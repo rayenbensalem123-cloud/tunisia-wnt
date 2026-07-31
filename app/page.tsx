@@ -13,6 +13,13 @@ import { ExportTools } from "@/components/export-tools"
 import { ScoutPanel } from "@/components/scout-panel"
 import { searchPlayerDatabase } from "@/lib/player-database"
 import { PlayerCard } from "@/components/player-card"
+import { supabase } from "@/lib/supabase"
+import {
+  signInUsername, fetchMyProfile, registerUser,
+  fetchAllProfiles, updateProfile, deleteProfile,
+  fetchMembers, fetchMatches, syncMembers, syncMatches,
+  subscribeRealtime,
+} from "@/lib/app-data"
 
 // ─────────────────────────────────────────────
 // CONSTANTS
@@ -74,27 +81,21 @@ interface UserPerms {
   useScout: boolean; exportData: boolean
 }
 interface AppUser {
-  username: string; password: string; firstName: string; lastName: string; status: "active" | "pending"
+  username: string; firstName: string; lastName: string; status: "active" | "pending"
   perms: UserPerms
 }
 
 const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, useScout:false, exportData:false }
 const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, useScout:true, exportData:true }
 
-const getUsers = (): AppUser[] => {
-  try{
-    const raw = localStorage.getItem('esq-users')
-    if (raw) return JSON.parse(raw)
-  }catch(e){console.error('getUsers err',e)}
-  const defaultUsers: AppUser[] = [{ username: "admin", password: "1921", firstName: "Admin", lastName: "User", status: "active", perms: { ...FULL_PERMS, exportData:true } }]
-  saveUsers(defaultUsers, true)
-  return defaultUsers
-}
-const saveUsers = (users: AppUser[], skipSync?: boolean) => {
-  localStorage.setItem('esq-users', JSON.stringify(users))
-  if(!skipSync&&typeof window!=="undefined"&&window.location.hostname!=="localhost")
-    fetch('/api/users',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(users)}).catch(()=>{})
-}
+// Maps a DB profiles row -> the shape the UI already expects
+const profileToAppUser = (p: any): AppUser => ({
+  username: p.username,
+  firstName: p.first_name,
+  lastName: p.last_name,
+  status: p.status,
+  perms: p.permissions,
+})
 
 const LOGIN_AND_REGISTER_STYLE = "min-h-screen flex items-center justify-center bg-zinc-50 text-zinc-900"
 const LOGIN_CARD_STYLE = "p-10 rounded-[3rem] text-center space-y-6 max-w-md w-full mx-4 bg-white shadow-xl border border-zinc-200"
@@ -104,15 +105,15 @@ const LOGIN_CARD_STYLE = "p-10 rounded-[3rem] text-center space-y-6 max-w-md w-f
 // ─────────────────────────────────────────────
 const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
   const {lang,setLang,tr}=useTranslate()
-  const [fn,setFn]=useState(""), [ln,setLn]=useState(""), [u,setU]=useState(""), [p,setP]=useState(""), [msg,setMsg]=useState("")
-  const submit=(e:React.FormEvent)=>{
+  const [fn,setFn]=useState(""), [ln,setLn]=useState(""), [u,setU]=useState(""), [p,setP]=useState(""), [msg,setMsg]=useState(""), [busy,setBusy]=useState(false)
+  const submit=async(e:React.FormEvent)=>{
     e.preventDefault()
     if(!fn.trim()||!ln.trim()||!u.trim()||!p.trim()){setMsg("Fill all fields");return}
-    if(p.length<4){setMsg("Password min 4 chars");return}
-    const users=getUsers()
-    if(users.find(x=>x.username===u.trim().toLowerCase())){setMsg("Username taken");return}
-    users.push({username:u.trim().toLowerCase(),password:p,firstName:fn.trim(),lastName:ln.trim(),status:"pending",perms:{...DEFAULT_PERMS}})
-    saveUsers(users)
+    if(p.length<6){setMsg("Password min 6 chars");return}
+    setBusy(true)
+    const res = await registerUser({ firstName: fn.trim(), lastName: ln.trim(), username: u.trim().toLowerCase(), password: p })
+    setBusy(false)
+    if(res.error){setMsg(res.error);return}
     setMsg(""); setFn(""); setLn(""); setU(""); setP("")
     onBack()
   }
@@ -131,7 +132,7 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
           <input type="text" placeholder={tr.login.username} value={u} onChange={e=>setU(e.target.value)} className="w-full p-4 rounded-2xl border text-center font-bold outline-none bg-zinc-50 border-zinc-300 focus:border-[#E30613]"/>
           <input type="password" placeholder={tr.login.password} value={p} onChange={e=>setP(e.target.value)} className="w-full p-4 rounded-2xl border text-center font-black tracking-[0.3em] outline-none bg-zinc-50 border-zinc-300 focus:border-[#E30613]"/>
           {msg&&<p className="text-[9px] font-black text-red-500 uppercase">{msg}</p>}
-          <button className="w-full py-4 rounded-2xl font-black uppercase italic tracking-tighter bg-[#E30613] text-white hover:bg-red-700 transition-all">Register</button>
+          <button disabled={busy} className="w-full py-4 rounded-2xl font-black uppercase italic tracking-tighter bg-[#E30613] text-white hover:bg-red-700 transition-all disabled:opacity-50">{busy?"...":"Register"}</button>
         </form>
         <p className="text-[8px] text-zinc-400">After registering, wait for admin approval.</p>
         <button onClick={onBack} className="text-[9px] font-black uppercase text-zinc-500 hover:text-[#E30613] transition-all">← Back to Login</button>
@@ -143,21 +144,25 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
 // ─────────────────────────────────────────────
 // LOGIN
 // ─────────────────────────────────────────────
-const LoginScreen = ({onLogin}:{onLogin:(u:string,perms:UserPerms)=>void}) => {
+const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
   const { tr } = useTranslate()
-  const [uname,setUname]=useState(""), [pw,setPw]=useState(""), [err,setErr]=useState(""), [reg,setReg]=useState(false)
+  const [uname,setUname]=useState(""), [pw,setPw]=useState(""), [err,setErr]=useState(""), [reg,setReg]=useState(false), [busy,setBusy]=useState(false)
   if(reg) return <RegisterScreen onBack={()=>setReg(false)}/>
-  const doLogin=()=>{
-    if(uname.trim().toLowerCase()==="admin"&&pw==="1921"){
-      onLogin("admin",{...FULL_PERMS,exportData:true})
-    }else{
-      const users=getUsers()
-      const found=users.find((u:any)=>u.username===uname.trim().toLowerCase())
-      if(!found){setErr("User not found");setTimeout(()=>setErr(""),2000);return}
-      if(found.password!==pw){setErr("Wrong password");setTimeout(()=>setErr(""),2000);return}
-      if(found.status!=="active"){setErr("Pending approval");setTimeout(()=>setErr(""),2500);return}
-      onLogin(found.username,found.perms)
+  const doLogin=async()=>{
+    if(!uname.trim()||!pw){setErr("Enter username & password");setTimeout(()=>setErr(""),2000);return}
+    setBusy(true)
+    const { error } = await signInUsername(uname, pw)
+    if(error){setBusy(false);setErr(error);setTimeout(()=>setErr(""),2500);return}
+    const profile = await fetchMyProfile()
+    if(!profile || profile.status!=="active"){
+      await supabase.auth.signOut()
+      setBusy(false)
+      setErr(profile?"Pending approval":"User not found")
+      setTimeout(()=>setErr(""),2500)
+      return
     }
+    setBusy(false)
+    onLogin()
   }
   return(
     <div className={LOGIN_AND_REGISTER_STYLE}>
@@ -168,7 +173,7 @@ const LoginScreen = ({onLogin}:{onLogin:(u:string,perms:UserPerms)=>void}) => {
           <input type="text" placeholder="Username" value={uname} onChange={e=>setUname(e.target.value)} className="w-full p-4 rounded-2xl border text-center font-bold outline-none bg-zinc-50 border-zinc-300 focus:border-[#E30613]"/>
           <input type="password" placeholder={tr.login.accessKey} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doLogin()} className={`w-full p-4 rounded-2xl border text-center font-black tracking-[0.3em] outline-none bg-zinc-50 ${err?'border-red-500 ring-4 ring-red-500/20':'border-zinc-300 focus:border-[#E30613]'}`}/>
           {err&&<p className="text-[9px] font-black text-red-500 uppercase tracking-widest">{err}</p>}
-          <button onClick={doLogin} className="w-full py-4 rounded-2xl font-black uppercase italic tracking-tighter hover:scale-[1.02] transition-all shadow-lg bg-[#E30613] text-white">{tr.login.authorize}</button>
+          <button disabled={busy} onClick={doLogin} className="w-full py-4 rounded-2xl font-black uppercase italic tracking-tighter hover:scale-[1.02] transition-all shadow-lg bg-[#E30613] text-white disabled:opacity-50">{busy?"...":tr.login.authorize}</button>
           <button onClick={()=>setReg(true)} className="w-full text-center text-[9px] font-black uppercase text-zinc-500 hover:text-[#E30613] transition-all">Register ↗</button>
       </div>
     </div>
@@ -287,11 +292,21 @@ const PERM_LABELS: {key:keyof UserPerms;label:string}[] = [
 // ═════════════════════════════════════════════
 export default function EliteSquadApp() {
   const { tr, setLang, lang } = useTranslate()
-  const [user,setUser]=useState<{username:string;perms:UserPerms}|null>(null)
+  const [user,setUser]=useState<{id:string;username:string;firstName:string;lastName:string;role:string;perms:UserPerms}|null>(null)
+  const [authChecked,setAuthChecked]=useState(false)
   const [buffering,setBuffering]=useState(false)
   const [members,setMembers]=useState<any[]>([])
   const [matches,setMatches]=useState<any[]>([])
-  const membersSynced=useRef("");const matchesSynced=useRef("")
+  const membersSnapshot=useRef<Map<any,any>>(new Map())
+  const matchesSnapshot=useRef<Map<any,any>>(new Map())
+  const applyingRemote=useRef(false)
+  const loadMyUser=async()=>{
+    const profile=await fetchMyProfile()
+    if(!profile||profile.status!=="active"){ setUser(null); return null }
+    const u={id:profile.id,username:profile.username,firstName:profile.first_name,lastName:profile.last_name,role:profile.role,perms:profile.permissions}
+    setUser(u)
+    return u
+  }
   const mergeById=(local:any[],remote:any[])=>{const m=new Map();remote.forEach(i=>m.set(i.id,i));local.forEach(i=>{const e=m.get(i.id);if(!e||(i.updatedAt||0)>=(e.updatedAt||0))m.set(i.id,i)});return[...m.values()]}
   const [activeTab,setActiveTab]=useState("PLAYERS")
   const [teamCat,setTeamCat]=useState<TeamCategory|null>(null)
@@ -299,8 +314,10 @@ export default function EliteSquadApp() {
   const [filterPos,setFilterPos]=useState("ALL")
   const [selectedIds,setSelectedIds]=useState<Set<string>>(new Set())
   const [opponentFilter,setOpponentFilter]=useState("")
-  const [fetchedUsers,setFetchedUsers]=useState<AppUser[]|null>(null)
-  const syncUsers=()=>{fetch('/api/users').then(r=>r.ok&&r.json()).then(d=>{if(Array.isArray(d)&&d.length>0){saveUsers(d);setFetchedUsers(d)}}).catch(()=>{})}
+  const [rawProfiles,setRawProfiles]=useState<any[]>([])
+  const fetchedUsers:AppUser[]=rawProfiles.map(profileToAppUser)
+  const reloadProfiles=async()=>{const data=await fetchAllProfiles();setRawProfiles(data)}
+  const syncUsers=()=>{reloadProfiles()}
   const [selMember,setSelMember]=useState<any>(null)
   const [isFormOpen,setIsFormOpen]=useState(false)
   const [editingId,setEditingId]=useState<number|null>(null)
@@ -314,7 +331,7 @@ export default function EliteSquadApp() {
   const [actionPick,setActionPick]=useState<"goal"|"yellow"|"red"|"sub"|null>(null)
   const [subOutId,setSubOutId]=useState<number|null>(null)
   const [matchStep,setMatchStep]=useState(0)
-  const pendingUsers = typeof window!=="undefined" ? getUsers().filter(u=>u.status==="pending") : []
+  const pendingUsers = fetchedUsers.filter(u=>u.status==="pending")
   const pendingCount = pendingUsers.length
   const fileRef=useRef<HTMLInputElement>(null)
 
@@ -333,29 +350,57 @@ export default function EliteSquadApp() {
 
   const [loaded,setLoaded]=useState(false)
 
-  const isVercel=typeof window!=='undefined'&&window.location.hostname!=='localhost'
+  const reloadMembers=async()=>{
+    const data=await fetchMembers()
+    applyingRemote.current=true
+    membersSnapshot.current=new Map(data.map((m:any)=>[m.id,m]))
+    setMembers(data)
+    setTimeout(()=>{applyingRemote.current=false},0)
+  }
+  const reloadMatches=async()=>{
+    const data=await fetchMatches()
+    applyingRemote.current=true
+    matchesSnapshot.current=new Map(data.map((m:any)=>[m.id,m]))
+    setMatches(data)
+    setTimeout(()=>{applyingRemote.current=false},0)
+  }
 
-  // Load / save (cloud is the source of truth, localStorage is only a cache/offline fallback)
+  // Check for an existing Supabase Auth session on mount, then load data + subscribe to realtime
   useEffect(()=>{
-    const norm=(m:any)=>{let r=m.result&&m.result!==''?String(m.result).trim().replace(/\s*-\s*/g,'-'):'';if(r&&!r.includes('-')){const d=r.replace(/\D/g,'');r=d.length<2?'':d.slice(0,-1)+'-'+d.slice(-1)};return{...m,result:r,opponent:m.opponent?m.opponent.charAt(0).toUpperCase()+m.opponent.slice(1).toLowerCase():''}}
-    const ls=localStorage.getItem('esq-v4');const parsedLs=ls?JSON.parse(ls):[]
-    const ms=localStorage.getItem('esq-matches-v2');const parsedMs=ms?JSON.parse(ms).map(norm):[]
-    fetch('/api/members').then(r=>r.ok&&r.json()).then(d=>{
-      if(Array.isArray(d)&&d.length)setMembers(d)
-      else if(parsedLs.length){setMembers(parsedLs);fetch('/api/members',{method:'POST',headers:{'Content-Type':'application/json'},body:ls}).catch(()=>{})}
-    }).catch(()=>{if(parsedLs.length)setMembers(parsedLs)})
-    fetch('/api/matches').then(r=>r.ok&&r.json()).then(d=>{
-      if(Array.isArray(d)&&d.length)setMatches(d)
-      else if(parsedMs.length){setMatches(parsedMs);fetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json'},body:ms}).catch(()=>{})}
-    }).catch(()=>{if(parsedMs.length)setMatches(parsedMs)})
-    fetch('/api/users').then(r=>r.ok&&r.json()).then(d=>{if(Array.isArray(d)&&d.length>0)saveUsers(d)}).catch(()=>{})
-    setLoaded(true)
+    let unsub=()=>{}
+    ;(async()=>{
+      await loadMyUser()
+      setAuthChecked(true)
+      await Promise.all([reloadMembers(),reloadMatches()])
+      await reloadProfiles()
+      setLoaded(true)
+      unsub=subscribeRealtime({
+        onMembers:reloadMembers,
+        onMatches:reloadMatches,
+        onProfiles:reloadProfiles,
+      })
+    })()
+    const { data: sub } = supabase.auth.onAuthStateChange((event)=>{
+      if(event==="SIGNED_OUT") setUser(null)
+    })
+    return ()=>{unsub();sub.subscription.unsubscribe()}
   },[])
-  useEffect(()=>{try{localStorage.setItem('esq-v4',JSON.stringify(members))}catch(e){}const b=JSON.stringify(members);if(members.length&&b!==membersSynced.current){membersSynced.current=b;fetch('/api/members',{method:'POST',headers:{'Content-Type':'application/json'},body:b}).catch(()=>{})}},[members])
-  useEffect(()=>{try{localStorage.setItem('esq-matches-v2',JSON.stringify(matches))}catch(e){}const b=JSON.stringify(matches);if(matches.length&&b!==matchesSynced.current){matchesSynced.current=b;fetch('/api/matches',{method:'POST',headers:{'Content-Type':'application/json'},body:b}).catch(()=>{})}},[matches])
-  useEffect(()=>{if(user)localStorage.setItem('esq-session',JSON.stringify(user));else localStorage.removeItem('esq-session')},[user])
-  useEffect(()=>{if(usersOpen){syncUsers()}},[usersOpen])
-  useEffect(()=>{if(typeof window==="undefined")return;const norm=(m:any)=>{let r=m.result&&m.result!==''?String(m.result).trim().replace(/\s*-\s*/g,'-'):'';if(r&&!r.includes('-')){const d=r.replace(/\D/g,'');r=d.length<2?'':d.slice(0,-1)+'-'+d.slice(-1)};return{...m,result:r,opponent:m.opponent?m.opponent.charAt(0).toUpperCase()+m.opponent.slice(1).toLowerCase():''}};const fn=()=>{syncUsers();fetch('/api/members').then(r=>r.ok&&r.json()).then(d=>{if(Array.isArray(d)&&d.length)setMembers(d)}).catch(()=>{});fetch('/api/matches').then(r=>r.ok&&r.json()).then(d=>{if(Array.isArray(d)&&d.length)setMatches(d.map(norm))}).catch(()=>{})};window.addEventListener('visibilitychange',fn);const i=setInterval(fn,3000);return()=>{window.removeEventListener('visibilitychange',fn);clearInterval(i)}},[])
+
+  // Push local edits to Supabase (diffed against last known server state) whenever members/matches change
+  useEffect(()=>{
+    if(!loaded||applyingRemote.current)return
+    if(JSON.stringify([...membersSnapshot.current.values()])===JSON.stringify(members))return
+    syncMembers(membersSnapshot.current,members).then(()=>{
+      membersSnapshot.current=new Map(members.map((m:any)=>[m.id,m]))
+    })
+  },[members])
+  useEffect(()=>{
+    if(!loaded||applyingRemote.current)return
+    if(JSON.stringify([...matchesSnapshot.current.values()])===JSON.stringify(matches))return
+    syncMatches(matchesSnapshot.current,matches).then(()=>{
+      matchesSnapshot.current=new Map(matches.map((m:any)=>[m.id,m]))
+    })
+  },[matches])
 
   const selectCat=(cat:TeamCategory)=>{
     setTeamCat(cat);setFilterPos("ALL");setActiveTab("PLAYERS");setSearch("")
@@ -512,7 +557,7 @@ export default function EliteSquadApp() {
     )
   }
   const p = user?.perms || DEFAULT_PERMS
-  const canManageUsers = user?.username === "admin"
+  const canManageUsers = user?.role === "admin"
 
   // ── STATS DASHBOARD ──
   const StatsView = () => {
@@ -551,7 +596,7 @@ export default function EliteSquadApp() {
   }
 
   // ── RENDER GATES ──
-  if(buffering) return(
+  if(buffering||!authChecked) return(
     <div className="min-h-screen flex flex-col items-center justify-center bg-white text-zinc-900 relative overflow-hidden">
       {/* Ambient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#E30613]/5 blur-[100px] animate-pulse"/>
@@ -584,13 +629,13 @@ export default function EliteSquadApp() {
       <style>{`@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}@keyframes loadDot{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}`}</style>
     </div>
   )
-  if(!user) return <LoginScreen onLogin={(u,perms)=>{setBuffering(true);setTimeout(()=>{setBuffering(false);setUser({username:u,perms})},4000)}}/>
+  if(authChecked&&!user) return <LoginScreen onLogin={()=>{setBuffering(true);loadMyUser().finally(()=>setTimeout(()=>setBuffering(false),1200))}}/>
   if(!teamCat) return(
     <div className="relative">
       <div className="fixed top-6 right-6 z-[999] flex gap-3">
         <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:text-black transition-all text-[10px] font-black uppercase tracking-widest"><Globe size={16}/><span className="ml-1">{lang.toUpperCase()}</span></button>
         <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 self-center">{user?.username}</span>
-        <button onClick={()=>setUser(null)} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-red-500 hover:text-white transition-all"><LogOut size={18}/></button>
+        <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-red-500 hover:text-white transition-all"><LogOut size={18}/></button>
       </div>
       <TeamSelector onSelect={selectCat}/>
     </div>
@@ -645,7 +690,7 @@ export default function EliteSquadApp() {
               <Globe size={14}/><span className="hidden sm:inline">{lang.toUpperCase()}</span>
             </button>
             <span className="text-[7px] font-black uppercase tracking-wider text-zinc-400 hidden sm:block">{user?.username}</span>
-            <button onClick={()=>setUser(null)} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={16}/></button>
+            <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={16}/></button>
             {canManageUsers&&<button onClick={()=>setPendingReviewOpen(true)} className="relative px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613] transition-all"><Bell size={14}/>{pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}</button>}
             {canManageUsers&&<button onClick={()=>setUsersOpen(true)} className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Users size={14}/></button>}
             {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} className="p-2 rounded-xl bg-[#E30613] text-white hover:bg-red-700 transition-all"><Plus size={16}/></button>}
@@ -1029,17 +1074,17 @@ export default function EliteSquadApp() {
             </div>
             <div className="p-6 space-y-5 overflow-y-auto">
               {pendingUsers.map((u)=>{
-                const allUsers=getUsers()
+                const allUsers=fetchedUsers
                 const realIdx=allUsers.findIndex(x=>x.username===u.username)
                 const togglePerm=(perm:keyof UserPerms)=>{
-                  const copy=getUsers(); copy[realIdx]={...copy[realIdx],perms:{...copy[realIdx].perms,[perm]:!copy[realIdx].perms[perm]}}; saveUsers(copy); setRenderTick(t=>t+1)
+                  updateProfile(u.username,{permissions:{...allUsers[realIdx].perms,[perm]:!allUsers[realIdx].perms[perm]}}).then(reloadProfiles)
                 }
                 const doApprove=()=>{
-                  const copy=getUsers(); copy[realIdx]={...copy[realIdx],status:"active"}; saveUsers(copy); setRenderTick(t=>t+1)
+                  updateProfile(u.username,{status:"active"}).then(reloadProfiles)
                 }
                 const doHold=()=>{ setPendingReviewOpen(false) }
                 const doDelete=()=>{
-                  const copy=getUsers().filter((_,idx)=>idx!==realIdx); saveUsers(copy); setRenderTick(t=>t+1)
+                  deleteProfile(u.username).then(reloadProfiles)
                 }
                 return(
                   <div key={u.username} className="rounded-xl border border-zinc-200 bg-zinc-50 overflow-hidden">
@@ -1139,7 +1184,7 @@ export default function EliteSquadApp() {
       {/* ═══════════════════════════════════════════
           USER MANAGEMENT MODAL
       ═══════════════════════════════════════════ */}
-      {usersOpen&&(()=>{const users=fetchedUsers??getUsers();return(
+      {usersOpen&&(()=>{const users=fetchedUsers;return(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 shrink-0">
@@ -1153,11 +1198,12 @@ export default function EliteSquadApp() {
               {users.map((u,i)=>{
                 const currentUser=u.username===user?.username
                 const togglePerm=(perm:keyof UserPerms)=>{
-                  const copy=users.slice(); copy[i]={...copy[i],perms:{...copy[i].perms,[perm]:!copy[i].perms[perm]}}; saveUsers(copy); setFetchedUsers(copy)
-                  if(currentUser) setUser({...user!,perms:copy[i].perms})
+                  const newPerms={...u.perms,[perm]:!u.perms[perm]}
+                  updateProfile(u.username,{permissions:newPerms}).then(reloadProfiles)
+                  if(currentUser) setUser({...user!,perms:newPerms})
                 }
                 const approveUser=()=>{
-                  const copy=users.slice(); copy[i]={...copy[i],status:"active"}; saveUsers(copy); setFetchedUsers(copy)
+                  updateProfile(u.username,{status:"active"}).then(reloadProfiles)
                 }
                 return(
                   <div key={i} className="p-3 rounded-xl border border-zinc-200 bg-zinc-50">
@@ -1169,7 +1215,7 @@ export default function EliteSquadApp() {
                       <div className="flex gap-1.5">
                         {u.status==="pending"&&canManageUsers&&<button onClick={approveUser} className="px-3 py-1.5 rounded-lg border border-green-300 text-green-600 text-[7px] font-black uppercase tracking-wider hover:bg-green-50 transition-all">Approve</button>}
                         {canManageUsers&&!currentUser&&(
-                          <button onClick={()=>{const xs=users.filter((_,idx)=>idx!==i);saveUsers(xs);setFetchedUsers(xs)}} className="px-3 py-1.5 rounded-lg border border-red-200 text-red-500 text-[7px] font-black uppercase tracking-wider hover:bg-red-50 transition-all">Remove</button>
+                          <button onClick={()=>{deleteProfile(u.username).then(reloadProfiles)}} className="px-3 py-1.5 rounded-lg border border-red-200 text-red-500 text-[7px] font-black uppercase tracking-wider hover:bg-red-50 transition-all">Remove</button>
                         )}
                       </div>
                     </div>
