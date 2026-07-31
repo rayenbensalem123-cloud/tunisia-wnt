@@ -1,0 +1,13 @@
+@layer components {
+  .text-elite-scout {
+    @apply font-black italic uppercase tracking-[-0.05em] leading-none;
+    /* This creates a subtle depth effect without using messy textures */
+    text-shadow: 0px 2px 4px rgba(0,0,0,0.1);
+    letter-spacing: -0.02em;
+  }
+  
+  .input-glow-red:focus {
+    @apply border-[#E30613];
+    box-shadow: 0 0 20px rgba(227, 6, 19, 0.1);
+  }
+}
