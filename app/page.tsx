@@ -19,6 +19,7 @@ import {
   fetchAllProfiles, updateProfile, deleteProfile,
   fetchMembers, fetchMatches, syncMembers, syncMatches,
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
+  fetchInjuries, addInjury, updateInjuryStatus,
 } from "@/lib/app-data"
 
 // ─────────────────────────────────────────────
@@ -79,14 +80,15 @@ interface UserPerms {
   addPlayer: boolean; editPlayer: boolean; deletePlayer: boolean
   addMatch: boolean; deleteMatch: boolean
   useScout: boolean; exportData: boolean
+  viewMedical: boolean; editMedical: boolean
 }
 interface AppUser {
   username: string; firstName: string; lastName: string; status: "active" | "pending"
   perms: UserPerms
 }
 
-const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, useScout:false, exportData:false }
-const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, useScout:true, exportData:true }
+const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, useScout:false, exportData:false, viewMedical:false, editMedical:false }
+const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, useScout:true, exportData:true, viewMedical:true, editMedical:true }
 
 // Maps a DB profiles row -> the shape the UI already expects
 const profileToAppUser = (p: any): AppUser => ({
@@ -285,6 +287,7 @@ const PERM_LABELS: {key:keyof UserPerms;label:string}[] = [
   {key:"addPlayer",label:"Add Player"},{key:"editPlayer",label:"Edit Player"},{key:"deletePlayer",label:"Delete Player"},
   {key:"addMatch",label:"Add Match"},{key:"deleteMatch",label:"Delete Match"},
   {key:"useScout",label:"Scout Button"},{key:"exportData",label:"Export Data"},
+  {key:"viewMedical",label:"View Medical"},{key:"editMedical",label:"Edit Medical"},
 ]
 
 // ═════════════════════════════════════════════
@@ -328,6 +331,15 @@ export default function EliteSquadApp() {
   const reloadProfiles=async()=>{const data=await fetchAllProfiles();setRawProfiles(data)}
   const syncUsers=()=>{reloadProfiles()}
   const [selMember,setSelMember]=useState<any>(null)
+  const [profileTab,setProfileTab]=useState<"profile"|"medical">("profile")
+  const [injuries,setInjuries]=useState<any[]>([])
+  const [addInjuryOpen,setAddInjuryOpen]=useState(false)
+  const [injForm,setInjForm]=useState({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""})
+  useEffect(()=>{
+    setProfileTab("profile")
+    if(selMember&&(p.viewMedical||canManageUsers)) fetchInjuries(selMember.id).then(setInjuries)
+    else setInjuries([])
+  },[selMember?.id])
   const [isFormOpen,setIsFormOpen]=useState(false)
   const [editingId,setEditingId]=useState<number|null>(null)
   const [isMatchOpen,setIsMatchOpen]=useState(false)
@@ -866,6 +878,14 @@ export default function EliteSquadApp() {
               {/* Body */}
               <div className="px-5 py-4 space-y-4 max-h-[55vh] overflow-y-auto">
 
+                {(p.viewMedical||canManageUsers)&&(
+                  <div className="flex gap-1.5 -mt-1 mb-1">
+                    <button onClick={()=>setProfileTab("profile")} className={`flex-1 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all ${profileTab==="profile"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Profile</button>
+                    <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Medical</button>
+                  </div>
+                )}
+
+                {profileTab==="profile"&&(<>
                 {/* Status banner */}
                 {cs&&isPlayer&&(
                   <div className={`flex items-center gap-1.5 px-3 py-2 rounded text-[9px] font-semibold ${cs==="suspended"?'bg-red-50 text-red-600':'bg-yellow-50 text-yellow-700'}`}>
@@ -978,11 +998,85 @@ export default function EliteSquadApp() {
                   </div>
                 </div>
 
+              </>)}
+
+              {profileTab==="medical"&&(
+                <div className="space-y-2.5">
+                  {p.editMedical&&(
+                    <button onClick={()=>setAddInjuryOpen(true)} className="w-full py-2 rounded-lg border border-dashed border-[#E30613]/30 text-[8px] font-black uppercase tracking-wider text-[#E30613] hover:bg-[#E30613]/5 transition-all flex items-center justify-center gap-1.5">
+                      <Plus size={11}/>Log Injury
+                    </button>
+                  )}
+                  {injuries.length===0&&<p className="text-[9px] text-zinc-400 py-6 text-center">No medical history on record</p>}
+                  {injuries.map((inj:any)=>{
+                    const colors=inj.status==="active"?{bg:"bg-red-50",border:"border-red-200",text:"text-red-600",pill:"bg-red-500 text-white"}
+                      :inj.status==="recovering"?{bg:"bg-amber-50",border:"border-amber-200",text:"text-amber-700",pill:"bg-amber-500 text-white"}
+                      :{bg:"bg-zinc-50",border:"border-zinc-200",text:"text-zinc-500",pill:"bg-green-100 text-green-700"}
+                    return(
+                      <div key={inj.id} className={`rounded-lg border ${colors.border} ${colors.bg} p-3 ${inj.status==="recovered"?'opacity-70':''}`}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className={`text-[11px] font-bold ${colors.text}`}>{inj.injury_type}</p>
+                            <p className="text-[9px] text-zinc-500 mt-0.5">{inj.body_part?`${inj.body_part} · `:""}{inj.occurred_on?`occurred ${inj.occurred_on}`:""}</p>
+                          </div>
+                          <span className={`shrink-0 text-[8px] font-black uppercase px-2 py-1 rounded ${colors.pill}`}>{inj.status}</span>
+                        </div>
+                        {inj.expected_return&&<p className="text-[8px] text-zinc-400 mt-1.5">Expected return: {inj.expected_return}</p>}
+                        {inj.notes&&<p className="text-[9px] text-zinc-500 mt-1.5">{inj.notes}</p>}
+                        <p className="text-[7px] text-zinc-400 mt-1.5">Logged by {inj.logged_by_username||"unknown"}</p>
+                        {p.editMedical&&inj.status!=="recovered"&&(
+                          <div className="flex gap-1.5 mt-2">
+                            {inj.status==="active"&&<button onClick={()=>{updateInjuryStatus(inj.id,"recovering").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg border border-amber-300 text-amber-600 text-[7px] font-black uppercase tracking-wider hover:bg-amber-50">Mark Recovering</button>}
+                            <button onClick={()=>{updateInjuryStatus(inj.id,"recovered").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg border border-green-300 text-green-600 text-[7px] font-black uppercase tracking-wider hover:bg-green-50">Mark Recovered</button>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
               </div>
             </div>
           </div>
         )
       })()}
+
+      {/* ═══════════════════════════════════════════
+          LOG INJURY FORM
+      ═══════════════════════════════════════════ */}
+      {addInjuryOpen&&selMember&&(()=>{
+        return(
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80">
+          <div className="w-full max-w-sm rounded-2xl bg-white text-zinc-900 shadow-2xl p-5 space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase italic tracking-tighter">Log Injury — {selMember.name}</h2>
+              <button onClick={()=>setAddInjuryOpen(false)} className="p-1.5 rounded-lg hover:bg-zinc-100"><X size={18}/></button>
+            </div>
+            <input placeholder="Injury type (e.g. Hamstring strain)" value={injForm.injury_type} onChange={e=>setInjForm({...injForm,injury_type:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+            <input placeholder="Body part (e.g. Left leg)" value={injForm.body_part} onChange={e=>setInjForm({...injForm,body_part:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+            <select value={injForm.severity} onChange={e=>setInjForm({...injForm,severity:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none">
+              <option value="minor">Minor</option><option value="moderate">Moderate</option><option value="severe">Severe</option>
+            </select>
+            <div className="flex gap-2">
+              <input type="date" value={injForm.occurred_on} onChange={e=>setInjForm({...injForm,occurred_on:e.target.value})} className="flex-1 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+              <input type="date" placeholder="Expected return" value={injForm.expected_return} onChange={e=>setInjForm({...injForm,expected_return:e.target.value})} className="flex-1 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+            </div>
+            <textarea placeholder="Notes (optional)" value={injForm.notes} onChange={e=>setInjForm({...injForm,notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none resize-none"/>
+            <div className="flex gap-2 pt-1">
+              <button onClick={()=>setAddInjuryOpen(false)} className="flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
+              <button onClick={async()=>{
+                if(!injForm.injury_type.trim()){alert("Enter an injury type");return}
+                const {error}=await addInjury(selMember.id,injForm)
+                if(error){alert("Failed: "+error);return}
+                setAddInjuryOpen(false)
+                setInjForm({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""})
+                fetchInjuries(selMember.id).then(setInjuries)
+              }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">Save</button>
+            </div>
+          </div>
+        </div>
+      )})()}
 
       {/* ═══════════════════════════════════════════
           ADD / EDIT MEMBER MODAL
