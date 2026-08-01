@@ -142,6 +142,41 @@ export async function fetchActivityLog(limit = 100) {
 }
 
 // ─────────────────────────────────────────────
+// INJURIES (medical history — never deleted, just status changes)
+// ─────────────────────────────────────────────
+export async function fetchInjuries(memberId: number) {
+  const { data, error } = await supabase
+    .from('injuries')
+    .select('*')
+    .eq('member_id', memberId)
+    .order('occurred_on', { ascending: false })
+  if (error) { console.error('fetchInjuries', error); return [] }
+  return data
+}
+
+export async function addInjury(memberId: number, payload: {
+  injury_type: string; body_part?: string; severity?: string
+  occurred_on?: string; expected_return?: string; notes?: string
+}) {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const uid = sessionData.session?.user.id
+  let username: string | null = null
+  if (uid) {
+    const { data: profile } = await supabase.from('profiles').select('username').eq('id', uid).maybeSingle()
+    username = profile?.username || null
+  }
+  const { error } = await supabase.from('injuries').insert({
+    member_id: memberId, status: 'active', logged_by: uid, logged_by_username: username, ...payload,
+  })
+  return { error: error?.message || null }
+}
+
+export async function updateInjuryStatus(injuryId: number, status: 'active' | 'recovering' | 'recovered') {
+  const { error } = await supabase.from('injuries').update({ status, updated_at: new Date().toISOString() }).eq('id', injuryId)
+  return { error: error?.message || null }
+}
+
+// ─────────────────────────────────────────────
 // PROFILES (admin-only management)
 // ─────────────────────────────────────────────
 export async function fetchAllProfiles() {
