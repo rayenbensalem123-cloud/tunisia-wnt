@@ -365,26 +365,34 @@ export default function EliteSquadApp() {
     setTimeout(()=>{applyingRemote.current=false},0)
   }
 
-  // Check for an existing Supabase Auth session on mount, then load data + subscribe to realtime
+  // Check for an existing Supabase Auth session on mount, then load data
   useEffect(()=>{
-    let unsub=()=>{}
     ;(async()=>{
       await loadMyUser()
       setAuthChecked(true)
       await Promise.all([reloadMembers(),reloadMatches()])
       await reloadProfiles()
       setLoaded(true)
-      unsub=subscribeRealtime({
-        onMembers:reloadMembers,
-        onMatches:reloadMatches,
-        onProfiles:reloadProfiles,
-      })
     })()
     const { data: sub } = supabase.auth.onAuthStateChange((event)=>{
       if(event==="SIGNED_OUT") setUser(null)
     })
-    return ()=>{unsub();sub.subscription.unsubscribe()}
+    return ()=>{sub.subscription.unsubscribe()}
   },[])
+
+  // (Re)subscribe to realtime whenever we have a confirmed authenticated user,
+  // so the websocket carries a valid JWT for RLS-checked postgres_changes events.
+  useEffect(()=>{
+    if(!user)return
+    let unsub=()=>{}
+    let cancelled=false
+    subscribeRealtime({
+      onMembers:reloadMembers,
+      onMatches:reloadMatches,
+      onProfiles:reloadProfiles,
+    }).then(fn=>{ if(!cancelled) unsub=fn; else fn() })
+    return ()=>{cancelled=true;unsub()}
+  },[user?.id])
 
   // Push local edits to Supabase (diffed against last known server state) whenever members/matches change
   useEffect(()=>{
