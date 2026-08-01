@@ -130,6 +130,17 @@ export async function adminResetPassword(username: string, newPassword: string) 
   return { error: json.error || null }
 }
 
+// Admin-only activity log (who changed what, when)
+export async function fetchActivityLog(limit = 100) {
+  const { data, error } = await supabase
+    .from('activity_log')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) { console.error('fetchActivityLog', error); return [] }
+  return data
+}
+
 // ─────────────────────────────────────────────
 // PROFILES (admin-only management)
 // ─────────────────────────────────────────────
