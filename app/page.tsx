@@ -5,7 +5,7 @@ import {
   LogOut, Goal, History, Trash2, Trophy, Loader2,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase, Sparkles,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key
+  Users, Calendar, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
@@ -18,7 +18,7 @@ import {
   signInUsername, fetchMyProfile, registerUser,
   fetchAllProfiles, updateProfile, deleteProfile,
   fetchMembers, fetchMatches, syncMembers, syncMatches,
-  subscribeRealtime, changeMyPassword, adminResetPassword,
+  subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
 } from "@/lib/app-data"
 
 // ─────────────────────────────────────────────
@@ -334,6 +334,8 @@ export default function EliteSquadApp() {
   const [isHistoryOpen,setIsHistoryOpen]=useState(false)
   const [selMatch,setSelMatch]=useState<any>(null)
   const [usersOpen,setUsersOpen]=useState(false)
+  const [activityLogOpen,setActivityLogOpen]=useState(false)
+  const [activityLog,setActivityLog]=useState<any[]>([])
   const [pendingReviewOpen,setPendingReviewOpen]=useState(false)
   const [pendingMatchesOpen,setPendingMatchesOpen]=useState(false)
   const [renderTick,setRenderTick]=useState(0)
@@ -710,6 +712,7 @@ export default function EliteSquadApp() {
             <button onClick={handleChangePassword} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-blue-50 hover:text-blue-500 transition-all"><Key size={16}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={16}/></button>
             {canManageUsers&&<button onClick={()=>setPendingReviewOpen(true)} className="relative px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613] transition-all"><Bell size={14}/>{pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}</button>}
             {canManageUsers&&<button onClick={()=>setUsersOpen(true)} className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Users size={14}/></button>}
+            {canManageUsers&&<button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Activity size={14}/></button>}
             {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} className="p-2 rounded-xl bg-[#E30613] text-white hover:bg-red-700 transition-all"><Plus size={16}/></button>}
           </div>
         </div>
@@ -1263,6 +1266,40 @@ export default function EliteSquadApp() {
           </div>
         </div>
       )})()}
+
+      {/* ═══════════════════════════════════════════
+          ACTIVITY LOG — WHO CHANGED WHAT, WHEN
+      ═══════════════════════════════════════════ */}
+      {activityLogOpen&&(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
+          <div className="w-full max-w-lg rounded-2xl bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Activity size={16}/>Activity Log</h2>
+              <button onClick={()=>setActivityLogOpen(false)} className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
+            </div>
+            <div className="p-4 overflow-y-auto space-y-1.5">
+              {activityLog.length===0&&<p className="text-[10px] text-zinc-400 text-center py-8">No activity yet</p>}
+              {activityLog.map((a:any)=>{
+                const actionColor=a.action==="insert"?"text-green-600":a.action==="delete"?"text-red-500":"text-blue-600"
+                const actionLabel=a.action==="insert"?"added":a.action==="delete"?"deleted":"updated"
+                const entityLabel=a.entity_type==="members"?"a player/staff":a.entity_type==="matches"?"a match":"an account"
+                return(
+                  <div key={a.id} className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-zinc-50 border border-zinc-100">
+                    <div className="min-w-0">
+                      <p className="text-[10px] leading-tight">
+                        <span className="font-black">{a.actor_username||"unknown"}</span>{" "}
+                        <span className={`font-bold ${actionColor}`}>{actionLabel}</span>{" "}
+                        {entityLabel}{a.entity_label?`: ${a.entity_label}`:""}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-[7px] text-zinc-400 whitespace-nowrap">{new Date(a.created_at).toLocaleString()}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════
           NEW MATCH MODAL — MATCH REPORT
