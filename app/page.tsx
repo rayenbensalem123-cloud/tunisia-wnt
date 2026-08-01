@@ -5,7 +5,7 @@ import {
   LogOut, Goal, History, Trash2, Trophy, Loader2,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase, Sparkles,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronDown, ChevronLeft, Globe, MapPin, Bell
+  Users, Calendar, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
@@ -18,7 +18,7 @@ import {
   signInUsername, fetchMyProfile, registerUser,
   fetchAllProfiles, updateProfile, deleteProfile,
   fetchMembers, fetchMatches, syncMembers, syncMatches,
-  subscribeRealtime,
+  subscribeRealtime, changeMyPassword, adminResetPassword,
 } from "@/lib/app-data"
 
 // ─────────────────────────────────────────────
@@ -300,6 +300,15 @@ export default function EliteSquadApp() {
   const membersSnapshot=useRef<Map<any,any>>(new Map())
   const matchesSnapshot=useRef<Map<any,any>>(new Map())
   const applyingRemote=useRef(false)
+  const handleChangePassword=async()=>{
+    const pw1=window.prompt("New password (min 6 characters):")
+    if(!pw1)return
+    if(pw1.length<6){alert("Password must be at least 6 characters");return}
+    const pw2=window.prompt("Confirm new password:")
+    if(pw1!==pw2){alert("Passwords don't match");return}
+    const {error}=await changeMyPassword(pw1)
+    if(error){alert("Failed: "+error)}else{alert("Password updated!")}
+  }
   const loadMyUser=async()=>{
     const profile=await fetchMyProfile()
     if(!profile||profile.status!=="active"){ setUser(null); return null }
@@ -643,7 +652,7 @@ export default function EliteSquadApp() {
       <div className="fixed top-6 right-6 z-[999] flex gap-3">
         <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:text-black transition-all text-[10px] font-black uppercase tracking-widest"><Globe size={16}/><span className="ml-1">{lang.toUpperCase()}</span></button>
         <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 self-center">{user?.username}</span>
-        <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-red-500 hover:text-white transition-all"><LogOut size={18}/></button>
+        <button onClick={handleChangePassword} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-blue-500 hover:text-white transition-all"><Key size={18}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-red-500 hover:text-white transition-all"><LogOut size={18}/></button>
       </div>
       <TeamSelector onSelect={selectCat}/>
     </div>
@@ -698,7 +707,7 @@ export default function EliteSquadApp() {
               <Globe size={14}/><span className="hidden sm:inline">{lang.toUpperCase()}</span>
             </button>
             <span className="text-[7px] font-black uppercase tracking-wider text-zinc-400 hidden sm:block">{user?.username}</span>
-            <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={16}/></button>
+            <button onClick={handleChangePassword} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-blue-50 hover:text-blue-500 transition-all"><Key size={16}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={16}/></button>
             {canManageUsers&&<button onClick={()=>setPendingReviewOpen(true)} className="relative px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613] transition-all"><Bell size={14}/>{pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}</button>}
             {canManageUsers&&<button onClick={()=>setUsersOpen(true)} className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Users size={14}/></button>}
             {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} className="p-2 rounded-xl bg-[#E30613] text-white hover:bg-red-700 transition-all"><Plus size={16}/></button>}
@@ -1222,9 +1231,16 @@ export default function EliteSquadApp() {
                       </div>
                       <div className="flex gap-1.5">
                         {u.status==="pending"&&canManageUsers&&<button onClick={approveUser} className="px-3 py-1.5 rounded-lg border border-green-300 text-green-600 text-[7px] font-black uppercase tracking-wider hover:bg-green-50 transition-all">Approve</button>}
-                        {canManageUsers&&!currentUser&&(
+                        {canManageUsers&&!currentUser&&(<>
+                          <button onClick={async()=>{
+                            const pw1=window.prompt(`New password for ${u.username} (min 6 chars):`)
+                            if(!pw1)return
+                            if(pw1.length<6){alert("Password must be at least 6 characters");return}
+                            const {error}=await adminResetPassword(u.username,pw1)
+                            if(error){alert("Failed: "+error)}else{alert("Password reset for "+u.username)}
+                          }} className="px-3 py-1.5 rounded-lg border border-blue-200 text-blue-500 text-[7px] font-black uppercase tracking-wider hover:bg-blue-50 transition-all">Reset PW</button>
                           <button onClick={()=>{deleteProfile(u.username).then(reloadProfiles)}} className="px-3 py-1.5 rounded-lg border border-red-200 text-red-500 text-[7px] font-black uppercase tracking-wider hover:bg-red-50 transition-all">Remove</button>
-                        )}
+                        </>)}
                       </div>
                     </div>
                     {canManageUsers&&(
