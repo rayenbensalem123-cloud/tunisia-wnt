@@ -813,6 +813,12 @@ export default function EliteSquadApp() {
       {selMember&&(()=>{
         const cs=getCardStatus(selMember)
         const isPlayer=selMember.role==="PLAYERS"
+        const yc=selMember.yellowCards||0
+        const rc=selMember.redCards||0
+        const ringPct=Math.min(yc/YELLOW_SUSPENSION,1)
+        const ringCircum=2*Math.PI*50
+        const ringOffset=ringCircum*(1-ringPct)
+        const ringColor=yc===0?"#639922":"#BA7517"
         return(
           <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 overflow-y-auto" onClick={()=>setSelMember(null)}>
             <div className="relative w-full max-w-lg bg-white rounded-lg shadow-xl overflow-hidden" onClick={e=>e.stopPropagation()}>
@@ -894,56 +900,56 @@ export default function EliteSquadApp() {
                   </div>
                 )}
 
-                {/* Stats grid: 2 columns — discipline left, performance right */}
+                {/* Stats: goals/assists tiles + centered card-accumulation ring */}
                 {isPlayer&&(
-                  <div className="grid grid-cols-2 gap-3">
-                    {/* Discipline card */}
-                    <div className="bg-zinc-50 rounded-lg border border-zinc-200/60 p-3.5">
-                      <h4 className="text-[12px] font-bold text-[#E30613] uppercase tracking-wider mb-2.5">{tr.profile.discipline}</h4>
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-medium text-zinc-600">Yellow</span>
-                          <span className="text-sm font-bold text-zinc-800">{selMember.yellowCards||0}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-medium text-zinc-600">Red</span>
-                          <span className="text-sm font-bold text-red-600">{selMember.redCards||0}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-medium text-zinc-600">Suspended</span>
-                          <span className={`text-sm font-bold ${selMember.suspended?'text-red-500':'text-zinc-500'}`}>{selMember.suspended?tr.profile.yes:tr.profile.no}</span>
-                        </div>
-                        <div className="pt-2 border-t border-zinc-200">
-                          <div className="flex justify-between text-[12px] text-zinc-500 mb-1">
-                            <span>{tr.profile.accumulation}</span>
-                            <span>{selMember.yellowCards||0}/{YELLOW_SUSPENSION}</span>
-                          </div>
-                          <div className="w-full h-1.5 rounded-full bg-zinc-200 overflow-hidden">
-                            <div className={`h-full rounded-full ${cs==="suspended"?'bg-red-500':'bg-yellow-400'}`} style={{width:`${Math.min(((selMember.yellowCards||0)/YELLOW_SUSPENSION)*100,100)}%`}}/>
-                          </div>
-                        </div>
-                      </div>
+                  <>
+                  <div className="grid grid-cols-3 gap-px bg-zinc-200 rounded-xl overflow-hidden">
+                    <div className="bg-white py-3.5 text-center">
+                      <p className="font-mono text-xl font-bold text-zinc-900">{String(selMember.position==="GOALKEEPER"?(selMember.cleansheets??0):(selMember.goals||0)).padStart(2,'0')}</p>
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">{selMember.position==="GOALKEEPER"?"Cleansheets":tr.profile.goals}</p>
                     </div>
-
-                    {/* Performance card */}
-                    <div className="bg-zinc-50 rounded-lg border border-zinc-200/60 p-3.5">
-                      <h4 className="text-[12px] font-bold text-[#E30613] uppercase tracking-wider mb-2.5">{tr.profile.performance}</h4>
-                      <div className="space-y-2.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-medium text-zinc-600">{selMember.position==="GOALKEEPER"?"Cleansheet":tr.profile.goals}</span>
-                          <span className="text-sm font-bold text-zinc-800">{selMember.position==="GOALKEEPER"?(selMember.cleansheets??'0'):(selMember.goals||'0')}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-medium text-zinc-600">Assist</span>
-                          <span className="text-sm font-bold text-zinc-800">{selMember.assists||'0'}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <span className="text-[13px] font-medium text-zinc-600">Matches</span>
-                          <span className="text-sm font-bold text-zinc-800">{selMember.natMatches||0}</span>
-                        </div>
-                      </div>
+                    <div className="bg-white py-3.5 text-center">
+                      <p className="font-mono text-xl font-bold text-zinc-900">{String(selMember.assists||0).padStart(2,'0')}</p>
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Assists</p>
+                    </div>
+                    <div className="bg-white py-3.5 text-center">
+                      <p className="font-mono text-xl font-bold text-zinc-900">{String(selMember.natMatches||0).padStart(2,'0')}</p>
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Matches</p>
                     </div>
                   </div>
+
+                  <div className="bg-zinc-50 rounded-xl p-4 text-center">
+                    <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-3">{tr.profile.accumulation}</p>
+                    <svg width="100" height="100" viewBox="0 0 120 120" className="mx-auto block">
+                      <circle cx="60" cy="60" r="50" fill="none" stroke="#e4e4e7" strokeWidth="9"/>
+                      {cs==="suspended"?(
+                        <circle cx="60" cy="60" r="50" fill="#fee2e2" stroke="#E24B4A" strokeWidth="9"/>
+                      ):(
+                        <circle cx="60" cy="60" r="50" fill="none" stroke={ringColor} strokeWidth="9" strokeDasharray={ringCircum} strokeDashoffset={ringOffset} strokeLinecap="round" transform="rotate(-90 60 60)"/>
+                      )}
+                      {cs==="suspended"?(
+                        <text x="60" y="66" textAnchor="middle" fontSize="22" fontWeight="700" fill="#791F1F">OUT</text>
+                      ):(<>
+                        <text x="60" y="58" textAnchor="middle" fontSize="30" fontWeight="700" fill="#18181b">{yc}</text>
+                        <text x="60" y="78" textAnchor="middle" fontSize="12" fill="#a1a1aa">of {YELLOW_SUSPENSION}</text>
+                      </>)}
+                    </svg>
+                    <p className={`mt-3 text-[13px] font-bold ${cs==="suspended"?'text-red-600':yc===0?'text-green-700':'text-amber-700'}`}>
+                      {cs==="suspended"?tr.profile.suspended:yc===YELLOW_SUSPENSION-1?"One more yellow triggers a suspension":yc===0?"Clean disciplinary record":`${YELLOW_SUSPENSION-yc} more until suspension`}
+                    </p>
+                    <div className="mt-3 flex justify-center gap-6 border-t border-zinc-200 pt-2.5">
+                      <div><p className="text-base font-bold text-zinc-800">{yc}</p><p className="text-[10px] text-zinc-400 uppercase tracking-wider">Yellow</p></div>
+                      <div><p className="text-base font-bold text-red-600">{rc}</p><p className="text-[10px] text-zinc-400 uppercase tracking-wider">Red</p></div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="bg-zinc-50 rounded-lg border border-zinc-200/60 p-3.5 flex items-center justify-between">
+                      <span className="text-[13px] font-medium text-zinc-600">{tr.profile.suspended}</span>
+                      <span className={`text-sm font-bold ${selMember.suspended?'text-red-500':'text-zinc-500'}`}>{selMember.suspended?tr.profile.yes:tr.profile.no}</span>
+                    </div>
+                  </div>
+                  </>
                 )}
 
                 {/* Staff info */}
