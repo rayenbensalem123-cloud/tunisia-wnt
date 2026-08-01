@@ -344,6 +344,7 @@ export default function EliteSquadApp() {
   const [editingId,setEditingId]=useState<number|null>(null)
   const [isMatchOpen,setIsMatchOpen]=useState(false)
   const [isHistoryOpen,setIsHistoryOpen]=useState(false)
+  const [matchSheetTarget,setMatchSheetTarget]=useState<any>(null)
   const [selMatch,setSelMatch]=useState<any>(null)
   const [usersOpen,setUsersOpen]=useState(false)
   const [activityLogOpen,setActivityLogOpen]=useState(false)
@@ -1884,14 +1885,166 @@ export default function EliteSquadApp() {
                         </div>
                       </div>}
 
-                      {/* Delete */}
-                      <div className="flex justify-end">
+                      {/* Match Sheet + Delete */}
+                      <div className="flex justify-end gap-2">
+                        <button onClick={()=>setMatchSheetTarget(match)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E30613]/30 bg-white text-[#E30613] text-[8px] font-black uppercase tracking-wider hover:bg-[#E30613] hover:text-white transition-all"><ClipboardCheck size={11}/> Match Sheet</button>
                         {p.deleteMatch&&<button onClick={()=>{if(confirm(tr.history.delete+" this match?")){setMatches(m=>m.filter((x:any)=>x.id!==match.id));setSelMatch(null)}}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-500 text-[8px] font-black uppercase tracking-wider hover:bg-red-600 hover:text-white transition-all"><Trash2 size={11}/> {tr.history.delete}</button>}
                       </div>
                     </div>
                   )}
                 </div>
               )})}
+            </div>
+          </div>
+        </div>
+      )})()}
+
+      {/* ═══════════════════════════════════════════
+          OFFICIAL MATCH SHEET (FEUILLE DE MATCH)
+      ═══════════════════════════════════════════ */}
+      {matchSheetTarget&&(()=>{
+        const match=matchSheetTarget
+        const xi=(match.squad||[]).slice(0,11).map((pid:number)=>members.find((m:any)=>m.id===pid)).filter(Boolean)
+        const bench=(match.squad||[]).slice(11).map((pid:number)=>members.find((m:any)=>m.id===pid)).filter(Boolean)
+        const staff=members.filter((m:any)=>m.role==="COACHES"&&m.teamCategory===match.teamCategory)
+        const rowFor=(pos:string)=>{
+          const P=(pos||"").toUpperCase()
+          if(P.includes("GOAL")||P==="GK") return 0
+          if(P.includes("DEF")||P==="CB"||P==="LB"||P==="RB") return 1
+          if(P.includes("MID")) return 2
+          return 3
+        }
+        const rows=[[],[],[],[]] as any[][]
+        xi.forEach((pl:any)=>rows[rowFor(pl.position)].push(pl))
+        const scorerNames=(match.scorers||[]).flatMap((s:any)=>{
+          const pl=members.find((m:any)=>m.id===s.playerId); return pl?Array(s.goals).fill(pl.name):[]
+        })
+        return(
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-2 sm:p-4 bg-black/85 overflow-y-auto match-sheet-print">
+          <div className="w-full max-w-3xl bg-white text-zinc-900 rounded-2xl shadow-2xl my-4">
+
+            <div className="match-sheet-print-btn flex items-center justify-between px-6 py-3 border-b border-zinc-100 bg-zinc-50 rounded-t-2xl sticky top-0">
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Official Match Sheet</span>
+              <div className="flex gap-2">
+                <button onClick={()=>window.print()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                  Print / Save PDF
+                </button>
+                <button onClick={()=>setMatchSheetTarget(null)} className="w-8 h-8 rounded-lg bg-zinc-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><X size={15} className="text-zinc-400"/></button>
+              </div>
+            </div>
+
+            <div className="p-6 sm:p-8">
+              {/* Document header */}
+              <div className="flex items-center gap-4 pb-4 border-b-2 border-zinc-900">
+                <img src="/ftf-logo.png" className="h-16 w-16 object-contain" alt=""/>
+                <div className="flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Fédération Tunisienne de Football</p>
+                  <h1 className="text-xl font-black uppercase italic tracking-tight">Official Match Sheet</h1>
+                  <p className="text-[10px] font-bold text-[#E30613] uppercase tracking-wider">{catLabel(match.teamCategory)} {match.competition&&`· ${match.competition}`}</p>
+                </div>
+                <div className="text-right text-[10px] font-bold text-zinc-500">
+                  <p>{match.date||"—"}</p>
+                  <p className="mt-0.5">{match.venue||"Venue TBC"}</p>
+                </div>
+              </div>
+
+              {/* Score line */}
+              <div className="flex items-center justify-center gap-6 py-6">
+                <span className="text-lg font-black uppercase">Tunisia</span>
+                <span className="text-3xl font-black bg-zinc-900 text-white px-6 py-1.5 rounded-xl tracking-widest">{match.result||"—"}</span>
+                <span className="text-lg font-black uppercase">{match.opponent||"Opponent"}</span>
+              </div>
+
+              {/* Formation pitch */}
+              <div className="relative rounded-2xl overflow-hidden mb-6" style={{background:"linear-gradient(180deg, #2d7a3a 0%, #26692f 100%)", aspectRatio:"16/10"}}>
+                <div className="absolute inset-3 border-2 border-white/40 rounded-lg"/>
+                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-2 border-white/40"/>
+                <div className="absolute left-1/2 top-3 -translate-x-1/2 w-1/3 h-[15%] border-2 border-t-0 border-white/40"/>
+                <div className="absolute left-1/2 bottom-3 -translate-x-1/2 w-1/3 h-[15%] border-2 border-b-0 border-white/40"/>
+                <div className="absolute inset-0 flex flex-col-reverse justify-around py-6">
+                  {rows.map((row,ri)=>row.length>0&&(
+                    <div key={ri} className="flex items-center justify-center gap-4 flex-wrap px-4">
+                      {row.map((pl:any,i:number)=>{
+                        const overallIdx=xi.findIndex((x:any)=>x.id===pl.id)
+                        return(
+                          <div key={pl.id} className="flex flex-col items-center">
+                            <div className="w-9 h-9 rounded-full bg-white text-zinc-900 flex items-center justify-center text-[11px] font-black shadow-md">{overallIdx+1}</div>
+                            <span className="text-[9px] font-bold text-white mt-1 max-w-[70px] text-center truncate drop-shadow">{pl.name}</span>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* XI / Bench / Staff */}
+              <div className="grid grid-cols-3 gap-4 mb-6">
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-[#E30613] mb-2 pb-1 border-b border-zinc-200">Starting XI</p>
+                  <div className="space-y-1">
+                    {xi.map((pl:any,i:number)=>(
+                      <div key={pl.id} className="flex items-center gap-2 text-[11px]">
+                        <span className="font-black text-zinc-300 w-4">{i+1}</span>
+                        <span className="font-bold truncate">{pl.name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-amber-600 mb-2 pb-1 border-b border-zinc-200">Substitutes</p>
+                  <div className="space-y-1">
+                    {bench.map((pl:any,i:number)=>(
+                      <div key={pl.id} className="flex items-center gap-2 text-[11px]">
+                        <span className="font-black text-zinc-300 w-4">{i+12}</span>
+                        <span className="font-bold truncate">{pl.name}</span>
+                      </div>
+                    ))}
+                    {bench.length===0&&<p className="text-[10px] text-zinc-300 italic">None listed</p>}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-2 pb-1 border-b border-zinc-200">Coaching Staff</p>
+                  <div className="space-y-1">
+                    {staff.map((pl:any)=>(
+                      <div key={pl.id} className="text-[11px]">
+                        <span className="font-bold truncate block">{pl.name}</span>
+                        <span className="text-[9px] text-zinc-400">{pl.position}</span>
+                      </div>
+                    ))}
+                    {staff.length===0&&<p className="text-[10px] text-zinc-300 italic">None listed</p>}
+                  </div>
+                </div>
+              </div>
+
+              {/* Cards & scorers */}
+              <div className="grid grid-cols-3 gap-4 mb-6 text-[11px]">
+                <div className="bg-zinc-50 rounded-lg p-3">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-1.5">Scorers</p>
+                  {scorerNames.length>0?scorerNames.map((n:string,i:number)=><p key={i} className="font-bold">⚽ {n}</p>):<p className="text-zinc-300 italic text-[10px]">None</p>}
+                </div>
+                <div className="bg-zinc-50 rounded-lg p-3">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-yellow-600 mb-1.5">Yellow Cards</p>
+                  {(match.yellowCards||[]).length>0?(match.yellowCards||[]).map((pid:number)=>{const pl=members.find((m:any)=>m.id===pid);return pl&&<p key={pid} className="font-bold">🟨 {pl.name}</p>}):<p className="text-zinc-300 italic text-[10px]">None</p>}
+                </div>
+                <div className="bg-zinc-50 rounded-lg p-3">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-red-600 mb-1.5">Red Cards</p>
+                  {(match.redCards||[]).length>0?(match.redCards||[]).map((pid:number)=>{const pl=members.find((m:any)=>m.id===pid);return pl&&<p key={pid} className="font-bold">🟥 {pl.name}</p>}):<p className="text-zinc-300 italic text-[10px]">None</p>}
+                </div>
+              </div>
+
+              {/* Signatures */}
+              <div className="grid grid-cols-2 gap-8 pt-8 mt-4 border-t border-zinc-200">
+                <div>
+                  <div className="h-12 border-b border-zinc-300"/>
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 mt-1">Team Official Signature</p>
+                </div>
+                <div>
+                  <div className="h-12 border-b border-zinc-300"/>
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 mt-1">Match Referee Signature</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
