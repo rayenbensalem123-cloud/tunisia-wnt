@@ -110,6 +110,26 @@ export async function registerUser(payload: { firstName: string; lastName: strin
   return res.json()
 }
 
+// User changes their own password (works from any device, applies immediately)
+export async function changeMyPassword(newPassword: string) {
+  const { error } = await supabase.auth.updateUser({ password: newPassword })
+  return { error: error?.message || null }
+}
+
+// Admin resets someone else's password (server-verified admin check)
+export async function adminResetPassword(username: string, newPassword: string) {
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  if (!token) return { error: 'Not authenticated' }
+  const res = await fetch('/api/admin-reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ username, newPassword }),
+  })
+  const json = await res.json()
+  return { error: json.error || null }
+}
+
 // ─────────────────────────────────────────────
 // PROFILES (admin-only management)
 // ─────────────────────────────────────────────
