@@ -160,6 +160,7 @@ async function diffSync(
   for (const [id, item] of nextMap) {
     const prevItem = prevMap.get(id)
     if (!prevItem) {
+      // New row. If id looks like a client-generated timestamp (too big for int4), let DB assign a real id.
       const row = toDb(item)
       inserts.push(row)
     } else if (JSON.stringify(prevItem) !== JSON.stringify(item)) {
@@ -199,11 +200,15 @@ export async function syncMatches(prevMap: Map<any, any>, nextList: any[]) {
 // ─────────────────────────────────────────────
 // REALTIME
 // ─────────────────────────────────────────────
-export function subscribeRealtime(handlers: {
+export async function subscribeRealtime(handlers: {
   onMembers?: () => void
   onMatches?: () => void
   onProfiles?: () => void
 }) {
+  const { data } = await supabase.auth.getSession()
+  if (data.session?.access_token) {
+    await supabase.realtime.setAuth(data.session.access_token)
+  }
   const channel = supabase
     .channel('app-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, () => handlers.onMembers?.())
