@@ -1920,8 +1920,8 @@ export default function EliteSquadApp() {
           const pl=members.find((m:any)=>m.id===s.playerId); return pl?Array(s.goals).fill(pl.name):[]
         })
         return(
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-2 sm:p-4 bg-black/85 overflow-y-auto match-sheet-print">
-          <div className="w-full max-w-3xl bg-white text-zinc-900 rounded-2xl shadow-2xl my-4">
+        <div className="fixed inset-0 z-[250] flex items-center justify-center p-2 sm:p-4 bg-black/85 match-sheet-print">
+          <div className="w-full max-w-3xl bg-white text-zinc-900 rounded-2xl shadow-2xl flex flex-col max-h-[92vh]">
 
             <div className="match-sheet-print-btn flex items-center justify-between px-6 py-3 border-b border-zinc-100 bg-zinc-50 rounded-t-2xl sticky top-0">
               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Official Match Sheet</span>
@@ -1934,7 +1934,7 @@ export default function EliteSquadApp() {
               </div>
             </div>
 
-            <div className="p-6 sm:p-8">
+            <div className="p-6 sm:p-8 overflow-y-auto flex-1">
               {/* Document header */}
               <div className="flex items-center gap-4 pb-4 border-b-2 border-zinc-900">
                 <img src="/ftf-logo.png" className="h-16 w-16 object-contain" alt=""/>
@@ -1957,20 +1957,20 @@ export default function EliteSquadApp() {
               </div>
 
               {/* Formation pitch */}
-              <div className="relative rounded-2xl overflow-hidden mb-6" style={{background:"linear-gradient(180deg, #2d7a3a 0%, #26692f 100%)", aspectRatio:"16/10"}}>
+              <div className="relative rounded-2xl overflow-hidden mb-6 max-h-56" style={{background:"linear-gradient(180deg, #2d7a3a 0%, #26692f 100%)", aspectRatio:"16/6"}}>
                 <div className="absolute inset-3 border-2 border-white/40 rounded-lg"/>
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-2 border-white/40"/>
                 <div className="absolute left-1/2 top-3 -translate-x-1/2 w-1/3 h-[15%] border-2 border-t-0 border-white/40"/>
                 <div className="absolute left-1/2 bottom-3 -translate-x-1/2 w-1/3 h-[15%] border-2 border-b-0 border-white/40"/>
-                <div className="absolute inset-0 flex flex-col-reverse justify-around py-6">
+                <div className="absolute inset-0 flex flex-col-reverse justify-around py-2">
                   {rows.map((row,ri)=>row.length>0&&(
-                    <div key={ri} className="flex items-center justify-center gap-4 flex-wrap px-4">
+                    <div key={ri} className="flex items-center justify-center gap-3 flex-wrap px-4">
                       {row.map((pl:any,i:number)=>{
                         const overallIdx=xi.findIndex((x:any)=>x.id===pl.id)
                         return(
                           <div key={pl.id} className="flex flex-col items-center">
-                            <div className="w-9 h-9 rounded-full bg-white text-zinc-900 flex items-center justify-center text-[11px] font-black shadow-md">{overallIdx+1}</div>
-                            <span className="text-[9px] font-bold text-white mt-1 max-w-[70px] text-center truncate drop-shadow">{pl.name}</span>
+                            <div className="w-6 h-6 rounded-full bg-white text-zinc-900 flex items-center justify-center text-[9px] font-black shadow-md">{overallIdx+1}</div>
+                            <span className="text-[7px] font-bold text-white mt-0.5 max-w-[60px] text-center truncate drop-shadow">{pl.name}</span>
                           </div>
                         )
                       })}
