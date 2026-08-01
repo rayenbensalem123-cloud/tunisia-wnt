@@ -835,7 +835,7 @@ export default function EliteSquadApp() {
                 </div>
                 {/* Position */}
                 <div className="absolute bottom-3 left-0 right-0 text-center z-10">
-                  <span className="text-[10px] font-bold text-white bg-black/20 px-2.5 py-1 rounded-sm uppercase backdrop-blur-sm">{selMember.position||"STAFF"}</span>
+                  <span className="text-[13px] font-bold text-white bg-black/20 px-2.5 py-1 rounded-sm uppercase backdrop-blur-sm">{selMember.position||"STAFF"}</span>
                 </div>
                 {/* Actions */}
                 <div className="absolute top-2 right-2 z-10 flex gap-0.5">
@@ -849,29 +849,29 @@ export default function EliteSquadApp() {
               {/* Team + category bar */}
               <div className="flex items-center justify-between px-5 py-2.5 border-b border-zinc-100 bg-zinc-50">
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                  <span className="text-[10px] font-semibold text-zinc-500 uppercase">{catLabel(selMember.teamCategory)}</span>
+                  <span className="text-[13px] font-semibold text-zinc-500 uppercase">{catLabel(selMember.teamCategory)}</span>
                   <span className="text-zinc-300">|</span>
-                  <span className="text-[10px] font-bold text-zinc-700">{selMember.club||"—"}</span>
+                  <span className="text-[13px] font-bold text-zinc-700">{selMember.club||"—"}</span>
                 </div>
               </div>
 
               {/* Stat row */}
               <div className={`grid ${isPlayer?'grid-cols-4':'grid-cols-1'} border-b border-zinc-100`}>
                 <div className={`py-3 text-center ${isPlayer?'border-r border-zinc-100':''}`}>
-                  <p className="text-lg font-bold text-zinc-900">{calculateAge(selMember.birthdate)}</p>
-                  <p className="text-[8px] text-zinc-400 uppercase font-medium">{tr.profile.age}</p>
+                  <p className="text-xl font-bold text-zinc-900">{calculateAge(selMember.birthdate)}</p>
+                  <p className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.age}</p>
                 </div>
                 {isPlayer&&<div className="py-3 text-center border-r border-zinc-100">
-                  <p className="text-lg font-bold text-zinc-900 uppercase">{selMember.natMatches||"—"}</p>
-                  <p className="text-[8px] text-zinc-400 uppercase font-medium">{tr.profile.caps}</p>
+                  <p className="text-xl font-bold text-zinc-900 uppercase">{selMember.natMatches||"—"}</p>
+                  <p className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.caps}</p>
                 </div>}
                 {isPlayer&&<div className="py-3 text-center border-r border-zinc-100">
-                  <p className="text-lg font-bold text-zinc-900 uppercase">{selMember.height||"—"}</p>
-                  <p className="text-[8px] text-zinc-400 uppercase font-medium">Height</p>
+                  <p className="text-xl font-bold text-zinc-900 uppercase">{selMember.height||"—"}</p>
+                  <p className="text-[12px] text-zinc-400 uppercase font-medium">Height</p>
                 </div>}
                 {isPlayer&&<div className="py-3 text-center">
-                  <p className="text-lg font-bold text-zinc-900 uppercase">{selMember.foot||"R"}</p>
-                  <p className="text-[8px] text-zinc-400 uppercase font-medium">Foot</p>
+                  <p className="text-xl font-bold text-zinc-900 uppercase">{selMember.foot||"R"}</p>
+                  <p className="text-[12px] text-zinc-400 uppercase font-medium">Foot</p>
                 </div>}
               </div>
 
@@ -880,16 +880,16 @@ export default function EliteSquadApp() {
 
                 {(p.viewMedical||canManageUsers)&&(
                   <div className="flex gap-1.5 -mt-1 mb-1">
-                    <button onClick={()=>setProfileTab("profile")} className={`flex-1 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all ${profileTab==="profile"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Profile</button>
-                    <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Medical</button>
+                    <button onClick={()=>setProfileTab("profile")} className={`flex-1 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="profile"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Profile</button>
+                    <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Medical</button>
                   </div>
                 )}
 
                 {profileTab==="profile"&&(<>
                 {/* Status banner */}
                 {cs&&isPlayer&&(
-                  <div className={`flex items-center gap-1.5 px-3 py-2 rounded text-[9px] font-semibold ${cs==="suspended"?'bg-red-50 text-red-600':'bg-yellow-50 text-yellow-700'}`}>
-                    {cs==="suspended"?<Ban size={12}/>:<AlertTriangle size={12}/>}
+                  <div className={`flex items-center gap-1.5 px-3 py-2 rounded text-[12px] font-semibold ${cs==="suspended"?'bg-red-50 text-red-600':'bg-yellow-50 text-yellow-700'}`}>
+                    {cs==="suspended"?<Ban size={14}/>:<AlertTriangle size={14}/>}
                     {cs==="suspended"?tr.profile.suspended:tr.profile.oneMoreSuspended}
                   </div>
                 )}
@@ -898,23 +898,23 @@ export default function EliteSquadApp() {
                 {isPlayer&&(
                   <div className="grid grid-cols-2 gap-3">
                     {/* Discipline card */}
-                    <div className="bg-zinc-50 rounded border border-zinc-200/60 p-3">
-                      <h4 className="text-[8px] font-bold text-[#E30613] uppercase tracking-wider mb-2.5">{tr.profile.discipline}</h4>
+                    <div className="bg-zinc-50 rounded-lg border border-zinc-200/60 p-3.5">
+                      <h4 className="text-[12px] font-bold text-[#E30613] uppercase tracking-wider mb-2.5">{tr.profile.discipline}</h4>
                       <div className="space-y-2.5">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-medium text-zinc-600">Yellow</span>
+                          <span className="text-[13px] font-medium text-zinc-600">Yellow</span>
                           <span className="text-sm font-bold text-zinc-800">{selMember.yellowCards||0}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-medium text-zinc-600">Red</span>
+                          <span className="text-[13px] font-medium text-zinc-600">Red</span>
                           <span className="text-sm font-bold text-red-600">{selMember.redCards||0}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-medium text-zinc-600">Suspended</span>
+                          <span className="text-[13px] font-medium text-zinc-600">Suspended</span>
                           <span className={`text-sm font-bold ${selMember.suspended?'text-red-500':'text-zinc-500'}`}>{selMember.suspended?tr.profile.yes:tr.profile.no}</span>
                         </div>
                         <div className="pt-2 border-t border-zinc-200">
-                          <div className="flex justify-between text-[8px] text-zinc-500 mb-1">
+                          <div className="flex justify-between text-[12px] text-zinc-500 mb-1">
                             <span>{tr.profile.accumulation}</span>
                             <span>{selMember.yellowCards||0}/{YELLOW_SUSPENSION}</span>
                           </div>
@@ -926,19 +926,19 @@ export default function EliteSquadApp() {
                     </div>
 
                     {/* Performance card */}
-                    <div className="bg-zinc-50 rounded border border-zinc-200/60 p-3">
-                      <h4 className="text-[8px] font-bold text-[#E30613] uppercase tracking-wider mb-2.5">{tr.profile.performance}</h4>
+                    <div className="bg-zinc-50 rounded-lg border border-zinc-200/60 p-3.5">
+                      <h4 className="text-[12px] font-bold text-[#E30613] uppercase tracking-wider mb-2.5">{tr.profile.performance}</h4>
                       <div className="space-y-2.5">
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-medium text-zinc-600">{selMember.position==="GOALKEEPER"?"Cleansheet":tr.profile.goals}</span>
+                          <span className="text-[13px] font-medium text-zinc-600">{selMember.position==="GOALKEEPER"?"Cleansheet":tr.profile.goals}</span>
                           <span className="text-sm font-bold text-zinc-800">{selMember.position==="GOALKEEPER"?(selMember.cleansheets??'0'):(selMember.goals||'0')}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-medium text-zinc-600">Assist</span>
+                          <span className="text-[13px] font-medium text-zinc-600">Assist</span>
                           <span className="text-sm font-bold text-zinc-800">{selMember.assists||'0'}</span>
                         </div>
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] font-medium text-zinc-600">Matches</span>
+                          <span className="text-[13px] font-medium text-zinc-600">Matches</span>
                           <span className="text-sm font-bold text-zinc-800">{selMember.natMatches||0}</span>
                         </div>
                       </div>
@@ -952,49 +952,49 @@ export default function EliteSquadApp() {
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
                         <Award size={16} className="text-[#E30613] shrink-0"/>
-                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.position||'COACH'}</p><span className="text-[8px] text-zinc-400 uppercase font-medium">{tr.profile.responsibility}</span></div>
+                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.position||'COACH'}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.responsibility}</span></div>
                       </div>
                       <div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
                         <ShieldCheck size={16} className="text-[#E30613] shrink-0"/>
-                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.natMatches||'N/A'}</p><span className="text-[8px] text-zinc-400 uppercase font-medium">{tr.profile.license}</span></div>
+                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.natMatches||'N/A'}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.license}</span></div>
                       </div>
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       {selMember.nationality&&<div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
                         <Globe size={14} className="text-[#E30613] shrink-0"/>
-                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.nationality}</p><span className="text-[8px] text-zinc-400 uppercase font-medium">{tr.profile.nationality}</span></div>
+                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.nationality}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.nationality}</span></div>
                       </div>}
                       {selMember.languages&&<div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
                         <BookOpen size={14} className="text-[#E30613] shrink-0"/>
-                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.languages}</p><span className="text-[8px] text-zinc-400 uppercase font-medium">{tr.profile.languages}</span></div>
+                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.languages}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.languages}</span></div>
                       </div>}
                       {selMember.contract&&<div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
                         <Calendar size={14} className="text-[#E30613] shrink-0"/>
-                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.contract}</p><span className="text-[8px] text-zinc-400 uppercase font-medium">{tr.profile.contract}</span></div>
+                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.contract}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.contract}</span></div>
                       </div>}
                     </div>
                   </div>
                 )}
 
               {/* AI Update */}
-              <button type="button" onClick={handleAIUpdate} className="w-full py-2.5 rounded-xl border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-100 text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
+              <button type="button" onClick={handleAIUpdate} className="w-full py-2.5 rounded-xl border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-100 text-[12px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
                 🤖 AI Update Career
               </button>
               {/* History */}
                 <div>
-                  <h4 className="text-[8px] font-bold text-[#E30613] uppercase tracking-wider mb-2">{tr.profile.careerHistory}</h4>
+                  <h4 className="text-[12px] font-bold text-[#E30613] uppercase tracking-wider mb-2">{tr.profile.careerHistory}</h4>
                   <div className="border border-zinc-200/60 rounded overflow-hidden">
                     {selMember.history?.filter((h:any)=>h&&h.year&&!h.year.startsWith("0000")).length>0?(
                       <div className="divide-y divide-zinc-100">
                         {selMember.history.filter((h:any)=>h&&h.year&&!h.year.startsWith("0000")).map((h:any,i:number)=>(
                           <div key={i} className="flex items-center gap-2.5 px-3 py-2.5">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#E30613] shrink-0"/>
-                            <span className="text-[9px] font-semibold text-[#E30613] w-12 shrink-0">{h.year}</span>
-                            <span className="text-[9px] text-zinc-500">{h.event}</span>
+                            <span className="text-[12px] font-semibold text-[#E30613] w-12 shrink-0">{h.year}</span>
+                            <span className="text-[12px] text-zinc-500">{h.event}</span>
                           </div>
                         ))}
                       </div>
-                    ):<p className="text-[9px] text-zinc-400 py-4 text-center">No career history</p>}
+                    ):<p className="text-[12px] text-zinc-400 py-4 text-center">No career history</p>}
                   </div>
                 </div>
 
@@ -1003,11 +1003,11 @@ export default function EliteSquadApp() {
               {profileTab==="medical"&&(
                 <div className="space-y-2.5">
                   {p.editMedical&&(
-                    <button onClick={()=>setAddInjuryOpen(true)} className="w-full py-2 rounded-lg border border-dashed border-[#E30613]/30 text-[8px] font-black uppercase tracking-wider text-[#E30613] hover:bg-[#E30613]/5 transition-all flex items-center justify-center gap-1.5">
+                    <button onClick={()=>setAddInjuryOpen(true)} className="w-full py-2 rounded-lg border border-dashed border-[#E30613]/30 text-[12px] font-black uppercase tracking-wider text-[#E30613] hover:bg-[#E30613]/5 transition-all flex items-center justify-center gap-1.5">
                       <Plus size={11}/>Log Injury
                     </button>
                   )}
-                  {injuries.length===0&&<p className="text-[9px] text-zinc-400 py-6 text-center">No medical history on record</p>}
+                  {injuries.length===0&&<p className="text-[12px] text-zinc-400 py-6 text-center">No medical history on record</p>}
                   {injuries.map((inj:any)=>{
                     const colors=inj.status==="active"?{bg:"bg-red-50",border:"border-red-200",text:"text-red-600",pill:"bg-red-500 text-white"}
                       :inj.status==="recovering"?{bg:"bg-amber-50",border:"border-amber-200",text:"text-amber-700",pill:"bg-amber-500 text-white"}
@@ -1016,18 +1016,18 @@ export default function EliteSquadApp() {
                       <div key={inj.id} className={`rounded-lg border ${colors.border} ${colors.bg} p-3 ${inj.status==="recovered"?'opacity-70':''}`}>
                         <div className="flex items-start justify-between gap-2">
                           <div>
-                            <p className={`text-[11px] font-bold ${colors.text}`}>{inj.injury_type}</p>
-                            <p className="text-[9px] text-zinc-500 mt-0.5">{inj.body_part?`${inj.body_part} · `:""}{inj.occurred_on?`occurred ${inj.occurred_on}`:""}</p>
+                            <p className={`text-[14px] font-bold ${colors.text}`}>{inj.injury_type}</p>
+                            <p className="text-[12px] text-zinc-500 mt-0.5">{inj.body_part?`${inj.body_part} · `:""}{inj.occurred_on?`occurred ${inj.occurred_on}`:""}</p>
                           </div>
-                          <span className={`shrink-0 text-[8px] font-black uppercase px-2 py-1 rounded ${colors.pill}`}>{inj.status}</span>
+                          <span className={`shrink-0 text-[12px] font-black uppercase px-2 py-1 rounded ${colors.pill}`}>{inj.status}</span>
                         </div>
-                        {inj.expected_return&&<p className="text-[8px] text-zinc-400 mt-1.5">Expected return: {inj.expected_return}</p>}
-                        {inj.notes&&<p className="text-[9px] text-zinc-500 mt-1.5">{inj.notes}</p>}
-                        <p className="text-[7px] text-zinc-400 mt-1.5">Logged by {inj.logged_by_username||"unknown"}</p>
+                        {inj.expected_return&&<p className="text-[12px] text-zinc-400 mt-1.5">Expected return: {inj.expected_return}</p>}
+                        {inj.notes&&<p className="text-[12px] text-zinc-500 mt-1.5">{inj.notes}</p>}
+                        <p className="text-[11px] text-zinc-400 mt-1.5">Logged by {inj.logged_by_username||"unknown"}</p>
                         {p.editMedical&&inj.status!=="recovered"&&(
                           <div className="flex gap-1.5 mt-2">
-                            {inj.status==="active"&&<button onClick={()=>{updateInjuryStatus(inj.id,"recovering").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg border border-amber-300 text-amber-600 text-[7px] font-black uppercase tracking-wider hover:bg-amber-50">Mark Recovering</button>}
-                            <button onClick={()=>{updateInjuryStatus(inj.id,"recovered").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg border border-green-300 text-green-600 text-[7px] font-black uppercase tracking-wider hover:bg-green-50">Mark Recovered</button>
+                            {inj.status==="active"&&<button onClick={()=>{updateInjuryStatus(inj.id,"recovering").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg border border-amber-300 text-amber-600 text-[11px] font-black uppercase tracking-wider hover:bg-amber-50">Mark Recovering</button>}
+                            <button onClick={()=>{updateInjuryStatus(inj.id,"recovered").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg border border-green-300 text-green-600 text-[11px] font-black uppercase tracking-wider hover:bg-green-50">Mark Recovered</button>
                           </div>
                         )}
                       </div>
