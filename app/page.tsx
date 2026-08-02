@@ -794,7 +794,7 @@ export default function EliteSquadApp() {
               </button>
             </Dropdown>
 
-            {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="p-2 rounded-xl bg-[#E30613] text-white hover:bg-red-700 transition-all"><Plus size={16}/></button>}
+            {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="p-2 rounded-full bg-[#E30613] text-white hover:bg-red-700 transition-all"><Plus size={16}/></button>}
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 pb-3 flex items-center gap-3 flex-wrap">
@@ -955,8 +955,8 @@ export default function EliteSquadApp() {
 
                 {(p.viewMedical||canManageUsers)&&(
                   <div className="flex gap-1.5 -mt-1 mb-1">
-                    <button onClick={()=>setProfileTab("profile")} className={`flex-1 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="profile"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Profile</button>
-                    <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Medical</button>
+                    <button onClick={()=>setProfileTab("profile")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="profile"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Profile</button>
+                    <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Medical</button>
                   </div>
                 )}
 
@@ -1123,7 +1123,7 @@ export default function EliteSquadApp() {
       {addInjuryOpen&&selMember&&(()=>{
         return(
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-sm rounded-2xl bg-white text-zinc-900 shadow-2xl p-5 space-y-3">
+          <div className="w-full max-w-sm rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-black uppercase italic tracking-tighter">Log Injury — {selMember.name}</h2>
               <button onClick={()=>setAddInjuryOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100"><X size={18}/></button>
@@ -1158,7 +1158,7 @@ export default function EliteSquadApp() {
       ═══════════════════════════════════════════ */}
       {isFormOpen&&(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80 overflow-y-auto">
-          <div className="w-full max-w-lg p-4 sm:p-5 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900 max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-lg p-4 sm:p-5 rounded-[2rem] border border-zinc-200 bg-[#FAF8F3] text-zinc-900 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <div><h2 className="text-xl font-black italic uppercase tracking-tighter">{editingId?tr.form.update:tr.form.newEntry}</h2><p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{catLabel(teamCat)} · {activeTab}</p></div>
               <button onClick={()=>setIsFormOpen(false)} title="Close" className="p-1.5 hover:bg-red-500/10 rounded-xl"><X size={20}/></button>
@@ -1253,7 +1253,7 @@ export default function EliteSquadApp() {
       ═══════════════════════════════════════════ */}
       {pendingReviewOpen&&(
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 shrink-0">
               <div>
                 <h2 className="text-2xl font-black uppercase italic tracking-tight">Pending Users</h2>
@@ -1302,7 +1302,7 @@ export default function EliteSquadApp() {
                       </div>
                     </div>
                     <div className="flex gap-3 px-5 pb-5">
-                      <button onClick={doApprove} className="flex-1 py-3 rounded-xl bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Save & Approve</button>
+                      <button onClick={doApprove} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Save & Approve</button>
                       <button onClick={doHold} className="flex-1 py-3 rounded-xl border border-zinc-300 bg-white text-zinc-500 text-[8px] font-black uppercase tracking-wider hover:bg-zinc-100 transition-all">Hold</button>
                       <button onClick={doDelete} className="py-3 px-4 rounded-xl border border-red-200 text-red-500 text-[8px] font-black uppercase tracking-wider hover:bg-red-50 transition-all"><Trash2 size={12}/></button>
                     </div>
@@ -1325,7 +1325,7 @@ export default function EliteSquadApp() {
       ═══════════════════════════════════════════ */}
       {pendingMatchesOpen&&(
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 shrink-0">
               <div>
                 <h2 className="text-2xl font-black uppercase italic tracking-tight">Pending Matches</h2>
@@ -1354,7 +1354,7 @@ export default function EliteSquadApp() {
                     <p>Squad: {m.squad?.length||0} players · Scorers: {m.scorers?.length||0}</p>
                   </div>
                   <div className="flex gap-3 px-5 pb-5">
-                    <button onClick={()=>approveMatch(m)} className="flex-1 py-3 rounded-xl bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Approve Match</button>
+                    <button onClick={()=>approveMatch(m)} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Approve Match</button>
                     <button onClick={()=>{setMatches(p=>p.filter((x:any)=>x.id!==m.id));setPendingMatchesOpen(false)}} className="py-3 px-5 rounded-xl border border-red-200 text-red-500 text-[8px] font-black uppercase tracking-wider hover:bg-red-50 transition-all"><Trash2 size={12} className="inline mr-1"/>Reject</button>
                   </div>
                 </div>
@@ -1375,7 +1375,7 @@ export default function EliteSquadApp() {
       ═══════════════════════════════════════════ */}
       {usersOpen&&(()=>{const users=fetchedUsers;return(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 shrink-0">
               <h2 className="text-lg font-black uppercase italic tracking-tight">User Management</h2>
               <div className="flex items-center gap-2">
@@ -1441,7 +1441,7 @@ export default function EliteSquadApp() {
       ═══════════════════════════════════════════ */}
       {activityLogOpen&&(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-lg rounded-2xl bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[85vh]">
+          <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[85vh]">
             <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
               <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Activity size={16}/>Activity Log</h2>
               <button onClick={()=>setActivityLogOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
@@ -1516,7 +1516,7 @@ export default function EliteSquadApp() {
         const upcoming=matches.filter((m:any)=>m.date&&m.date>=today&&!m.result).sort((a:any,b:any)=>a.date.localeCompare(b.date))
         return(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
-          <div className="w-full max-w-lg rounded-2xl bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
+          <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
             <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
               <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Newspaper size={16}/>News & Upcoming Matches</h2>
               <button onClick={()=>setNewsOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
@@ -1564,7 +1564,7 @@ export default function EliteSquadApp() {
       )})()}
       {isMatchOpen&&(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-2xl rounded-2xl bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-2xl rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
 
             {/* ── HEADER ── */}
             <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0">
@@ -1828,8 +1828,8 @@ export default function EliteSquadApp() {
               </span>
               <div className="flex gap-2">
                 {matchStep>0&&<button onClick={()=>setMatchStep(matchStep-1)} className="px-4 py-2 rounded-lg border border-zinc-200 text-xs font-bold text-zinc-500 hover:bg-zinc-50 transition-all">Back</button>}
-                {matchStep<3&&<button onClick={()=>setMatchStep(matchStep+1)} disabled={matchStep===0&&!matchForm.opponent.trim()} className="px-5 py-2 rounded-lg bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all disabled:opacity-40">Next</button>}
-                {matchStep===3&&<button onClick={()=>{const id=Date.now();const nm={...matchForm,id,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username};setMatches((p:any)=>[...p,nm]);if(canManageUsers)approveMatch(nm);setIsMatchOpen(false);setMatchForm(initMatch);setMatchStep(0)}} className="px-5 py-2 rounded-lg bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all">Save Match</button>}
+                {matchStep<3&&<button onClick={()=>setMatchStep(matchStep+1)} disabled={matchStep===0&&!matchForm.opponent.trim()} className="px-5 py-2 rounded-full bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all disabled:opacity-40">Next</button>}
+                {matchStep===3&&<button onClick={()=>{const id=Date.now();const nm={...matchForm,id,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username};setMatches((p:any)=>[...p,nm]);if(canManageUsers)approveMatch(nm);setIsMatchOpen(false);setMatchForm(initMatch);setMatchStep(0)}} className="px-5 py-2 rounded-full bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all">Save Match</button>}
               </div>
             </div>
           </div>
@@ -1845,7 +1845,7 @@ export default function EliteSquadApp() {
         const h2h=opponentFilter?(()=>{const w=filteredMatches.filter((m:any)=>{const p=m.result?.split('-');return p&&p[0]>p[1]}).length;const d=filteredMatches.filter((m:any)=>{const p=m.result?.split('-');return p&&p[0]===p[1]}).length;const l=filteredMatches.filter((m:any)=>{const p=m.result?.split('-');return p&&p[0]<p[1]}).length;return{w,d,l}})():null
         return(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80 overflow-y-auto">
-          <div className="w-full max-w-4xl rounded-2xl bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-4xl rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 shrink-0">
               <div className="flex items-center gap-4">
                 <div>
@@ -2078,12 +2078,12 @@ export default function EliteSquadApp() {
         })
         return(
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-2 sm:p-4 bg-black/85 match-sheet-print">
-          <div className="w-full max-w-3xl bg-white text-zinc-900 rounded-2xl shadow-2xl flex flex-col max-h-[92vh]">
+          <div className="w-full max-w-3xl bg-[#FAF8F3] text-zinc-900 rounded-2xl shadow-2xl flex flex-col max-h-[92vh]">
 
-            <div className="match-sheet-print-btn flex items-center justify-between px-6 py-3 border-b border-zinc-100 bg-zinc-50 rounded-t-2xl sticky top-0">
+            <div className="match-sheet-print-btn flex items-center justify-between px-6 py-3 border-b border-zinc-100 bg-[#F3F0E8] rounded-t-2xl sticky top-0">
               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Official Match Sheet</span>
               <div className="flex gap-2">
-                <button onClick={()=>window.print()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">
+                <button onClick={()=>window.print()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   Print / Save PDF
                 </button>
@@ -2220,7 +2220,7 @@ export default function EliteSquadApp() {
       )}
       {scoutPlayer&&scoutResult&&(
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60" onClick={()=>{setScoutPlayer(null);setScoutResult(null)}}>
-          <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white shadow-2xl" onClick={e=>e.stopPropagation()}>
+          <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-[#FAF8F3] shadow-2xl" onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-zinc-200">
               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
                 <Sparkles size={14} className="text-[#E30613]"/> AI Search · {scoutPlayer.name.split(' ').slice(-1)}
