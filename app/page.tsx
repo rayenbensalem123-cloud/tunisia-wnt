@@ -5,7 +5,7 @@ import {
   LogOut, Goal, History, Trash2, Trophy, Loader2,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase, Sparkles,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity
+  Users, Calendar, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
@@ -349,6 +349,9 @@ export default function EliteSquadApp() {
   const [usersOpen,setUsersOpen]=useState(false)
   const [activityLogOpen,setActivityLogOpen]=useState(false)
   const [activityLog,setActivityLog]=useState<any[]>([])
+  const [newsOpen,setNewsOpen]=useState(false)
+  const [newsItems,setNewsItems]=useState<any[]|null>(null)
+  const [newsLoading,setNewsLoading]=useState(false)
   const [pendingReviewOpen,setPendingReviewOpen]=useState(false)
   const [pendingMatchesOpen,setPendingMatchesOpen]=useState(false)
   const [renderTick,setRenderTick]=useState(0)
@@ -726,6 +729,7 @@ export default function EliteSquadApp() {
             {canManageUsers&&<button onClick={()=>setPendingReviewOpen(true)} className="relative px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613] transition-all"><Bell size={14}/>{pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}</button>}
             {canManageUsers&&<button onClick={()=>setUsersOpen(true)} className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Users size={14}/></button>}
             {canManageUsers&&<button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Activity size={14}/></button>}
+            <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Newspaper size={14}/></button>
             {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} className="p-2 rounded-xl bg-[#E30613] text-white hover:bg-red-700 transition-all"><Plus size={16}/></button>}
           </div>
         </div>
@@ -1383,18 +1387,45 @@ export default function EliteSquadApp() {
               {activityLog.map((a:any)=>{
                 const actionColor=a.action==="insert"?"text-green-600":a.action==="delete"?"text-red-500":"text-blue-600"
                 const actionLabel=a.action==="insert"?"added":a.action==="delete"?"deleted":"updated"
-                const entityLabel=a.entity_type==="members"?"a player/staff":a.entity_type==="matches"?"a match":"an account"
+                const entityLabel=a.entity_type==="members"?"player/staff":a.entity_type==="matches"?"match":a.entity_type==="injuries"?"injury record":"account"
+                const hiddenFields=new Set(["id","image_url","image_path","history","details"])
+                const changeEntries=a.changes?Object.entries(a.changes).filter(([k]:any)=>!hiddenFields.has(k)):[]
+                const fieldLabel=(k:string)=>k.replace(/_/g," ").replace(/\b\w/g,(c:string)=>c.toUpperCase())
+                const fmtVal=(v:any)=>{
+                  if(v===null||v===undefined)return "—"
+                  if(typeof v==="object")return JSON.stringify(v)
+                  return String(v)
+                }
+                const dt=new Date(a.created_at)
+                const dateStr=dt.toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"})
+                const timeStr=dt.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit",second:"2-digit"})
                 return(
-                  <div key={a.id} className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-zinc-50 border border-zinc-100">
-                    <div className="min-w-0">
-                      <p className="text-[10px] leading-tight">
-                        <span className="font-black">{a.actor_username||"unknown"}</span>{" "}
-                        <span className={`font-bold ${actionColor}`}>{actionLabel}</span>{" "}
-                        {entityLabel}{a.entity_label?`: ${a.entity_label}`:""}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-[7px] text-zinc-400 whitespace-nowrap">{new Date(a.created_at).toLocaleString()}</span>
-                  </div>
+                  <details key={a.id} className="group rounded-lg bg-zinc-50 border border-zinc-100 overflow-hidden">
+                    <summary className="flex items-start justify-between gap-2 p-2.5 cursor-pointer list-none">
+                      <div className="min-w-0">
+                        <p className="text-[11px] leading-snug">
+                          <span className="font-black">{a.actor_username||"unknown user"}</span>{" "}
+                          <span className={`font-bold ${actionColor}`}>{actionLabel}</span>{" "}
+                          <span className="text-zinc-500">{entityLabel}</span>{" "}
+                          {a.entity_label&&<span className="font-bold text-zinc-800">"{a.entity_label}"</span>}
+                        </p>
+                        <p className="text-[8px] text-zinc-400 mt-0.5">{dateStr} at {timeStr}</p>
+                      </div>
+                      {changeEntries.length>0&&<ChevronDown size={13} className="shrink-0 text-zinc-400 mt-0.5 group-open:rotate-180 transition-transform"/>}
+                    </summary>
+                    {changeEntries.length>0&&(
+                      <div className="px-2.5 pb-2.5 space-y-1 border-t border-zinc-200 pt-2 mt-0.5">
+                        {changeEntries.map(([field,val]:any)=>(
+                          <div key={field} className="flex items-center gap-1.5 text-[9px]">
+                            <span className="font-bold text-zinc-500 shrink-0">{fieldLabel(field)}:</span>
+                            <span className="text-red-400 line-through truncate">{fmtVal(val.from)}</span>
+                            <span className="text-zinc-300">→</span>
+                            <span className="text-green-600 font-bold truncate">{fmtVal(val.to)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </details>
                 )
               })}
             </div>
@@ -1403,8 +1434,59 @@ export default function EliteSquadApp() {
       )}
 
       {/* ═══════════════════════════════════════════
-          NEW MATCH MODAL — MATCH REPORT
+          NEWS & UPCOMING MATCHES
       ═══════════════════════════════════════════ */}
+      {newsOpen&&(()=>{
+        const today=new Date().toISOString().slice(0,10)
+        const upcoming=matches.filter((m:any)=>m.date&&m.date>=today&&!m.result).sort((a:any,b:any)=>a.date.localeCompare(b.date))
+        return(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
+          <div className="w-full max-w-lg rounded-2xl bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
+            <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Newspaper size={16}/>News & Upcoming Matches</h2>
+              <button onClick={()=>setNewsOpen(false)} className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
+            </div>
+            <div className="p-5 overflow-y-auto space-y-6">
+
+              {/* Upcoming matches — from our own official calendar */}
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-wider text-[#E30613] mb-2.5">Upcoming Matches</p>
+                {upcoming.length===0&&<p className="text-[10px] text-zinc-400 py-3 text-center bg-zinc-50 rounded-lg">No upcoming matches scheduled yet</p>}
+                <div className="space-y-2">
+                  {upcoming.map((m:any)=>(
+                    <div key={m.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-zinc-50 border border-zinc-100">
+                      <div>
+                        <p className="text-[12px] font-bold">Tunisia vs {m.opponent||"TBD"}</p>
+                        <p className="text-[9px] text-zinc-500 mt-0.5">{m.competition||"Friendly"}{m.venue?` · ${m.venue}`:""}</p>
+                      </div>
+                      <span className="shrink-0 text-[10px] font-black text-zinc-600 bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5">{m.date}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Automated news feed */}
+              <div>
+                <div className="flex items-center justify-between mb-2.5">
+                  <p className="text-[10px] font-black uppercase tracking-wider text-[#E30613]">Women's Football News</p>
+                  <span className="text-[8px] text-zinc-400">auto-updated</span>
+                </div>
+                {newsLoading&&<p className="text-[10px] text-zinc-400 py-6 text-center">Loading latest news…</p>}
+                {!newsLoading&&newsItems&&newsItems.length===0&&<p className="text-[10px] text-zinc-400 py-6 text-center">No news found right now</p>}
+                <div className="space-y-2">
+                  {!newsLoading&&newsItems&&newsItems.map((n:any,i:number)=>(
+                    <a key={i} href={n.link} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-lg bg-zinc-50 border border-zinc-100 hover:border-[#E30613]/30 hover:bg-[#E30613]/5 transition-all">
+                      <p className="text-[11px] font-bold text-zinc-800 leading-snug">{n.title}</p>
+                      <p className="text-[9px] text-zinc-400 mt-1">{n.source}{n.pubDate?` · ${new Date(n.pubDate).toLocaleDateString()}`:""}</p>
+                    </a>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      )})()}
       {isMatchOpen&&(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-2xl rounded-2xl bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
