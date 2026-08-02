@@ -668,9 +668,9 @@ export default function EliteSquadApp() {
   if(!teamCat) return(
     <div className="relative">
       <div className="fixed top-6 right-6 z-[999] flex gap-3">
-        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:text-black transition-all text-[10px] font-black uppercase tracking-widest"><Globe size={16}/><span className="ml-1">{lang.toUpperCase()}</span></button>
+        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} title="Change language" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:text-black transition-all text-[10px] font-black uppercase tracking-widest"><Globe size={16}/><span className="ml-1">{lang.toUpperCase()}</span></button>
         <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 self-center">{user?.username}</span>
-        <button onClick={handleChangePassword} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-blue-500 hover:text-white transition-all"><Key size={18}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-red-500 hover:text-white transition-all"><LogOut size={18}/></button>
+        <button onClick={handleChangePassword} title="Change your password" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-blue-500 hover:text-white transition-all"><Key size={18}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-red-500 hover:text-white transition-all"><LogOut size={18}/></button>
       </div>
       <TeamSelector onSelect={selectCat}/>
     </div>
@@ -694,7 +694,7 @@ export default function EliteSquadApp() {
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E30613]/40 to-transparent animate-[pulse_3s_ease-in-out_infinite]"/>
         <div className="max-w-7xl mx-auto px-6 pt-3 pb-2 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <button onClick={()=>{setTeamCat(null);setSearch("")}} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all"><ChevronLeft size={16}/></button>
+            <button onClick={()=>{setTeamCat(null);setSearch("")}} title="Back to team categories" className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all"><ChevronLeft size={16}/></button>
             <img src="/ftf-logo.png" className="h-10" alt=""/>
             <div className="leading-tight">
               <h1 className="text-xs sm:text-xl font-black italic uppercase tracking-wider leading-none">{tr.header.eliteSquad}</h1>
@@ -725,12 +725,12 @@ export default function EliteSquadApp() {
               <Globe size={14}/><span className="hidden sm:inline">{lang.toUpperCase()}</span>
             </button>
             <span className="text-[7px] font-black uppercase tracking-wider text-zinc-400 hidden sm:block">{user?.username}</span>
-            <button onClick={handleChangePassword} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-blue-50 hover:text-blue-500 transition-all"><Key size={16}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={16}/></button>
-            {canManageUsers&&<button onClick={()=>setPendingReviewOpen(true)} className="relative px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613] transition-all"><Bell size={14}/>{pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}</button>}
-            {canManageUsers&&<button onClick={()=>setUsersOpen(true)} className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Users size={14}/></button>}
-            {canManageUsers&&<button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Activity size={14}/></button>}
-            <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Newspaper size={14}/></button>
-            {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} className="p-2 rounded-xl bg-[#E30613] text-white hover:bg-red-700 transition-all"><Plus size={16}/></button>}
+            <button onClick={handleChangePassword} title="Change your password" className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-blue-50 hover:text-blue-500 transition-all"><Key size={16}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={16}/></button>
+            {canManageUsers&&<button onClick={()=>setPendingReviewOpen(true)} title="Pending user approvals" className="relative px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613] transition-all"><Bell size={14}/>{pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}</button>}
+            {canManageUsers&&<button onClick={()=>setUsersOpen(true)} title="Manage users & permissions" className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Users size={14}/></button>}
+            {canManageUsers&&<button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} title="View activity log" className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Activity size={14}/></button>}
+            <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} title="News & upcoming matches" className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Newspaper size={14}/></button>
+            {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="p-2 rounded-xl bg-[#E30613] text-white hover:bg-red-700 transition-all"><Plus size={16}/></button>}
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 pb-3 flex items-center gap-3 flex-wrap">
@@ -852,7 +852,7 @@ export default function EliteSquadApp() {
                 <div className="absolute top-2 right-2 z-10 flex gap-0.5">
                   {p.editPlayer&&<button onClick={()=>{setEditingId(selMember.id);setForm({...selMember});setSelMember(null);setIsFormOpen(true)}} className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><Edit3 size={10} className="text-white"/></button>}
                   {p.deletePlayer&&<button onClick={()=>{if(confirm(tr.profile.delete+"?")){{setMembers(members.filter(m=>m.id!==selMember.id));setSelMember(null)}}}} className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><Trash2 size={10} className="text-red-200"/></button>}
-                  <button onClick={()=>setSelMember(null)} className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><X size={10} className="text-white"/></button>
+                  <button onClick={()=>setSelMember(null)} title="Close" className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><X size={10} className="text-white"/></button>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black/20"/>
               </div>
@@ -1062,7 +1062,7 @@ export default function EliteSquadApp() {
           <div className="w-full max-w-sm rounded-2xl bg-white text-zinc-900 shadow-2xl p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-black uppercase italic tracking-tighter">Log Injury — {selMember.name}</h2>
-              <button onClick={()=>setAddInjuryOpen(false)} className="p-1.5 rounded-lg hover:bg-zinc-100"><X size={18}/></button>
+              <button onClick={()=>setAddInjuryOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100"><X size={18}/></button>
             </div>
             <input placeholder="Injury type (e.g. Hamstring strain)" value={injForm.injury_type} onChange={e=>setInjForm({...injForm,injury_type:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
             <input placeholder="Body part (e.g. Left leg)" value={injForm.body_part} onChange={e=>setInjForm({...injForm,body_part:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
@@ -1097,7 +1097,7 @@ export default function EliteSquadApp() {
           <div className="w-full max-w-lg p-4 sm:p-5 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <div><h2 className="text-xl font-black italic uppercase tracking-tighter">{editingId?tr.form.update:tr.form.newEntry}</h2><p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{catLabel(teamCat)} · {activeTab}</p></div>
-              <button onClick={()=>setIsFormOpen(false)} className="p-1.5 hover:bg-red-500/10 rounded-xl"><X size={20}/></button>
+              <button onClick={()=>setIsFormOpen(false)} title="Close" className="p-1.5 hover:bg-red-500/10 rounded-xl"><X size={20}/></button>
             </div>
             <form onSubmit={saveForm} className="space-y-3">
               <div className="relative">
@@ -1195,7 +1195,7 @@ export default function EliteSquadApp() {
                 <h2 className="text-2xl font-black uppercase italic tracking-tight">Pending Users</h2>
                 <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{pendingCount} awaiting approval</p>
               </div>
-              <button onClick={()=>setPendingReviewOpen(false)} className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
+              <button onClick={()=>setPendingReviewOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
             </div>
             <div className="p-6 space-y-5 overflow-y-auto">
               {pendingUsers.map((u)=>{
@@ -1267,7 +1267,7 @@ export default function EliteSquadApp() {
                 <h2 className="text-2xl font-black uppercase italic tracking-tight">Pending Matches</h2>
                 <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{pendingMatches.length} awaiting approval</p>
               </div>
-              <button onClick={()=>setPendingMatchesOpen(false)} className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
+              <button onClick={()=>setPendingMatchesOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
             </div>
             <div className="p-6 space-y-4 overflow-y-auto">
               {pendingMatches.map(m=>(
@@ -1316,7 +1316,7 @@ export default function EliteSquadApp() {
               <h2 className="text-lg font-black uppercase italic tracking-tight">User Management</h2>
               <div className="flex items-center gap-2">
                 <button onClick={()=>{syncUsers()}} className="p-2 rounded-xl border border-zinc-200 hover:bg-zinc-100 transition-all" title="Refresh"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
-                <button onClick={()=>setUsersOpen(false)} className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={16}/></button>
+                <button onClick={()=>setUsersOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={16}/></button>
               </div>
             </div>
             <div className="p-5 space-y-3 overflow-y-auto">
@@ -1380,7 +1380,7 @@ export default function EliteSquadApp() {
           <div className="w-full max-w-lg rounded-2xl bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[85vh]">
             <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
               <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Activity size={16}/>Activity Log</h2>
-              <button onClick={()=>setActivityLogOpen(false)} className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
+              <button onClick={()=>setActivityLogOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
             </div>
             <div className="p-4 overflow-y-auto space-y-1.5">
               {activityLog.length===0&&<p className="text-[10px] text-zinc-400 text-center py-8">No activity yet</p>}
@@ -1455,7 +1455,7 @@ export default function EliteSquadApp() {
           <div className="w-full max-w-lg rounded-2xl bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
             <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
               <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Newspaper size={16}/>News & Upcoming Matches</h2>
-              <button onClick={()=>setNewsOpen(false)} className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
+              <button onClick={()=>setNewsOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
             </div>
             <div className="p-5 overflow-y-auto space-y-6">
 
@@ -1514,7 +1514,7 @@ export default function EliteSquadApp() {
                     </div>
                   ))}
                 </div>
-                <button onClick={()=>setIsMatchOpen(false)} className="w-7 h-7 rounded-lg bg-zinc-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><X size={14} className="text-zinc-400"/></button>
+                <button onClick={()=>setIsMatchOpen(false)} title="Close" className="w-7 h-7 rounded-lg bg-zinc-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><X size={14} className="text-zinc-400"/></button>
               </div>
 
               {/* Step content in header */}
@@ -1691,7 +1691,7 @@ export default function EliteSquadApp() {
                                 <span className="w-4 text-center text-xs font-black text-zinc-800">{s.goals}</span>
                                 <span onClick={()=>editGoals(pl.id,1)} className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-black cursor-pointer bg-green-200 text-green-700">+</span>
                               </div>
-                              <button onClick={()=>removeGoal(pl.id)} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
+                              <button onClick={()=>removeGoal(pl.id)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </div>
                           )
                         })}
@@ -1707,7 +1707,7 @@ export default function EliteSquadApp() {
                           return(
                             <span key={"y"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-yellow-200 text-[10px] font-bold group">
                               <span className="w-3 h-4 rounded-[2px] bg-yellow-400"/> {pl.name.split(' ').slice(-1)}
-                              <button onClick={()=>toggleYellow(pid)} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
+                              <button onClick={()=>toggleYellow(pid)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </span>
                           )
                         })}
@@ -1717,7 +1717,7 @@ export default function EliteSquadApp() {
                           return(
                             <span key={"r"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-red-200 text-[10px] font-bold group">
                               <span className="w-3 h-4 rounded-[2px] bg-red-600"/> {pl.name.split(' ').slice(-1)}
-                              <button onClick={()=>toggleRed(pid)} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
+                              <button onClick={()=>toggleRed(pid)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </span>
                           )
                         })}
@@ -1735,7 +1735,7 @@ export default function EliteSquadApp() {
                               <span className="text-red-500 line-through">{on}</span>
                               <span className="text-zinc-300">→</span>
                               <span className="text-green-600">{inn}</span>
-                              <button onClick={()=>removeSub(i)} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
+                              <button onClick={()=>removeSub(i)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </div>
                           )
                         })}
@@ -2023,7 +2023,7 @@ export default function EliteSquadApp() {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   Print / Save PDF
                 </button>
-                <button onClick={()=>setMatchSheetTarget(null)} className="w-8 h-8 rounded-lg bg-zinc-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><X size={15} className="text-zinc-400"/></button>
+                <button onClick={()=>setMatchSheetTarget(null)} title="Close" className="w-8 h-8 rounded-lg bg-zinc-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><X size={15} className="text-zinc-400"/></button>
               </div>
             </div>
 
