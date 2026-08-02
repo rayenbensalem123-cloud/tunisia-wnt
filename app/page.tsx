@@ -1386,8 +1386,22 @@ export default function EliteSquadApp() {
               {activityLog.length===0&&<p className="text-[10px] text-zinc-400 text-center py-8">No activity yet</p>}
               {activityLog.map((a:any)=>{
                 const actionColor=a.action==="insert"?"text-green-600":a.action==="delete"?"text-red-500":"text-blue-600"
-                const actionLabel=a.action==="insert"?"added":a.action==="delete"?"deleted":"updated"
-                const entityLabel=a.entity_type==="members"?"player/staff":a.entity_type==="matches"?"match":a.entity_type==="injuries"?"injury record":"account"
+                const actionVerb=a.action==="insert"?"added":a.action==="delete"?"deleted":"updated"
+                const buildSentence=()=>{
+                  if(a.entity_type==="injuries"){
+                    const playerName=(a.entity_label||"").split(" — ")[0]
+                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> <span className="font-bold text-zinc-800">{playerName}</span><span className="text-zinc-500">'s injury record</span></>
+                  }
+                  if(a.entity_type==="members"){
+                    if(a.action==="insert")return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-green-600">added a new player/staff</span>: <span className="font-bold text-zinc-800">{a.entity_label}</span></>
+                    if(a.action==="delete")return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-red-500">removed</span> <span className="font-bold text-zinc-800">{a.entity_label}</span></>
+                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-blue-600">updated</span> <span className="font-bold text-zinc-800">{a.entity_label}</span>'s profile</>
+                  }
+                  if(a.entity_type==="matches"){
+                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> the match vs <span className="font-bold text-zinc-800">{a.entity_label}</span></>
+                  }
+                  return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> account <span className="font-bold text-zinc-800">{a.entity_label}</span></>
+                }
                 const hiddenFields=new Set(["id","image_url","image_path","history","details"])
                 const changeEntries=a.changes?Object.entries(a.changes).filter(([k]:any)=>!hiddenFields.has(k)):[]
                 const fieldLabel=(k:string)=>k.replace(/_/g," ").replace(/\b\w/g,(c:string)=>c.toUpperCase())
@@ -1404,10 +1418,7 @@ export default function EliteSquadApp() {
                     <summary className="flex items-start justify-between gap-2 p-2.5 cursor-pointer list-none">
                       <div className="min-w-0">
                         <p className="text-[11px] leading-snug">
-                          <span className="font-black">{a.actor_username||"unknown user"}</span>{" "}
-                          <span className={`font-bold ${actionColor}`}>{actionLabel}</span>{" "}
-                          <span className="text-zinc-500">{entityLabel}</span>{" "}
-                          {a.entity_label&&<span className="font-bold text-zinc-800">"{a.entity_label}"</span>}
+                          {buildSentence()}
                         </p>
                         <p className="text-[8px] text-zinc-400 mt-0.5">{dateStr} at {timeStr}</p>
                       </div>
