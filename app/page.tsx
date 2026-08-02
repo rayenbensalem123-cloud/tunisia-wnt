@@ -147,6 +147,69 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
 // LOGIN
 // ─────────────────────────────────────────────
 // Simple reusable dropdown menu — click trigger to open, click outside or an item to close
+// Custom-styled date picker — replaces the plain native browser calendar
+const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onChange:(v:string)=>void;placeholder?:string}) => {
+  const [open,setOpen]=useState(false)
+  const ref=useRef<HTMLDivElement>(null)
+  const today=new Date()
+  const selected=value?new Date(value+"T00:00:00"):null
+  const [viewMonth,setViewMonth]=useState(selected||today)
+
+  useEffect(()=>{
+    if(!open)return
+    const onClick=(e:MouseEvent)=>{ if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener("mousedown",onClick)
+    return ()=>document.removeEventListener("mousedown",onClick)
+  },[open])
+
+  const year=viewMonth.getFullYear(), month=viewMonth.getMonth()
+  const firstDay=new Date(year,month,1).getDay()
+  const daysInMonth=new Date(year,month+1,0).getDate()
+  const monthName=viewMonth.toLocaleDateString(undefined,{month:"long",year:"numeric"})
+  const fmt=(d:Date)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  const isSameDay=(a:Date,b:Date)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()
+
+  const cells=[]
+  for(let i=0;i<firstDay;i++)cells.push(null)
+  for(let d=1;d<=daysInMonth;d++)cells.push(d)
+
+  return(
+    <div ref={ref} className="relative">
+      <button type="button" onClick={()=>setOpen(o=>!o)} className="w-full flex items-center gap-2 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold text-left">
+        <Calendar size={13} className="text-[#E30613] shrink-0"/>
+        <span className={value?"text-zinc-900":"text-zinc-400"}>{value?new Date(value+"T00:00:00").toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"}):placeholder}</span>
+      </button>
+      {open&&(
+        <div className="absolute z-[300] top-full mt-1.5 left-0 w-64 rounded-2xl bg-[#FAF8F3] border border-zinc-200 shadow-2xl p-3">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronLeft size={14}/></button>
+            <span className="text-[11px] font-black uppercase tracking-wider">{monthName}</span>
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronRight size={14}/></button>
+          </div>
+          <div className="grid grid-cols-7 gap-0.5 mb-1">
+            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-zinc-400 text-center py-1">{d}</div>))}
+          </div>
+          <div className="grid grid-cols-7 gap-0.5">
+            {cells.map((d,i)=>{
+              if(d===null)return <div key={i}/>
+              const cellDate=new Date(year,month,d)
+              const isToday=isSameDay(cellDate,today)
+              const isSelected=selected&&isSameDay(cellDate,selected)
+              return(
+                <button type="button" key={i} onClick={()=>{onChange(fmt(cellDate));setOpen(false)}}
+                  className={`aspect-square rounded-full text-[10px] font-bold transition-all flex items-center justify-center
+                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-zinc-700 hover:bg-zinc-200/60'}`}>
+                  {d}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 const Dropdown = ({trigger,children,align="right"}:{trigger:React.ReactNode;children:React.ReactNode;align?:"left"|"right"}) => {
   const [open,setOpen]=useState(false)
   const ref=useRef<HTMLDivElement>(null)
@@ -365,6 +428,8 @@ export default function EliteSquadApp() {
   const [isFormOpen,setIsFormOpen]=useState(false)
   const [editingId,setEditingId]=useState<number|null>(null)
   const [isMatchOpen,setIsMatchOpen]=useState(false)
+  const [scheduleOpen,setScheduleOpen]=useState(false)
+  const [scheduleForm,setScheduleForm]=useState({opponent:"",date:"",competition:"Friendly",venue:""})
   const [isHistoryOpen,setIsHistoryOpen]=useState(false)
   const [matchSheetTarget,setMatchSheetTarget]=useState<any>(null)
   const [selMatch,setSelMatch]=useState<any>(null)
@@ -736,6 +801,9 @@ export default function EliteSquadApp() {
             </button>
             {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-green-50 hover:border-green-300 hover:text-green-600">
               <Users size={14}/><span className="hidden sm:inline">Add Match</span>
+            </button>}
+            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"Friendly",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600">
+              <Calendar size={14}/><span className="hidden sm:inline">Schedule Match</span>
             </button>}
             <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} />
 
@@ -1831,6 +1899,53 @@ export default function EliteSquadApp() {
                 {matchStep<3&&<button onClick={()=>setMatchStep(matchStep+1)} disabled={matchStep===0&&!matchForm.opponent.trim()} className="px-5 py-2 rounded-full bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all disabled:opacity-40">Next</button>}
                 {matchStep===3&&<button onClick={()=>{const id=Date.now();const nm={...matchForm,id,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username};setMatches((p:any)=>[...p,nm]);if(canManageUsers)approveMatch(nm);setIsMatchOpen(false);setMatchForm(initMatch);setMatchStep(0)}} className="px-5 py-2 rounded-full bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all">Save Match</button>}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SCHEDULE MATCH — lightweight fixture planner
+          (no result/squad/staff required — just the essentials for planning ahead)
+      ═══════════════════════════════════════════ */}
+      {scheduleOpen&&(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
+          <div className="w-full max-w-sm rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl p-5 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Calendar size={16}/>Schedule Match</h2>
+              <button onClick={()=>setScheduleOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-200/60 transition-all"><X size={18}/></button>
+            </div>
+            <p className="text-[10px] text-zinc-500">Planning ahead? Just set the date and opponent — no result or squad needed yet.</p>
+
+            <input placeholder="Opponent" value={scheduleForm.opponent} onChange={e=>setScheduleForm({...scheduleForm,opponent:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[12px] font-bold outline-none"/>
+
+            <DatePicker value={scheduleForm.date} onChange={(v)=>setScheduleForm({...scheduleForm,date:v})} placeholder="Match date"/>
+
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">Competition</p>
+              <div className="flex flex-wrap gap-1.5">
+                {["Friendly","WCQ","AFCON","WAFCON","Other"].map(comp=>(
+                  <button key={comp} onClick={()=>setScheduleForm({...scheduleForm,competition:comp})}
+                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${scheduleForm.competition===comp?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>
+                    {comp}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <input placeholder="Venue (optional)" value={scheduleForm.venue} onChange={e=>setScheduleForm({...scheduleForm,venue:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[12px] font-bold outline-none"/>
+
+            <div className="flex gap-2 pt-1">
+              <button onClick={()=>setScheduleOpen(false)} className="flex-1 py-2.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
+              <button onClick={()=>{
+                if(!scheduleForm.opponent.trim()){alert("Enter an opponent");return}
+                if(!scheduleForm.date){alert("Pick a date");return}
+                const id=Date.now()
+                const nm={...initMatch,id,opponent:scheduleForm.opponent.trim(),date:scheduleForm.date,competition:scheduleForm.competition,venue:scheduleForm.venue,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username}
+                setMatches((p:any)=>[...p,nm])
+                if(canManageUsers)approveMatch(nm)
+                setScheduleOpen(false)
+              }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">Save Fixture</button>
             </div>
           </div>
         </div>
