@@ -153,6 +153,27 @@
   margin-right: auto;
 }
 
+/* Custom scrollbars — match the app's design instead of the default browser/OS scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #E30613 #F3F0E8;
+}
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+*::-webkit-scrollbar-track {
+  background: #F3F0E8;
+}
+*::-webkit-scrollbar-thumb {
+  background: #E30613;
+  border-radius: 8px;
+  border: 2px solid #F3F0E8;
+}
+*::-webkit-scrollbar-thumb:hover {
+  background: #b8050f;
+}
+
 @media print {
   @page { margin: 1cm; }
   body { -webkit-print-color-adjust: exact; print-color-adjust: exact; background: white; }
@@ -162,4 +183,10 @@
   .grid { display: grid !important; gap: 0.5rem !important; page-break-inside: avoid; }
   img { max-height: 120px !important; }
   [class*="bg-"] { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  /* Official match sheet: isolate it and hide everything else while printing */
+  body:has(.match-sheet-print) header,
+  body:has(.match-sheet-print) > main { display: none !important; }
+  .match-sheet-print { display: block !important; position: static !important; inset: auto !important; background: white !important; padding: 0 !important; }
+  .match-sheet-print .match-sheet-print-btn { display: none !important; }
 }

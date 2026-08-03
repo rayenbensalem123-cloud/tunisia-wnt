@@ -147,6 +147,23 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
 // LOGIN
 // ─────────────────────────────────────────────
 // Simple reusable dropdown menu — click trigger to open, click outside or an item to close
+// Formats a date as "7 October 2026" instead of raw numeric strings
+const fmtDateWords = (dateStr?: string) => {
+  if (!dateStr) return ""
+  const d = new Date(dateStr + "T00:00:00")
+  if (isNaN(d.getTime())) return dateStr
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })
+}
+
+const COMPETITIONS = [
+  {value:"",label:"Friendly"},
+  {value:"World Cup Qualification",label:"WCQ"},
+  {value:"African Cup Qualification",label:"AFCONQ"},
+  {value:"UNAF",label:"UNAF"},
+  {value:"World Cup",label:"World Cup"},
+  {value:"African Cup",label:"AFCON"},
+]
+
 // Custom-styled date picker — replaces the plain native browser calendar
 const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onChange:(v:string)=>void;placeholder?:string}) => {
   const [open,setOpen]=useState(false)
@@ -427,9 +444,11 @@ export default function EliteSquadApp() {
   },[selMember?.id])
   const [isFormOpen,setIsFormOpen]=useState(false)
   const [editingId,setEditingId]=useState<number|null>(null)
+  const [confirmState,setConfirmState]=useState<{message:string;resolve:(v:boolean)=>void}|null>(null)
+  const askConfirm=(message:string):Promise<boolean>=>new Promise(resolve=>setConfirmState({message,resolve}))
   const [isMatchOpen,setIsMatchOpen]=useState(false)
   const [scheduleOpen,setScheduleOpen]=useState(false)
-  const [scheduleForm,setScheduleForm]=useState({opponent:"",date:"",competition:"Friendly",venue:""})
+  const [scheduleForm,setScheduleForm]=useState({opponent:"",date:"",competition:"",venue:""})
   const [isHistoryOpen,setIsHistoryOpen]=useState(false)
   const [matchSheetTarget,setMatchSheetTarget]=useState<any>(null)
   const [selMatch,setSelMatch]=useState<any>(null)
@@ -437,6 +456,7 @@ export default function EliteSquadApp() {
   const [activityLogOpen,setActivityLogOpen]=useState(false)
   const [activityLog,setActivityLog]=useState<any[]>([])
   const [newsOpen,setNewsOpen]=useState(false)
+  const [upcomingOpen,setUpcomingOpen]=useState(false)
   const [newsItems,setNewsItems]=useState<any[]|null>(null)
   const [newsLoading,setNewsLoading]=useState(false)
   const [pendingReviewOpen,setPendingReviewOpen]=useState(false)
@@ -802,7 +822,7 @@ export default function EliteSquadApp() {
             {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-green-50 hover:border-green-300 hover:text-green-600">
               <Users size={14}/><span className="hidden sm:inline">Add Match</span>
             </button>}
-            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"Friendly",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600">
+            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600">
               <Calendar size={14}/><span className="hidden sm:inline">Schedule Match</span>
             </button>}
             <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} />
@@ -823,8 +843,11 @@ export default function EliteSquadApp() {
               <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <Globe size={14}/>Language ({lang.toUpperCase()})
               </button>
+              <button onClick={()=>setUpcomingOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                <Calendar size={14}/>Upcoming Matches
+              </button>
               <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                <Newspaper size={14}/>News & Matches
+                <Newspaper size={14}/>Women's Football News
               </button>
             </Dropdown>
 
@@ -899,11 +922,11 @@ export default function EliteSquadApp() {
           </div>
           <span className="text-[7px] text-zinc-300 italic hidden sm:block">{tr.discipline.cafRule}</span>
           <div className="ml-auto flex items-center gap-2">
-            <button onClick={()=>{if(window.confirm("Reset all yellow/red cards for all players in this category?")){setMembers((p:any[])=>p.map(m=>m.teamCategory===teamCat?{...m,yellowCards:0,redCards:0,suspended:false}:m))}}}
+            <button onClick={async()=>{if(await askConfirm("Reset all yellow/red cards for all players in this category?")){setMembers((p:any[])=>p.map(m=>m.teamCategory===teamCat?{...m,yellowCards:0,redCards:0,suspended:false}:m))}}}
               className="px-2 py-1 rounded-lg border border-zinc-200 text-[6px] font-black uppercase tracking-widest text-zinc-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all">Reset</button>
             {p.deletePlayer&&(selectedIds.size===0
               ?<button onClick={()=>setSelectedIds(new Set(members.filter(m=>m.role==="PLAYERS"&&m.teamCategory===teamCat).map(m=>m.id)))} className="flex items-center gap-1 px-2 py-1 rounded-lg border border-red-200 text-[6px] font-black uppercase tracking-widest text-red-400 hover:bg-red-50 transition-all"><Trash2 size={9}/>Select</button>
-              :<><span className="text-[7px] font-bold text-red-500">{selectedIds.size}</span><button onClick={()=>{const names=members.filter(m=>selectedIds.has(m.id)).map(m=>m.name).join(", ");if(confirm(`Delete ${selectedIds.size} player(s)?\n\n${names}`)){setMembers(members.filter(m=>!selectedIds.has(m.id)));setSelectedIds(new Set())}}} className="px-2 py-1 rounded-lg bg-red-600 text-white text-[6px] font-black uppercase tracking-widest hover:bg-red-700 transition-all">Delete</button><button onClick={()=>setSelectedIds(new Set())} className="px-2 py-1 rounded-lg border border-zinc-300 text-[6px] font-black uppercase tracking-widest text-zinc-500 hover:bg-zinc-100 transition-all">X</button></>)}
+              :<><span className="text-[7px] font-bold text-red-500">{selectedIds.size}</span><button onClick={async()=>{const names=members.filter(m=>selectedIds.has(m.id)).map(m=>m.name).join(", ");if(await askConfirm(`Delete ${selectedIds.size} player(s)?\n\n${names}`)){setMembers(members.filter(m=>!selectedIds.has(m.id)));setSelectedIds(new Set())}}} className="px-2 py-1 rounded-lg bg-red-600 text-white text-[6px] font-black uppercase tracking-widest hover:bg-red-700 transition-all">Delete</button><button onClick={()=>setSelectedIds(new Set())} className="px-2 py-1 rounded-lg border border-zinc-300 text-[6px] font-black uppercase tracking-widest text-zinc-500 hover:bg-zinc-100 transition-all">X</button></>)}
           </div>
         </div>
       )}
@@ -983,7 +1006,7 @@ export default function EliteSquadApp() {
                 {/* Actions */}
                 <div className="absolute top-2 right-2 z-10 flex gap-0.5">
                   {p.editPlayer&&<button onClick={()=>{setEditingId(selMember.id);setForm({...selMember});setSelMember(null);setIsFormOpen(true)}} className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><Edit3 size={10} className="text-white"/></button>}
-                  {p.deletePlayer&&<button onClick={()=>{if(confirm(tr.profile.delete+"?")){{setMembers(members.filter(m=>m.id!==selMember.id));setSelMember(null)}}}} className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><Trash2 size={10} className="text-red-200"/></button>}
+                  {p.deletePlayer&&<button onClick={async()=>{if(await askConfirm(tr.profile.delete+"?")){{setMembers(members.filter(m=>m.id!==selMember.id));setSelMember(null)}}}} className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><Trash2 size={10} className="text-red-200"/></button>}
                   <button onClick={()=>setSelMember(null)} title="Close" className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><X size={10} className="text-white"/></button>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black/20"/>
@@ -1160,11 +1183,11 @@ export default function EliteSquadApp() {
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <p className={`text-[14px] font-bold ${colors.text}`}>{inj.injury_type}</p>
-                            <p className="text-[12px] text-zinc-500 mt-0.5">{inj.body_part?`${inj.body_part} · `:""}{inj.occurred_on?`occurred ${inj.occurred_on}`:""}</p>
+                            <p className="text-[12px] text-zinc-500 mt-0.5">{inj.body_part?`${inj.body_part} · `:""}{inj.occurred_on?`occurred ${fmtDateWords(inj.occurred_on)}`:""}</p>
                           </div>
                           <span className={`shrink-0 text-[12px] font-black uppercase px-2 py-1 rounded ${colors.pill}`}>{inj.status}</span>
                         </div>
-                        {inj.expected_return&&<p className="text-[12px] text-zinc-400 mt-1.5">Expected return: {inj.expected_return}</p>}
+                        {inj.expected_return&&<p className="text-[12px] text-zinc-400 mt-1.5">Expected return: {fmtDateWords(inj.expected_return)}</p>}
                         {inj.notes&&<p className="text-[12px] text-zinc-500 mt-1.5">{inj.notes}</p>}
                         <p className="text-[11px] text-zinc-400 mt-1.5">Logged by {inj.logged_by_username||"unknown"}</p>
                         {p.editMedical&&inj.status!=="recovered"&&(
@@ -1198,12 +1221,17 @@ export default function EliteSquadApp() {
             </div>
             <input placeholder="Injury type (e.g. Hamstring strain)" value={injForm.injury_type} onChange={e=>setInjForm({...injForm,injury_type:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
             <input placeholder="Body part (e.g. Left leg)" value={injForm.body_part} onChange={e=>setInjForm({...injForm,body_part:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
-            <select value={injForm.severity} onChange={e=>setInjForm({...injForm,severity:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none">
-              <option value="minor">Minor</option><option value="moderate">Moderate</option><option value="severe">Severe</option>
-            </select>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">Severity</p>
+              <div className="flex gap-1.5">
+                {["minor","moderate","severe"].map(sev=>(
+                  <button key={sev} type="button" onClick={()=>setInjForm({...injForm,severity:sev})} className={`flex-1 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${injForm.severity===sev?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>{sev}</button>
+                ))}
+              </div>
+            </div>
             <div className="flex gap-2">
-              <input type="date" value={injForm.occurred_on} onChange={e=>setInjForm({...injForm,occurred_on:e.target.value})} className="flex-1 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
-              <input type="date" placeholder="Expected return" value={injForm.expected_return} onChange={e=>setInjForm({...injForm,expected_return:e.target.value})} className="flex-1 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+              <div className="flex-1"><DatePicker value={injForm.occurred_on} onChange={(v)=>setInjForm({...injForm,occurred_on:v})} placeholder="Date occurred"/></div>
+              <div className="flex-1"><DatePicker value={injForm.expected_return} onChange={(v)=>setInjForm({...injForm,expected_return:v})} placeholder="Expected return"/></div>
             </div>
             <textarea placeholder="Notes (optional)" value={injForm.notes} onChange={e=>setInjForm({...injForm,notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none resize-none"/>
             <div className="flex gap-2 pt-1">
@@ -1410,7 +1438,7 @@ export default function EliteSquadApp() {
                         <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center"><BookOpen size={18} className="text-amber-600"/></div>
                         <div>
                           <p className="font-black uppercase text-sm leading-tight">{m.opponent}</p>
-                          <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">{m.date} · {m.competition||"Friendly"} · by @{m.submittedBy}</p>
+                          <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">{fmtDateWords(m.date)} · {m.competition||"Friendly"} · by @{m.submittedBy}</p>
                         </div>
                       </div>
                       <span className="text-[9px] font-black text-amber-600 bg-amber-100 px-2.5 py-1 rounded-lg uppercase">Pending</span>
@@ -1577,59 +1605,91 @@ export default function EliteSquadApp() {
       )}
 
       {/* ═══════════════════════════════════════════
-          NEWS & UPCOMING MATCHES
+          UPCOMING MATCHES — its own special, featured space
       ═══════════════════════════════════════════ */}
-      {newsOpen&&(()=>{
+      {upcomingOpen&&(()=>{
         const today=new Date().toISOString().slice(0,10)
         const upcoming=matches.filter((m:any)=>m.date&&m.date>=today&&!m.result).sort((a:any,b:any)=>a.date.localeCompare(b.date))
+        const next=upcoming[0]
+        const rest=upcoming.slice(1)
+        const daysUntil=(dateStr:string)=>{
+          const diff=Math.ceil((new Date(dateStr+"T00:00:00").getTime()-new Date(new Date().toDateString()).getTime())/86400000)
+          return diff
+        }
         return(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
           <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
             <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Newspaper size={16}/>News & Upcoming Matches</h2>
-              <button onClick={()=>setNewsOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
+              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Calendar size={16}/>Upcoming Matches</h2>
+              <button onClick={()=>setUpcomingOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
             </div>
-            <div className="p-5 overflow-y-auto space-y-6">
+            <div className="p-5 overflow-y-auto space-y-5">
 
-              {/* Upcoming matches — from our own official calendar */}
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-wider text-[#E30613] mb-2.5">Upcoming Matches</p>
-                {upcoming.length===0&&<p className="text-[10px] text-zinc-400 py-3 text-center bg-zinc-50 rounded-lg">No upcoming matches scheduled yet</p>}
-                <div className="space-y-2">
-                  {upcoming.map((m:any)=>(
-                    <div key={m.id} className="flex items-center justify-between gap-3 p-3 rounded-lg bg-zinc-50 border border-zinc-100">
-                      <div>
-                        <p className="text-[12px] font-bold">Tunisia vs {m.opponent||"TBD"}</p>
-                        <p className="text-[9px] text-zinc-500 mt-0.5">{m.competition||"Friendly"}{m.venue?` · ${m.venue}`:""}</p>
-                      </div>
-                      <span className="shrink-0 text-[10px] font-black text-zinc-600 bg-white border border-zinc-200 rounded-lg px-2.5 py-1.5">{m.date}</span>
+              {!next&&<p className="text-[11px] text-zinc-400 py-10 text-center bg-zinc-100/60 rounded-2xl">No upcoming matches scheduled yet</p>}
+
+              {/* Featured hero card — the very next match, given real visual weight */}
+              {next&&(
+                <div className="relative rounded-2xl overflow-hidden" style={{background:"linear-gradient(135deg, #1a1a1a 0%, #E30613 140%)"}}>
+                  <div className="relative p-6 text-center">
+                    <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/60 mb-2">Next Match {daysUntil(next.date)===0?"· Today":daysUntil(next.date)===1?"· Tomorrow":`· In ${daysUntil(next.date)} days`}</p>
+                    <p className="text-2xl font-black uppercase italic tracking-tight text-white">Tunisia <span className="text-white/50 not-italic mx-1">vs</span> {next.opponent||"TBD"}</p>
+                    <p className="text-[12px] font-bold text-white/80 mt-2">{fmtDateWords(next.date)}</p>
+                    <div className="flex items-center justify-center gap-2 mt-3">
+                      <span className="text-[8px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-white/15 text-white">{next.competition||"Friendly"}</span>
+                      {next.venue&&<span className="text-[8px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-white/15 text-white">{next.venue}</span>}
                     </div>
-                  ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
-              {/* Automated news feed */}
-              <div>
-                <div className="flex items-center justify-between mb-2.5">
-                  <p className="text-[10px] font-black uppercase tracking-wider text-[#E30613]">Women's Football News</p>
-                  <span className="text-[8px] text-zinc-400">auto-updated</span>
+              {/* Later fixtures — smaller, secondary treatment */}
+              {rest.length>0&&(
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-2">Also Coming Up</p>
+                  <div className="space-y-2">
+                    {rest.map((m:any)=>(
+                      <div key={m.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white border border-zinc-200/60">
+                        <div>
+                          <p className="text-[12px] font-bold">Tunisia vs {m.opponent||"TBD"}</p>
+                          <p className="text-[9px] text-zinc-500 mt-0.5">{m.competition||"Friendly"}{m.venue?` · ${m.venue}`:""}</p>
+                        </div>
+                        <span className="shrink-0 text-[10px] font-black text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full px-3 py-1.5">{fmtDateWords(m.date)}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                {newsLoading&&<p className="text-[10px] text-zinc-400 py-6 text-center">Loading latest news…</p>}
-                {!newsLoading&&newsItems&&newsItems.length===0&&<p className="text-[10px] text-zinc-400 py-6 text-center">No news found right now</p>}
-                <div className="space-y-2">
-                  {!newsLoading&&newsItems&&newsItems.map((n:any,i:number)=>(
-                    <a key={i} href={n.link} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-lg bg-zinc-50 border border-zinc-100 hover:border-[#E30613]/30 hover:bg-[#E30613]/5 transition-all">
-                      <p className="text-[11px] font-bold text-zinc-800 leading-snug">{n.title}</p>
-                      <p className="text-[9px] text-zinc-400 mt-1">{n.source}{n.pubDate?` · ${new Date(n.pubDate).toLocaleDateString()}`:""}</p>
-                    </a>
-                  ))}
-                </div>
-              </div>
-
+              )}
             </div>
           </div>
         </div>
       )})()}
+
+      {/* ═══════════════════════════════════════════
+          WOMEN'S FOOTBALL NEWS — automated feed
+      ═══════════════════════════════════════════ */}
+      {newsOpen&&(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
+          <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
+            <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Newspaper size={16}/>Women's Football News</h2>
+              <button onClick={()=>setNewsOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
+            </div>
+            <div className="p-5 overflow-y-auto space-y-2">
+              <div className="flex items-center justify-end mb-1">
+                <span className="text-[8px] text-zinc-400">auto-updated</span>
+              </div>
+              {newsLoading&&<p className="text-[10px] text-zinc-400 py-6 text-center">Loading latest news…</p>}
+              {!newsLoading&&newsItems&&newsItems.length===0&&<p className="text-[10px] text-zinc-400 py-6 text-center">No news found right now</p>}
+              {!newsLoading&&newsItems&&newsItems.map((n:any,i:number)=>(
+                <a key={i} href={n.link} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-lg bg-white border border-zinc-200/60 hover:border-[#E30613]/30 hover:bg-[#E30613]/5 transition-all">
+                  <p className="text-[11px] font-bold text-zinc-800 leading-snug">{n.title}</p>
+                  <p className="text-[9px] text-zinc-400 mt-1">{n.source}{n.pubDate?` · ${new Date(n.pubDate).toLocaleDateString()}`:""}</p>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       {isMatchOpen&&(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-2xl rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
@@ -1659,7 +1719,7 @@ export default function EliteSquadApp() {
                   </div>
                   <div>
                     <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Date</label>
-                    <input type="date" value={matchForm.date} onChange={e=>setMatchForm({...matchForm,date:e.target.value})} className="p-2 rounded-lg border border-zinc-200 outline-none text-xs font-bold w-36"/>
+                    <div className="w-36"><DatePicker value={matchForm.date} onChange={(v)=>setMatchForm({...matchForm,date:v})} placeholder="Match date"/></div>
                   </div>
                   <div>
                     <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Score</label>
@@ -1674,16 +1734,16 @@ export default function EliteSquadApp() {
                       <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Venue</label>
                       <input placeholder="Stadium name" value={matchForm.venue} onChange={e=>setMatchForm({...matchForm,venue:e.target.value})} className="w-full p-2 rounded-lg border border-zinc-200 outline-none text-xs font-bold uppercase"/>
                     </div>
-                    <div>
-                      <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Competition</label>
-                      <select value={matchForm.competition} onChange={e=>setMatchForm({...matchForm,competition:e.target.value})} className="p-2 rounded-lg border border-zinc-200 outline-none text-xs font-bold bg-white min-w-[130px]">
-                        <option value="">Friendly</option>
-                        <option value="World Cup Qualification">WCQ</option>
-                        <option value="African Cup Qualification">AFCONQ</option>
-                        <option value="UNAF">UNAF</option>
-                        <option value="World Cup">World Cup</option>
-                        <option value="African Cup">AFCON</option>
-                      </select>
+                  </div>
+                  <div className="col-span-full">
+                    <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 block">Competition</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {COMPETITIONS.map(comp=>(
+                        <button key={comp.label} type="button" onClick={()=>setMatchForm({...matchForm,competition:comp.value})}
+                          className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${matchForm.competition===comp.value?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>
+                          {comp.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
                   {/* ── MATCH STATS ── */}
@@ -1905,6 +1965,24 @@ export default function EliteSquadApp() {
       )}
 
       {/* ═══════════════════════════════════════════
+          CUSTOM CONFIRM DIALOG — replaces native browser confirm()
+      ═══════════════════════════════════════════ */}
+      {confirmState&&(
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/80">
+          <div className="w-full max-w-xs rounded-2xl bg-[#FAF8F3] shadow-2xl p-5 text-center">
+            <div className="w-11 h-11 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle size={20} className="text-[#E30613]"/>
+            </div>
+            <p className="text-[12px] font-bold text-zinc-800 leading-snug whitespace-pre-line">{confirmState.message}</p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={()=>{confirmState.resolve(false);setConfirmState(null)}} className="flex-1 py-2.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100 hover:bg-zinc-200 transition-all">Cancel</button>
+              <button onClick={()=>{confirmState.resolve(true);setConfirmState(null)}} className="flex-1 py-2.5 rounded-full bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider shadow-lg hover:bg-red-700 transition-all">Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════
           SCHEDULE MATCH — lightweight fixture planner
           (no result/squad/staff required — just the essentials for planning ahead)
       ═══════════════════════════════════════════ */}
@@ -1924,10 +2002,10 @@ export default function EliteSquadApp() {
             <div>
               <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">Competition</p>
               <div className="flex flex-wrap gap-1.5">
-                {["Friendly","WCQ","AFCON","WAFCON","Other"].map(comp=>(
-                  <button key={comp} onClick={()=>setScheduleForm({...scheduleForm,competition:comp})}
-                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${scheduleForm.competition===comp?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>
-                    {comp}
+                {COMPETITIONS.map(comp=>(
+                  <button key={comp.label} onClick={()=>setScheduleForm({...scheduleForm,competition:comp.value})}
+                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${scheduleForm.competition===comp.value?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>
+                    {comp.label}
                   </button>
                 ))}
               </div>
@@ -1995,7 +2073,7 @@ export default function EliteSquadApp() {
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <div className={`w-2 h-2 rounded-full ${scoreBg} shrink-0`}/>
                         <div className="flex items-center gap-1.5 text-xs font-bold">
-                          <span className="text-zinc-500">{match.date}</span>
+                          <span className="text-zinc-500">{fmtDateWords(match.date)}</span>
                           {match.competition&&<><span className="text-zinc-200">·</span><span className="text-zinc-400">{match.competition}</span></>}
                         </div>
                       </div>
@@ -2160,7 +2238,7 @@ export default function EliteSquadApp() {
                       {/* Match Sheet + Delete */}
                       <div className="flex justify-end gap-2">
                         <button onClick={()=>setMatchSheetTarget(match)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E30613]/30 bg-white text-[#E30613] text-[8px] font-black uppercase tracking-wider hover:bg-[#E30613] hover:text-white transition-all"><ClipboardCheck size={11}/> Match Sheet</button>
-                        {p.deleteMatch&&<button onClick={()=>{if(confirm(tr.history.delete+" this match?")){setMatches(m=>m.filter((x:any)=>x.id!==match.id));setSelMatch(null)}}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-500 text-[8px] font-black uppercase tracking-wider hover:bg-red-600 hover:text-white transition-all"><Trash2 size={11}/> {tr.history.delete}</button>}
+                        {p.deleteMatch&&<button onClick={async()=>{if(await askConfirm(tr.history.delete+" this match?")){setMatches(m=>m.filter((x:any)=>x.id!==match.id));setSelMatch(null)}}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-500 text-[8px] font-black uppercase tracking-wider hover:bg-red-600 hover:text-white transition-all"><Trash2 size={11}/> {tr.history.delete}</button>}
                       </div>
                     </div>
                   )}
@@ -2216,7 +2294,7 @@ export default function EliteSquadApp() {
                   <p className="text-[10px] font-bold text-[#E30613] uppercase tracking-wider">{catLabel(match.teamCategory)} {match.competition&&`· ${match.competition}`}</p>
                 </div>
                 <div className="text-right text-[10px] font-bold text-zinc-500">
-                  <p>{match.date||"—"}</p>
+                  <p>{fmtDateWords(match.date)||"—"}</p>
                   <p className="mt-0.5">{match.venue||"Venue TBC"}</p>
                 </div>
               </div>
