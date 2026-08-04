@@ -26,6 +26,10 @@ export const memberFromDb = (r: any) => ({
   history: r.history || [],
   image: r.image_url,
   imagePath: r.image_path,
+  bioQuote: r.bio_quote,
+  leagueRegion: r.league_region,
+  dualNationality: r.dual_nationality,
+  secondNationality: r.second_nationality,
   updatedAt: r.updated_at ? new Date(r.updated_at).getTime() : Date.now(),
 })
 
@@ -52,6 +56,10 @@ export const memberToDb = (m: any) => ({
   history: m.history || [],
   image_url: m.image || null,
   image_path: m.imagePath || null,
+  bio_quote: m.bioQuote || null,
+  league_region: m.leagueRegion || null,
+  dual_nationality: !!m.dualNationality,
+  second_nationality: m.secondNationality || null,
 })
 
 export const matchFromDb = (r: any) => ({
@@ -173,6 +181,43 @@ export async function addInjury(memberId: number, payload: {
 
 export async function updateInjuryStatus(injuryId: number, status: 'active' | 'recovering' | 'recovered') {
   const { error } = await supabase.from('injuries').update({ status, updated_at: new Date().toISOString() }).eq('id', injuryId)
+  return { error: error?.message || null }
+}
+
+// ─────────────────────────────────────────────
+// SQUAD TEMPLATES (Squad Lab — save/load formations & lineups)
+// ─────────────────────────────────────────────
+export async function fetchSquadTemplates(teamCategory: string) {
+  const { data, error } = await supabase
+    .from('squad_templates')
+    .select('*')
+    .eq('team_category', teamCategory)
+    .order('updated_at', { ascending: false })
+  if (error) { console.error('fetchSquadTemplates', error); return [] }
+  return data
+}
+
+export async function saveSquadTemplate(payload: { teamCategory: string; name: string; formation: string; slots: Record<string, number | null> }) {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const uid = sessionData.session?.user.id
+  let username: string | null = null
+  if (uid) {
+    const { data: profile } = await supabase.from('profiles').select('username').eq('id', uid).maybeSingle()
+    username = profile?.username || null
+  }
+  const { data, error } = await supabase.from('squad_templates').insert({
+    team_category: payload.teamCategory,
+    name: payload.name,
+    formation: payload.formation,
+    slots: payload.slots,
+    created_by: uid,
+    created_by_username: username,
+  }).select().single()
+  return { data, error: error?.message || null }
+}
+
+export async function deleteSquadTemplate(id: number) {
+  const { error } = await supabase.from('squad_templates').delete().eq('id', id)
   return { error: error?.message || null }
 }
 
