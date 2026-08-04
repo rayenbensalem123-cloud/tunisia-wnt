@@ -5,7 +5,7 @@ import {
   LogOut, Goal, History, Trash2, Trophy, Loader2,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase, Sparkles,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity
+  Users, Calendar, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
@@ -13,6 +13,7 @@ import { ExportTools } from "@/components/export-tools"
 import { ScoutPanel } from "@/components/scout-panel"
 import { searchPlayerDatabase } from "@/lib/player-database"
 import { PlayerCard } from "@/components/player-card"
+import { FormationPitch, FORMATIONS } from "@/components/formation-pitch"
 import { supabase } from "@/lib/supabase"
 import {
   signInUsername, fetchMyProfile, registerUser,
@@ -20,6 +21,7 @@ import {
   fetchMembers, fetchMatches, syncMembers, syncMatches,
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
   fetchInjuries, addInjury, updateInjuryStatus,
+  fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate,
 } from "@/lib/app-data"
 
 // ─────────────────────────────────────────────
@@ -146,6 +148,118 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
 // ─────────────────────────────────────────────
 // LOGIN
 // ─────────────────────────────────────────────
+// Simple reusable dropdown menu — click trigger to open, click outside or an item to close
+// Formats a date as "7 October 2026" instead of raw numeric strings
+const fmtDateWords = (dateStr?: string) => {
+  if (!dateStr) return ""
+  const d = new Date(dateStr + "T00:00:00")
+  if (isNaN(d.getTime())) return dateStr
+  return d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })
+}
+
+const LEAGUES_BY_REGION = [
+  { region: "Tunisia", options: ["Championnat National Féminin (Tunisia)"] },
+  { region: "North Africa", options: ["Botola Nsawiya (Morocco)", "Championnat National Féminin (Algeria)", "Egyptian Women's Premier League", "Libya Women's League"] },
+  { region: "Middle East", options: ["UAE Women's Football League", "Saudi Women's Football League", "Qatar Women's League", "Jordan Women's League"] },
+  { region: "France", options: ["Ligue 1 Féminine", "Seconde Ligue (D2 Féminine)"] },
+  { region: "Europe", options: ["WSL (England)", "Liga F (Spain)", "Frauen-Bundesliga (Germany)", "Serie A Femminile (Italy)", "Damallsvenskan (Sweden)"] },
+  { region: "Americas", options: ["NWSL (USA)", "Liga MX Femenil (Mexico)"] },
+  { region: "Other", options: ["Other / Diaspora"] },
+]
+
+const COMPETITIONS = [
+  {value:"",label:"Friendly"},
+  {value:"World Cup Qualification",label:"WCQ"},
+  {value:"African Cup Qualification",label:"AFCONQ"},
+  {value:"UNAF",label:"UNAF"},
+  {value:"World Cup",label:"World Cup"},
+  {value:"African Cup",label:"AFCON"},
+]
+
+// Custom-styled date picker — replaces the plain native browser calendar
+const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onChange:(v:string)=>void;placeholder?:string}) => {
+  const [open,setOpen]=useState(false)
+  const ref=useRef<HTMLDivElement>(null)
+  const today=new Date()
+  const selected=value?new Date(value+"T00:00:00"):null
+  const [viewMonth,setViewMonth]=useState(selected||today)
+
+  useEffect(()=>{
+    if(!open)return
+    const onClick=(e:MouseEvent)=>{ if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener("mousedown",onClick)
+    return ()=>document.removeEventListener("mousedown",onClick)
+  },[open])
+
+  const year=viewMonth.getFullYear(), month=viewMonth.getMonth()
+  const firstDay=new Date(year,month,1).getDay()
+  const daysInMonth=new Date(year,month+1,0).getDate()
+  const monthName=viewMonth.toLocaleDateString(undefined,{month:"long",year:"numeric"})
+  const fmt=(d:Date)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+  const isSameDay=(a:Date,b:Date)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()
+
+  const cells=[]
+  for(let i=0;i<firstDay;i++)cells.push(null)
+  for(let d=1;d<=daysInMonth;d++)cells.push(d)
+
+  return(
+    <div ref={ref} className="relative">
+      <button type="button" onClick={()=>setOpen(o=>!o)} className="w-full flex items-center gap-2 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold text-left">
+        <Calendar size={13} className="text-[#E30613] shrink-0"/>
+        <span className={value?"text-zinc-900":"text-zinc-400"}>{value?new Date(value+"T00:00:00").toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"}):placeholder}</span>
+      </button>
+      {open&&(
+        <div className="absolute z-[300] top-full mt-1.5 left-0 w-64 rounded-2xl bg-[#FAF8F3] border border-zinc-200 shadow-2xl p-3">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronLeft size={14}/></button>
+            <span className="text-[11px] font-black uppercase tracking-wider">{monthName}</span>
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronRight size={14}/></button>
+          </div>
+          <div className="grid grid-cols-7 gap-0.5 mb-1">
+            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-zinc-400 text-center py-1">{d}</div>))}
+          </div>
+          <div className="grid grid-cols-7 gap-0.5">
+            {cells.map((d,i)=>{
+              if(d===null)return <div key={i}/>
+              const cellDate=new Date(year,month,d)
+              const isToday=isSameDay(cellDate,today)
+              const isSelected=selected&&isSameDay(cellDate,selected)
+              return(
+                <button type="button" key={i} onClick={()=>{onChange(fmt(cellDate));setOpen(false)}}
+                  className={`aspect-square rounded-full text-[10px] font-bold transition-all flex items-center justify-center
+                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-zinc-700 hover:bg-zinc-200/60'}`}>
+                  {d}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+const Dropdown = ({trigger,children,align="right"}:{trigger:React.ReactNode;children:React.ReactNode;align?:"left"|"right"}) => {
+  const [open,setOpen]=useState(false)
+  const ref=useRef<HTMLDivElement>(null)
+  useEffect(()=>{
+    if(!open)return
+    const onClick=(e:MouseEvent)=>{ if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener("mousedown",onClick)
+    return ()=>document.removeEventListener("mousedown",onClick)
+  },[open])
+  return(
+    <div ref={ref} className="relative">
+      <div onClick={()=>setOpen(o=>!o)}>{trigger}</div>
+      {open&&(
+        <div onClick={()=>setOpen(false)} className={`absolute top-full mt-1.5 ${align==="right"?"right-0":"left-0"} z-[150] min-w-[180px] rounded-xl bg-white border border-zinc-200 shadow-xl py-1.5 flex flex-col`}>
+          {children}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
   const { tr } = useTranslate()
   const [uname,setUname]=useState(""), [pw,setPw]=useState(""), [err,setErr]=useState(""), [reg,setReg]=useState(false), [busy,setBusy]=useState(false)
@@ -342,13 +456,21 @@ export default function EliteSquadApp() {
   },[selMember?.id])
   const [isFormOpen,setIsFormOpen]=useState(false)
   const [editingId,setEditingId]=useState<number|null>(null)
+  const [confirmState,setConfirmState]=useState<{message:string;resolve:(v:boolean)=>void}|null>(null)
+  const askConfirm=(message:string):Promise<boolean>=>new Promise(resolve=>setConfirmState({message,resolve}))
   const [isMatchOpen,setIsMatchOpen]=useState(false)
+  const [scheduleOpen,setScheduleOpen]=useState(false)
+  const [scheduleForm,setScheduleForm]=useState({opponent:"",date:"",competition:"",venue:""})
   const [isHistoryOpen,setIsHistoryOpen]=useState(false)
   const [matchSheetTarget,setMatchSheetTarget]=useState<any>(null)
   const [selMatch,setSelMatch]=useState<any>(null)
   const [usersOpen,setUsersOpen]=useState(false)
   const [activityLogOpen,setActivityLogOpen]=useState(false)
   const [activityLog,setActivityLog]=useState<any[]>([])
+  const [newsOpen,setNewsOpen]=useState(false)
+  const [upcomingOpen,setUpcomingOpen]=useState(false)
+  const [newsItems,setNewsItems]=useState<any[]|null>(null)
+  const [newsLoading,setNewsLoading]=useState(false)
   const [pendingReviewOpen,setPendingReviewOpen]=useState(false)
   const [pendingMatchesOpen,setPendingMatchesOpen]=useState(false)
   const [renderTick,setRenderTick]=useState(0)
@@ -359,7 +481,7 @@ export default function EliteSquadApp() {
   const pendingCount = pendingUsers.length
   const fileRef=useRef<HTMLInputElement>(null)
 
-  const initForm={name:"",club:"",position:"",image:"",natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:""}
+  const initForm={name:"",club:"",position:"",image:"",natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",bioQuote:"",leagueRegion:"",dualNationality:false,secondNationality:""}
   const [form,setForm]=useState<any>(initForm)
   const initMatch={opponent:"",date:"",result:"",venue:"",competition:"",squad:[] as number[],scorers:[] as {playerId:number,goals:number}[],yellowCards:[] as number[],redCards:[] as number[],subs:[] as {out:number;in:number}[],notes:"",opponentSquad:[] as string[],opponentScorers:[] as {name:string,goals:number}[],opponentYellowCards:[] as string[],opponentRedCards:[] as string[],opponentSubs:[] as {out:string;in:string}[],tunisiaPossession:"",opponentPossession:"",tunisiaShots:"",opponentShots:"",tunisiaShotsOnTarget:"",opponentShotsOnTarget:"",tunisiaCorners:"",opponentCorners:"",tunisiaFouls:"",opponentFouls:""}
   const countryFlags:Record<string,string>={"Tunisia":"tn","Algeria":"dz","Egypt":"eg","Morocco":"ma","Senegal":"sn","Nigeria":"ng","Cameroon":"cm","Ghana":"gh","Ivory Coast":"ci","Côte d'Ivoire":"ci","Cote d'Ivoire":"ci","Mali":"ml","Burkina Faso":"bf","South Africa":"za","DR Congo":"cd","DRC":"cd","Congo":"cg","Zambia":"zm","Equatorial Guinea":"gq","Guinea":"gn","Guinea-Bissau":"gw","Benin":"bj","Togo":"tg","Sierra Leone":"sl","Liberia":"lr","Sudan":"sd","South Sudan":"ss","Uganda":"ug","Kenya":"ke","Tanzania":"tz","Rwanda":"rw","Burundi":"bi","Ethiopia":"et","Eritrea":"er","Somalia":"so","Angola":"ao","Namibia":"na","Botswana":"bw","Zimbabwe":"zw","Mozambique":"mz","Malawi":"mw","Lesotho":"ls","Eswatini":"sz","Madagascar":"mg","Mauritius":"mu","Cape Verde":"cv","Mauritania":"mr","Gambia":"gm","Gabon":"ga","Chad":"td","Niger":"ne","Libya":"ly","France":"fr","England":"gb-eng","Spain":"es","Germany":"de","Italy":"it","Netherlands":"nl","Portugal":"pt","Belgium":"be","Croatia":"hr","Switzerland":"ch","Sweden":"se","Denmark":"dk","Norway":"no","Poland":"pl","Brazil":"br","Argentina":"ar","Uruguay":"uy","Colombia":"co","Chile":"cl","Peru":"pe","Ecuador":"ec","Mexico":"mx","USA":"us","United States":"us","Canada":"ca","Japan":"jp","South Korea":"kr","Korea Republic":"kr","Saudi Arabia":"sa","Iran":"ir","Australia":"au","New Zealand":"nz"}
@@ -438,11 +560,22 @@ export default function EliteSquadApp() {
     setTeamCat(cat);setFilterPos("ALL");setActiveTab("PLAYERS");setSearch("")
   }
 
+  const [scoutRegionFilter,setScoutRegionFilter]=useState<Set<string>>(new Set())
+  const [scoutDualOnly,setScoutDualOnly]=useState(false)
+  const [scoutFilterOpen,setScoutFilterOpen]=useState(false)
+  const [squadLabOpen,setSquadLabOpen]=useState(false)
+  const [labFormation,setLabFormation]=useState("4-3-3")
+  const [labSlots,setLabSlots]=useState<Record<string,number|null>>({})
+  const [labPickerSlot,setLabPickerSlot]=useState<string|null>(null)
+  const [labTemplates,setLabTemplates]=useState<any[]>([])
+  const [labTemplateName,setLabTemplateName]=useState("")
   const filtered=useMemo(()=>members.filter(m=>
     m.role===activeTab&&m.teamCategory===teamCat&&
     m.name.toLowerCase().includes(search.toLowerCase())&&
-    (filterPos==="ALL"||m.position===filterPos)
-  ),[members,activeTab,search,filterPos,teamCat])
+    (filterPos==="ALL"||m.position===filterPos)&&
+    (scoutRegionFilter.size===0||(m.leagueRegion&&scoutRegionFilter.has(m.leagueRegion)))&&
+    (!scoutDualOnly||m.dualNationality)
+  ),[members,activeTab,search,filterPos,teamCat,scoutRegionFilter,scoutDualOnly])
 
   const catPlayers=useMemo(()=>members.filter(m=>m.role==="PLAYERS"&&m.teamCategory===teamCat),[members,teamCat])
   const catMatches=useMemo(()=>matches.filter(m=>m.teamCategory===teamCat&&m.status==="approved"),[matches,teamCat])
@@ -665,9 +798,9 @@ export default function EliteSquadApp() {
   if(!teamCat) return(
     <div className="relative">
       <div className="fixed top-6 right-6 z-[999] flex gap-3">
-        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:text-black transition-all text-[10px] font-black uppercase tracking-widest"><Globe size={16}/><span className="ml-1">{lang.toUpperCase()}</span></button>
+        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} title="Change language" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:text-black transition-all text-[10px] font-black uppercase tracking-widest"><Globe size={16}/><span className="ml-1">{lang.toUpperCase()}</span></button>
         <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 self-center">{user?.username}</span>
-        <button onClick={handleChangePassword} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-blue-500 hover:text-white transition-all"><Key size={18}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-red-500 hover:text-white transition-all"><LogOut size={18}/></button>
+        <button onClick={handleChangePassword} title="Change your password" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-blue-500 hover:text-white transition-all"><Key size={18}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-red-500 hover:text-white transition-all"><LogOut size={18}/></button>
       </div>
       <TeamSelector onSelect={selectCat}/>
     </div>
@@ -691,7 +824,7 @@ export default function EliteSquadApp() {
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E30613]/40 to-transparent animate-[pulse_3s_ease-in-out_infinite]"/>
         <div className="max-w-7xl mx-auto px-6 pt-3 pb-2 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <button onClick={()=>{setTeamCat(null);setSearch("")}} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all"><ChevronLeft size={16}/></button>
+            <button onClick={()=>{setTeamCat(null);setSearch("")}} title="Back to team categories" className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all"><ChevronLeft size={16}/></button>
             <img src="/ftf-logo.png" className="h-10" alt=""/>
             <div className="leading-tight">
               <h1 className="text-xs sm:text-xl font-black italic uppercase tracking-wider leading-none">{tr.header.eliteSquad}</h1>
@@ -703,30 +836,82 @@ export default function EliteSquadApp() {
               <Search size={13} className="mr-2 text-zinc-400 shrink-0"/>
               <input placeholder={tr.header.search} className="bg-transparent text-[10px] font-bold outline-none w-full uppercase text-zinc-900 placeholder-zinc-400" value={search} onChange={e=>setSearch(e.target.value)}/>
             </div>
-            <button onClick={()=>{if(canManageUsers&&pendingMatches.length>0)setPendingMatchesOpen(true);else setIsHistoryOpen(true)}} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613]">
+            <button onClick={()=>{if(canManageUsers&&pendingMatches.length>0)setPendingMatchesOpen(true);else setIsHistoryOpen(true)}} title="Match history" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613]">
               <BookOpen size={14}/>
               <span className="hidden sm:inline">{tr.header.matches}</span>
               {canManageUsers&&pendingMatches.length>0&&<span className="bg-amber-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingMatches.length}</span>}
               {catMatches.length>0&&<span className="bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{catMatches.length}</span>}
             </button>
-            {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-green-50 hover:border-green-300 hover:text-green-600">
+            {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-green-50 hover:border-green-300 hover:text-green-600">
               <Users size={14}/><span className="hidden sm:inline">Add Match</span>
             </button>}
+            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600">
+              <Calendar size={14}/><span className="hidden sm:inline">Schedule Match</span>
+            </button>}
             <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} />
-            {p.exportData&&<ExportTools members={members} matches={matches} teamCat={teamCat} onImport={handleImport} />}
-            <button onClick={()=>window.print()} className="flex items-center gap-1 px-2 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-zinc-100">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-              <span className="hidden sm:inline">Print</span>
-            </button>
-            <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} className="flex items-center gap-1 px-2 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-zinc-100">
-              <Globe size={14}/><span className="hidden sm:inline">{lang.toUpperCase()}</span>
-            </button>
-            <span className="text-[7px] font-black uppercase tracking-wider text-zinc-400 hidden sm:block">{user?.username}</span>
-            <button onClick={handleChangePassword} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-blue-50 hover:text-blue-500 transition-all"><Key size={16}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-red-50 hover:text-red-500 transition-all"><LogOut size={16}/></button>
-            {canManageUsers&&<button onClick={()=>setPendingReviewOpen(true)} className="relative px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613] transition-all"><Bell size={14}/>{pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}</button>}
-            {canManageUsers&&<button onClick={()=>setUsersOpen(true)} className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Users size={14}/></button>}
-            {canManageUsers&&<button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="px-2 py-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all text-[8px] font-black uppercase tracking-wider"><Activity size={14}/></button>}
-            {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} className="p-2 rounded-xl bg-[#E30613] text-white hover:bg-red-700 transition-all"><Plus size={16}/></button>}
+
+            <div className="w-px h-6 bg-zinc-200 mx-0.5"/>
+
+            <Dropdown trigger={
+              <button title="Tools" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-zinc-100">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span className="hidden sm:inline">Tools</span><ChevronDown size={11}/>
+              </button>
+            }>
+              {p.exportData&&<div className="px-1"><ExportTools members={members} matches={matches} teamCat={teamCat} onImport={handleImport} /></div>}
+              <button onClick={()=>window.print()} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                Print
+              </button>
+              <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                <Globe size={14}/>Language ({lang.toUpperCase()})
+              </button>
+              <button onClick={()=>setUpcomingOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                <Calendar size={14}/>Upcoming Matches
+              </button>
+              {p.addMatch&&<button onClick={async()=>{setLabSlots({});setLabTemplateName("");setSquadLabOpen(true);setLabTemplates(await fetchSquadTemplates(teamCat))}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                <Users size={14}/>Squad Lab
+              </button>}
+              <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                <Newspaper size={14}/>Women's Football News
+              </button>
+            </Dropdown>
+
+            {canManageUsers&&(
+              <Dropdown trigger={
+                <button title="Admin" className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#E30613]/20 bg-[#E30613]/5 text-[9px] font-black uppercase tracking-widest transition-all text-[#E30613] hover:bg-[#E30613]/10">
+                  <ShieldCheck size={14}/><span className="hidden sm:inline">Admin</span><ChevronDown size={11}/>
+                  {pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}
+                </button>
+              }>
+                <button onClick={()=>setPendingReviewOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                  <Bell size={14}/>Pending Approvals{pendingCount>0&&<span className="ml-auto bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingCount}</span>}
+                </button>
+                <button onClick={()=>setUsersOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                  <Users size={14}/>Manage Users
+                </button>
+                <button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                  <Activity size={14}/>Activity Log
+                </button>
+              </Dropdown>
+            )}
+
+            <Dropdown trigger={
+              <button title="Account" className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl border border-zinc-200 hover:bg-zinc-100 transition-all">
+                <div className="w-6 h-6 rounded-full bg-zinc-800 text-white flex items-center justify-center text-[9px] font-black uppercase shrink-0">{(user?.username||"?")[0]}</div>
+                <span className="hidden sm:inline text-[8px] font-black uppercase tracking-wider text-zinc-500">{user?.username}</span>
+                <ChevronDown size={11} className="text-zinc-400"/>
+              </button>
+            }>
+              <button onClick={handleChangePassword} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                <Key size={14}/>Change Password
+              </button>
+              <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-red-500 hover:bg-red-50 transition-all text-left">
+                <LogOut size={14}/>Log Out
+              </button>
+            </Dropdown>
+
+            {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="p-2 rounded-full bg-[#E30613] text-white hover:bg-red-700 transition-all"><Plus size={16}/></button>}
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 pb-3 flex items-center gap-3 flex-wrap">
@@ -750,6 +935,15 @@ export default function EliteSquadApp() {
             ))}
           </div>
         </div>
+
+        {/* Scout filter — button opens a full panel with every league/region + dual nationality */}
+        {activeTab==="PLAYERS"&&(
+          <div className="max-w-7xl mx-auto px-6 pb-3">
+            <button onClick={()=>setScoutFilterOpen(true)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-wider border transition-all ${(scoutRegionFilter.size>0||scoutDualOnly)?'bg-blue-600 border-blue-600 text-white':'border-zinc-200 bg-white text-zinc-500 hover:border-blue-300'}`}>
+              <Globe size={11}/>Filter{(scoutRegionFilter.size>0||scoutDualOnly)&&<span className="bg-white/25 rounded-full px-1.5">{scoutRegionFilter.size+(scoutDualOnly?1:0)}</span>}
+            </button>
+          </div>
+        )}
       </header>
 
       {/* ─── DISCIPLINE LEGEND ─── */}
@@ -763,11 +957,11 @@ export default function EliteSquadApp() {
           </div>
           <span className="text-[7px] text-zinc-300 italic hidden sm:block">{tr.discipline.cafRule}</span>
           <div className="ml-auto flex items-center gap-2">
-            <button onClick={()=>{if(window.confirm("Reset all yellow/red cards for all players in this category?")){setMembers((p:any[])=>p.map(m=>m.teamCategory===teamCat?{...m,yellowCards:0,redCards:0,suspended:false}:m))}}}
+            <button onClick={async()=>{if(await askConfirm("Reset all yellow/red cards for all players in this category?")){setMembers((p:any[])=>p.map(m=>m.teamCategory===teamCat?{...m,yellowCards:0,redCards:0,suspended:false}:m))}}}
               className="px-2 py-1 rounded-lg border border-zinc-200 text-[6px] font-black uppercase tracking-widest text-zinc-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all">Reset</button>
             {p.deletePlayer&&(selectedIds.size===0
               ?<button onClick={()=>setSelectedIds(new Set(members.filter(m=>m.role==="PLAYERS"&&m.teamCategory===teamCat).map(m=>m.id)))} className="flex items-center gap-1 px-2 py-1 rounded-lg border border-red-200 text-[6px] font-black uppercase tracking-widest text-red-400 hover:bg-red-50 transition-all"><Trash2 size={9}/>Select</button>
-              :<><span className="text-[7px] font-bold text-red-500">{selectedIds.size}</span><button onClick={()=>{const names=members.filter(m=>selectedIds.has(m.id)).map(m=>m.name).join(", ");if(confirm(`Delete ${selectedIds.size} player(s)?\n\n${names}`)){setMembers(members.filter(m=>!selectedIds.has(m.id)));setSelectedIds(new Set())}}} className="px-2 py-1 rounded-lg bg-red-600 text-white text-[6px] font-black uppercase tracking-widest hover:bg-red-700 transition-all">Delete</button><button onClick={()=>setSelectedIds(new Set())} className="px-2 py-1 rounded-lg border border-zinc-300 text-[6px] font-black uppercase tracking-widest text-zinc-500 hover:bg-zinc-100 transition-all">X</button></>)}
+              :<><span className="text-[7px] font-bold text-red-500">{selectedIds.size}</span><button onClick={async()=>{const names=members.filter(m=>selectedIds.has(m.id)).map(m=>m.name).join(", ");if(await askConfirm(`Delete ${selectedIds.size} player(s)?\n\n${names}`)){setMembers(members.filter(m=>!selectedIds.has(m.id)));setSelectedIds(new Set())}}} className="px-2 py-1 rounded-lg bg-red-600 text-white text-[6px] font-black uppercase tracking-widest hover:bg-red-700 transition-all">Delete</button><button onClick={()=>setSelectedIds(new Set())} className="px-2 py-1 rounded-lg border border-zinc-300 text-[6px] font-black uppercase tracking-widest text-zinc-500 hover:bg-zinc-100 transition-all">X</button></>)}
           </div>
         </div>
       )}
@@ -787,6 +981,11 @@ export default function EliteSquadApp() {
               {cs&&(
                 <div className={`absolute z-10 px-2 py-0.5 rounded-full text-[6px] font-black uppercase tracking-wider translate-x-3 translate-y-3 ${cs==="suspended"?'bg-red-600 text-white':'bg-yellow-400 text-yellow-900'}`}>
                   {cs==="suspended"?"BANNED":"WARN"}
+                </div>
+              )}
+              {m.dualNationality&&(
+                <div title={`Dual nationality${m.secondNationality?': '+m.secondNationality:''}`} className="absolute z-10 top-2 right-2 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shadow">
+                  <Globe size={10} className="text-white"/>
                 </div>
               )}
               {p.deletePlayer&&<div onClick={e=>{e.stopPropagation();setSelectedIds(p=>{const n=new Set(p);if(n.has(m.id))n.delete(m.id);else n.add(m.id);return n})}} className={`absolute z-10 top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${sel?'bg-[#E30613] border-[#E30613]':'bg-white/80 border-zinc-400 hover:border-[#E30613]'}`}>{sel&&<Check size={12} className="text-white"/>}</div>}
@@ -847,8 +1046,8 @@ export default function EliteSquadApp() {
                 {/* Actions */}
                 <div className="absolute top-2 right-2 z-10 flex gap-0.5">
                   {p.editPlayer&&<button onClick={()=>{setEditingId(selMember.id);setForm({...selMember});setSelMember(null);setIsFormOpen(true)}} className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><Edit3 size={10} className="text-white"/></button>}
-                  {p.deletePlayer&&<button onClick={()=>{if(confirm(tr.profile.delete+"?")){{setMembers(members.filter(m=>m.id!==selMember.id));setSelMember(null)}}}} className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><Trash2 size={10} className="text-red-200"/></button>}
-                  <button onClick={()=>setSelMember(null)} className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><X size={10} className="text-white"/></button>
+                  {p.deletePlayer&&<button onClick={async()=>{if(await askConfirm(tr.profile.delete+"?")){{setMembers(members.filter(m=>m.id!==selMember.id));setSelMember(null)}}}} className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><Trash2 size={10} className="text-red-200"/></button>}
+                  <button onClick={()=>setSelMember(null)} title="Close" className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><X size={10} className="text-white"/></button>
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black/20"/>
               </div>
@@ -885,10 +1084,17 @@ export default function EliteSquadApp() {
               {/* Body */}
               <div className="px-5 py-4 space-y-4 max-h-[55vh] overflow-y-auto">
 
-                {(p.viewMedical||canManageUsers)&&(
+                {isPlayer?(
+                  (p.viewMedical||canManageUsers)&&(
+                    <div className="flex gap-1.5 -mt-1 mb-1">
+                      <button onClick={()=>setProfileTab("profile")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="profile"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Profile</button>
+                      <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Medical</button>
+                    </div>
+                  )
+                ):(
                   <div className="flex gap-1.5 -mt-1 mb-1">
-                    <button onClick={()=>setProfileTab("profile")} className={`flex-1 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="profile"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Profile</button>
-                    <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Medical</button>
+                    <button onClick={()=>setProfileTab("profile")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="profile"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Profile</button>
+                    <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Info</button>
                   </div>
                 )}
 
@@ -953,19 +1159,29 @@ export default function EliteSquadApp() {
                   </>
                 )}
 
-                {/* Staff info */}
-                {!isPlayer&&(
+                {/* Staff info — Profile tab: core bio only */}
+                {!isPlayer&&(()=>{
+                  const validYears=(selMember.history||[]).map((h:any)=>parseInt(h?.year)).filter((y:number)=>!isNaN(y)&&y>1900)
+                  const sinceYear=validYears.length>0?Math.min(...validYears):null
+                  return(
                   <div className="space-y-3">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
                         <Award size={16} className="text-[#E30613] shrink-0"/>
                         <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.position||'COACH'}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.responsibility}</span></div>
                       </div>
-                      <div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
-                        <ShieldCheck size={16} className="text-[#E30613] shrink-0"/>
-                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.natMatches||'N/A'}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.license}</span></div>
+                      <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded border border-amber-200 p-3 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center shrink-0 shadow"><ShieldCheck size={14} className="text-white"/></div>
+                        <div><p className="text-sm font-bold text-amber-900 uppercase">{selMember.natMatches||'N/A'}</p><span className="text-[12px] text-amber-600 uppercase font-medium">{tr.profile.license}</span></div>
                       </div>
                     </div>
+
+                    {sinceYear&&(
+                      <div className="flex justify-center">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full bg-zinc-100 text-zinc-500">With the federation since {sinceYear}</span>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-3 gap-3">
                       {selMember.nationality&&<div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
                         <Globe size={14} className="text-[#E30613] shrink-0"/>
@@ -981,7 +1197,7 @@ export default function EliteSquadApp() {
                       </div>}
                     </div>
                   </div>
-                )}
+                )})()}
 
               {/* AI Update */}
               <button type="button" onClick={handleAIUpdate} className="w-full py-2.5 rounded-xl border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-100 text-[12px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
@@ -1007,7 +1223,7 @@ export default function EliteSquadApp() {
 
               </>)}
 
-              {profileTab==="medical"&&(
+              {profileTab==="medical"&&(isPlayer?(
                 <div className="space-y-2.5">
                   {p.editMedical&&(
                     <button onClick={()=>setAddInjuryOpen(true)} className="w-full py-2 rounded-lg border border-dashed border-[#E30613]/30 text-[12px] font-black uppercase tracking-wider text-[#E30613] hover:bg-[#E30613]/5 transition-all flex items-center justify-center gap-1.5">
@@ -1024,11 +1240,11 @@ export default function EliteSquadApp() {
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <p className={`text-[14px] font-bold ${colors.text}`}>{inj.injury_type}</p>
-                            <p className="text-[12px] text-zinc-500 mt-0.5">{inj.body_part?`${inj.body_part} · `:""}{inj.occurred_on?`occurred ${inj.occurred_on}`:""}</p>
+                            <p className="text-[12px] text-zinc-500 mt-0.5">{inj.body_part?`${inj.body_part} · `:""}{inj.occurred_on?`occurred ${fmtDateWords(inj.occurred_on)}`:""}</p>
                           </div>
                           <span className={`shrink-0 text-[12px] font-black uppercase px-2 py-1 rounded ${colors.pill}`}>{inj.status}</span>
                         </div>
-                        {inj.expected_return&&<p className="text-[12px] text-zinc-400 mt-1.5">Expected return: {inj.expected_return}</p>}
+                        {inj.expected_return&&<p className="text-[12px] text-zinc-400 mt-1.5">Expected return: {fmtDateWords(inj.expected_return)}</p>}
                         {inj.notes&&<p className="text-[12px] text-zinc-500 mt-1.5">{inj.notes}</p>}
                         <p className="text-[11px] text-zinc-400 mt-1.5">Logged by {inj.logged_by_username||"unknown"}</p>
                         {p.editMedical&&inj.status!=="recovered"&&(
@@ -1041,7 +1257,94 @@ export default function EliteSquadApp() {
                     )
                   })}
                 </div>
-              )}
+              ):(()=>{
+                const catMatchesPlayed=matches.filter((m:any)=>m.teamCategory===selMember.teamCategory&&m.result)
+                let wins=0,draws=0,losses=0
+                let biggestWin:{opponent:string,result:string,diff:number}|null=null
+                catMatchesPlayed.forEach((m:any)=>{
+                  const parts=(m.result||"").split("-").map((x:string)=>parseInt(x))
+                  if(parts.length===2&&!isNaN(parts[0])&&!isNaN(parts[1])){
+                    if(parts[0]>parts[1]){
+                      wins++
+                      const diff=parts[0]-parts[1]
+                      if(!biggestWin||diff>biggestWin.diff)biggestWin={opponent:m.opponent,result:m.result,diff}
+                    }
+                    else if(parts[0]<parts[1])losses++
+                    else draws++
+                  }
+                })
+                const posGroup=(pos:string)=>{
+                  const P=(pos||"").toUpperCase()
+                  if(P.includes("GOAL")||P==="GK")return null
+                  if(P.includes("DEF"))return "DEF"
+                  if(P.includes("MID"))return "MID"
+                  return "FWD"
+                }
+                const formationCounts:Record<string,number>={}
+                catMatchesPlayed.forEach((m:any)=>{
+                  const xi=(m.squad||[]).slice(0,11).map((pid:number)=>members.find((mm:any)=>mm.id===pid)).filter(Boolean)
+                  if(xi.length<11)return
+                  let def=0,mid=0,fwd=0
+                  xi.forEach((pl:any)=>{const g=posGroup(pl.position);if(g==="DEF")def++;else if(g==="MID")mid++;else if(g==="FWD")fwd++})
+                  if(def+mid+fwd===0)return
+                  const shape=`${def}-${mid}-${fwd}`
+                  formationCounts[shape]=(formationCounts[shape]||0)+1
+                })
+                const signatureFormation=Object.entries(formationCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]
+                const milestones:string[]=[]
+                if(catMatchesPlayed.length>=50)milestones.push("50+ Matches")
+                else if(catMatchesPlayed.length>=20)milestones.push("20+ Matches")
+                if(wins>=10)milestones.push("10+ Wins")
+                const sortedByDate=[...catMatchesPlayed].sort((a,b)=>(a.date||"").localeCompare(b.date||""))
+                if(sortedByDate.length>=5&&sortedByDate.slice(0,5).every((m:any)=>{const parts=(m.result||"").split("-").map((x:string)=>parseInt(x));return !(parts[0]<parts[1])}))milestones.push("Unbeaten Start")
+                return(
+                <div className="space-y-3">
+                  {selMember.bioQuote?(
+                    <p className="text-[12px] italic text-zinc-500 text-center px-2 leading-snug">"{selMember.bioQuote}"</p>
+                  ):(
+                    <p className="text-[11px] text-zinc-300 text-center px-2 italic">No coaching philosophy added yet</p>
+                  )}
+                  <div className="grid grid-cols-3 gap-px bg-zinc-200 rounded-xl overflow-hidden">
+                    <div className="bg-white py-3.5 text-center">
+                      <p className="font-mono text-xl font-bold text-zinc-900">{String(catMatchesPlayed.length).padStart(2,'0')}</p>
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Overseen</p>
+                    </div>
+                    <div className="bg-white py-3.5 text-center">
+                      <p className="text-xl font-bold"><span className="text-green-600">{wins}</span><span className="text-zinc-300 mx-0.5">-</span><span className="text-zinc-500">{draws}</span><span className="text-zinc-300 mx-0.5">-</span><span className="text-red-500">{losses}</span></p>
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">W-D-L</p>
+                    </div>
+                    <div className="bg-white py-3.5 text-center">
+                      <p className="text-xl font-bold text-zinc-900">{catMatchesPlayed.length>0?Math.round((wins/catMatchesPlayed.length)*100):0}%</p>
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Win Rate</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gradient-to-br from-[#E30613] to-red-800 rounded-xl p-3 text-white">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-white/70">Biggest Win</p>
+                      {biggestWin?(<>
+                        <p className="text-lg font-black font-mono mt-0.5">{biggestWin.result}</p>
+                        <p className="text-[10px] font-bold text-white/80 truncate">vs {biggestWin.opponent}</p>
+                      </>):(
+                        <p className="text-[10px] font-bold text-white/60 mt-1.5">No wins recorded yet</p>
+                      )}
+                    </div>
+                    <div className="bg-zinc-900 rounded-xl p-3 text-white flex flex-col justify-center items-center text-center">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-white/50">Preferred Formation</p>
+                      <p className="text-lg font-black font-mono mt-0.5">{signatureFormation||"—"}</p>
+                    </div>
+                  </div>
+
+                  {milestones.length>0&&(
+                    <div className="flex flex-wrap gap-1.5">
+                      {milestones.map(ms=>(
+                        <span key={ms} className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">🏅 {ms}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                )
+              })())}
 
               </div>
             </div>
@@ -1055,19 +1358,24 @@ export default function EliteSquadApp() {
       {addInjuryOpen&&selMember&&(()=>{
         return(
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-sm rounded-2xl bg-white text-zinc-900 shadow-2xl p-5 space-y-3">
+          <div className="w-full max-w-sm rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl p-5 space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-black uppercase italic tracking-tighter">Log Injury — {selMember.name}</h2>
-              <button onClick={()=>setAddInjuryOpen(false)} className="p-1.5 rounded-lg hover:bg-zinc-100"><X size={18}/></button>
+              <button onClick={()=>setAddInjuryOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100"><X size={18}/></button>
             </div>
             <input placeholder="Injury type (e.g. Hamstring strain)" value={injForm.injury_type} onChange={e=>setInjForm({...injForm,injury_type:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
             <input placeholder="Body part (e.g. Left leg)" value={injForm.body_part} onChange={e=>setInjForm({...injForm,body_part:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
-            <select value={injForm.severity} onChange={e=>setInjForm({...injForm,severity:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none">
-              <option value="minor">Minor</option><option value="moderate">Moderate</option><option value="severe">Severe</option>
-            </select>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">Severity</p>
+              <div className="flex gap-1.5">
+                {["minor","moderate","severe"].map(sev=>(
+                  <button key={sev} type="button" onClick={()=>setInjForm({...injForm,severity:sev})} className={`flex-1 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${injForm.severity===sev?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>{sev}</button>
+                ))}
+              </div>
+            </div>
             <div className="flex gap-2">
-              <input type="date" value={injForm.occurred_on} onChange={e=>setInjForm({...injForm,occurred_on:e.target.value})} className="flex-1 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
-              <input type="date" placeholder="Expected return" value={injForm.expected_return} onChange={e=>setInjForm({...injForm,expected_return:e.target.value})} className="flex-1 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+              <div className="flex-1"><DatePicker value={injForm.occurred_on} onChange={(v)=>setInjForm({...injForm,occurred_on:v})} placeholder="Date occurred"/></div>
+              <div className="flex-1"><DatePicker value={injForm.expected_return} onChange={(v)=>setInjForm({...injForm,expected_return:v})} placeholder="Expected return"/></div>
             </div>
             <textarea placeholder="Notes (optional)" value={injForm.notes} onChange={e=>setInjForm({...injForm,notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none resize-none"/>
             <div className="flex gap-2 pt-1">
@@ -1090,10 +1398,10 @@ export default function EliteSquadApp() {
       ═══════════════════════════════════════════ */}
       {isFormOpen&&(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80 overflow-y-auto">
-          <div className="w-full max-w-lg p-4 sm:p-5 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900 max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-lg p-4 sm:p-5 rounded-[2rem] border border-zinc-200 bg-[#FAF8F3] text-zinc-900 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <div><h2 className="text-xl font-black italic uppercase tracking-tighter">{editingId?tr.form.update:tr.form.newEntry}</h2><p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{catLabel(teamCat)} · {activeTab}</p></div>
-              <button onClick={()=>setIsFormOpen(false)} className="p-1.5 hover:bg-red-500/10 rounded-xl"><X size={20}/></button>
+              <button onClick={()=>setIsFormOpen(false)} title="Close" className="p-1.5 hover:bg-red-500/10 rounded-xl"><X size={20}/></button>
             </div>
             <form onSubmit={saveForm} className="space-y-3">
               <div className="relative">
@@ -1130,6 +1438,36 @@ export default function EliteSquadApp() {
                       <div><label className="text-[7px] font-black uppercase text-zinc-500 mb-1 block">{tr.form.suspended}</label><button type="button" onClick={()=>setForm({...form,suspended:!form.suspended})} className={`w-full p-2.5 rounded-lg border text-[9px] font-black uppercase transition-all ${form.suspended?'bg-red-600 border-red-600 text-white':'bg-white border-zinc-200 text-zinc-400'}`}>{form.suspended?tr.profile.yes:tr.profile.no}</button></div>
                     </div>
                   </div>
+                  <div className="p-4 rounded-[1.5rem] border border-blue-200 bg-blue-50 space-y-3">
+                    <p className="text-[8px] font-black text-blue-500 uppercase tracking-[0.3em] flex items-center gap-2"><Globe size={9}/> Scout Tags</p>
+                    <div>
+                      <label className="text-[7px] font-black uppercase text-zinc-500 mb-1.5 block">League / Region</label>
+                      <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                        {LEAGUES_BY_REGION.map(group=>(
+                          <div key={group.region}>
+                            <p className="text-[6px] font-black uppercase text-zinc-400 mb-1">{group.region}</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {group.options.map(opt=>(
+                                <button key={opt} type="button" onClick={()=>setForm({...form,leagueRegion:form.leagueRegion===opt?"":opt})}
+                                  className={`px-2.5 py-1.5 rounded-full text-[8px] font-black uppercase tracking-wider transition-all ${form.leagueRegion===opt?'bg-blue-600 text-white':'bg-white border border-zinc-200 text-zinc-500 hover:border-blue-300'}`}>
+                                  {opt}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={()=>setForm({...form,dualNationality:!form.dualNationality})}
+                        className={`px-3 py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all shrink-0 ${form.dualNationality?'bg-blue-600 text-white':'bg-white border border-zinc-200 text-zinc-500'}`}>
+                        {form.dualNationality?"✓ Dual Nationality":"Dual Nationality"}
+                      </button>
+                      {form.dualNationality&&(
+                        <input placeholder="Second nationality (e.g. France)" value={form.secondNationality||""} onChange={e=>setForm({...form,secondNationality:e.target.value})} className="flex-1 p-2 rounded-lg border border-zinc-200 bg-white text-[9px] font-bold outline-none"/>
+                      )}
+                    </div>
+                  </div>
                 </>
               ):(
                 <div className="grid grid-cols-2 gap-2">
@@ -1153,6 +1491,9 @@ export default function EliteSquadApp() {
                         )
                       })}
                     </div>
+                  </div>
+                  <div className="col-span-2">
+                    <textarea placeholder="Coaching philosophy (optional, one line)" value={form.bioQuote||""} onChange={e=>setForm({...form,bioQuote:e.target.value})} rows={2} maxLength={140} className="w-full p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-medium italic outline-none resize-none"/>
                   </div>
                   <input placeholder={tr.form.contract} value={form.contract} onChange={e=>setForm({...form,contract:e.target.value})} className="w-full p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-[9px] font-bold uppercase outline-none"/>
                 </div>
@@ -1185,13 +1526,13 @@ export default function EliteSquadApp() {
       ═══════════════════════════════════════════ */}
       {pendingReviewOpen&&(
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 shrink-0">
               <div>
                 <h2 className="text-2xl font-black uppercase italic tracking-tight">Pending Users</h2>
                 <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{pendingCount} awaiting approval</p>
               </div>
-              <button onClick={()=>setPendingReviewOpen(false)} className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
+              <button onClick={()=>setPendingReviewOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
             </div>
             <div className="p-6 space-y-5 overflow-y-auto">
               {pendingUsers.map((u)=>{
@@ -1234,7 +1575,7 @@ export default function EliteSquadApp() {
                       </div>
                     </div>
                     <div className="flex gap-3 px-5 pb-5">
-                      <button onClick={doApprove} className="flex-1 py-3 rounded-xl bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Save & Approve</button>
+                      <button onClick={doApprove} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Save & Approve</button>
                       <button onClick={doHold} className="flex-1 py-3 rounded-xl border border-zinc-300 bg-white text-zinc-500 text-[8px] font-black uppercase tracking-wider hover:bg-zinc-100 transition-all">Hold</button>
                       <button onClick={doDelete} className="py-3 px-4 rounded-xl border border-red-200 text-red-500 text-[8px] font-black uppercase tracking-wider hover:bg-red-50 transition-all"><Trash2 size={12}/></button>
                     </div>
@@ -1257,13 +1598,13 @@ export default function EliteSquadApp() {
       ═══════════════════════════════════════════ */}
       {pendingMatchesOpen&&(
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 shrink-0">
               <div>
                 <h2 className="text-2xl font-black uppercase italic tracking-tight">Pending Matches</h2>
                 <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{pendingMatches.length} awaiting approval</p>
               </div>
-              <button onClick={()=>setPendingMatchesOpen(false)} className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
+              <button onClick={()=>setPendingMatchesOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
             </div>
             <div className="p-6 space-y-4 overflow-y-auto">
               {pendingMatches.map(m=>(
@@ -1274,7 +1615,7 @@ export default function EliteSquadApp() {
                         <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center"><BookOpen size={18} className="text-amber-600"/></div>
                         <div>
                           <p className="font-black uppercase text-sm leading-tight">{m.opponent}</p>
-                          <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">{m.date} · {m.competition||"Friendly"} · by @{m.submittedBy}</p>
+                          <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">{fmtDateWords(m.date)} · {m.competition||"Friendly"} · by @{m.submittedBy}</p>
                         </div>
                       </div>
                       <span className="text-[9px] font-black text-amber-600 bg-amber-100 px-2.5 py-1 rounded-lg uppercase">Pending</span>
@@ -1286,7 +1627,7 @@ export default function EliteSquadApp() {
                     <p>Squad: {m.squad?.length||0} players · Scorers: {m.scorers?.length||0}</p>
                   </div>
                   <div className="flex gap-3 px-5 pb-5">
-                    <button onClick={()=>approveMatch(m)} className="flex-1 py-3 rounded-xl bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Approve Match</button>
+                    <button onClick={()=>approveMatch(m)} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Approve Match</button>
                     <button onClick={()=>{setMatches(p=>p.filter((x:any)=>x.id!==m.id));setPendingMatchesOpen(false)}} className="py-3 px-5 rounded-xl border border-red-200 text-red-500 text-[8px] font-black uppercase tracking-wider hover:bg-red-50 transition-all"><Trash2 size={12} className="inline mr-1"/>Reject</button>
                   </div>
                 </div>
@@ -1307,12 +1648,12 @@ export default function EliteSquadApp() {
       ═══════════════════════════════════════════ */}
       {usersOpen&&(()=>{const users=fetchedUsers;return(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 shrink-0">
               <h2 className="text-lg font-black uppercase italic tracking-tight">User Management</h2>
               <div className="flex items-center gap-2">
                 <button onClick={()=>{syncUsers()}} className="p-2 rounded-xl border border-zinc-200 hover:bg-zinc-100 transition-all" title="Refresh"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
-                <button onClick={()=>setUsersOpen(false)} className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={16}/></button>
+                <button onClick={()=>setUsersOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={16}/></button>
               </div>
             </div>
             <div className="p-5 space-y-3 overflow-y-auto">
@@ -1373,28 +1714,66 @@ export default function EliteSquadApp() {
       ═══════════════════════════════════════════ */}
       {activityLogOpen&&(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-lg rounded-2xl bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[85vh]">
+          <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[85vh]">
             <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
               <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Activity size={16}/>Activity Log</h2>
-              <button onClick={()=>setActivityLogOpen(false)} className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
+              <button onClick={()=>setActivityLogOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
             </div>
             <div className="p-4 overflow-y-auto space-y-1.5">
               {activityLog.length===0&&<p className="text-[10px] text-zinc-400 text-center py-8">No activity yet</p>}
               {activityLog.map((a:any)=>{
                 const actionColor=a.action==="insert"?"text-green-600":a.action==="delete"?"text-red-500":"text-blue-600"
-                const actionLabel=a.action==="insert"?"added":a.action==="delete"?"deleted":"updated"
-                const entityLabel=a.entity_type==="members"?"a player/staff":a.entity_type==="matches"?"a match":"an account"
+                const actionVerb=a.action==="insert"?"added":a.action==="delete"?"deleted":"updated"
+                const buildSentence=()=>{
+                  if(a.entity_type==="injuries"){
+                    const playerName=(a.entity_label||"").split(" — ")[0]
+                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> <span className="font-bold text-zinc-800">{playerName}</span><span className="text-zinc-500">'s injury record</span></>
+                  }
+                  if(a.entity_type==="members"){
+                    if(a.action==="insert")return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-green-600">added a new player/staff</span>: <span className="font-bold text-zinc-800">{a.entity_label}</span></>
+                    if(a.action==="delete")return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-red-500">removed</span> <span className="font-bold text-zinc-800">{a.entity_label}</span></>
+                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-blue-600">updated</span> <span className="font-bold text-zinc-800">{a.entity_label}</span>'s profile</>
+                  }
+                  if(a.entity_type==="matches"){
+                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> the match vs <span className="font-bold text-zinc-800">{a.entity_label}</span></>
+                  }
+                  return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> account <span className="font-bold text-zinc-800">{a.entity_label}</span></>
+                }
+                const hiddenFields=new Set(["id","image_url","image_path","history","details"])
+                const changeEntries=a.changes?Object.entries(a.changes).filter(([k]:any)=>!hiddenFields.has(k)):[]
+                const fieldLabel=(k:string)=>k.replace(/_/g," ").replace(/\b\w/g,(c:string)=>c.toUpperCase())
+                const fmtVal=(v:any)=>{
+                  if(v===null||v===undefined)return "—"
+                  if(typeof v==="object")return JSON.stringify(v)
+                  return String(v)
+                }
+                const dt=new Date(a.created_at)
+                const dateStr=dt.toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"})
+                const timeStr=dt.toLocaleTimeString(undefined,{hour:"2-digit",minute:"2-digit",second:"2-digit"})
                 return(
-                  <div key={a.id} className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-zinc-50 border border-zinc-100">
-                    <div className="min-w-0">
-                      <p className="text-[10px] leading-tight">
-                        <span className="font-black">{a.actor_username||"unknown"}</span>{" "}
-                        <span className={`font-bold ${actionColor}`}>{actionLabel}</span>{" "}
-                        {entityLabel}{a.entity_label?`: ${a.entity_label}`:""}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-[7px] text-zinc-400 whitespace-nowrap">{new Date(a.created_at).toLocaleString()}</span>
-                  </div>
+                  <details key={a.id} className="group rounded-lg bg-zinc-50 border border-zinc-100 overflow-hidden">
+                    <summary className="flex items-start justify-between gap-2 p-2.5 cursor-pointer list-none">
+                      <div className="min-w-0">
+                        <p className="text-[11px] leading-snug">
+                          {buildSentence()}
+                        </p>
+                        <p className="text-[8px] text-zinc-400 mt-0.5">{dateStr} at {timeStr}</p>
+                      </div>
+                      {changeEntries.length>0&&<ChevronDown size={13} className="shrink-0 text-zinc-400 mt-0.5 group-open:rotate-180 transition-transform"/>}
+                    </summary>
+                    {changeEntries.length>0&&(
+                      <div className="px-2.5 pb-2.5 space-y-1 border-t border-zinc-200 pt-2 mt-0.5">
+                        {changeEntries.map(([field,val]:any)=>(
+                          <div key={field} className="flex items-center gap-1.5 text-[9px]">
+                            <span className="font-bold text-zinc-500 shrink-0">{fieldLabel(field)}:</span>
+                            <span className="text-red-400 line-through truncate">{fmtVal(val.from)}</span>
+                            <span className="text-zinc-300">→</span>
+                            <span className="text-green-600 font-bold truncate">{fmtVal(val.to)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </details>
                 )
               })}
             </div>
@@ -1403,11 +1782,228 @@ export default function EliteSquadApp() {
       )}
 
       {/* ═══════════════════════════════════════════
-          NEW MATCH MODAL — MATCH REPORT
+          UPCOMING MATCHES — its own special, featured space
       ═══════════════════════════════════════════ */}
+      {upcomingOpen&&(()=>{
+        const today=new Date().toISOString().slice(0,10)
+        const upcoming=matches.filter((m:any)=>m.date&&m.date>=today&&!m.result).sort((a:any,b:any)=>a.date.localeCompare(b.date))
+        const next=upcoming[0]
+        const rest=upcoming.slice(1)
+        const daysUntil=(dateStr:string)=>{
+          const diff=Math.ceil((new Date(dateStr+"T00:00:00").getTime()-new Date(new Date().toDateString()).getTime())/86400000)
+          return diff
+        }
+        return(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
+          <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
+            <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Calendar size={16}/>Upcoming Matches</h2>
+              <button onClick={()=>setUpcomingOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
+            </div>
+            <div className="p-5 overflow-y-auto space-y-5">
+
+              {!next&&<p className="text-[11px] text-zinc-400 py-10 text-center bg-zinc-100/60 rounded-2xl">No upcoming matches scheduled yet</p>}
+
+              {/* Featured hero card — the very next match, given real visual weight */}
+              {next&&(
+                <div className="relative rounded-2xl overflow-hidden" style={{background:"linear-gradient(135deg, #1a1a1a 0%, #E30613 140%)"}}>
+                  <div className="relative p-6 text-center">
+                    <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/60 mb-2">Next Match {daysUntil(next.date)===0?"· Today":daysUntil(next.date)===1?"· Tomorrow":`· In ${daysUntil(next.date)} days`}</p>
+                    <p className="text-2xl font-black uppercase italic tracking-tight text-white">Tunisia <span className="text-white/50 not-italic mx-1">vs</span> {next.opponent||"TBD"}</p>
+                    <p className="text-[12px] font-bold text-white/80 mt-2">{fmtDateWords(next.date)}</p>
+                    <div className="flex items-center justify-center gap-2 mt-3">
+                      <span className="text-[8px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-white/15 text-white">{next.competition||"Friendly"}</span>
+                      {next.venue&&<span className="text-[8px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-white/15 text-white">{next.venue}</span>}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Later fixtures — smaller, secondary treatment */}
+              {rest.length>0&&(
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-2">Also Coming Up</p>
+                  <div className="space-y-2">
+                    {rest.map((m:any)=>(
+                      <div key={m.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white border border-zinc-200/60">
+                        <div>
+                          <p className="text-[12px] font-bold">Tunisia vs {m.opponent||"TBD"}</p>
+                          <p className="text-[9px] text-zinc-500 mt-0.5">{m.competition||"Friendly"}{m.venue?` · ${m.venue}`:""}</p>
+                        </div>
+                        <span className="shrink-0 text-[10px] font-black text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full px-3 py-1.5">{fmtDateWords(m.date)}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )})()}
+
+      {/* ═══════════════════════════════════════════
+          WOMEN'S FOOTBALL NEWS — automated feed
+      ═══════════════════════════════════════════ */}
+      {newsOpen&&(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
+          <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
+            <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Newspaper size={16}/>Women's Football News</h2>
+              <button onClick={()=>setNewsOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
+            </div>
+            <div className="p-5 overflow-y-auto space-y-2">
+              <div className="flex items-center justify-end mb-1">
+                <span className="text-[8px] text-zinc-400">auto-updated</span>
+              </div>
+              {newsLoading&&<p className="text-[10px] text-zinc-400 py-6 text-center">Loading latest news…</p>}
+              {!newsLoading&&newsItems&&newsItems.length===0&&<p className="text-[10px] text-zinc-400 py-6 text-center">No news found right now</p>}
+              {!newsLoading&&newsItems&&newsItems.map((n:any,i:number)=>(
+                <a key={i} href={n.link} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-lg bg-white border border-zinc-200/60 hover:border-[#E30613]/30 hover:bg-[#E30613]/5 transition-all">
+                  <p className="text-[11px] font-bold text-zinc-800 leading-snug">{n.title}</p>
+                  <p className="text-[9px] text-zinc-400 mt-1">{n.source}{n.pubDate?` · ${new Date(n.pubDate).toLocaleDateString()}`:""}</p>
+                </a>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SCOUT FILTER PANEL — every league/region + dual nationality
+      ═══════════════════════════════════════════ */}
+      {scoutFilterOpen&&(
+        <div className="fixed inset-0 z-[220] flex items-center justify-center p-2 sm:p-4 bg-black/80">
+          <div className="w-full max-w-sm rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="px-5 pt-4 pb-3 border-b border-zinc-200 shrink-0 flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Globe size={15}/>Scout Filter</h2>
+              <button onClick={()=>setScoutFilterOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-200/60 transition-all"><X size={17}/></button>
+            </div>
+            <div className="p-4 overflow-y-auto space-y-4">
+              <button onClick={()=>setScoutDualOnly(d=>!d)} className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${scoutDualOnly?'bg-blue-600 border-blue-600 text-white':'border-zinc-200 bg-white text-zinc-600'}`}>
+                🌐 Dual Nationality Only {scoutDualOnly&&"✓"}
+              </button>
+
+              {LEAGUES_BY_REGION.map(group=>(
+                <div key={group.region}>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">{group.region}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.options.map(opt=>{
+                      const active=scoutRegionFilter.has(opt)
+                      return(
+                        <button key={opt} onClick={()=>{
+                          const next=new Set(scoutRegionFilter)
+                          if(active)next.delete(opt);else next.add(opt)
+                          setScoutRegionFilter(next)
+                        }} className={`px-2.5 py-1.5 rounded-full text-[9px] font-bold transition-all ${active?'bg-blue-600 text-white':'bg-white border border-zinc-200 text-zinc-500 hover:border-blue-300'}`}>
+                          {opt}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t border-zinc-200 shrink-0 flex gap-2">
+              <button onClick={()=>{setScoutRegionFilter(new Set());setScoutDualOnly(false)}} className="flex-1 py-2.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-white hover:bg-zinc-100 transition-all">Clear All</button>
+              <button onClick={()=>setScoutFilterOpen(false)} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">Show Results</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SQUAD LAB — test formations & lineups, FPL-style
+      ═══════════════════════════════════════════ */}
+      {squadLabOpen&&(()=>{
+        const categoryPlayers=members.filter((m:any)=>m.role==="PLAYERS"&&m.teamCategory===teamCat)
+        const usedIds=new Set(Object.values(labSlots).filter(Boolean))
+        const availableForPicker=categoryPlayers.filter((m:any)=>!usedIds.has(m.id))
+        const filledCount=Object.values(labSlots).filter(Boolean).length
+        return(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
+          <div className="w-full max-w-2xl rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[92vh]">
+            <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Users size={16}/>Squad Lab</h2>
+              <button onClick={()=>{setSquadLabOpen(false);setLabPickerSlot(null)}} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
+            </div>
+
+            <div className="p-5 overflow-y-auto space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.keys(FORMATIONS).map(f=>(
+                    <button key={f} onClick={()=>{setLabFormation(f);setLabSlots({})}} className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${labFormation===f?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>{f}</button>
+                  ))}
+                </div>
+                <span className="text-[10px] font-bold text-zinc-500">{filledCount}/11 filled</span>
+              </div>
+
+              <FormationPitch
+                formation={labFormation}
+                slots={labSlots}
+                members={categoryPlayers}
+                editable
+                onSlotClick={(slotKey)=>setLabPickerSlot(slotKey)}
+              />
+
+              {/* Player picker for the selected slot */}
+              {labPickerSlot&&(
+                <div className="rounded-xl bg-white border border-zinc-200 p-3 space-y-1.5 max-h-52 overflow-y-auto">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400">Assign to {labPickerSlot.toUpperCase()}</p>
+                    <button onClick={()=>setLabPickerSlot(null)} className="text-[8px] font-bold text-zinc-400 hover:text-zinc-600">Cancel</button>
+                  </div>
+                  {labSlots[labPickerSlot]&&(
+                    <button onClick={()=>{setLabSlots({...labSlots,[labPickerSlot]:null});setLabPickerSlot(null)}} className="w-full flex items-center gap-2 p-2 rounded-lg bg-red-50 text-red-600 text-[11px] font-bold text-left">
+                      <X size={12}/>Remove {categoryPlayers.find((m:any)=>m.id===labSlots[labPickerSlot!])?.name}
+                    </button>
+                  )}
+                  {availableForPicker.length===0&&<p className="text-[10px] text-zinc-400 py-3 text-center">No available players left</p>}
+                  {availableForPicker.map((pl:any)=>(
+                    <button key={pl.id} onClick={()=>{setLabSlots({...labSlots,[labPickerSlot]:pl.id});setLabPickerSlot(null)}} className="w-full flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-zinc-50 text-left transition-all">
+                      <span className="text-[11px] font-bold">{pl.name}</span>
+                      <span className="text-[8px] font-black uppercase text-zinc-400">{pl.position}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Save as template */}
+              <div className="flex gap-2">
+                <input placeholder="Name this lineup (e.g. vs Algeria - Plan A)" value={labTemplateName} onChange={e=>setLabTemplateName(e.target.value)} className="flex-1 p-2.5 bg-white rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+                <button onClick={async()=>{
+                  if(!labTemplateName.trim()){alert("Name this lineup first");return}
+                  const {error}=await saveSquadTemplate({teamCategory:teamCat!,name:labTemplateName.trim(),formation:labFormation,slots:labSlots})
+                  if(error){alert("Failed: "+error);return}
+                  setLabTemplateName("")
+                  setLabTemplates(await fetchSquadTemplates(teamCat!))
+                }} className="px-4 py-2.5 bg-[#E30613] text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all shrink-0">Save</button>
+              </div>
+
+              {/* Saved templates */}
+              {labTemplates.length>0&&(
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-2">Saved Lineups</p>
+                  <div className="space-y-1.5">
+                    {labTemplates.map((t:any)=>(
+                      <div key={t.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-white border border-zinc-200/60">
+                        <button onClick={()=>{setLabFormation(t.formation);setLabSlots(t.slots||{})}} className="flex-1 text-left">
+                          <p className="text-[11px] font-bold text-zinc-800">{t.name}</p>
+                          <p className="text-[8px] text-zinc-400">{t.formation} · by {t.created_by_username||"unknown"}</p>
+                        </button>
+                        <button onClick={async()=>{if(await askConfirm(`Delete "${t.name}"?`)){await deleteSquadTemplate(t.id);setLabTemplates(await fetchSquadTemplates(teamCat!))}}} className="p-1.5 rounded-lg text-zinc-300 hover:text-red-500 hover:bg-red-50 transition-all"><Trash2 size={12}/></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )})()}
+
       {isMatchOpen&&(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-2xl rounded-2xl bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-2xl rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
 
             {/* ── HEADER ── */}
             <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0">
@@ -1421,7 +2017,7 @@ export default function EliteSquadApp() {
                     </div>
                   ))}
                 </div>
-                <button onClick={()=>setIsMatchOpen(false)} className="w-7 h-7 rounded-lg bg-zinc-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><X size={14} className="text-zinc-400"/></button>
+                <button onClick={()=>setIsMatchOpen(false)} title="Close" className="w-7 h-7 rounded-lg bg-zinc-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><X size={14} className="text-zinc-400"/></button>
               </div>
 
               {/* Step content in header */}
@@ -1434,7 +2030,7 @@ export default function EliteSquadApp() {
                   </div>
                   <div>
                     <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Date</label>
-                    <input type="date" value={matchForm.date} onChange={e=>setMatchForm({...matchForm,date:e.target.value})} className="p-2 rounded-lg border border-zinc-200 outline-none text-xs font-bold w-36"/>
+                    <div className="w-36"><DatePicker value={matchForm.date} onChange={(v)=>setMatchForm({...matchForm,date:v})} placeholder="Match date"/></div>
                   </div>
                   <div>
                     <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Score</label>
@@ -1449,16 +2045,16 @@ export default function EliteSquadApp() {
                       <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Venue</label>
                       <input placeholder="Stadium name" value={matchForm.venue} onChange={e=>setMatchForm({...matchForm,venue:e.target.value})} className="w-full p-2 rounded-lg border border-zinc-200 outline-none text-xs font-bold uppercase"/>
                     </div>
-                    <div>
-                      <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Competition</label>
-                      <select value={matchForm.competition} onChange={e=>setMatchForm({...matchForm,competition:e.target.value})} className="p-2 rounded-lg border border-zinc-200 outline-none text-xs font-bold bg-white min-w-[130px]">
-                        <option value="">Friendly</option>
-                        <option value="World Cup Qualification">WCQ</option>
-                        <option value="African Cup Qualification">AFCONQ</option>
-                        <option value="UNAF">UNAF</option>
-                        <option value="World Cup">World Cup</option>
-                        <option value="African Cup">AFCON</option>
-                      </select>
+                  </div>
+                  <div className="col-span-full">
+                    <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 block">Competition</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {COMPETITIONS.map(comp=>(
+                        <button key={comp.label} type="button" onClick={()=>setMatchForm({...matchForm,competition:comp.value})}
+                          className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${matchForm.competition===comp.value?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>
+                          {comp.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
                   {/* ── MATCH STATS ── */}
@@ -1483,6 +2079,19 @@ export default function EliteSquadApp() {
               {/* ── STEP 2: OUR SQUAD ── */}
               {matchStep===1&&(
                 <div className="space-y-5">
+                  <button type="button" onClick={async()=>{
+                    const templates=await fetchSquadTemplates(teamCat!)
+                    if(templates.length===0){alert("No saved lineups yet — build one in Squad Lab first");return}
+                    const names=templates.map((t:any,i:number)=>`${i+1}. ${t.name} (${t.formation})`).join("\n")
+                    const pick=window.prompt(`Load which lineup?\n\n${names}\n\nEnter the number:`)
+                    const idx=parseInt(pick||"")-1
+                    if(isNaN(idx)||!templates[idx])return
+                    const t=templates[idx]
+                    const orderedIds=(FORMATIONS[t.formation]||[]).map((s:any)=>t.slots[s.slotKey]).filter(Boolean)
+                    setMatchForm({...matchForm,squad:[...orderedIds,...matchForm.squad.slice(11)],formation:t.formation,formationSlots:t.slots})
+                  }} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-blue-300 bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-wider hover:bg-blue-100 transition-all">
+                    <Users size={12}/>Load from Squad Lab
+                  </button>
                   <div className="grid grid-cols-2 gap-4">
                     {/* Starting XI */}
                     <div className="bg-zinc-50 rounded-xl border border-zinc-100 p-4">
@@ -1598,7 +2207,7 @@ export default function EliteSquadApp() {
                                 <span className="w-4 text-center text-xs font-black text-zinc-800">{s.goals}</span>
                                 <span onClick={()=>editGoals(pl.id,1)} className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-black cursor-pointer bg-green-200 text-green-700">+</span>
                               </div>
-                              <button onClick={()=>removeGoal(pl.id)} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
+                              <button onClick={()=>removeGoal(pl.id)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </div>
                           )
                         })}
@@ -1614,7 +2223,7 @@ export default function EliteSquadApp() {
                           return(
                             <span key={"y"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-yellow-200 text-[10px] font-bold group">
                               <span className="w-3 h-4 rounded-[2px] bg-yellow-400"/> {pl.name.split(' ').slice(-1)}
-                              <button onClick={()=>toggleYellow(pid)} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
+                              <button onClick={()=>toggleYellow(pid)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </span>
                           )
                         })}
@@ -1624,7 +2233,7 @@ export default function EliteSquadApp() {
                           return(
                             <span key={"r"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-red-200 text-[10px] font-bold group">
                               <span className="w-3 h-4 rounded-[2px] bg-red-600"/> {pl.name.split(' ').slice(-1)}
-                              <button onClick={()=>toggleRed(pid)} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
+                              <button onClick={()=>toggleRed(pid)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </span>
                           )
                         })}
@@ -1642,7 +2251,7 @@ export default function EliteSquadApp() {
                               <span className="text-red-500 line-through">{on}</span>
                               <span className="text-zinc-300">→</span>
                               <span className="text-green-600">{inn}</span>
-                              <button onClick={()=>removeSub(i)} className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
+                              <button onClick={()=>removeSub(i)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </div>
                           )
                         })}
@@ -1671,9 +2280,74 @@ export default function EliteSquadApp() {
               </span>
               <div className="flex gap-2">
                 {matchStep>0&&<button onClick={()=>setMatchStep(matchStep-1)} className="px-4 py-2 rounded-lg border border-zinc-200 text-xs font-bold text-zinc-500 hover:bg-zinc-50 transition-all">Back</button>}
-                {matchStep<3&&<button onClick={()=>setMatchStep(matchStep+1)} disabled={matchStep===0&&!matchForm.opponent.trim()} className="px-5 py-2 rounded-lg bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all disabled:opacity-40">Next</button>}
-                {matchStep===3&&<button onClick={()=>{const id=Date.now();const nm={...matchForm,id,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username};setMatches((p:any)=>[...p,nm]);if(canManageUsers)approveMatch(nm);setIsMatchOpen(false);setMatchForm(initMatch);setMatchStep(0)}} className="px-5 py-2 rounded-lg bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all">Save Match</button>}
+                {matchStep<3&&<button onClick={()=>setMatchStep(matchStep+1)} disabled={matchStep===0&&!matchForm.opponent.trim()} className="px-5 py-2 rounded-full bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all disabled:opacity-40">Next</button>}
+                {matchStep===3&&<button onClick={()=>{const id=Date.now();const nm={...matchForm,id,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username};setMatches((p:any)=>[...p,nm]);if(canManageUsers)approveMatch(nm);setIsMatchOpen(false);setMatchForm(initMatch);setMatchStep(0)}} className="px-5 py-2 rounded-full bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all">Save Match</button>}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          CUSTOM CONFIRM DIALOG — replaces native browser confirm()
+      ═══════════════════════════════════════════ */}
+      {confirmState&&(
+        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/80">
+          <div className="w-full max-w-xs rounded-2xl bg-[#FAF8F3] shadow-2xl p-5 text-center">
+            <div className="w-11 h-11 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
+              <AlertTriangle size={20} className="text-[#E30613]"/>
+            </div>
+            <p className="text-[12px] font-bold text-zinc-800 leading-snug whitespace-pre-line">{confirmState.message}</p>
+            <div className="flex gap-2 mt-4">
+              <button onClick={()=>{confirmState.resolve(false);setConfirmState(null)}} className="flex-1 py-2.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100 hover:bg-zinc-200 transition-all">Cancel</button>
+              <button onClick={()=>{confirmState.resolve(true);setConfirmState(null)}} className="flex-1 py-2.5 rounded-full bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider shadow-lg hover:bg-red-700 transition-all">Confirm</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SCHEDULE MATCH — lightweight fixture planner
+          (no result/squad/staff required — just the essentials for planning ahead)
+      ═══════════════════════════════════════════ */}
+      {scheduleOpen&&(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
+          <div className="w-full max-w-sm rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl p-5 space-y-3.5">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Calendar size={16}/>Schedule Match</h2>
+              <button onClick={()=>setScheduleOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-200/60 transition-all"><X size={18}/></button>
+            </div>
+            <p className="text-[10px] text-zinc-500">Planning ahead? Just set the date and opponent — no result or squad needed yet.</p>
+
+            <input placeholder="Opponent" value={scheduleForm.opponent} onChange={e=>setScheduleForm({...scheduleForm,opponent:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[12px] font-bold outline-none"/>
+
+            <DatePicker value={scheduleForm.date} onChange={(v)=>setScheduleForm({...scheduleForm,date:v})} placeholder="Match date"/>
+
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">Competition</p>
+              <div className="flex flex-wrap gap-1.5">
+                {COMPETITIONS.map(comp=>(
+                  <button key={comp.label} onClick={()=>setScheduleForm({...scheduleForm,competition:comp.value})}
+                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${scheduleForm.competition===comp.value?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>
+                    {comp.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <input placeholder="Venue (optional)" value={scheduleForm.venue} onChange={e=>setScheduleForm({...scheduleForm,venue:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[12px] font-bold outline-none"/>
+
+            <div className="flex gap-2 pt-1">
+              <button onClick={()=>setScheduleOpen(false)} className="flex-1 py-2.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
+              <button onClick={()=>{
+                if(!scheduleForm.opponent.trim()){alert("Enter an opponent");return}
+                if(!scheduleForm.date){alert("Pick a date");return}
+                const id=Date.now()
+                const nm={...initMatch,id,opponent:scheduleForm.opponent.trim(),date:scheduleForm.date,competition:scheduleForm.competition,venue:scheduleForm.venue,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username}
+                setMatches((p:any)=>[...p,nm])
+                if(canManageUsers)approveMatch(nm)
+                setScheduleOpen(false)
+              }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">Save Fixture</button>
             </div>
           </div>
         </div>
@@ -1688,7 +2362,7 @@ export default function EliteSquadApp() {
         const h2h=opponentFilter?(()=>{const w=filteredMatches.filter((m:any)=>{const p=m.result?.split('-');return p&&p[0]>p[1]}).length;const d=filteredMatches.filter((m:any)=>{const p=m.result?.split('-');return p&&p[0]===p[1]}).length;const l=filteredMatches.filter((m:any)=>{const p=m.result?.split('-');return p&&p[0]<p[1]}).length;return{w,d,l}})():null
         return(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80 overflow-y-auto">
-          <div className="w-full max-w-4xl rounded-2xl bg-white text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-4xl rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 shrink-0">
               <div className="flex items-center gap-4">
                 <div>
@@ -1723,7 +2397,7 @@ export default function EliteSquadApp() {
                       <div className="flex items-center gap-2 flex-1 min-w-0">
                         <div className={`w-2 h-2 rounded-full ${scoreBg} shrink-0`}/>
                         <div className="flex items-center gap-1.5 text-xs font-bold">
-                          <span className="text-zinc-500">{match.date}</span>
+                          <span className="text-zinc-500">{fmtDateWords(match.date)}</span>
                           {match.competition&&<><span className="text-zinc-200">·</span><span className="text-zinc-400">{match.competition}</span></>}
                         </div>
                       </div>
@@ -1888,7 +2562,7 @@ export default function EliteSquadApp() {
                       {/* Match Sheet + Delete */}
                       <div className="flex justify-end gap-2">
                         <button onClick={()=>setMatchSheetTarget(match)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E30613]/30 bg-white text-[#E30613] text-[8px] font-black uppercase tracking-wider hover:bg-[#E30613] hover:text-white transition-all"><ClipboardCheck size={11}/> Match Sheet</button>
-                        {p.deleteMatch&&<button onClick={()=>{if(confirm(tr.history.delete+" this match?")){setMatches(m=>m.filter((x:any)=>x.id!==match.id));setSelMatch(null)}}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-500 text-[8px] font-black uppercase tracking-wider hover:bg-red-600 hover:text-white transition-all"><Trash2 size={11}/> {tr.history.delete}</button>}
+                        {p.deleteMatch&&<button onClick={async()=>{if(await askConfirm(tr.history.delete+" this match?")){setMatches(m=>m.filter((x:any)=>x.id!==match.id));setSelMatch(null)}}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-500 text-[8px] font-black uppercase tracking-wider hover:bg-red-600 hover:text-white transition-all"><Trash2 size={11}/> {tr.history.delete}</button>}
                       </div>
                     </div>
                   )}
@@ -1921,16 +2595,16 @@ export default function EliteSquadApp() {
         })
         return(
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-2 sm:p-4 bg-black/85 match-sheet-print">
-          <div className="w-full max-w-3xl bg-white text-zinc-900 rounded-2xl shadow-2xl flex flex-col max-h-[92vh]">
+          <div className="w-full max-w-3xl bg-[#FAF8F3] text-zinc-900 rounded-2xl shadow-2xl flex flex-col max-h-[92vh]">
 
-            <div className="match-sheet-print-btn flex items-center justify-between px-6 py-3 border-b border-zinc-100 bg-zinc-50 rounded-t-2xl sticky top-0">
+            <div className="match-sheet-print-btn flex items-center justify-between px-6 py-3 border-b border-zinc-100 bg-[#F3F0E8] rounded-t-2xl sticky top-0">
               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Official Match Sheet</span>
               <div className="flex gap-2">
-                <button onClick={()=>window.print()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">
+                <button onClick={()=>window.print()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   Print / Save PDF
                 </button>
-                <button onClick={()=>setMatchSheetTarget(null)} className="w-8 h-8 rounded-lg bg-zinc-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><X size={15} className="text-zinc-400"/></button>
+                <button onClick={()=>setMatchSheetTarget(null)} title="Close" className="w-8 h-8 rounded-lg bg-zinc-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><X size={15} className="text-zinc-400"/></button>
               </div>
             </div>
 
@@ -1944,7 +2618,7 @@ export default function EliteSquadApp() {
                   <p className="text-[10px] font-bold text-[#E30613] uppercase tracking-wider">{catLabel(match.teamCategory)} {match.competition&&`· ${match.competition}`}</p>
                 </div>
                 <div className="text-right text-[10px] font-bold text-zinc-500">
-                  <p>{match.date||"—"}</p>
+                  <p>{fmtDateWords(match.date)||"—"}</p>
                   <p className="mt-0.5">{match.venue||"Venue TBC"}</p>
                 </div>
               </div>
@@ -1956,7 +2630,12 @@ export default function EliteSquadApp() {
                 <span className="text-lg font-black uppercase">{match.opponent||"Opponent"}</span>
               </div>
 
-              {/* Formation pitch */}
+              {/* Formation pitch — uses the real saved formation if this match was built in Squad Lab, else auto-groups by position */}
+              {match.formation&&match.formationSlots?(
+                <div className="mb-6">
+                  <FormationPitch formation={match.formation} slots={match.formationSlots} members={members} compact/>
+                </div>
+              ):(
               <div className="relative rounded-2xl overflow-hidden mb-6 max-h-56" style={{background:"linear-gradient(180deg, #2d7a3a 0%, #26692f 100%)", aspectRatio:"16/6"}}>
                 <div className="absolute inset-3 border-2 border-white/40 rounded-lg"/>
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-2 border-white/40"/>
@@ -1978,6 +2657,7 @@ export default function EliteSquadApp() {
                   ))}
                 </div>
               </div>
+              )}
 
               {/* XI / Bench / Staff */}
               <div className="grid grid-cols-3 gap-4 mb-6">
@@ -2063,7 +2743,7 @@ export default function EliteSquadApp() {
       )}
       {scoutPlayer&&scoutResult&&(
         <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60" onClick={()=>{setScoutPlayer(null);setScoutResult(null)}}>
-          <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-white shadow-2xl" onClick={e=>e.stopPropagation()}>
+          <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-[#FAF8F3] shadow-2xl" onClick={e=>e.stopPropagation()}>
             <div className="flex items-center justify-between p-4 border-b border-zinc-200">
               <h3 className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
                 <Sparkles size={14} className="text-[#E30613]"/> AI Search · {scoutPlayer.name.split(' ').slice(-1)}
