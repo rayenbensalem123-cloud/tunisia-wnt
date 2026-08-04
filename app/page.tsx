@@ -13,6 +13,7 @@ import { ExportTools } from "@/components/export-tools"
 import { ScoutPanel } from "@/components/scout-panel"
 import { searchPlayerDatabase } from "@/lib/player-database"
 import { PlayerCard } from "@/components/player-card"
+import { FormationPitch, FORMATIONS } from "@/components/formation-pitch"
 import { supabase } from "@/lib/supabase"
 import {
   signInUsername, fetchMyProfile, registerUser,
@@ -20,6 +21,7 @@ import {
   fetchMembers, fetchMatches, syncMembers, syncMatches,
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
   fetchInjuries, addInjury, updateInjuryStatus,
+  fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate,
 } from "@/lib/app-data"
 
 // ─────────────────────────────────────────────
@@ -469,7 +471,7 @@ export default function EliteSquadApp() {
   const pendingCount = pendingUsers.length
   const fileRef=useRef<HTMLInputElement>(null)
 
-  const initForm={name:"",club:"",position:"",image:"",natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:""}
+  const initForm={name:"",club:"",position:"",image:"",natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",bioQuote:"",leagueRegion:"",dualNationality:false,secondNationality:""}
   const [form,setForm]=useState<any>(initForm)
   const initMatch={opponent:"",date:"",result:"",venue:"",competition:"",squad:[] as number[],scorers:[] as {playerId:number,goals:number}[],yellowCards:[] as number[],redCards:[] as number[],subs:[] as {out:number;in:number}[],notes:"",opponentSquad:[] as string[],opponentScorers:[] as {name:string,goals:number}[],opponentYellowCards:[] as string[],opponentRedCards:[] as string[],opponentSubs:[] as {out:string;in:string}[],tunisiaPossession:"",opponentPossession:"",tunisiaShots:"",opponentShots:"",tunisiaShotsOnTarget:"",opponentShotsOnTarget:"",tunisiaCorners:"",opponentCorners:"",tunisiaFouls:"",opponentFouls:""}
   const countryFlags:Record<string,string>={"Tunisia":"tn","Algeria":"dz","Egypt":"eg","Morocco":"ma","Senegal":"sn","Nigeria":"ng","Cameroon":"cm","Ghana":"gh","Ivory Coast":"ci","Côte d'Ivoire":"ci","Cote d'Ivoire":"ci","Mali":"ml","Burkina Faso":"bf","South Africa":"za","DR Congo":"cd","DRC":"cd","Congo":"cg","Zambia":"zm","Equatorial Guinea":"gq","Guinea":"gn","Guinea-Bissau":"gw","Benin":"bj","Togo":"tg","Sierra Leone":"sl","Liberia":"lr","Sudan":"sd","South Sudan":"ss","Uganda":"ug","Kenya":"ke","Tanzania":"tz","Rwanda":"rw","Burundi":"bi","Ethiopia":"et","Eritrea":"er","Somalia":"so","Angola":"ao","Namibia":"na","Botswana":"bw","Zimbabwe":"zw","Mozambique":"mz","Malawi":"mw","Lesotho":"ls","Eswatini":"sz","Madagascar":"mg","Mauritius":"mu","Cape Verde":"cv","Mauritania":"mr","Gambia":"gm","Gabon":"ga","Chad":"td","Niger":"ne","Libya":"ly","France":"fr","England":"gb-eng","Spain":"es","Germany":"de","Italy":"it","Netherlands":"nl","Portugal":"pt","Belgium":"be","Croatia":"hr","Switzerland":"ch","Sweden":"se","Denmark":"dk","Norway":"no","Poland":"pl","Brazil":"br","Argentina":"ar","Uruguay":"uy","Colombia":"co","Chile":"cl","Peru":"pe","Ecuador":"ec","Mexico":"mx","USA":"us","United States":"us","Canada":"ca","Japan":"jp","South Korea":"kr","Korea Republic":"kr","Saudi Arabia":"sa","Iran":"ir","Australia":"au","New Zealand":"nz"}
@@ -548,11 +550,21 @@ export default function EliteSquadApp() {
     setTeamCat(cat);setFilterPos("ALL");setActiveTab("PLAYERS");setSearch("")
   }
 
+  const [scoutRegionFilter,setScoutRegionFilter]=useState("ALL")
+  const [scoutDualOnly,setScoutDualOnly]=useState(false)
+  const [squadLabOpen,setSquadLabOpen]=useState(false)
+  const [labFormation,setLabFormation]=useState("4-3-3")
+  const [labSlots,setLabSlots]=useState<Record<string,number|null>>({})
+  const [labPickerSlot,setLabPickerSlot]=useState<string|null>(null)
+  const [labTemplates,setLabTemplates]=useState<any[]>([])
+  const [labTemplateName,setLabTemplateName]=useState("")
   const filtered=useMemo(()=>members.filter(m=>
     m.role===activeTab&&m.teamCategory===teamCat&&
     m.name.toLowerCase().includes(search.toLowerCase())&&
-    (filterPos==="ALL"||m.position===filterPos)
-  ),[members,activeTab,search,filterPos,teamCat])
+    (filterPos==="ALL"||m.position===filterPos)&&
+    (scoutRegionFilter==="ALL"||m.leagueRegion===scoutRegionFilter)&&
+    (!scoutDualOnly||m.dualNationality)
+  ),[members,activeTab,search,filterPos,teamCat,scoutRegionFilter,scoutDualOnly])
 
   const catPlayers=useMemo(()=>members.filter(m=>m.role==="PLAYERS"&&m.teamCategory===teamCat),[members,teamCat])
   const catMatches=useMemo(()=>matches.filter(m=>m.teamCategory===teamCat&&m.status==="approved"),[matches,teamCat])
@@ -846,6 +858,9 @@ export default function EliteSquadApp() {
               <button onClick={()=>setUpcomingOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <Calendar size={14}/>Upcoming Matches
               </button>
+              {p.addMatch&&<button onClick={async()=>{setLabSlots({});setLabTemplateName("");setSquadLabOpen(true);setLabTemplates(await fetchSquadTemplates(teamCat))}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                <Users size={14}/>Squad Lab
+              </button>}
               <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <Newspaper size={14}/>Women's Football News
               </button>
@@ -909,6 +924,17 @@ export default function EliteSquadApp() {
             ))}
           </div>
         </div>
+
+        {/* Scout Tags — filter by league region / dual nationality */}
+        {activeTab==="PLAYERS"&&(
+          <div className="max-w-7xl mx-auto px-6 pb-3 flex items-center gap-1.5 flex-wrap">
+            <span className="text-[7px] font-black uppercase tracking-widest text-zinc-400 mr-1">Scout:</span>
+            {[{v:"ALL",l:"All Regions"},{v:"tunisia",l:"Tunisia"},{v:"ligue1_feminine",l:"Ligue 1 Féminine"},{v:"middle_east",l:"Middle East"},{v:"other",l:"Diaspora"}].map(opt=>(
+              <button key={opt.v} onClick={()=>setScoutRegionFilter(opt.v)} className={`px-2.5 py-1 rounded-full text-[7px] font-black uppercase tracking-wider border transition-all ${scoutRegionFilter===opt.v?'bg-blue-600 border-blue-600 text-white':'border-zinc-200 bg-white text-zinc-400 hover:border-blue-300'}`}>{opt.l}</button>
+            ))}
+            <button onClick={()=>setScoutDualOnly(d=>!d)} className={`px-2.5 py-1 rounded-full text-[7px] font-black uppercase tracking-wider border transition-all ${scoutDualOnly?'bg-blue-600 border-blue-600 text-white':'border-zinc-200 bg-white text-zinc-400 hover:border-blue-300'}`}>🌐 Dual Nationality Only</button>
+          </div>
+        )}
       </header>
 
       {/* ─── DISCIPLINE LEGEND ─── */}
@@ -946,6 +972,11 @@ export default function EliteSquadApp() {
               {cs&&(
                 <div className={`absolute z-10 px-2 py-0.5 rounded-full text-[6px] font-black uppercase tracking-wider translate-x-3 translate-y-3 ${cs==="suspended"?'bg-red-600 text-white':'bg-yellow-400 text-yellow-900'}`}>
                   {cs==="suspended"?"BANNED":"WARN"}
+                </div>
+              )}
+              {m.dualNationality&&(
+                <div title={`Dual nationality${m.secondNationality?': '+m.secondNationality:''}`} className="absolute z-10 top-2 right-2 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shadow">
+                  <Globe size={10} className="text-white"/>
                 </div>
               )}
               {p.deletePlayer&&<div onClick={e=>{e.stopPropagation();setSelectedIds(p=>{const n=new Set(p);if(n.has(m.id))n.delete(m.id);else n.add(m.id);return n})}} className={`absolute z-10 top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${sel?'bg-[#E30613] border-[#E30613]':'bg-white/80 border-zinc-400 hover:border-[#E30613]'}`}>{sel&&<Check size={12} className="text-white"/>}</div>}
@@ -1113,18 +1144,114 @@ export default function EliteSquadApp() {
                 )}
 
                 {/* Staff info */}
-                {!isPlayer&&(
+                {!isPlayer&&(()=>{
+                  const catMatchesPlayed=matches.filter((m:any)=>m.teamCategory===selMember.teamCategory&&m.result)
+                  let wins=0,draws=0,losses=0
+                  let biggestWin:{opponent:string,result:string,diff:number}|null=null
+                  catMatchesPlayed.forEach((m:any)=>{
+                    const parts=(m.result||"").split("-").map((x:string)=>parseInt(x))
+                    if(parts.length===2&&!isNaN(parts[0])&&!isNaN(parts[1])){
+                      if(parts[0]>parts[1]){
+                        wins++
+                        const diff=parts[0]-parts[1]
+                        if(!biggestWin||diff>biggestWin.diff)biggestWin={opponent:m.opponent,result:m.result,diff}
+                      }
+                      else if(parts[0]<parts[1])losses++
+                      else draws++
+                    }
+                  })
+                  // Signature formation — most common shape (DEF-MID-FWD) across matches with a saved squad
+                  const posGroup=(pos:string)=>{
+                    const P=(pos||"").toUpperCase()
+                    if(P.includes("GOAL")||P==="GK")return null
+                    if(P.includes("DEF"))return "DEF"
+                    if(P.includes("MID"))return "MID"
+                    return "FWD"
+                  }
+                  const formationCounts:Record<string,number>={}
+                  catMatchesPlayed.forEach((m:any)=>{
+                    const xi=(m.squad||[]).slice(0,11).map((pid:number)=>members.find((mm:any)=>mm.id===pid)).filter(Boolean)
+                    if(xi.length<11)return
+                    let def=0,mid=0,fwd=0
+                    xi.forEach((pl:any)=>{const g=posGroup(pl.position);if(g==="DEF")def++;else if(g==="MID")mid++;else if(g==="FWD")fwd++})
+                    if(def+mid+fwd===0)return
+                    const shape=`${def}-${mid}-${fwd}`
+                    formationCounts[shape]=(formationCounts[shape]||0)+1
+                  })
+                  const signatureFormation=Object.entries(formationCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]
+                  // Since-year badge
+                  const validYears=(selMember.history||[]).map((h:any)=>parseInt(h?.year)).filter((y:number)=>!isNaN(y)&&y>1900)
+                  const sinceYear=validYears.length>0?Math.min(...validYears):null
+                  // Milestone badges
+                  const milestones:string[]=[]
+                  if(catMatchesPlayed.length>=50)milestones.push("50+ Matches")
+                  else if(catMatchesPlayed.length>=20)milestones.push("20+ Matches")
+                  if(wins>=10)milestones.push("10+ Wins")
+                  const sortedByDate=[...catMatchesPlayed].sort((a,b)=>(a.date||"").localeCompare(b.date||""))
+                  if(sortedByDate.length>=5&&sortedByDate.slice(0,5).every((m:any)=>{const parts=(m.result||"").split("-").map((x:string)=>parseInt(x));return !(parts[0]<parts[1])}))milestones.push("Unbeaten Start")
+                  return(
                   <div className="space-y-3">
+                    {selMember.bioQuote&&(
+                      <p className="text-[12px] italic text-zinc-500 text-center px-2 leading-snug">"{selMember.bioQuote}"</p>
+                    )}
+                    <div className="grid grid-cols-3 gap-px bg-zinc-200 rounded-xl overflow-hidden">
+                      <div className="bg-white py-3.5 text-center">
+                        <p className="font-mono text-xl font-bold text-zinc-900">{String(catMatchesPlayed.length).padStart(2,'0')}</p>
+                        <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Overseen</p>
+                      </div>
+                      <div className="bg-white py-3.5 text-center">
+                        <p className="text-xl font-bold"><span className="text-green-600">{wins}</span><span className="text-zinc-300 mx-0.5">-</span><span className="text-zinc-500">{draws}</span><span className="text-zinc-300 mx-0.5">-</span><span className="text-red-500">{losses}</span></p>
+                        <p className="text-[10px] text-zinc-400 uppercase tracking-wider">W-D-L</p>
+                      </div>
+                      <div className="bg-white py-3.5 text-center">
+                        <p className="text-xl font-bold text-zinc-900">{catMatchesPlayed.length>0?Math.round((wins/catMatchesPlayed.length)*100):0}%</p>
+                        <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Win Rate</p>
+                      </div>
+                    </div>
+
+                    {(biggestWin||signatureFormation)&&(
+                      <div className="grid grid-cols-2 gap-3">
+                        {biggestWin&&(
+                          <div className="bg-gradient-to-br from-[#E30613] to-red-800 rounded-xl p-3 text-white">
+                            <p className="text-[9px] font-black uppercase tracking-wider text-white/70">Biggest Win</p>
+                            <p className="text-lg font-black font-mono mt-0.5">{biggestWin.result}</p>
+                            <p className="text-[10px] font-bold text-white/80 truncate">vs {biggestWin.opponent}</p>
+                          </div>
+                        )}
+                        {signatureFormation&&(
+                          <div className="bg-zinc-900 rounded-xl p-3 text-white flex flex-col justify-center items-center text-center">
+                            <p className="text-[9px] font-black uppercase tracking-wider text-white/50">Signature Shape</p>
+                            <p className="text-lg font-black font-mono mt-0.5">{signatureFormation}</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {milestones.length>0&&(
+                      <div className="flex flex-wrap gap-1.5">
+                        {milestones.map(ms=>(
+                          <span key={ms} className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">🏅 {ms}</span>
+                        ))}
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
                         <Award size={16} className="text-[#E30613] shrink-0"/>
                         <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.position||'COACH'}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.responsibility}</span></div>
                       </div>
-                      <div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
-                        <ShieldCheck size={16} className="text-[#E30613] shrink-0"/>
-                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.natMatches||'N/A'}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.license}</span></div>
+                      <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded border border-amber-200 p-3 flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center shrink-0 shadow"><ShieldCheck size={14} className="text-white"/></div>
+                        <div><p className="text-sm font-bold text-amber-900 uppercase">{selMember.natMatches||'N/A'}</p><span className="text-[12px] text-amber-600 uppercase font-medium">{tr.profile.license}</span></div>
                       </div>
                     </div>
+
+                    {sinceYear&&(
+                      <div className="flex justify-center">
+                        <span className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full bg-zinc-100 text-zinc-500">With the federation since {sinceYear}</span>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-3 gap-3">
                       {selMember.nationality&&<div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
                         <Globe size={14} className="text-[#E30613] shrink-0"/>
@@ -1140,7 +1267,7 @@ export default function EliteSquadApp() {
                       </div>}
                     </div>
                   </div>
-                )}
+                )})()}
 
               {/* AI Update */}
               <button type="button" onClick={handleAIUpdate} className="w-full py-2.5 rounded-xl border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-100 text-[12px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
@@ -1294,6 +1421,29 @@ export default function EliteSquadApp() {
                       <div><label className="text-[7px] font-black uppercase text-zinc-500 mb-1 block">{tr.form.suspended}</label><button type="button" onClick={()=>setForm({...form,suspended:!form.suspended})} className={`w-full p-2.5 rounded-lg border text-[9px] font-black uppercase transition-all ${form.suspended?'bg-red-600 border-red-600 text-white':'bg-white border-zinc-200 text-zinc-400'}`}>{form.suspended?tr.profile.yes:tr.profile.no}</button></div>
                     </div>
                   </div>
+                  <div className="p-4 rounded-[1.5rem] border border-blue-200 bg-blue-50 space-y-3">
+                    <p className="text-[8px] font-black text-blue-500 uppercase tracking-[0.3em] flex items-center gap-2"><Globe size={9}/> Scout Tags</p>
+                    <div>
+                      <label className="text-[7px] font-black uppercase text-zinc-500 mb-1.5 block">League / Region</label>
+                      <div className="flex flex-wrap gap-1.5">
+                        {[{v:"tunisia",l:"Tunisia Domestic"},{v:"ligue1_feminine",l:"Ligue 1 Féminine"},{v:"middle_east",l:"Middle East"},{v:"other",l:"Other/Diaspora"}].map(opt=>(
+                          <button key={opt.v} type="button" onClick={()=>setForm({...form,leagueRegion:form.leagueRegion===opt.v?"":opt.v})}
+                            className={`px-2.5 py-1.5 rounded-full text-[8px] font-black uppercase tracking-wider transition-all ${form.leagueRegion===opt.v?'bg-blue-600 text-white':'bg-white border border-zinc-200 text-zinc-500 hover:border-blue-300'}`}>
+                            {opt.l}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button type="button" onClick={()=>setForm({...form,dualNationality:!form.dualNationality})}
+                        className={`px-3 py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all shrink-0 ${form.dualNationality?'bg-blue-600 text-white':'bg-white border border-zinc-200 text-zinc-500'}`}>
+                        {form.dualNationality?"✓ Dual Nationality":"Dual Nationality"}
+                      </button>
+                      {form.dualNationality&&(
+                        <input placeholder="Second nationality (e.g. France)" value={form.secondNationality||""} onChange={e=>setForm({...form,secondNationality:e.target.value})} className="flex-1 p-2 rounded-lg border border-zinc-200 bg-white text-[9px] font-bold outline-none"/>
+                      )}
+                    </div>
+                  </div>
                 </>
               ):(
                 <div className="grid grid-cols-2 gap-2">
@@ -1317,6 +1467,9 @@ export default function EliteSquadApp() {
                         )
                       })}
                     </div>
+                  </div>
+                  <div className="col-span-2">
+                    <textarea placeholder="Coaching philosophy (optional, one line)" value={form.bioQuote||""} onChange={e=>setForm({...form,bioQuote:e.target.value})} rows={2} maxLength={140} className="w-full p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-medium italic outline-none resize-none"/>
                   </div>
                   <input placeholder={tr.form.contract} value={form.contract} onChange={e=>setForm({...form,contract:e.target.value})} className="w-full p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-[9px] font-bold uppercase outline-none"/>
                 </div>
@@ -1690,6 +1843,97 @@ export default function EliteSquadApp() {
           </div>
         </div>
       )}
+
+      {/* ═══════════════════════════════════════════
+          SQUAD LAB — test formations & lineups, FPL-style
+      ═══════════════════════════════════════════ */}
+      {squadLabOpen&&(()=>{
+        const categoryPlayers=members.filter((m:any)=>m.role==="PLAYERS"&&m.teamCategory===teamCat)
+        const usedIds=new Set(Object.values(labSlots).filter(Boolean))
+        const availableForPicker=categoryPlayers.filter((m:any)=>!usedIds.has(m.id))
+        const filledCount=Object.values(labSlots).filter(Boolean).length
+        return(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
+          <div className="w-full max-w-2xl rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[92vh]">
+            <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Users size={16}/>Squad Lab</h2>
+              <button onClick={()=>{setSquadLabOpen(false);setLabPickerSlot(null)}} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
+            </div>
+
+            <div className="p-5 overflow-y-auto space-y-4">
+              <div className="flex items-center justify-between flex-wrap gap-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {Object.keys(FORMATIONS).map(f=>(
+                    <button key={f} onClick={()=>{setLabFormation(f);setLabSlots({})}} className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${labFormation===f?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>{f}</button>
+                  ))}
+                </div>
+                <span className="text-[10px] font-bold text-zinc-500">{filledCount}/11 filled</span>
+              </div>
+
+              <FormationPitch
+                formation={labFormation}
+                slots={labSlots}
+                members={categoryPlayers}
+                editable
+                onSlotClick={(slotKey)=>setLabPickerSlot(slotKey)}
+              />
+
+              {/* Player picker for the selected slot */}
+              {labPickerSlot&&(
+                <div className="rounded-xl bg-white border border-zinc-200 p-3 space-y-1.5 max-h-52 overflow-y-auto">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400">Assign to {labPickerSlot.toUpperCase()}</p>
+                    <button onClick={()=>setLabPickerSlot(null)} className="text-[8px] font-bold text-zinc-400 hover:text-zinc-600">Cancel</button>
+                  </div>
+                  {labSlots[labPickerSlot]&&(
+                    <button onClick={()=>{setLabSlots({...labSlots,[labPickerSlot]:null});setLabPickerSlot(null)}} className="w-full flex items-center gap-2 p-2 rounded-lg bg-red-50 text-red-600 text-[11px] font-bold text-left">
+                      <X size={12}/>Remove {categoryPlayers.find((m:any)=>m.id===labSlots[labPickerSlot!])?.name}
+                    </button>
+                  )}
+                  {availableForPicker.length===0&&<p className="text-[10px] text-zinc-400 py-3 text-center">No available players left</p>}
+                  {availableForPicker.map((pl:any)=>(
+                    <button key={pl.id} onClick={()=>{setLabSlots({...labSlots,[labPickerSlot]:pl.id});setLabPickerSlot(null)}} className="w-full flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-zinc-50 text-left transition-all">
+                      <span className="text-[11px] font-bold">{pl.name}</span>
+                      <span className="text-[8px] font-black uppercase text-zinc-400">{pl.position}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Save as template */}
+              <div className="flex gap-2">
+                <input placeholder="Name this lineup (e.g. vs Algeria - Plan A)" value={labTemplateName} onChange={e=>setLabTemplateName(e.target.value)} className="flex-1 p-2.5 bg-white rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+                <button onClick={async()=>{
+                  if(!labTemplateName.trim()){alert("Name this lineup first");return}
+                  const {error}=await saveSquadTemplate({teamCategory:teamCat!,name:labTemplateName.trim(),formation:labFormation,slots:labSlots})
+                  if(error){alert("Failed: "+error);return}
+                  setLabTemplateName("")
+                  setLabTemplates(await fetchSquadTemplates(teamCat!))
+                }} className="px-4 py-2.5 bg-[#E30613] text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all shrink-0">Save</button>
+              </div>
+
+              {/* Saved templates */}
+              {labTemplates.length>0&&(
+                <div>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-2">Saved Lineups</p>
+                  <div className="space-y-1.5">
+                    {labTemplates.map((t:any)=>(
+                      <div key={t.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-white border border-zinc-200/60">
+                        <button onClick={()=>{setLabFormation(t.formation);setLabSlots(t.slots||{})}} className="flex-1 text-left">
+                          <p className="text-[11px] font-bold text-zinc-800">{t.name}</p>
+                          <p className="text-[8px] text-zinc-400">{t.formation} · by {t.created_by_username||"unknown"}</p>
+                        </button>
+                        <button onClick={async()=>{if(await askConfirm(`Delete "${t.name}"?`)){await deleteSquadTemplate(t.id);setLabTemplates(await fetchSquadTemplates(teamCat!))}}} className="p-1.5 rounded-lg text-zinc-300 hover:text-red-500 hover:bg-red-50 transition-all"><Trash2 size={12}/></button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )})()}
+
       {isMatchOpen&&(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-2xl rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
@@ -1768,6 +2012,19 @@ export default function EliteSquadApp() {
               {/* ── STEP 2: OUR SQUAD ── */}
               {matchStep===1&&(
                 <div className="space-y-5">
+                  <button type="button" onClick={async()=>{
+                    const templates=await fetchSquadTemplates(teamCat!)
+                    if(templates.length===0){alert("No saved lineups yet — build one in Squad Lab first");return}
+                    const names=templates.map((t:any,i:number)=>`${i+1}. ${t.name} (${t.formation})`).join("\n")
+                    const pick=window.prompt(`Load which lineup?\n\n${names}\n\nEnter the number:`)
+                    const idx=parseInt(pick||"")-1
+                    if(isNaN(idx)||!templates[idx])return
+                    const t=templates[idx]
+                    const orderedIds=(FORMATIONS[t.formation]||[]).map((s:any)=>t.slots[s.slotKey]).filter(Boolean)
+                    setMatchForm({...matchForm,squad:[...orderedIds,...matchForm.squad.slice(11)],formation:t.formation,formationSlots:t.slots})
+                  }} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-blue-300 bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-wider hover:bg-blue-100 transition-all">
+                    <Users size={12}/>Load from Squad Lab
+                  </button>
                   <div className="grid grid-cols-2 gap-4">
                     {/* Starting XI */}
                     <div className="bg-zinc-50 rounded-xl border border-zinc-100 p-4">
@@ -2306,7 +2563,12 @@ export default function EliteSquadApp() {
                 <span className="text-lg font-black uppercase">{match.opponent||"Opponent"}</span>
               </div>
 
-              {/* Formation pitch */}
+              {/* Formation pitch — uses the real saved formation if this match was built in Squad Lab, else auto-groups by position */}
+              {match.formation&&match.formationSlots?(
+                <div className="mb-6">
+                  <FormationPitch formation={match.formation} slots={match.formationSlots} members={members} compact/>
+                </div>
+              ):(
               <div className="relative rounded-2xl overflow-hidden mb-6 max-h-56" style={{background:"linear-gradient(180deg, #2d7a3a 0%, #26692f 100%)", aspectRatio:"16/6"}}>
                 <div className="absolute inset-3 border-2 border-white/40 rounded-lg"/>
                 <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-2 border-white/40"/>
@@ -2328,6 +2590,7 @@ export default function EliteSquadApp() {
                   ))}
                 </div>
               </div>
+              )}
 
               {/* XI / Bench / Staff */}
               <div className="grid grid-cols-3 gap-4 mb-6">
