@@ -157,6 +157,16 @@ const fmtDateWords = (dateStr?: string) => {
   return d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })
 }
 
+const LEAGUES_BY_REGION = [
+  { region: "Tunisia", options: ["Championnat National Féminin (Tunisia)"] },
+  { region: "North Africa", options: ["Botola Nsawiya (Morocco)", "Championnat National Féminin (Algeria)", "Egyptian Women's Premier League", "Libya Women's League"] },
+  { region: "Middle East", options: ["UAE Women's Football League", "Saudi Women's Football League", "Qatar Women's League", "Jordan Women's League"] },
+  { region: "France", options: ["Ligue 1 Féminine", "Seconde Ligue (D2 Féminine)"] },
+  { region: "Europe", options: ["WSL (England)", "Liga F (Spain)", "Frauen-Bundesliga (Germany)", "Serie A Femminile (Italy)", "Damallsvenskan (Sweden)"] },
+  { region: "Americas", options: ["NWSL (USA)", "Liga MX Femenil (Mexico)"] },
+  { region: "Other", options: ["Other / Diaspora"] },
+]
+
 const COMPETITIONS = [
   {value:"",label:"Friendly"},
   {value:"World Cup Qualification",label:"WCQ"},
@@ -550,8 +560,9 @@ export default function EliteSquadApp() {
     setTeamCat(cat);setFilterPos("ALL");setActiveTab("PLAYERS");setSearch("")
   }
 
-  const [scoutRegionFilter,setScoutRegionFilter]=useState("ALL")
+  const [scoutRegionFilter,setScoutRegionFilter]=useState<Set<string>>(new Set())
   const [scoutDualOnly,setScoutDualOnly]=useState(false)
+  const [scoutFilterOpen,setScoutFilterOpen]=useState(false)
   const [squadLabOpen,setSquadLabOpen]=useState(false)
   const [labFormation,setLabFormation]=useState("4-3-3")
   const [labSlots,setLabSlots]=useState<Record<string,number|null>>({})
@@ -562,7 +573,7 @@ export default function EliteSquadApp() {
     m.role===activeTab&&m.teamCategory===teamCat&&
     m.name.toLowerCase().includes(search.toLowerCase())&&
     (filterPos==="ALL"||m.position===filterPos)&&
-    (scoutRegionFilter==="ALL"||m.leagueRegion===scoutRegionFilter)&&
+    (scoutRegionFilter.size===0||(m.leagueRegion&&scoutRegionFilter.has(m.leagueRegion)))&&
     (!scoutDualOnly||m.dualNationality)
   ),[members,activeTab,search,filterPos,teamCat,scoutRegionFilter,scoutDualOnly])
 
@@ -925,14 +936,12 @@ export default function EliteSquadApp() {
           </div>
         </div>
 
-        {/* Scout Tags — filter by league region / dual nationality */}
+        {/* Scout filter — button opens a full panel with every league/region + dual nationality */}
         {activeTab==="PLAYERS"&&(
-          <div className="max-w-7xl mx-auto px-6 pb-3 flex items-center gap-1.5 flex-wrap">
-            <span className="text-[7px] font-black uppercase tracking-widest text-zinc-400 mr-1">Scout:</span>
-            {[{v:"ALL",l:"All Regions"},{v:"tunisia",l:"Tunisia"},{v:"ligue1_feminine",l:"Ligue 1 Féminine"},{v:"middle_east",l:"Middle East"},{v:"other",l:"Diaspora"}].map(opt=>(
-              <button key={opt.v} onClick={()=>setScoutRegionFilter(opt.v)} className={`px-2.5 py-1 rounded-full text-[7px] font-black uppercase tracking-wider border transition-all ${scoutRegionFilter===opt.v?'bg-blue-600 border-blue-600 text-white':'border-zinc-200 bg-white text-zinc-400 hover:border-blue-300'}`}>{opt.l}</button>
-            ))}
-            <button onClick={()=>setScoutDualOnly(d=>!d)} className={`px-2.5 py-1 rounded-full text-[7px] font-black uppercase tracking-wider border transition-all ${scoutDualOnly?'bg-blue-600 border-blue-600 text-white':'border-zinc-200 bg-white text-zinc-400 hover:border-blue-300'}`}>🌐 Dual Nationality Only</button>
+          <div className="max-w-7xl mx-auto px-6 pb-3">
+            <button onClick={()=>setScoutFilterOpen(true)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-wider border transition-all ${(scoutRegionFilter.size>0||scoutDualOnly)?'bg-blue-600 border-blue-600 text-white':'border-zinc-200 bg-white text-zinc-500 hover:border-blue-300'}`}>
+              <Globe size={11}/>Filter{(scoutRegionFilter.size>0||scoutDualOnly)&&<span className="bg-white/25 rounded-full px-1.5">{scoutRegionFilter.size+(scoutDualOnly?1:0)}</span>}
+            </button>
           </div>
         )}
       </header>
@@ -1075,10 +1084,17 @@ export default function EliteSquadApp() {
               {/* Body */}
               <div className="px-5 py-4 space-y-4 max-h-[55vh] overflow-y-auto">
 
-                {(p.viewMedical||canManageUsers)&&(
+                {isPlayer?(
+                  (p.viewMedical||canManageUsers)&&(
+                    <div className="flex gap-1.5 -mt-1 mb-1">
+                      <button onClick={()=>setProfileTab("profile")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="profile"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Profile</button>
+                      <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Medical</button>
+                    </div>
+                  )
+                ):(
                   <div className="flex gap-1.5 -mt-1 mb-1">
                     <button onClick={()=>setProfileTab("profile")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="profile"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Profile</button>
-                    <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Medical</button>
+                    <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Info</button>
                   </div>
                 )}
 
@@ -1143,98 +1159,12 @@ export default function EliteSquadApp() {
                   </>
                 )}
 
-                {/* Staff info */}
+                {/* Staff info — Profile tab: core bio only */}
                 {!isPlayer&&(()=>{
-                  const catMatchesPlayed=matches.filter((m:any)=>m.teamCategory===selMember.teamCategory&&m.result)
-                  let wins=0,draws=0,losses=0
-                  let biggestWin:{opponent:string,result:string,diff:number}|null=null
-                  catMatchesPlayed.forEach((m:any)=>{
-                    const parts=(m.result||"").split("-").map((x:string)=>parseInt(x))
-                    if(parts.length===2&&!isNaN(parts[0])&&!isNaN(parts[1])){
-                      if(parts[0]>parts[1]){
-                        wins++
-                        const diff=parts[0]-parts[1]
-                        if(!biggestWin||diff>biggestWin.diff)biggestWin={opponent:m.opponent,result:m.result,diff}
-                      }
-                      else if(parts[0]<parts[1])losses++
-                      else draws++
-                    }
-                  })
-                  // Signature formation — most common shape (DEF-MID-FWD) across matches with a saved squad
-                  const posGroup=(pos:string)=>{
-                    const P=(pos||"").toUpperCase()
-                    if(P.includes("GOAL")||P==="GK")return null
-                    if(P.includes("DEF"))return "DEF"
-                    if(P.includes("MID"))return "MID"
-                    return "FWD"
-                  }
-                  const formationCounts:Record<string,number>={}
-                  catMatchesPlayed.forEach((m:any)=>{
-                    const xi=(m.squad||[]).slice(0,11).map((pid:number)=>members.find((mm:any)=>mm.id===pid)).filter(Boolean)
-                    if(xi.length<11)return
-                    let def=0,mid=0,fwd=0
-                    xi.forEach((pl:any)=>{const g=posGroup(pl.position);if(g==="DEF")def++;else if(g==="MID")mid++;else if(g==="FWD")fwd++})
-                    if(def+mid+fwd===0)return
-                    const shape=`${def}-${mid}-${fwd}`
-                    formationCounts[shape]=(formationCounts[shape]||0)+1
-                  })
-                  const signatureFormation=Object.entries(formationCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]
-                  // Since-year badge
                   const validYears=(selMember.history||[]).map((h:any)=>parseInt(h?.year)).filter((y:number)=>!isNaN(y)&&y>1900)
                   const sinceYear=validYears.length>0?Math.min(...validYears):null
-                  // Milestone badges
-                  const milestones:string[]=[]
-                  if(catMatchesPlayed.length>=50)milestones.push("50+ Matches")
-                  else if(catMatchesPlayed.length>=20)milestones.push("20+ Matches")
-                  if(wins>=10)milestones.push("10+ Wins")
-                  const sortedByDate=[...catMatchesPlayed].sort((a,b)=>(a.date||"").localeCompare(b.date||""))
-                  if(sortedByDate.length>=5&&sortedByDate.slice(0,5).every((m:any)=>{const parts=(m.result||"").split("-").map((x:string)=>parseInt(x));return !(parts[0]<parts[1])}))milestones.push("Unbeaten Start")
                   return(
                   <div className="space-y-3">
-                    {selMember.bioQuote&&(
-                      <p className="text-[12px] italic text-zinc-500 text-center px-2 leading-snug">"{selMember.bioQuote}"</p>
-                    )}
-                    <div className="grid grid-cols-3 gap-px bg-zinc-200 rounded-xl overflow-hidden">
-                      <div className="bg-white py-3.5 text-center">
-                        <p className="font-mono text-xl font-bold text-zinc-900">{String(catMatchesPlayed.length).padStart(2,'0')}</p>
-                        <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Overseen</p>
-                      </div>
-                      <div className="bg-white py-3.5 text-center">
-                        <p className="text-xl font-bold"><span className="text-green-600">{wins}</span><span className="text-zinc-300 mx-0.5">-</span><span className="text-zinc-500">{draws}</span><span className="text-zinc-300 mx-0.5">-</span><span className="text-red-500">{losses}</span></p>
-                        <p className="text-[10px] text-zinc-400 uppercase tracking-wider">W-D-L</p>
-                      </div>
-                      <div className="bg-white py-3.5 text-center">
-                        <p className="text-xl font-bold text-zinc-900">{catMatchesPlayed.length>0?Math.round((wins/catMatchesPlayed.length)*100):0}%</p>
-                        <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Win Rate</p>
-                      </div>
-                    </div>
-
-                    {(biggestWin||signatureFormation)&&(
-                      <div className="grid grid-cols-2 gap-3">
-                        {biggestWin&&(
-                          <div className="bg-gradient-to-br from-[#E30613] to-red-800 rounded-xl p-3 text-white">
-                            <p className="text-[9px] font-black uppercase tracking-wider text-white/70">Biggest Win</p>
-                            <p className="text-lg font-black font-mono mt-0.5">{biggestWin.result}</p>
-                            <p className="text-[10px] font-bold text-white/80 truncate">vs {biggestWin.opponent}</p>
-                          </div>
-                        )}
-                        {signatureFormation&&(
-                          <div className="bg-zinc-900 rounded-xl p-3 text-white flex flex-col justify-center items-center text-center">
-                            <p className="text-[9px] font-black uppercase tracking-wider text-white/50">Signature Shape</p>
-                            <p className="text-lg font-black font-mono mt-0.5">{signatureFormation}</p>
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {milestones.length>0&&(
-                      <div className="flex flex-wrap gap-1.5">
-                        {milestones.map(ms=>(
-                          <span key={ms} className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">🏅 {ms}</span>
-                        ))}
-                      </div>
-                    )}
-
                     <div className="grid grid-cols-2 gap-3">
                       <div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
                         <Award size={16} className="text-[#E30613] shrink-0"/>
@@ -1293,7 +1223,7 @@ export default function EliteSquadApp() {
 
               </>)}
 
-              {profileTab==="medical"&&(
+              {profileTab==="medical"&&(isPlayer?(
                 <div className="space-y-2.5">
                   {p.editMedical&&(
                     <button onClick={()=>setAddInjuryOpen(true)} className="w-full py-2 rounded-lg border border-dashed border-[#E30613]/30 text-[12px] font-black uppercase tracking-wider text-[#E30613] hover:bg-[#E30613]/5 transition-all flex items-center justify-center gap-1.5">
@@ -1327,7 +1257,94 @@ export default function EliteSquadApp() {
                     )
                   })}
                 </div>
-              )}
+              ):(()=>{
+                const catMatchesPlayed=matches.filter((m:any)=>m.teamCategory===selMember.teamCategory&&m.result)
+                let wins=0,draws=0,losses=0
+                let biggestWin:{opponent:string,result:string,diff:number}|null=null
+                catMatchesPlayed.forEach((m:any)=>{
+                  const parts=(m.result||"").split("-").map((x:string)=>parseInt(x))
+                  if(parts.length===2&&!isNaN(parts[0])&&!isNaN(parts[1])){
+                    if(parts[0]>parts[1]){
+                      wins++
+                      const diff=parts[0]-parts[1]
+                      if(!biggestWin||diff>biggestWin.diff)biggestWin={opponent:m.opponent,result:m.result,diff}
+                    }
+                    else if(parts[0]<parts[1])losses++
+                    else draws++
+                  }
+                })
+                const posGroup=(pos:string)=>{
+                  const P=(pos||"").toUpperCase()
+                  if(P.includes("GOAL")||P==="GK")return null
+                  if(P.includes("DEF"))return "DEF"
+                  if(P.includes("MID"))return "MID"
+                  return "FWD"
+                }
+                const formationCounts:Record<string,number>={}
+                catMatchesPlayed.forEach((m:any)=>{
+                  const xi=(m.squad||[]).slice(0,11).map((pid:number)=>members.find((mm:any)=>mm.id===pid)).filter(Boolean)
+                  if(xi.length<11)return
+                  let def=0,mid=0,fwd=0
+                  xi.forEach((pl:any)=>{const g=posGroup(pl.position);if(g==="DEF")def++;else if(g==="MID")mid++;else if(g==="FWD")fwd++})
+                  if(def+mid+fwd===0)return
+                  const shape=`${def}-${mid}-${fwd}`
+                  formationCounts[shape]=(formationCounts[shape]||0)+1
+                })
+                const signatureFormation=Object.entries(formationCounts).sort((a,b)=>b[1]-a[1])[0]?.[0]
+                const milestones:string[]=[]
+                if(catMatchesPlayed.length>=50)milestones.push("50+ Matches")
+                else if(catMatchesPlayed.length>=20)milestones.push("20+ Matches")
+                if(wins>=10)milestones.push("10+ Wins")
+                const sortedByDate=[...catMatchesPlayed].sort((a,b)=>(a.date||"").localeCompare(b.date||""))
+                if(sortedByDate.length>=5&&sortedByDate.slice(0,5).every((m:any)=>{const parts=(m.result||"").split("-").map((x:string)=>parseInt(x));return !(parts[0]<parts[1])}))milestones.push("Unbeaten Start")
+                return(
+                <div className="space-y-3">
+                  {selMember.bioQuote?(
+                    <p className="text-[12px] italic text-zinc-500 text-center px-2 leading-snug">"{selMember.bioQuote}"</p>
+                  ):(
+                    <p className="text-[11px] text-zinc-300 text-center px-2 italic">No coaching philosophy added yet</p>
+                  )}
+                  <div className="grid grid-cols-3 gap-px bg-zinc-200 rounded-xl overflow-hidden">
+                    <div className="bg-white py-3.5 text-center">
+                      <p className="font-mono text-xl font-bold text-zinc-900">{String(catMatchesPlayed.length).padStart(2,'0')}</p>
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Overseen</p>
+                    </div>
+                    <div className="bg-white py-3.5 text-center">
+                      <p className="text-xl font-bold"><span className="text-green-600">{wins}</span><span className="text-zinc-300 mx-0.5">-</span><span className="text-zinc-500">{draws}</span><span className="text-zinc-300 mx-0.5">-</span><span className="text-red-500">{losses}</span></p>
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">W-D-L</p>
+                    </div>
+                    <div className="bg-white py-3.5 text-center">
+                      <p className="text-xl font-bold text-zinc-900">{catMatchesPlayed.length>0?Math.round((wins/catMatchesPlayed.length)*100):0}%</p>
+                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Win Rate</p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-gradient-to-br from-[#E30613] to-red-800 rounded-xl p-3 text-white">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-white/70">Biggest Win</p>
+                      {biggestWin?(<>
+                        <p className="text-lg font-black font-mono mt-0.5">{biggestWin.result}</p>
+                        <p className="text-[10px] font-bold text-white/80 truncate">vs {biggestWin.opponent}</p>
+                      </>):(
+                        <p className="text-[10px] font-bold text-white/60 mt-1.5">No wins recorded yet</p>
+                      )}
+                    </div>
+                    <div className="bg-zinc-900 rounded-xl p-3 text-white flex flex-col justify-center items-center text-center">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-white/50">Preferred Formation</p>
+                      <p className="text-lg font-black font-mono mt-0.5">{signatureFormation||"—"}</p>
+                    </div>
+                  </div>
+
+                  {milestones.length>0&&(
+                    <div className="flex flex-wrap gap-1.5">
+                      {milestones.map(ms=>(
+                        <span key={ms} className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">🏅 {ms}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                )
+              })())}
 
               </div>
             </div>
@@ -1425,12 +1442,19 @@ export default function EliteSquadApp() {
                     <p className="text-[8px] font-black text-blue-500 uppercase tracking-[0.3em] flex items-center gap-2"><Globe size={9}/> Scout Tags</p>
                     <div>
                       <label className="text-[7px] font-black uppercase text-zinc-500 mb-1.5 block">League / Region</label>
-                      <div className="flex flex-wrap gap-1.5">
-                        {[{v:"tunisia",l:"Tunisia Domestic"},{v:"ligue1_feminine",l:"Ligue 1 Féminine"},{v:"middle_east",l:"Middle East"},{v:"other",l:"Other/Diaspora"}].map(opt=>(
-                          <button key={opt.v} type="button" onClick={()=>setForm({...form,leagueRegion:form.leagueRegion===opt.v?"":opt.v})}
-                            className={`px-2.5 py-1.5 rounded-full text-[8px] font-black uppercase tracking-wider transition-all ${form.leagueRegion===opt.v?'bg-blue-600 text-white':'bg-white border border-zinc-200 text-zinc-500 hover:border-blue-300'}`}>
-                            {opt.l}
-                          </button>
+                      <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                        {LEAGUES_BY_REGION.map(group=>(
+                          <div key={group.region}>
+                            <p className="text-[6px] font-black uppercase text-zinc-400 mb-1">{group.region}</p>
+                            <div className="flex flex-wrap gap-1.5">
+                              {group.options.map(opt=>(
+                                <button key={opt} type="button" onClick={()=>setForm({...form,leagueRegion:form.leagueRegion===opt?"":opt})}
+                                  className={`px-2.5 py-1.5 rounded-full text-[8px] font-black uppercase tracking-wider transition-all ${form.leagueRegion===opt?'bg-blue-600 text-white':'bg-white border border-zinc-200 text-zinc-500 hover:border-blue-300'}`}>
+                                  {opt}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
                     </div>
@@ -1839,6 +1863,49 @@ export default function EliteSquadApp() {
                   <p className="text-[9px] text-zinc-400 mt-1">{n.source}{n.pubDate?` · ${new Date(n.pubDate).toLocaleDateString()}`:""}</p>
                 </a>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          SCOUT FILTER PANEL — every league/region + dual nationality
+      ═══════════════════════════════════════════ */}
+      {scoutFilterOpen&&(
+        <div className="fixed inset-0 z-[220] flex items-center justify-center p-2 sm:p-4 bg-black/80">
+          <div className="w-full max-w-sm rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[85vh]">
+            <div className="px-5 pt-4 pb-3 border-b border-zinc-200 shrink-0 flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Globe size={15}/>Scout Filter</h2>
+              <button onClick={()=>setScoutFilterOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-200/60 transition-all"><X size={17}/></button>
+            </div>
+            <div className="p-4 overflow-y-auto space-y-4">
+              <button onClick={()=>setScoutDualOnly(d=>!d)} className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${scoutDualOnly?'bg-blue-600 border-blue-600 text-white':'border-zinc-200 bg-white text-zinc-600'}`}>
+                🌐 Dual Nationality Only {scoutDualOnly&&"✓"}
+              </button>
+
+              {LEAGUES_BY_REGION.map(group=>(
+                <div key={group.region}>
+                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">{group.region}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.options.map(opt=>{
+                      const active=scoutRegionFilter.has(opt)
+                      return(
+                        <button key={opt} onClick={()=>{
+                          const next=new Set(scoutRegionFilter)
+                          if(active)next.delete(opt);else next.add(opt)
+                          setScoutRegionFilter(next)
+                        }} className={`px-2.5 py-1.5 rounded-full text-[9px] font-bold transition-all ${active?'bg-blue-600 text-white':'bg-white border border-zinc-200 text-zinc-500 hover:border-blue-300'}`}>
+                          {opt}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="p-4 border-t border-zinc-200 shrink-0 flex gap-2">
+              <button onClick={()=>{setScoutRegionFilter(new Set());setScoutDualOnly(false)}} className="flex-1 py-2.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-white hover:bg-zinc-100 transition-all">Clear All</button>
+              <button onClick={()=>setScoutFilterOpen(false)} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">Show Results</button>
             </div>
           </div>
         </div>
