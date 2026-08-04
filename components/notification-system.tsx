@@ -19,6 +19,21 @@ type Props = {
 
 export function NotificationBell({ members, matches, teamCat, onSelectMember }: Props) {
   const [open, setOpen] = useState(false)
+  const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
+    if (typeof window === "undefined") return new Set()
+    try {
+      const raw = localStorage.getItem("esq-dismissed-notifications")
+      return raw ? new Set(JSON.parse(raw)) : new Set()
+    } catch { return new Set() }
+  })
+  const dismiss = (id: string) => {
+    setDismissedIds(prev => {
+      const next = new Set(prev)
+      next.add(id)
+      try { localStorage.setItem("esq-dismissed-notifications", JSON.stringify([...next])) } catch {}
+      return next
+    })
+  }
 
   const notifications = useMemo(() => {
     const n: Notification[] = []
@@ -43,6 +58,8 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember }: 
     return n
   }, [members, matches, teamCat])
 
+  const visibleNotifications = notifications.filter(n => !dismissedIds.has(n.id))
+
   return (
     <div className="relative">
       <button
@@ -50,9 +67,9 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember }: 
         className="relative p-2 rounded-xl border border-zinc-300 bg-white text-zinc-500 hover:text-zinc-900 transition-all"
       >
         <Bell size={16} />
-        {notifications.length > 0 && (
+        {visibleNotifications.length > 0 && (
           <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#E30613] text-white rounded-full text-[7px] font-black flex items-center justify-center shadow-lg">
-            {notifications.length > 9 ? "9+" : notifications.length}
+            {visibleNotifications.length > 9 ? "9+" : visibleNotifications.length}
           </span>
         )}
       </button>
@@ -63,15 +80,15 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember }: 
           <div className="absolute right-0 top-12 z-[190] w-80 rounded-2xl border border-zinc-200 bg-white shadow-2xl overflow-hidden text-zinc-900">
             <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between">
               <h3 className="text-[9px] font-black uppercase tracking-widest">Notifications</h3>
-              <span className={`text-[8px] font-black px-2 py-0.5 rounded-lg ${notifications.length > 0 ? 'bg-[#E30613]/10 text-[#E30613]' : 'bg-zinc-500/10 text-zinc-500'}`}>
-                {notifications.length}
+              <span className={`text-[8px] font-black px-2 py-0.5 rounded-lg ${visibleNotifications.length > 0 ? 'bg-[#E30613]/10 text-[#E30613]' : 'bg-zinc-500/10 text-zinc-500'}`}>
+                {visibleNotifications.length}
               </span>
             </div>
             <div className="max-h-64 overflow-y-auto divide-y divide-zinc-200">
-              {notifications.length === 0 && (
+              {visibleNotifications.length === 0 && (
                 <div className="p-6 text-center text-[10px] font-black uppercase tracking-widest opacity-40">All clear</div>
               )}
-              {notifications.map(n => (
+              {visibleNotifications.map(n => (
                 <button
                   key={n.id}
                   onClick={() => {
@@ -79,6 +96,7 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember }: 
                       const m = members.find(x => x.id === n.playerId)
                       if (m) onSelectMember(m)
                     }
+                    dismiss(n.id)
                     setOpen(false)
                   }}
                   className="w-full text-left px-4 py-3 flex items-center gap-3 transition-all hover:bg-zinc-50"
