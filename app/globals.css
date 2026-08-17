@@ -109,6 +109,43 @@ body {
   box-shadow: 0 16px 26px rgba(9, 35, 65, .16);
 }
 
+/* Modal system: all operations are presented as match-centre panels. */
+.ftf-portal .fixed.inset-0 {
+  backdrop-filter: blur(7px);
+}
+.ftf-portal .fixed.inset-0 > div:not(.absolute):not(.pointer-events-none) {
+  border: 1px solid rgba(198, 215, 232, .9) !important;
+  border-radius: .8rem !important;
+  box-shadow: 0 28px 80px rgba(1, 12, 29, .42) !important;
+}
+.ftf-portal .fixed.inset-0 > div:not(.absolute):not(.pointer-events-none) > :first-child:not(img) {
+  position: relative;
+}
+.ftf-portal .fixed.inset-0 > div:not(.absolute):not(.pointer-events-none) > :first-child:not(img)::before {
+  content: "";
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 72px;
+  height: 3px;
+  background: #e3062c;
+}
+.ftf-portal .fixed.inset-0 input,
+.ftf-portal .fixed.inset-0 select,
+.ftf-portal .fixed.inset-0 textarea {
+  border-radius: .45rem !important;
+  border-color: #cbd8e5 !important;
+  background: #f7fafc !important;
+}
+.ftf-portal .fixed.inset-0 input:focus,
+.ftf-portal .fixed.inset-0 select:focus,
+.ftf-portal .fixed.inset-0 textarea:focus {
+  border-color: #e3062c !important;
+  box-shadow: 0 0 0 3px rgba(227, 6, 44, .12);
+}
+.ftf-portal .fixed.inset-0 button:not([class*="bg-\["]) {
+  border-radius: .45rem;
+}
+
 @media (max-width: 640px) {
   .ftf-portal header .max-w-7xl { padding-left: 1rem; padding-right: 1rem; }
 }
