@@ -39,6 +39,80 @@
   --sidebar-ring: oklch(1 0 0);
 }
 
+/* Football operations identity — the dashboard is intentionally built around
+   matchday navy, Tunisian red, and broadcast-style information hierarchy. */
+body {
+  background: #06152d;
+  background-image:
+    radial-gradient(circle at 12% -10%, rgba(224, 14, 47, .34), transparent 34rem),
+    linear-gradient(135deg, #06152d 0%, #0a2041 52%, #06152d 100%);
+}
+
+.ftf-portal {
+  --ftf-navy: #061a38;
+  --ftf-blue: #0c2d59;
+  --ftf-red: #e3062c;
+  --ftf-gold: #f6c744;
+  min-height: 100vh;
+  background-color: #edf3f8 !important;
+  background-image:
+    linear-gradient(rgba(8, 31, 61, .035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(8, 31, 61, .035) 1px, transparent 1px),
+    linear-gradient(180deg, #f9fbfd 0%, #e9f0f6 100%) !important;
+  background-size: 26px 26px, 26px 26px, auto;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.ftf-portal header {
+  background: linear-gradient(106deg, #06152d 0%, #0a2b58 62%, #061a38 100%) !important;
+  border-color: rgba(255,255,255,.12) !important;
+  box-shadow: 0 10px 30px rgba(3, 13, 31, .2);
+}
+
+.ftf-portal header h1 { color: #fff; letter-spacing: .1em; }
+.ftf-portal header .text-zinc-500 { color: #c4d3e5 !important; }
+.ftf-portal header .text-zinc-400 { color: #a9bed6 !important; }
+.ftf-portal header .border-zinc-200 { border-color: rgba(255,255,255,.16) !important; }
+.ftf-portal header .bg-white,
+.ftf-portal header .bg-zinc-50,
+.ftf-portal header .bg-zinc-100 { background-color: rgba(255,255,255,.08) !important; }
+.ftf-portal header input { color: white !important; }
+.ftf-portal header input::placeholder { color: #afc1d5 !important; }
+.ftf-portal header .bg-\[\#E30613\] { background: linear-gradient(135deg, #ef183e, #bf0020) !important; }
+
+.ftf-portal .rounded-xl { border-radius: .55rem; }
+.ftf-portal .rounded-2xl { border-radius: .7rem; }
+.ftf-portal .rounded-3xl { border-radius: .85rem; }
+.ftf-portal .border-zinc-200 { border-color: #d7e1ea; }
+
+/* Strong, compact controls similar to a competition data centre. */
+.ftf-portal button { letter-spacing: .055em; }
+.ftf-portal button[class*="bg-[#E30613]"] {
+  background: linear-gradient(135deg, #ef183e, #c60024) !important;
+  box-shadow: 0 5px 13px rgba(198, 0, 36, .2);
+}
+.ftf-portal button[class*="hover:bg-zinc"]:hover {
+  background-color: #e2ebf3 !important;
+  color: #061a38 !important;
+}
+
+/* Give team/player cards the feeling of official squad tiles, not generic AI cards. */
+.ftf-portal .group.cursor-pointer > div:not(.absolute) {
+  border-radius: .7rem;
+  border: 1px solid #d4e0ea;
+  box-shadow: 0 8px 18px rgba(9, 35, 65, .09);
+  overflow: hidden;
+}
+.ftf-portal .group.cursor-pointer:hover > div:not(.absolute) {
+  transform: translateY(-4px);
+  border-color: rgba(227, 6, 44, .55);
+  box-shadow: 0 16px 26px rgba(9, 35, 65, .16);
+}
+
+@media (max-width: 640px) {
+  .ftf-portal header .max-w-7xl { padding-left: 1rem; padding-right: 1rem; }
+}
+
 .dark {
   --background: oklch(0.145 0 0);
   --foreground: oklch(0.985 0 0);

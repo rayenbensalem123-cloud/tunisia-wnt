@@ -808,7 +808,7 @@ export default function EliteSquadApp() {
 
   // ── MAIN SQUAD VIEW ──
   return(
-    <main className="min-h-screen bg-zinc-50 text-zinc-900 relative">
+    <main className="ftf-portal min-h-screen bg-zinc-50 text-zinc-900 relative">
       {!loaded&&<div className="fixed inset-0 z-[999] bg-white flex items-center justify-center"><div className="flex flex-col items-center gap-3"><div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin"/><p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Loading...</p></div></div>}
       {/* Ambient animated background */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
