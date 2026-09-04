@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Inter:wght@400;600;700&display=swap');
 @import 'tailwindcss';
 @import 'tw-animate-css';
 
@@ -42,59 +43,148 @@
 /* Football operations identity — the dashboard is intentionally built around
    matchday navy, Tunisian red, and broadcast-style information hierarchy. */
 body {
-  background: #06152d;
+  background: #0a1c38;
   background-image:
-    radial-gradient(circle at 12% -10%, rgba(224, 14, 47, .34), transparent 34rem),
-    linear-gradient(135deg, #06152d 0%, #0a2041 52%, #06152d 100%);
+    radial-gradient(circle at 12% -10%, rgba(224, 14, 47, .28), transparent 34rem),
+    linear-gradient(135deg, #0a1c38 0%, #0e2445 52%, #0a1c38 100%);
 }
 
+/* ═════════════════════════════════════════════════════════════════════
+   THE FULL PLATFORM DESIGN — "SÉLECTION TUNISIENNE" BROADCAST DATA CENTRE
+   Identity: deep matchday navy, Tunisian red, gold highlights.
+   Surfaces are dark by design; the player cards already match this.
+   Utility classes are remapped in-scope so every panel inherits the look.
+   ═════════════════════════════════════════════════════════════════════ */
 .ftf-portal {
-  --ftf-navy: #061a38;
-  --ftf-blue: #0c2d59;
+  --ftf-navy: #0c1f3d;
+  --ftf-blue: #12305a;
   --ftf-red: #e3062c;
   --ftf-gold: #f6c744;
+  --ftf-panel: #112950;
+  --ftf-panel-2: #0e2345;
+  --ftf-line: rgba(213, 200, 174, .16);
   min-height: 100vh;
-  background-color: #edf3f8 !important;
+  color: #f2ecdf;
+  background-color: #0c1f3d !important;
   background-image:
-    linear-gradient(rgba(8, 31, 61, .035) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(8, 31, 61, .035) 1px, transparent 1px),
-    linear-gradient(180deg, #f9fbfd 0%, #e9f0f6 100%) !important;
-  background-size: 26px 26px, 26px 26px, auto;
-  font-family: Arial, Helvetica, sans-serif;
+    radial-gradient(1100px 520px at 12% -8%, rgba(227, 6, 44, .18), transparent 60%),
+    radial-gradient(900px 500px at 95% 0%, rgba(246, 199, 68, .04), transparent 55%),
+    radial-gradient(600px 400px at 50% 110%, rgba(18, 48, 90, .35), transparent 65%),
+    linear-gradient(180deg, #0e2343 0%, #0c1f3d 55%, #091b36 100%);
+  background-size: auto, auto, auto, auto;
+  font-family: 'Oswald', 'Arial Narrow', Arial, sans-serif !important;
+  letter-spacing: .02em;
+}
+.ftf-portal :not(code):not(pre):not(svg):not([class*="font-mono"]) {
+  font-family: 'Oswald', 'Arial Narrow', Arial, sans-serif !important;
 }
 
-.ftf-portal header {
-  background: linear-gradient(106deg, #06152d 0%, #0a2b58 62%, #061a38 100%) !important;
-  border-color: rgba(255,255,255,.12) !important;
-  box-shadow: 0 10px 30px rgba(3, 13, 31, .2);
+/* ── Broadcast header: navy bar, solid red baseline rail, red crest line ── */
+.ftf-portal header.border-b {
+  background: linear-gradient(180deg, #0e2547 0%, #0b1f3d 60%, #081a35 100%) !important;
+  border-bottom: 3px solid #e3062c !important;
+  border-bottom-color: #e3062c !important;
+  box-shadow: 0 14px 38px rgba(0, 0, 0, .6);
 }
-
-.ftf-portal header h1 { color: #fff; letter-spacing: .1em; }
-.ftf-portal header .text-zinc-500 { color: #c4d3e5 !important; }
-.ftf-portal header .text-zinc-400 { color: #a9bed6 !important; }
-.ftf-portal header .border-zinc-200 { border-color: rgba(255,255,255,.16) !important; }
+.ftf-portal header::before {
+  content: "";
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #e3062c 0%, rgba(227, 6, 44, .5) 45%, rgba(227, 6, 44, 0) 100%);
+  z-index: 2;
+}
+.ftf-portal header h1 {
+  color: #fff; letter-spacing: .06em; font-weight: 700;
+  text-transform: uppercase;
+}
+.ftf-portal header .text-zinc-500 { color: #cdc2b0 !important; }
+.ftf-portal header .text-zinc-400 { color: #a89c89 !important; }
+.ftf-portal header .border-zinc-200 { border-color: rgba(213, 200, 174, .22) !important; }
 .ftf-portal header .bg-white,
-.ftf-portal header .bg-zinc-50,
-.ftf-portal header .bg-zinc-100 { background-color: rgba(255,255,255,.08) !important; }
-.ftf-portal header input { color: white !important; }
-.ftf-portal header input::placeholder { color: #afc1d5 !important; }
-.ftf-portal header .bg-\[\#E30613\] { background: linear-gradient(135deg, #ef183e, #bf0020) !important; }
+.ftf-portal header .bg-zinc-50 {
+  background-color: rgba(18, 48, 90, .8) !important;
+}
+.ftf-portal header .bg-zinc-100 { background-color: rgba(24, 60, 106, .85) !important; }
+.ftf-portal header input { color: #f4efe7 !important; }
+.ftf-portal header input::placeholder { color: #9b8f7d !important; }
+.ftf-portal header .bg-\[\#E30613\]:not([class*="/"]) { background: linear-gradient(135deg, #ef183e, #bf0020) !important; }
+.ftf-portal header .bg-blue-600,
+.ftf-portal header .bg-amber-500 { background-color: #12305a !important; }
+.ftf-portal header .hover\:bg-zinc-100:hover,
+.ftf-portal header .hover\:bg-zinc-50:hover { background-color: rgba(26, 62, 108, .9) !important; }
 
-.ftf-portal .rounded-xl { border-radius: .55rem; }
-.ftf-portal .rounded-2xl { border-radius: .7rem; }
-.ftf-portal .rounded-3xl { border-radius: .85rem; }
-.ftf-portal .border-zinc-200 { border-color: #d7e1ea; }
+/* ── Global surface inversion inside the portal ── */
+.ftf-portal .bg-white,
+.ftf-portal [class*="bg-white/"] {
+  background-color: #112950 !important;
+}
+.ftf-portal .bg-zinc-50 { background-color: #0e2345 !important; }
+.ftf-portal .bg-zinc-100 { background-color: #12294e !important; }
+.ftf-portal .bg-zinc-200 { background-color: #1a355f !important; }
+.ftf-portal [class*="hover:bg-zinc-50"]:hover { background-color: #142c52 !important; }
+.ftf-portal [class*="hover:bg-zinc-100"]:hover { background-color: #17335f !important; }
+.ftf-portal [class*="hover:bg-zinc-200"]:hover { background-color: #1e3d6d !important; }
 
-/* Strong, compact controls similar to a competition data centre. */
+/* ── Text inversion inside the portal ── */
+.ftf-portal .text-zinc-900 { color: #f7f1e6 !important; }
+.ftf-portal .text-zinc-800 { color: #ece4d5 !important; }
+.ftf-portal .text-zinc-700 { color: #d8cfc0 !important; }
+.ftf-portal .text-zinc-600 { color: #c2b7a6 !important; }
+.ftf-portal .text-zinc-500 { color: #a89c8a !important; }
+.ftf-portal .text-zinc-400 { color: #877a68 !important; }
+.ftf-portal .text-zinc-300 { color: #66594a !important; }
+.ftf-portal .text-zinc-200 { color: #4a4034 !important; }
+.ftf-portal .text-zinc-100 { color: #383029 !important; }
+.ftf-portal .text-red-500,
+.ftf-portal .text-red-600 { color: #ff5f72 !important; }
+.ftf-portal .text-blue-600 { color: #7fb3ff !important; }
+.ftf-portal .text-green-600 { color: #6ee7a0 !important; }
+
+/* ── Border inversion inside the portal ── */
+.ftf-portal .border-zinc-100,
+.ftf-portal .border-zinc-200,
+.ftf-portal .border-zinc-300 { border-color: rgba(213, 200, 174, .16) !important; }
+.ftf-portal .border-red-200, .ftf-portal .border-red-300 { border-color: rgba(255, 95, 114, .35) !important; }
+.ftf-portal .border-blue-200, .ftf-portal .border-blue-300 { border-color: rgba(127, 179, 255, .35) !important; }
+.ftf-portal .border-purple-200 { border-color: rgba(180, 150, 255, .3) !important; }
+.ftf-portal .border-green-200 { border-color: rgba(110, 231, 160, .3) !important; }
+
+/* ── Form controls inside the portal ── */
+.ftf-portal input, .ftf-portal select, .ftf-portal textarea {
+  background-color: #0a1f3c !important;
+  color: #f7f1e6 !important;
+  border-color: rgba(213, 200, 174, .24) !important;
+}
+.ftf-portal input::placeholder, .ftf-portal textarea::placeholder { color: #9b8f7d !important; }
+
+/* ── Scoreboard cards: navy panel, red header rail, hard offset shadow ── */
+.ftf-portal .shadow-sm {
+  box-shadow: 0 6px 0 rgba(4, 12, 26, .35), 0 0 0 1px rgba(213, 200, 174, .1) !important;
+  border-radius: .35rem !important;
+  border-color: rgba(213, 200, 174, .14) !important;
+  border-top: 3px solid #e3062c !important;
+}
+
+/* ── Rounded corners: tighten the "product/AI" feel into broadcast panels ── */
+.ftf-portal .rounded-xl { border-radius: .4rem; }
+.ftf-portal .rounded-2xl { border-radius: .55rem; }
+.ftf-portal .rounded-3xl { border-radius: .7rem; }
+.ftf-portal [class*="rounded-2xl"] { border-radius: .55rem !important; }
+
+/* ── Strict, compact controls like a competition data centre ── */
 .ftf-portal button { letter-spacing: .055em; }
-.ftf-portal button[class*="bg-[#E30613]"] {
+.ftf-portal button[class*="bg-[#E30613]"]:not([class*="bg-[#E30613]/"]) {
   background: linear-gradient(135deg, #ef183e, #c60024) !important;
-  box-shadow: 0 5px 13px rgba(198, 0, 36, .2);
+  box-shadow: 0 5px 13px rgba(198, 0, 36, .25) !important;
 }
 .ftf-portal button[class*="hover:bg-zinc"]:hover {
-  background-color: #e2ebf3 !important;
-  color: #061a38 !important;
+  background-color: #13305a !important;
+  color: #fff !important;
 }
+.ftf-portal button[class*="hover:bg-red-50"]:hover { background-color: rgba(227, 6, 44, .16) !important; }
+.ftf-portal button[class*="hover:bg-blue-50"]:hover { background-color: rgba(30, 120, 255, .16) !important; }
+.ftf-portal button[class*="hover:bg-green-50"]:hover { background-color: rgba(34, 197, 94, .14) !important; }
 
 /* Give team/player cards the feeling of official squad tiles, not generic AI cards. */
 .ftf-portal .group.cursor-pointer > div:not(.absolute) {
@@ -106,28 +196,37 @@ body {
 }
 
 .player-squad-card {
-  clip-path: polygon(0 0, calc(100% - 24px) 0, 100% 24px, 100% 100%, 0 100%);
-  border: 1px solid #173c6b;
-  box-shadow: 9px 11px 0 rgba(6, 26, 56, .12) !important;
+  border-radius: .8rem !important;
+  box-shadow: 0 0 0 1px rgba(42, 69, 104, .9), 0 18px 40px rgba(2, 8, 20, .45) !important;
+  transition: transform .55s cubic-bezier(.16, .84, .44, 1), translate .55s cubic-bezier(.16, .84, .44, 1), box-shadow .55s ease;
 }
-.player-squad-card::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border: 1px solid rgba(255,255,255,.15);
-  pointer-events: none;
-  clip-path: inherit;
+.player-squad-card:hover {
+  transform: perspective(900px) translateZ(60px) scale(1.07);
+  box-shadow: 0 0 0 1px rgba(42, 69, 104, .9), 0 34px 60px rgba(2, 8, 20, .55), 0 18px 40px rgba(227, 6, 44, .25) !important;
 }
-.player-squad-card:hover { box-shadow: 12px 15px 0 #e3062c !important; }
+.ftf-portal .group.cursor-pointer:hover { z-index: 40; }
+
+/* Motion only — the portrait celebrates (hops) inside its frame on hover */
+@keyframes card-celebrate {
+  0%   { transform: scale(1); }
+  25%  { transform: scale(1.1) translateY(-5px); }
+  50%  { transform: scale(1); }
+  75%  { transform: scale(1.05) translateY(-3px); }
+  100% { transform: scale(1); }
+}
+.player-squad-card:hover .player-card-photo img {
+  animation: card-celebrate .7s cubic-bezier(.34, 1.56, .64, 1);
+}
 
 /* Modal system: all operations are presented as match-centre panels. */
 .ftf-portal .fixed.inset-0 {
   backdrop-filter: blur(7px);
 }
 .ftf-portal .fixed.inset-0 > div:not(.absolute):not(.pointer-events-none) {
-  border: 1px solid rgba(198, 215, 232, .9) !important;
-  border-radius: 0 !important;
-  box-shadow: 0 28px 80px rgba(1, 12, 29, .42) !important;
+  background: #112950 !important;
+  border: 1px solid rgba(213, 200, 174, .22) !important;
+  border-radius: .65rem !important;
+  box-shadow: 0 28px 80px rgba(1, 8, 18, .65) !important;
 }
 .ftf-portal .fixed.inset-0 > div:not(.absolute):not(.pointer-events-none) > :first-child:not(img) {
   position: relative;
@@ -138,20 +237,23 @@ body {
   inset: 0 auto auto 0;
   width: 100%;
   height: 5px;
-  background: #e3062c;
+  background: linear-gradient(90deg, #e3062c 0%, #f6c744 100%);
 }
 .ftf-portal .fixed.inset-0 input,
 .ftf-portal .fixed.inset-0 select,
 .ftf-portal .fixed.inset-0 textarea {
   border-radius: .45rem !important;
-  border-color: #cbd8e5 !important;
-  background: #f7fafc !important;
+  border-color: rgba(213, 200, 174, .26) !important;
+  background: #0a1f3c !important;
+  color: #f7f1e6 !important;
 }
+.ftf-portal .fixed.inset-0 input::placeholder,
+.ftf-portal .fixed.inset-0 textarea::placeholder { color: #9b8f7d !important; }
 .ftf-portal .fixed.inset-0 input:focus,
 .ftf-portal .fixed.inset-0 select:focus,
 .ftf-portal .fixed.inset-0 textarea:focus {
   border-color: #e3062c !important;
-  box-shadow: 0 0 0 3px rgba(227, 6, 44, .12);
+  box-shadow: 0 0 0 3px rgba(227, 6, 44, .14);
 }
 .ftf-portal .fixed.inset-0 button:not([class*="bg-\["]) {
   border-radius: .45rem;
@@ -299,111 +401,286 @@ button {
   filter: saturate(.6);
 }
 
-/* ── PRIMARY (solid red) — glossy, elevated, pressable ── */
-.ftf-portal button[class*="bg-[#E30613]"] {
-  background: linear-gradient(180deg, #ff3b52 0%, #ef183e 55%, #c60024 100%) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .28),
-    inset 0 -2px 0 rgba(0, 0, 0, .14),
-    0 6px 16px -6px rgba(198, 0, 36, .5) !important;
-  transition: transform .18s cubic-bezier(.22, .61, .36, 1), box-shadow .22s ease, filter .22s ease !important;
+/* ── ALL PORTAL BUTTONS: calm, modern, consistent ── */
+.ftf-portal button {
+  border-radius: .45rem !important;
+  font-weight: 600;
+  transition:
+    transform .16s ease,
+    background-color .16s ease,
+    border-color .16s ease,
+    color .16s ease,
+    box-shadow .16s ease !important;
 }
-.ftf-portal button[class*="bg-[#E30613]"]:hover:not(:disabled) {
-  filter: brightness(1.06);
+.ftf-portal button[class*="rounded-full"]:not([class*="px-"]):not([class*="w-7"]):not([class*="w-8"]) {
+  border-radius: 9999px !important;
+}
+.ftf-portal button:hover:not(:disabled):not([class*="animate-"]) {
   transform: translateY(-1px);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .3),
-    inset 0 -2px 0 rgba(0, 0, 0, .14),
-    0 10px 22px -8px rgba(198, 0, 36, .6) !important;
-}
-.ftf-portal button[class*="bg-[#E30613]"]:active:not(:disabled) {
-  transform: translateY(1px) scale(.98);
-  box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, .22),
-    0 2px 6px -2px rgba(198, 0, 36, .4) !important;
 }
 
-/* ── OUTLINE / SECONDARY (white + border) — clean, slight elevation on hover ── */
+/* ── PRIMARY (solid red) — reserved for the main action only ── */
+.ftf-portal button[class*="bg-[#E30613]"]:not([class*="bg-[#E30613]/"]):not([class*="rounded-full"]) {
+  background: linear-gradient(180deg, #f01630 0%, #dd0523 100%) !important;
+  color: #fff !important;
+  border-color: #c2071d !important;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .16) !important;
+  animation: btn-in .32s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+.ftf-portal button[class*="bg-[#E30613]"]:not([class*="bg-[#E30613]/"]):not([class*="rounded-full"]):hover:not(:disabled) {
+  background: linear-gradient(180deg, #f52b43 0%, #e70c29 100%) !important;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .14) !important;
+}
+.ftf-portal button[class*="bg-[#E30613]"]:not([class*="bg-[#E30613]/"]):not([class*="rounded-full"]):active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .18) !important;
+}
+
+/* Circular red FABs: same clean red, no heaviness */
+.ftf-portal button[class*="bg-[#E30613]"][class*="rounded-full"] {
+  background: linear-gradient(180deg, #f01630 0%, #dd0523 100%) !important;
+  color: #fff !important;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .16) !important;
+  animation: btn-in .32s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+.ftf-portal button[class*="bg-[#E30613]"][class*="rounded-full"]:hover:not(:disabled) {
+  background: linear-gradient(180deg, #f52b43 0%, #e70c29 100%) !important;
+}
+.ftf-portal button[class*="bg-[#E30613]"][class*="rounded-full"]:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .18) !important;
+}
+
+/* ── OUTLINE / SECONDARY — lighter navy panel, warm keyline, quiet hover ── */
 .ftf-portal button[class*="border-zinc-200"],
 .ftf-portal button[class*="border-zinc-300"] {
-  transition: transform .18s cubic-bezier(.22, .61, .36, 1), box-shadow .22s ease, background-color .2s ease, border-color .2s ease, color .2s ease !important;
+  background-color: #112950 !important;
+  color: #d8cfc0 !important;
+  border-color: rgba(213, 200, 174, .2) !important;
+  box-shadow: none !important;
+  animation: btn-in .32s cubic-bezier(.34, 1.56, .64, 1) both;
 }
 .ftf-portal button[class*="border-zinc-200"]:hover:not(:disabled),
 .ftf-portal button[class*="border-zinc-300"]:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 14px -8px rgba(6, 26, 56, .35);
+  background-color: #17335f !important;
+  color: #fff !important;
+  border-color: rgba(213, 200, 174, .34) !important;
+}
+.ftf-portal button[class*="border-zinc-200"]:active:not(:disabled),
+.ftf-portal button[class*="border-zinc-300"]:active:not(:disabled) {
+  background-color: #0e2345 !important;
 }
 
-/* ── SEGMENTED TABS (header Stats/Players/Staff + team pills) ── */
-.ftf-portal div.flex.p-1.rounded-xl > button {
-  position: relative;
-  transition: color .2s ease, background-color .22s ease, box-shadow .22s ease, transform .18s ease !important;
+/* ── SEGMENTED TABS (Stats/Players/Staff + team pills) ── */
+.ftf-portal div.flex.p-1.rounded-xl {
+  background: #0a1f3c !important;
+  border-color: rgba(213, 200, 174, .14) !important;
 }
-.ftf-portal div.flex.p-1.rounded-xl > button[class*="bg-[#E30613]"] {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, .3),
-    0 4px 10px -4px rgba(198, 0, 36, .55) !important;
+.ftf-portal div.flex.p-1.rounded-xl > button {
+  border-radius: .4rem !important;
+  font-weight: 600;
+  transition: color .16s ease, background-color .16s ease, box-shadow .16s ease !important;
+}
+.ftf-portal div.flex.p-1.rounded-xl > button[class*="bg-[#E30613]"]:not([class*="bg-[#E30613]/"]) {
+  background: linear-gradient(180deg, #f01630 0%, #dd0523 100%) !important;
+  color: #fff !important;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .16) !important;
+}
+.ftf-portal div.flex.p-1.rounded-xl > button:not([class*="bg-[#E30613]"]):not([class*="bg-[#E30613]/"]):hover {
+  color: #fff !important;
+  background: #17335f !important;
+}
+
+/* ── PILL FILTER CHIPS (positions/ALL) ── */
+.ftf-portal div.flex.gap-1\.5.flex-wrap > button {
+  border-radius: .4rem !important;
+}
+.ftf-portal div.flex.gap-1\.5.flex-wrap > button[class*="border-zinc-200"][class*="bg-white"] {
+  background: #0e2345 !important;
 }
 
 /* ── ICON-only buttons (plus, close, back chevron, etc.) ── */
 .ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]),
 .ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]),
 .ftf-portal button[class*="w-7"]:not([class*="px-"]),
-.ftf-portal button[class*="w-8"]:not([class*="px-"]),
-.ftf-portal button[class*="rounded-full"]:not([class*="px-"]) {
-  transition: transform .18s cubic-bezier(.22, .61, .36, 1), background-color .2s ease, box-shadow .22s ease !important;
+.ftf-portal button[class*="w-8"]:not([class*="px-"]) {
+  background: #0a1f3c !important;
+  color: #d8cfc0 !important;
+  border-color: rgba(213, 200, 174, .16) !important;
+  border-radius: .4rem !important;
 }
 .ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]):hover,
 .ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]):hover,
 .ftf-portal button[class*="w-7"]:not([class*="px-"]):hover,
-.ftf-portal button[class*="w-8"]:not([class*="px-"]):hover,
-.ftf-portal button[class*="rounded-full"]:not([class*="px-"]):hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 10px -6px rgba(6, 26, 56, .35);
+.ftf-portal button[class*="w-8"]:not([class*="px-"]):hover {
+  background: #17335f !important;
+  color: #fff !important;
 }
 
-/* ── Login / Register screens (outside .ftf-portal) ── */
-button[class*="bg-[#E30613]"] {
+/* ── FLAT GHOST menu buttons (dropdown rows, header links) ── */
+.ftf-portal button[class*="hover:bg-zinc-50"]:not([class*="px-3.5"]):not([class*="px-3"]),
+.ftf-portal button[class*="hover:bg-zinc-100"]:not([class*="px-3.5"]):not([class*="px-3"]) {
+  border-radius: .4rem !important;
+}
+
+/* ── Login / Register screens (outside .ftf-portal): clean red primary ── */
+button[class*="w-full"][class*="bg-[#E30613]"] {
   -webkit-tap-highlight-color: transparent;
-  transition: transform .18s cubic-bezier(.22, .61, .36, 1), box-shadow .22s ease, filter .22s ease !important;
+  border-radius: .55rem !important;
+  background: linear-gradient(180deg, #f01630 0%, #dd0523 100%) !important;
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, .16) !important;
+  transition: transform .16s ease, box-shadow .16s ease, background .3s ease !important;
+  animation: btn-in .32s cubic-bezier(.34, 1.56, .64, 1) both;
 }
-button[class*="bg-[#E30613]"]:hover:not(:disabled) {
+button[class*="w-full"][class*="bg-[#E30613]"]:hover:not(:disabled) {
   transform: translateY(-1px);
+  background: linear-gradient(180deg, #f52b43 0%, #e70c29 100%) !important;
 }
-button[class*="bg-[#E30613]"]:active:not(:disabled) {
-  transform: translateY(1px) scale(.98);
+button[class*="w-full"][class*="bg-[#E30613]"]:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, .18) !important;
 }
-button[class*="bg-[#E30613]"]:focus-visible {
+button[class*="w-full"][class*="bg-[#E30613]"]:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(227, 6, 44, .25) !important;
+  box-shadow: 0 0 0 3px rgba(227, 6, 44, .3) !important;
 }
 
-/* Smooth entrance for segmented active pill (subtle pop) */
-@keyframes pill-pop {
-  0% { transform: scale(.94); }
-  60% { transform: scale(1.03); }
+/* ── SEGMENT TABS: pop-out on selection ── */
+@keyframes tile-pop {
+  0% { transform: scale(.4); }
+  55% { transform: scale(1.12); }
+  75% { transform: scale(.97); }
   100% { transform: scale(1); }
 }
 .ftf-portal div.flex.p-1.rounded-xl > button[class*="bg-[#E30613]"] {
-  animation: pill-pop .28s cubic-bezier(.22, .61, .36, 1);
+  animation: tile-pop .34s cubic-bezier(.34, 1.56, .64, 1);
+}
+
+/* ═════════════════════════════════════════════════════════════════════
+   BUTTON & PAGE MOTION — broadcast-grade movement, no more static UI.
+   ═════════════════════════════════════════════════════════════════════ */
+
+/* Buttons snap in with a springy pop when they appear */
+@keyframes btn-in {
+  0% { opacity: 0; transform: translateY(6px) scale(.92); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Segmented tab container: subtle slide-down when the page mounts */
+.ftf-portal div.flex.p-1.rounded-xl {
+  animation: seg-in .45s cubic-bezier(.16, .84, .44, 1) both;
+}
+@keyframes seg-in {
+  0% { opacity: 0; transform: translateY(-8px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Sticky header: slides down into place with the red rail */
+.ftf-portal header {
+  animation: header-in .5s cubic-bezier(.16, .84, .44, 1) both;
+}
+@keyframes header-in {
+  0% { opacity: 0; transform: translateY(-100%); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Content blocks: fade + rise per view (StatsView, grids, leaderboards) */
+.ftf-portal main > *:not(.fixed):not(.sticky) {
+  animation: view-in .55s cubic-bezier(.16, .84, .44, 1) both;
+}
+.ftf-portal .p-4.sm\:p-5.space-y-4 {
+  animation: view-in .55s cubic-bezier(.16, .84, .44, 1) both;
+}
+@keyframes view-in {
+  0% { opacity: 0; transform: translateY(18px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Modals: rise from the bottom + scale with a hard fall shadow */
+.ftf-portal .fixed.inset-0:not(.z-0) > div:not(.absolute):not(.pointer-events-none) {
+  animation: modal-in .38s cubic-bezier(.16, .84, .44, 1) both;
+}
+@keyframes modal-in {
+  0% { opacity: 0; transform: translateY(28px) scale(.96); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Stat tiles pop in with stagger-friendly timing */
+.ftf-portal .grid.grid-cols-2 > div,
+.ftf-portal .grid.grid-cols-3 > div,
+.ftf-portal .grid.grid-cols-4 > div {
+  animation: tile-in .4s cubic-bezier(.34, 1.56, .64, 1) both;
+}
+@keyframes tile-in {
+  0% { opacity: 0; transform: scale(.9) translateY(8px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Reduced motion: respect accessibility preferences */
+@media (prefers-reduced-motion: reduce) {
+  .ftf-portal button, .ftf-portal header,
+  .ftf-portal main > *:not(.fixed),
+  .ftf-portal .grid.grid-cols-2 > div,
+  .ftf-portal .grid.grid-cols-3 > div,
+  .ftf-portal .grid.grid-cols-4 > div {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ── Full-screen loading / auth screens (outside .ftf-portal) ──
+   Give them the same broadcast navy so no white "blank page" breaks the flow. */
+.min-h-screen.flex.flex-col.items-center.justify-center.bg-white,
+.min-h-screen.flex.items-center.justify-center.bg-zinc-50 {
+  background-color: #0a1c38 !important;
+  background-image:
+    radial-gradient(800px 400px at 50% -10%, rgba(227, 6, 44, .2), transparent 60%),
+    linear-gradient(180deg, #0e2343 0%, #091b36 100%) !important;
+  color: #f7f1e6 !important;
+}
+.min-h-screen.flex.flex-col.items-center.justify-center.bg-white .text-zinc-900,
+.min-h-screen.flex.items-center.justify-center.bg-zinc-50 .text-zinc-900 { color: #f7f1e6 !important; }
+.min-h-screen.flex.flex-col.items-center.justify-center.bg-white .text-zinc-500,
+.min-h-screen.flex.items-center.justify-center.bg-zinc-50 .text-zinc-500 { color: #a89c8a !important; }
+.min-h-screen.flex.flex-col.items-center.justify-center.bg-white .border-zinc-100,
+.min-h-screen.flex.items-center.justify-center.bg-zinc-50 .border-zinc-100,
+.min-h-screen.flex.flex-col.items-center.justify-center.bg-white .border-zinc-200,
+.min-h-screen.flex.items-center.justify-center.bg-zinc-50 .border-zinc-200 { border-color: rgba(213, 200, 174, .2) !important; }
+.min-h-screen.flex.items-center.justify-center.bg-zinc-50 input {
+  background-color: #0a1f3c !important;
+  color: #f7f1e6 !important;
+  border-color: rgba(213, 200, 174, .28) !important;
+}
+.min-h-screen.flex.items-center.justify-center.bg-zinc-50 input::placeholder { color: #9b8f7d !important; }
+.min-h-screen.flex.items-center.justify-center.bg-zinc-50 input:focus { border-color: #e3062c !important; }
+
+/* ── Team selector card re-skin (dark panels on the selection screen) ── */
+.relative.z-10 .rounded-\[2rem\].bg-white,
+.relative.z-10 div[class*="rounded-[2rem]"] {
+  background: #112950 !important;
+  border: 1px solid rgba(213, 200, 174, .18) !important;
+}
+.min-h-screen.flex.flex-col.items-center.justify-center.bg-white .w-20.h-20.rounded-2xl.bg-white {
+  background: #12305a !important;
+  border-color: rgba(213, 200, 174, .2) !important;
 }
 
 /* Custom scrollbars — match the app's design instead of the default browser/OS scrollbar */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #E30613 #F3F0E8;
+  scrollbar-color: #E30613 #0c1f3d;
 }
 *::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 *::-webkit-scrollbar-track {
-  background: #F3F0E8;
+  background: #0c1f3d;
 }
 *::-webkit-scrollbar-thumb {
   background: #E30613;
   border-radius: 8px;
-  border: 2px solid #F3F0E8;
+  border: 2px solid #0c1f3d;
 }
 *::-webkit-scrollbar-thumb:hover {
   background: #b8050f;

@@ -982,8 +982,10 @@ export default function EliteSquadApp() {
         {filtered.length===0&&(
           <div className="col-span-6 flex flex-col items-center justify-center py-24 gap-6 text-zinc-300"><User size={64}/><p className="text-[11px] font-black uppercase tracking-[0.4em]">{tr.empty.noRecords}</p></div>
         )}
-        {filtered.map((m,i)=>{
+        {(()=>{const numCounters: Record<string, number> = { GOALKEEPER: 0, DEFENDER: 0, MIDFIELDER: 0, FORWARD: 0, STAFF: 0 }
+        return filtered.map((m,i)=>{
           const cs=getCardStatus(m);const sel=selectedIds.has(m.id)
+          const n = ++numCounters[m.role==="PLAYERS" ? ((m.position||"FORWARD") in numCounters ? m.position : "FORWARD") : "STAFF"]
           return(
             <div key={m.id} onClick={()=>setSelMember(m)} className={`group cursor-pointer relative animate-[fadeUp_0.5s_ease-out_both] ${sel?'ring-2 ring-[#E30613] rounded-xl':''}`} style={{animationDelay:`${i*60}ms`}}>
               {cs&&(
@@ -1009,10 +1011,18 @@ export default function EliteSquadApp() {
                 goals={m.role==="PLAYERS"?Number(m.goals)||0:undefined}
                 imageSrc={getImageSrc(m)}
                 fullPosition={m.role!=="PLAYERS"}
+                n={n}
+                nationality={m.nationality}
+                height={m.height}
+                foot={m.foot}
+                assists={m.role==="PLAYERS"?Number(m.assists)||0:undefined}
+                yellows={m.yellowCards}
+                reds={m.redCards}
               />
             </div>
           )
-        })}
+        })})()}
+
       </div>
 
       {/* ═══════════════════════════════════════════
