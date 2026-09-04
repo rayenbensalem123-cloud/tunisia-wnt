@@ -1,4 +1,4 @@
-const CACHE = "tunisia-wnt-v1"
+const CACHE = "tunisia-wnt-v2"
 const STATIC = ["/", "/manifest.json", "/icon.svg", "/ftf-logo.png"]
 
 self.addEventListener("install", (e) => {

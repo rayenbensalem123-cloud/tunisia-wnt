@@ -511,12 +511,16 @@ export default function EliteSquadApp() {
     setTimeout(()=>{applyingRemote.current=false},0)
   }
 
-  // Check for an existing Supabase Auth session on mount, then load data
+  // Check for an existing Supabase Auth session on mount, then load data.
+  // A watchdog timeout guarantees the loading screen always clears, even if
+  // a Supabase call hangs (never resolves instead of rejecting).
   useEffect(()=>{
+    const watchdog = setTimeout(()=>{ setAuthChecked(true); setLoaded(true) }, 4000)
     ;(async()=>{
       try{
         await loadMyUser()
       }catch(e){console.error("loadMyUser failed",e)}
+      clearTimeout(watchdog)
       setAuthChecked(true)
       try{
         await Promise.all([reloadMembers(),reloadMatches()])
