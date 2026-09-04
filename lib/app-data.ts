@@ -248,13 +248,13 @@ export async function deleteProfile(username: string) {
 export async function fetchMembers() {
   const { data, error } = await supabase.from('members').select('*')
   if (error) { console.error('fetchMembers', error); return [] }
-  return data.map(memberFromDb)
+  return (data ?? []).map(memberFromDb)
 }
 
 export async function fetchMatches() {
   const { data, error } = await supabase.from('matches').select('*')
   if (error) { console.error('fetchMatches', error); return [] }
-  return data.map(matchFromDb)
+  return (data ?? []).map(matchFromDb)
 }
 
 async function diffSync(

@@ -514,10 +514,14 @@ export default function EliteSquadApp() {
   // Check for an existing Supabase Auth session on mount, then load data
   useEffect(()=>{
     ;(async()=>{
-      await loadMyUser()
+      try{
+        await loadMyUser()
+      }catch(e){console.error("loadMyUser failed",e)}
       setAuthChecked(true)
-      await Promise.all([reloadMembers(),reloadMatches()])
-      await reloadProfiles()
+      try{
+        await Promise.all([reloadMembers(),reloadMatches()])
+        await reloadProfiles()
+      }catch(e){console.error("initial data load failed",e)}
       setLoaded(true)
     })()
     const { data: sub } = supabase.auth.onAuthStateChange((event)=>{
