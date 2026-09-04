@@ -275,6 +275,119 @@ body {
   margin-right: auto;
 }
 
+/* ═════════════════════════════════════════════════════════════════════
+   BUTTON DESIGN SYSTEM — professional, tactile, consistent.
+   Applied globally so every control in the portal inherits the upgrade.
+   ═════════════════════════════════════════════════════════════════════ */
+.ftf-portal button,
+button {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Accessible focus ring + tactile press feedback for every control */
+.ftf-portal button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(227, 6, 44, .25) !important;
+}
+.ftf-portal button:active:not(:disabled):not([class*="animate-"]) {
+  transform: translateY(1px) scale(.985);
+}
+.ftf-portal button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+  filter: saturate(.6);
+}
+
+/* ── PRIMARY (solid red) — glossy, elevated, pressable ── */
+.ftf-portal button[class*="bg-[#E30613]"] {
+  background: linear-gradient(180deg, #ff3b52 0%, #ef183e 55%, #c60024 100%) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .28),
+    inset 0 -2px 0 rgba(0, 0, 0, .14),
+    0 6px 16px -6px rgba(198, 0, 36, .5) !important;
+  transition: transform .18s cubic-bezier(.22, .61, .36, 1), box-shadow .22s ease, filter .22s ease !important;
+}
+.ftf-portal button[class*="bg-[#E30613]"]:hover:not(:disabled) {
+  filter: brightness(1.06);
+  transform: translateY(-1px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .3),
+    inset 0 -2px 0 rgba(0, 0, 0, .14),
+    0 10px 22px -8px rgba(198, 0, 36, .6) !important;
+}
+.ftf-portal button[class*="bg-[#E30613]"]:active:not(:disabled) {
+  transform: translateY(1px) scale(.98);
+  box-shadow:
+    inset 0 2px 4px rgba(0, 0, 0, .22),
+    0 2px 6px -2px rgba(198, 0, 36, .4) !important;
+}
+
+/* ── OUTLINE / SECONDARY (white + border) — clean, slight elevation on hover ── */
+.ftf-portal button[class*="border-zinc-200"],
+.ftf-portal button[class*="border-zinc-300"] {
+  transition: transform .18s cubic-bezier(.22, .61, .36, 1), box-shadow .22s ease, background-color .2s ease, border-color .2s ease, color .2s ease !important;
+}
+.ftf-portal button[class*="border-zinc-200"]:hover:not(:disabled),
+.ftf-portal button[class*="border-zinc-300"]:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 14px -8px rgba(6, 26, 56, .35);
+}
+
+/* ── SEGMENTED TABS (header Stats/Players/Staff + team pills) ── */
+.ftf-portal div.flex.p-1.rounded-xl > button {
+  position: relative;
+  transition: color .2s ease, background-color .22s ease, box-shadow .22s ease, transform .18s ease !important;
+}
+.ftf-portal div.flex.p-1.rounded-xl > button[class*="bg-[#E30613]"] {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, .3),
+    0 4px 10px -4px rgba(198, 0, 36, .55) !important;
+}
+
+/* ── ICON-only buttons (plus, close, back chevron, etc.) ── */
+.ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]),
+.ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]),
+.ftf-portal button[class*="w-7"]:not([class*="px-"]),
+.ftf-portal button[class*="w-8"]:not([class*="px-"]),
+.ftf-portal button[class*="rounded-full"]:not([class*="px-"]) {
+  transition: transform .18s cubic-bezier(.22, .61, .36, 1), background-color .2s ease, box-shadow .22s ease !important;
+}
+.ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]):hover,
+.ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]):hover,
+.ftf-portal button[class*="w-7"]:not([class*="px-"]):hover,
+.ftf-portal button[class*="w-8"]:not([class*="px-"]):hover,
+.ftf-portal button[class*="rounded-full"]:not([class*="px-"]):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px -6px rgba(6, 26, 56, .35);
+}
+
+/* ── Login / Register screens (outside .ftf-portal) ── */
+button[class*="bg-[#E30613]"] {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform .18s cubic-bezier(.22, .61, .36, 1), box-shadow .22s ease, filter .22s ease !important;
+}
+button[class*="bg-[#E30613]"]:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+button[class*="bg-[#E30613]"]:active:not(:disabled) {
+  transform: translateY(1px) scale(.98);
+}
+button[class*="bg-[#E30613]"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(227, 6, 44, .25) !important;
+}
+
+/* Smooth entrance for segmented active pill (subtle pop) */
+@keyframes pill-pop {
+  0% { transform: scale(.94); }
+  60% { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+.ftf-portal div.flex.p-1.rounded-xl > button[class*="bg-[#E30613]"] {
+  animation: pill-pop .28s cubic-bezier(.22, .61, .36, 1);
+}
+
 /* Custom scrollbars — match the app's design instead of the default browser/OS scrollbar */
 * {
   scrollbar-width: thin;
