@@ -43,7 +43,7 @@ export async function POST(req: Request) {
       role: 'staff',
       status: 'pending',
       permissions: {
-        addMatch: false, useScout: false, addPlayer: false,
+        addMatch: false, addPlayer: false,
         editPlayer: false, exportData: false, deleteMatch: false, deletePlayer: false,
       },
     })

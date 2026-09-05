@@ -2,16 +2,14 @@
 import React, { useState, useMemo, useEffect, useRef } from "react"
 import {
   Plus, X, User, Search, Edit3, Camera, Check,
-  LogOut, Goal, History, Trash2, Trophy, Loader2,
-  Star, ClipboardCheck, Award, ShieldCheck, Briefcase, Sparkles,
+  LogOut, Goal, History, Trash2, Trophy,
+  Star, ClipboardCheck, Award, ShieldCheck, Briefcase,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper
+  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
 import { ExportTools } from "@/components/export-tools"
-import { ScoutPanel } from "@/components/scout-panel"
-import { searchPlayerDatabase } from "@/lib/player-database"
 import { PlayerCard } from "@/components/player-card"
 import { FormationPitch, FORMATIONS } from "@/components/formation-pitch"
 import { supabase } from "@/lib/supabase"
@@ -45,7 +43,7 @@ const YELLOW_SUSPENSION = 2
 const REAL_TUNISIA_SENIORS: any[] = []
 
 const titleCase=(s:string)=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())
-const getImageSrc=(m:any)=>{if(m?.imagePath)return `https://vtjdmuzeohtqxwknfmhw.supabase.co/storage/v1/object/public/members/${m.imagePath}`;return m?.image||"/placeholder.jpg"}
+const getImageSrc=(m:any)=>{if(m?.imagePath)return `https://vtjdmuzeohtqxwknfmhw.supabase.co/storage/v1/object/public/members/${m.imagePath}`;const i=String(m?.image||m?.image_url||"").trim();if(!i||i.startsWith("data:"))return "";return i}
 const compressImage=async(file:File,maxDim=1200,quality=0.82):Promise<Blob>=>{
   const img=await new Promise<HTMLImageElement>((res,rej)=>{const o=new Image();o.onload=()=>res(o);o.onerror=rej;o.src=URL.createObjectURL(file)})
   let w=img.width,h=img.height
@@ -81,7 +79,7 @@ const getCardStatus = (m: any) => {
 interface UserPerms {
   addPlayer: boolean; editPlayer: boolean; deletePlayer: boolean
   addMatch: boolean; deleteMatch: boolean
-  useScout: boolean; exportData: boolean
+  exportData: boolean
   viewMedical: boolean; editMedical: boolean
 }
 interface AppUser {
@@ -89,8 +87,8 @@ interface AppUser {
   perms: UserPerms
 }
 
-const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, useScout:false, exportData:false, viewMedical:false, editMedical:false }
-const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, useScout:true, exportData:true, viewMedical:true, editMedical:true }
+const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false }
+  const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true }
 
 // Maps a DB profiles row -> the shape the UI already expects
 const profileToAppUser = (p: any): AppUser => ({
@@ -101,8 +99,8 @@ const profileToAppUser = (p: any): AppUser => ({
   perms: p.permissions,
 })
 
-const LOGIN_AND_REGISTER_STYLE = "min-h-screen flex items-center justify-center bg-zinc-50 text-zinc-900"
-const LOGIN_CARD_STYLE = "p-10 rounded-[3rem] text-center space-y-6 max-w-md w-full mx-4 bg-white shadow-xl border border-zinc-200"
+const LOGIN_AND_REGISTER_STYLE = "fed-screen min-h-screen flex items-center justify-center text-[#EDEFF4]"
+const LOGIN_CARD_STYLE = "fed-card p-8 text-center space-y-6 max-w-md w-full mx-4 relative z-10"
 
 // ─────────────────────────────────────────────
 // REGISTER SCREEN
@@ -125,21 +123,24 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
     <div className={LOGIN_AND_REGISTER_STYLE}>
       <div className={`${LOGIN_CARD_STYLE} relative`}>
         <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")}
-          className="absolute top-5 right-5 p-2 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:text-black hover:bg-white transition-all text-[9px] font-black uppercase tracking-widest">
-          <Globe size={14} className="inline"/><span className="ml-1">{lang.toUpperCase()}</span>
+          className="absolute top-4 right-4 p-2 rounded-lg border border-[rgba(148,170,210,.22)] bg-[#0b1220] text-[#73849e] hover:text-white transition-all text-[9px] font-black uppercase tracking-widest">
+          <Globe size={13} className="inline"/><span className="ml-1">{lang.toUpperCase()}</span>
         </button>
-        <img src="/ftf-logo.png" className="h-20 mx-auto" alt=""/>
-        <div><h2 className="text-2xl font-black italic uppercase tracking-tighter">Register</h2><p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-1">Create an account</p></div>
+        <div>
+          <img src="/ftf-logo.png" className="h-16 mx-auto" alt=""/>
+          <p className="mt-3 text-[8px] font-bold uppercase tracking-[.4em] text-[#f6c744]">Fédération Tunisienne de Football</p>
+        </div>
+        <div><h2 className="text-2xl font-black uppercase tracking-tight text-[#EDEFF4]">Register</h2><p className="text-[9px] font-bold text-[#73849e] uppercase tracking-widest mt-1">Create an account</p></div>
         <form onSubmit={submit} className="space-y-3">
-          <input type="text" placeholder={tr.login.firstName} value={fn} onChange={e=>setFn(e.target.value)} className="w-full p-4 rounded-2xl border text-center font-bold outline-none bg-zinc-50 border-zinc-300 focus:border-[#E30613]"/>
-          <input type="text" placeholder={tr.login.lastName} value={ln} onChange={e=>setLn(e.target.value)} className="w-full p-4 rounded-2xl border text-center font-bold outline-none bg-zinc-50 border-zinc-300 focus:border-[#E30613]"/>
-          <input type="text" placeholder={tr.login.username} value={u} onChange={e=>setU(e.target.value)} className="w-full p-4 rounded-2xl border text-center font-bold outline-none bg-zinc-50 border-zinc-300 focus:border-[#E30613]"/>
-          <input type="password" placeholder={tr.login.password} value={p} onChange={e=>setP(e.target.value)} className="w-full p-4 rounded-2xl border text-center font-black tracking-[0.3em] outline-none bg-zinc-50 border-zinc-300 focus:border-[#E30613]"/>
-          {msg&&<p className="text-[9px] font-black text-red-500 uppercase">{msg}</p>}
-          <button disabled={busy} className="w-full py-4 rounded-2xl font-black uppercase italic tracking-tighter bg-[#E30613] text-white hover:bg-red-700 transition-all disabled:opacity-50">{busy?"...":"Register"}</button>
+          <input type="text" placeholder={tr.login.firstName} value={fn} onChange={e=>setFn(e.target.value)} className="fed-input"/>
+          <input type="text" placeholder={tr.login.lastName} value={ln} onChange={e=>setLn(e.target.value)} className="fed-input"/>
+          <input type="text" placeholder={tr.login.username} value={u} onChange={e=>setU(e.target.value)} className="fed-input"/>
+          <input type="password" placeholder={tr.login.password} value={p} onChange={e=>setP(e.target.value)} className="fed-input tracking-[.25em]"/>
+          {msg&&<p className="text-[9px] font-black text-[#ff4f66] uppercase">{msg}</p>}
+          <button disabled={busy} className="fed-btn">{busy?"...":"Register"}</button>
         </form>
-        <p className="text-[8px] text-zinc-400">After registering, wait for admin approval.</p>
-        <button onClick={onBack} className="text-[9px] font-black uppercase text-zinc-500 hover:text-[#E30613] transition-all">← Back to Login</button>
+        <p className="text-[8px] text-[#73849e]">After registering, wait for admin approval.</p>
+        <button onClick={onBack} className="text-[9px] font-black uppercase tracking-widest text-[#73849e] hover:text-[#e3062c] transition-all">← Back to Login</button>
       </div>
     </div>
   )
@@ -156,16 +157,6 @@ const fmtDateWords = (dateStr?: string) => {
   if (isNaN(d.getTime())) return dateStr
   return d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })
 }
-
-const LEAGUES_BY_REGION = [
-  { region: "Tunisia", options: ["Championnat National Féminin (Tunisia)"] },
-  { region: "North Africa", options: ["Botola Nsawiya (Morocco)", "Championnat National Féminin (Algeria)", "Egyptian Women's Premier League", "Libya Women's League"] },
-  { region: "Middle East", options: ["UAE Women's Football League", "Saudi Women's Football League", "Qatar Women's League", "Jordan Women's League"] },
-  { region: "France", options: ["Ligue 1 Féminine", "Seconde Ligue (D2 Féminine)"] },
-  { region: "Europe", options: ["WSL (England)", "Liga F (Spain)", "Frauen-Bundesliga (Germany)", "Serie A Femminile (Italy)", "Damallsvenskan (Sweden)"] },
-  { region: "Americas", options: ["NWSL (USA)", "Liga MX Femenil (Mexico)"] },
-  { region: "Other", options: ["Other / Diaspora"] },
-]
 
 const COMPETITIONS = [
   {value:"",label:"Friendly"},
@@ -283,16 +274,22 @@ const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
   return(
     <div className={LOGIN_AND_REGISTER_STYLE}>
       <div className={LOGIN_CARD_STYLE}>
-        <img src="/ftf-logo.png" className="h-20 mx-auto" alt=""/>
-        <div><h2 className="text-2xl font-black italic uppercase tracking-tighter">{tr.login.systemLocked}</h2><p className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mt-1">{tr.login.authRequired}</p></div>
+        <div>
+          <img src="/ftf-logo.png" className="h-16 mx-auto" alt=""/>
+          <p className="mt-3 text-[8px] font-bold uppercase tracking-[.4em] text-[#f6c744]">Fédération Tunisienne de Football</p>
+        </div>
+        <div>
+          <h2 className="text-2xl font-black uppercase tracking-tight text-[#EDEFF4]">{tr.login.systemLocked}</h2>
+          <p className="text-[9px] font-bold text-[#73849e] uppercase tracking-widest mt-1">{tr.login.authRequired}</p>
+        </div>
         <div className="space-y-3">
-          <input type="text" placeholder="Username" value={uname} onChange={e=>setUname(e.target.value)} className="w-full p-4 rounded-2xl border text-center font-bold outline-none bg-zinc-50 border-zinc-300 focus:border-[#E30613]"/>
-          <input type="password" placeholder={tr.login.accessKey} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doLogin()} className={`w-full p-4 rounded-2xl border text-center font-black tracking-[0.3em] outline-none bg-zinc-50 ${err?'border-red-500 ring-4 ring-red-500/20':'border-zinc-300 focus:border-[#E30613]'}`}/>
-          {err&&<p className="text-[9px] font-black text-red-500 uppercase tracking-widest">{err}</p>}
-          <button disabled={busy} onClick={doLogin} className="w-full py-4 rounded-2xl font-black uppercase italic tracking-tighter hover:scale-[1.02] transition-all shadow-lg bg-[#E30613] text-white disabled:opacity-50">{busy?"...":tr.login.authorize}</button>
-          <button onClick={()=>setReg(true)} className="w-full text-center text-[9px] font-black uppercase text-zinc-500 hover:text-[#E30613] transition-all">Register ↗</button>
+          <input type="text" placeholder="Username" value={uname} onChange={e=>setUname(e.target.value)} className="fed-input"/>
+          <input type="password" placeholder={tr.login.accessKey} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doLogin()} className={`fed-input tracking-[.25em] ${err?'border-[#ff4f66] ring-4 ring-[#ff4f66]/15':''}`}/>
+          {err&&<p className="text-[9px] font-black text-[#ff4f66] uppercase tracking-widest">{err}</p>}
+          <button disabled={busy} onClick={doLogin} className="fed-btn">{busy?"...":tr.login.authorize}</button>
+          <button onClick={()=>setReg(true)} className="w-full text-center text-[9px] font-black uppercase tracking-widest text-[#73849e] hover:text-[#e3062c] transition-all">Register ↗</button>
+        </div>
       </div>
-    </div>
     </div>
   )
 }
@@ -302,85 +299,45 @@ const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
 // ─────────────────────────────────────────────
 const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
   const { tr } = useTranslate()
-  const teams:{cat:TeamCategory;label:string;sub:string;abbr:string;color:string;bg:string;pattern:string}[]=[
-    {cat:"SENIORS",label:"SENIORS",sub:"Senior National Team",abbr:"S",color:"#E30613",bg:"from-red-500 to-red-700",pattern:"M20,40 C8.954,40 0,31.046 0,20 S8.954,0 20,0 S40,8.954 40,20 S31.046,40 20,40 Z"},
-    {cat:"U20",label:"U-20",sub:"Under 20 National Team",abbr:"20",color:"#2563eb",bg:"from-blue-500 to-blue-700",pattern:"M0,0 L40,0 L40,40 L0,40 Z M20,20 m-8,0 a8,8 0 1,1 16,0 a8,8 0 1,1 -16,0"},
-    {cat:"U17",label:"U-17",sub:"Under 17 National Team",abbr:"17",color:"#059669",bg:"from-emerald-500 to-emerald-700",pattern:"M20,2 L38,20 L20,38 L2,20 Z M20,10 L30,20 L20,30 L10,20 Z"},
+  const teams:{cat:TeamCategory;label:string;sub:string;abbr:string;bar:string}[]=[
+    {cat:"SENIORS",label:"SENIORS",sub:"Senior National Team",abbr:"S",bar:"from-[#ff2747] to-[#a30420]"},
+    {cat:"U20",label:"U-20",sub:"Under 20 National Team",abbr:"20",bar:"from-[#ff2747] to-[#8f0319]"},
+    {cat:"U17",label:"U-17",sub:"Under 17 National Team",abbr:"17",bar:"from-[#ff2747] to-[#75020f]"},
   ]
   return(
-    <div className="min-h-screen flex flex-col text-zinc-900 relative overflow-hidden">
-      {/* Dynamic mesh gradient background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-zinc-50 via-white to-zinc-50"/>
-        <div className="absolute top-0 left-0 right-0 h-64 bg-gradient-to-b from-[#E30613]/[0.03] to-transparent"/>
-        <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-zinc-100/50 to-transparent"/>
-      </div>
+    <div className="fed-screen min-h-screen flex flex-col relative overflow-hidden">
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 py-12">
         {/* Header */}
-        <div className="flex flex-col items-center mb-16 animate-[fadeUp_0.8s_ease-out_both]">
-          <div className="relative mb-6">
-            <div className="absolute inset-0 bg-[#E30613]/10 blur-2xl rounded-full w-20 h-20"/>
-            <div className="w-20 h-20 rounded-2xl bg-white shadow-lg border border-zinc-200 flex items-center justify-center relative">
-              <img src="/ftf-logo.png" className="h-11" alt=""/>
+        <div className="flex flex-col items-center mb-14 animate-[fadeUp_0.7s_ease-out_both]">
+          <div className="relative mb-5">
+            <div className="absolute inset-0 bg-[#e3062c]/20 blur-2xl rounded-full w-16 h-16"/>
+            <div className="relative w-16 h-16 rounded-2xl bg-[#101b33] border border-[rgba(148,170,210,.2)] flex items-center justify-center">
+              <img src="/ftf-logo.png" className="h-9" alt=""/>
             </div>
           </div>
-          <h1 className="text-4xl md:text-5xl font-black italic uppercase tracking-tighter text-center leading-none">{tr.teamSelect.eliteSquad}</h1>
-          <div className="flex items-center gap-2 mt-4">
-            <div className="h-px w-8 bg-zinc-300"/>
-            <p className="text-[8px] font-black uppercase tracking-[0.5em] text-zinc-400">{tr.teamSelect.selectCat}</p>
-            <div className="h-px w-8 bg-zinc-300"/>
-          </div>
+          <div className="h-px w-10 bg-[#e3062c]"/>
+          <h1 className="mt-4 text-3xl md:text-4xl font-black uppercase tracking-tight text-center leading-none text-[#EDEFF4]">{tr.teamSelect.eliteSquad}</h1>
+          <p className="mt-3 text-[9px] font-bold uppercase tracking-[.5em] text-[#f6c744]">{tr.teamSelect.selectCat}</p>
         </div>
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-5xl">
           {teams.map((t,i)=>(
-            <button key={t.cat} onClick={()=>onSelect(t.cat)} className="group relative h-[380px] rounded-[2rem] overflow-hidden transition-all duration-700 hover:-translate-y-1 animate-[fadeUp_0.6s_ease-out_both]" style={{animationDelay:`${i*150+200}ms`}}>
-              {/* Shadow layer */}
-              <div className="absolute inset-0 rounded-[2rem] shadow-lg group-hover:shadow-2xl transition-shadow duration-500"/>
-              {/* Card body */}
-              <div className="absolute inset-0 bg-white rounded-[2rem] border border-zinc-200/80 group-hover:border-zinc-300 transition-colors duration-500"/>
-              {/* Main visual area with team color */}
-              <div className={`absolute inset-0 bg-gradient-to-br ${t.bg} opacity-[0.04] group-hover:opacity-[0.08] transition-opacity duration-500`}/>
-              {/* Large pattern */}
-              <div className="absolute inset-0 overflow-hidden">
-                <svg className="w-full h-full opacity-[0.04]" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <circle cx="100" cy="100" r="80" stroke="currentColor" strokeWidth="0.5"/>
-                  <circle cx="100" cy="100" r="60" stroke="currentColor" strokeWidth="0.5"/>
-                  <circle cx="100" cy="100" r="40" stroke="currentColor" strokeWidth="0.5"/>
-                  <circle cx="100" cy="100" r="20" stroke="currentColor" strokeWidth="0.5"/>
-                </svg>
-              </div>
-              {/* Big background number */}
-              <div className="absolute -right-6 -top-6 text-[140px] font-black italic text-black/[0.03] select-none leading-none group-hover:scale-110 transition-transform duration-700">{t.abbr}</div>
-              {/* Top accent bar */}
-              <div className={`absolute top-0 left-0 right-0 h-1 bg-gradient-to-r ${t.bg} origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-700`}/>
-              {/* Color dot top right */}
-              <div className={`absolute top-5 right-5 w-2.5 h-2.5 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-500`} style={{backgroundColor:t.color}}/>
-              {/* Bottom accent line */}
-              <div className="absolute bottom-0 left-[10%] right-[10%] h-[1px] bg-zinc-200 group-hover:bg-zinc-300 transition-colors duration-500"/>
-              {/* Content */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center p-8">
-                {/* Shield/Crest */}
-                <div className="relative mb-8 transition-all duration-500 group-hover:scale-110 group-hover:-translate-y-1">
-                  <svg width="80" height="90" viewBox="0 0 80 90" className="drop-shadow-lg">
-                    <defs>
-                      <linearGradient id={`shield-${i}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={t.color} stopOpacity="0.15"/>
-                        <stop offset="100%" stopColor={t.color} stopOpacity="0.05"/>
-                      </linearGradient>
-                    </defs>
-                    <path d="M40 2 L78 18 L78 48 C78 68 40 88 40 88 C40 88 2 68 2 48 L2 18 Z" fill={`url(#shield-${i})`} stroke={t.color} strokeWidth="1.5" strokeOpacity="0.3"/>
-                    <text x="40" y="48" textAnchor="middle" dominantBaseline="middle" fontSize="28" fontWeight="900" fill={t.color} fontStyle="italic">{t.abbr}</text>
+            <button key={t.cat} onClick={()=>onSelect(t.cat)} className="group relative h-[300px] rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 text-left border border-[rgba(148,170,210,.16)] bg-[#101b33] hover:border-[#e3062c]/60 animate-[fadeUp_0.55s_ease-out_both]" style={{animationDelay:`${i*130+200}ms`}}>
+              <div className={`absolute inset-x-0 h-[3px] bg-gradient-to-r ${t.bar}`}/>
+              <div className="absolute -right-6 -bottom-10 text-[150px] font-black leading-none text-[#e3062c]/10 select-none pointer-events-none">{t.abbr}</div>
+              <div className="relative p-6 flex flex-col h-full">
+                <div className="flex items-center justify-between">
+                  <svg width="46" height="52" viewBox="0 0 80 90" fill="none">
+                    <path d="M40 2 L78 18 L78 48 C78 68 40 88 40 88 C40 88 2 68 2 48 L2 18 Z" stroke="#e3062c" strokeWidth="3" strokeOpacity=".55"/>
+                    <text x="40" y="50" textAnchor="middle" dominantBaseline="middle" fontSize="30" fontWeight="900" fill="#EDEFF4">{t.abbr}</text>
                   </svg>
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-[#73849e]">TUNISIA WNT</span>
                 </div>
-                {/* Team name */}
-                <h2 className="text-[26px] font-black italic uppercase tracking-tighter leading-none text-center">{t.label}</h2>
-                <p className="text-[9px] font-bold uppercase tracking-[0.3em] text-zinc-400 mt-2">{t.sub}</p>
-                {/* Bottom content */}
-                <div className="flex items-center gap-3 mt-auto pt-6 w-full justify-center">
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-300 group-hover:text-zinc-500 transition-colors duration-500">{tr.teamSelect.enter}</span>
-                  <div className={`w-7 h-7 rounded-full flex items-center justify-center transition-all duration-500 group-hover:scale-110`} style={{backgroundColor:t.color}}>
-                    <ChevronRight size={14} className="text-white"/>
+                <div className="mt-auto">
+                  <h2 className="text-[26px] font-black uppercase tracking-tight text-[#EDEFF4] leading-none">{t.label}</h2>
+                  <p className="text-[9px] font-bold uppercase tracking-[.28em] text-[#73849e] mt-1.5">{t.sub}</p>
+                  <div className="mt-5 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-[#ff5f72]">
+                    {tr.teamSelect.enter} <ChevronRight size={14} className="transition-transform duration-300 group-hover:translate-x-1"/>
                   </div>
                 </div>
               </div>
@@ -389,7 +346,7 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
         </div>
       </div>
       <div className="relative z-10 text-center pb-6">
-        <p className="text-[7px] font-black uppercase tracking-[0.5em] text-zinc-300">Fédération Tunisienne de Football</p>
+        <p className="text-[8px] font-black uppercase tracking-[.5em] text-[#f6c744]/80">Fédération Tunisienne de Football</p>
       </div>
     </div>
   )
@@ -400,7 +357,7 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
 const PERM_LABELS: {key:keyof UserPerms;label:string}[] = [
   {key:"addPlayer",label:"Add Player"},{key:"editPlayer",label:"Edit Player"},{key:"deletePlayer",label:"Delete Player"},
   {key:"addMatch",label:"Add Match"},{key:"deleteMatch",label:"Delete Match"},
-  {key:"useScout",label:"Scout Button"},{key:"exportData",label:"Export Data"},
+  {key:"exportData",label:"Export Data"},
   {key:"viewMedical",label:"View Medical"},{key:"editMedical",label:"Edit Medical"},
 ]
 
@@ -438,7 +395,6 @@ export default function EliteSquadApp() {
   const [teamCat,setTeamCat]=useState<TeamCategory|null>(null)
   const [search,setSearch]=useState("")
   const [filterPos,setFilterPos]=useState("ALL")
-  const [selectedIds,setSelectedIds]=useState<Set<string>>(new Set())
   const [opponentFilter,setOpponentFilter]=useState("")
   const [rawProfiles,setRawProfiles]=useState<any[]>([])
   const fetchedUsers:AppUser[]=rawProfiles.map(profileToAppUser)
@@ -487,12 +443,6 @@ export default function EliteSquadApp() {
   const countryFlags:Record<string,string>={"Tunisia":"tn","Algeria":"dz","Egypt":"eg","Morocco":"ma","Senegal":"sn","Nigeria":"ng","Cameroon":"cm","Ghana":"gh","Ivory Coast":"ci","Côte d'Ivoire":"ci","Cote d'Ivoire":"ci","Mali":"ml","Burkina Faso":"bf","South Africa":"za","DR Congo":"cd","DRC":"cd","Congo":"cg","Zambia":"zm","Equatorial Guinea":"gq","Guinea":"gn","Guinea-Bissau":"gw","Benin":"bj","Togo":"tg","Sierra Leone":"sl","Liberia":"lr","Sudan":"sd","South Sudan":"ss","Uganda":"ug","Kenya":"ke","Tanzania":"tz","Rwanda":"rw","Burundi":"bi","Ethiopia":"et","Eritrea":"er","Somalia":"so","Angola":"ao","Namibia":"na","Botswana":"bw","Zimbabwe":"zw","Mozambique":"mz","Malawi":"mw","Lesotho":"ls","Eswatini":"sz","Madagascar":"mg","Mauritius":"mu","Cape Verde":"cv","Mauritania":"mr","Gambia":"gm","Gabon":"ga","Chad":"td","Niger":"ne","Libya":"ly","France":"fr","England":"gb-eng","Spain":"es","Germany":"de","Italy":"it","Netherlands":"nl","Portugal":"pt","Belgium":"be","Croatia":"hr","Switzerland":"ch","Sweden":"se","Denmark":"dk","Norway":"no","Poland":"pl","Brazil":"br","Argentina":"ar","Uruguay":"uy","Colombia":"co","Chile":"cl","Peru":"pe","Ecuador":"ec","Mexico":"mx","USA":"us","United States":"us","Canada":"ca","Japan":"jp","South Korea":"kr","Korea Republic":"kr","Saudi Arabia":"sa","Iran":"ir","Australia":"au","New Zealand":"nz"}
   const flagImg=(name:string)=>{const c=countryFlags[name];return c?<img src={`https://flagcdn.com/16x12/${c}.png`} alt="" className="w-4 h-3 inline-block align-middle rounded-sm"/>:null}
   const [matchForm,setMatchForm]=useState<any>(initMatch)
-  const initScoutUse={club:false,position:false,birthdate:false,height:false,natMatches:false,goals:false,assists:false,history:false}
-  const [scoutPlayer,setScoutPlayer]=useState<any>(null)
-  const [scoutResult,setScoutResult]=useState<any>(null)
-  const [scoutLoading,setScoutLoading]=useState(false)
-  const [scoutUseWiki,setScoutUseWiki]=useState(initScoutUse)
-  const scoutFields=[{key:"club" as const,label:"Club"},{key:"position" as const,label:"Position"},{key:"birthdate" as const,label:"Birthdate"},{key:"height" as const,label:"Height"},{key:"natMatches" as const,label:"Caps"},{key:"goals" as const,label:"Goals"},{key:"assists" as const,label:"Assists"},{key:"history" as const,label:"History"}]
 
   const [loaded,setLoaded]=useState(false)
 
@@ -568,9 +518,6 @@ export default function EliteSquadApp() {
     setTeamCat(cat);setFilterPos("ALL");setActiveTab("PLAYERS");setSearch("")
   }
 
-  const [scoutRegionFilter,setScoutRegionFilter]=useState<Set<string>>(new Set())
-  const [scoutDualOnly,setScoutDualOnly]=useState(false)
-  const [scoutFilterOpen,setScoutFilterOpen]=useState(false)
   const [squadLabOpen,setSquadLabOpen]=useState(false)
   const [labFormation,setLabFormation]=useState("4-3-3")
   const [labSlots,setLabSlots]=useState<Record<string,number|null>>({})
@@ -580,10 +527,8 @@ export default function EliteSquadApp() {
   const filtered=useMemo(()=>members.filter(m=>
     m.role===activeTab&&m.teamCategory===teamCat&&
     m.name.toLowerCase().includes(search.toLowerCase())&&
-    (filterPos==="ALL"||m.position===filterPos)&&
-    (scoutRegionFilter.size===0||(m.leagueRegion&&scoutRegionFilter.has(m.leagueRegion)))&&
-    (!scoutDualOnly||m.dualNationality)
-  ),[members,activeTab,search,filterPos,teamCat,scoutRegionFilter,scoutDualOnly])
+    (filterPos==="ALL"||m.position===filterPos)
+  ),[members,activeTab,search,filterPos,teamCat])
 
   const catPlayers=useMemo(()=>members.filter(m=>m.role==="PLAYERS"&&m.teamCategory===teamCat),[members,teamCat])
   const catMatches=useMemo(()=>matches.filter(m=>m.teamCategory===teamCat&&m.status==="approved"),[matches,teamCat])
@@ -603,73 +548,6 @@ export default function EliteSquadApp() {
     if(data.matches?.length) setMatches(data.matches)
   }
 
-  const handleAIUpdate=async ()=>{
-    try{
-      const res=await fetch("/api/scout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:form.name})})
-      if(res.ok){
-        const result=await res.json()
-        const d=result?.sources?.database || result?.sources?.wikipedia || result?.data
-        if(d){
-          setForm({...form, club: d.club||"", position: d.position||"", birthdate: d.birthdate||"", height: d.height||"", natMatches: String(d.natMatches||""), goals: String(d.goals||""), assists: String(d.assists||""), yellowCards: d.yellowCards||0, redCards: d.redCards||0, history: (d.history||[]).filter((h:any)=>h.year&&!h.year.startsWith("0000"))})
-          return
-        }
-      }
-    }catch{}
-    const result=searchPlayerDatabase(form.name)
-    if(result.found&&result.data){
-      const d=result.data
-      setForm({...form, club: d.club, position: d.position, birthdate: d.birthdate, height: d.height, natMatches: String(d.natMatches), goals: String(d.goals), assists: String(d.assists), yellowCards: d.yellowCards, redCards: d.redCards, history: (d.history||[]).filter((h:any)=>h.year&&!h.year.startsWith("0000"))})
-    }
-  }
-
-  const handleCardScout=async(player:any)=>{
-    setScoutPlayer(player)
-    setScoutUseWiki(initScoutUse)
-    setScoutLoading(true)
-    try{
-      const res=await fetch("/api/scout",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:player.name})})
-      if(res.ok){
-        const data=await res.json()
-        setScoutResult(data)
-        // Auto-prefer Wikipedia when available (more reliable than static DB)
-        if(data?.sources?.wikipedia){
-          const w=data.sources.wikipedia
-          setScoutUseWiki({
-            club:!!w.club, position:!!w.position, birthdate:!!w.birthdate, height:!!w.height,
-            natMatches:w.natMatches!=null, goals:w.goals!=null, assists:w.assists!=null,
-            history:!!(w.history?.length),
-          })
-        }
-      }
-    }catch{}
-    setScoutLoading(false)
-  }
-  const toggleScoutField=(field:keyof typeof initScoutUse)=>setScoutUseWiki(p=>({...p,[field]:!p[field]}))
-  const selectAllDbScout=()=>setScoutUseWiki(initScoutUse)
-  const selectAllWikiScout=()=>setScoutUseWiki({club:true,position:true,birthdate:true,height:true,natMatches:true,goals:true,assists:true,history:true})
-  const applyCardScout=()=>{
-    if(!scoutResult?.sources||!scoutPlayer)return
-    const{ database:dbData, wikipedia:wikiData }=scoutResult.sources
-    const updated={...scoutPlayer}
-    if(scoutUseWiki.club&&wikiData?.club)updated.club=wikiData.club
-    else if(dbData?.club)updated.club=dbData.club
-    if(scoutUseWiki.position&&wikiData?.position)updated.position=wikiData.position
-    else if(dbData?.position)updated.position=dbData.position
-    if(scoutUseWiki.birthdate&&wikiData?.birthdate)updated.birthdate=wikiData.birthdate
-    else if(dbData?.birthdate)updated.birthdate=dbData.birthdate
-    if(scoutUseWiki.height&&wikiData?.height)updated.height=wikiData.height
-    else if(dbData?.height)updated.height=dbData.height
-    if(scoutUseWiki.natMatches&&wikiData?.natMatches!=null)updated.natMatches=String(wikiData.natMatches)
-    else if(dbData?.natMatches!=null)updated.natMatches=String(dbData.natMatches)
-    if(scoutUseWiki.goals&&wikiData?.goals!=null)updated.goals=String(wikiData.goals)
-    else if(dbData?.goals!=null)updated.goals=String(dbData.goals)
-    if(scoutUseWiki.assists&&wikiData?.assists!=null)updated.assists=String(wikiData.assists)
-    else if(dbData?.assists!=null)updated.assists=String(dbData.assists)
-    if(scoutUseWiki.history&&wikiData?.history?.length)updated.history=wikiData.history.filter((h:any)=>h.year&&!h.year.startsWith("0000"))
-    else if(dbData?.history?.length)updated.history=dbData.history.filter((h:any)=>h.year&&!h.year.startsWith("0000"))
-    setMembers(p=>p.map(m=>m.id===updated.id?{...updated,updatedAt:Date.now()}:m))
-    setScoutPlayer(null);setScoutResult(null)
-  }
   const approveMatch=(match:any)=>{
     setMatches(p=>p.map((x:any)=>x.id===match.id?{...x,status:"approved"}:x))
     const cat=match.teamCategory
@@ -705,9 +583,16 @@ export default function EliteSquadApp() {
   const removeGoal=(id:number)=>setMatchForm((p:any)=>({...p,scorers:p.scorers.filter((s:any)=>s.playerId!==id)}))
   const toggleYellow=(id:number)=>setMatchForm((p:any)=>({...p,yellowCards:p.yellowCards.includes(id)?p.yellowCards.filter((x:number)=>x!==id):[...p.yellowCards,id]}))
   const toggleRed=(id:number)=>setMatchForm((p:any)=>({...p,redCards:p.redCards.includes(id)?p.redCards.filter((x:number)=>x!==id):[...p.redCards,id]}))
+  const NumBox=({value,set,align,max=99}:{value:string;set:(v:string)=>void;align?:"l"|"r";max?:number})=>(
+    <div className={`flex items-center gap-0.5 ${align==="r"?'justify-self-end':''}`}>
+      <button type="button" onClick={()=>set(String(Math.min(max,(parseInt(value)||0)+1)))} className="w-7 h-7 rounded-lg bg-[#0d1526] border border-[rgba(148,170,210,.18)] text-[#f6c744]/70 hover:text-[#f6c744] hover:border-[#f6c744]/40 flex items-center justify-center transition-all active:scale-90"><ChevronUp size={13}/></button>
+      <input value={value} onChange={e=>set(e.target.value.replace(/\D/g,''))} placeholder="0" className="w-11 text-center py-1.5 rounded-lg border border-zinc-200 outline-none text-xs font-black"/>
+      <button type="button" onClick={()=>set(String(Math.max(0,(parseInt(value)||0)-1)))} className="w-7 h-7 rounded-lg bg-[#0d1526] border border-[rgba(148,170,210,.18)] text-[#f6c744]/70 hover:text-[#f6c744] hover:border-[#f6c744]/40 flex items-center justify-center transition-all active:scale-90"><ChevronDown size={13}/></button>
+    </div>
+  )
   const PickerCard=({title,color,players,onPick,onClose,filter}:{title:string;color:"green"|"yellow"|"red"|"blue";players:number[];onPick:(id:number)=>void;onClose:()=>void;filter?:(id:number)=>boolean})=>{
-    const cMap:Record<string,string>={green:"border-green-200 bg-green-50 text-green-700 hover:bg-green-100",yellow:"border-yellow-200 bg-yellow-50 text-yellow-700 hover:bg-yellow-100",red:"border-red-200 bg-red-50 text-red-700 hover:bg-red-100",blue:"border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100"}
-    const tMap:Record<string,string>={green:"text-green-700",yellow:"text-yellow-700",red:"text-red-700",blue:"text-blue-700"}
+    const cMap:Record<string,string>={green:"border-[#7fd6a8]/25 bg-[#7fd6a8]/10 text-[#7fd6a8] hover:bg-[#7fd6a8]/15",yellow:"border-[#f6c744]/25 bg-[#f6c744]/10 text-[#f6c744] hover:bg-[#f6c744]/15",red:"border-[#e3062c]/35 bg-[#e3062c]/10 text-[#ff4f66] hover:bg-[#e3062c]/20",blue:"border-[#7ec3ff]/25 bg-[#7ec3ff]/10 text-[#7ec3ff] hover:bg-[#7ec3ff]/15"}
+    const tMap:Record<string,string>={green:"text-[#7fd6a8]",yellow:"text-[#f6c744]",red:"text-[#ff4f66]",blue:"text-[#7ec3ff]"}
     return(
       <div className="mb-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
         <div className="flex items-center justify-between mb-2">
@@ -746,7 +631,7 @@ export default function EliteSquadApp() {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {Object.entries(posCount).map(([pos,count])=>(<div key={pos} className="bg-white rounded-xl border border-zinc-100 p-3 text-center shadow-sm hover:shadow-md hover:border-[#E30613]/20 transition-all duration-300 hover:-translate-y-0.5"><p className="text-[18px] font-black text-zinc-800">{count}</p><p className="text-[7px] font-black uppercase tracking-wider text-zinc-400">{pos==='GOALKEEPER'?'GK':pos==='DEFENDER'?'DEF':pos==='MIDFIELDER'?'MID':'FWD'}</p></div>))}
         </div>
-        {recent.length>0&&<div className="bg-white rounded-xl border border-zinc-100 p-3 shadow-sm hover:shadow-md transition-all duration-300"><p className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mb-2">Recent Form</p><div className="flex gap-1.5">{recent.map((r,i)=><div key={i} className={`w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-black text-white ${r==='W'?'bg-green-500':r==='D'?'bg-yellow-500':'bg-red-500'} hover:scale-110 transition-transform`}>{r}</div>)}</div></div>}
+        {recent.length>0&&<div className="bg-white rounded-xl border border-zinc-100 p-3 shadow-sm hover:shadow-md transition-all duration-300"><p className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mb-2">Recent Form</p><div className="flex gap-1.5">{recent.map((r,i)=><div key={i} className={`w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-black ${r==='W'?'bg-[#f6c744] text-[#0c1f3d] shadow-[0_0_14px_rgba(246,199,68,.25)]':r==='D'?'bg-white/5 text-[#e8dcc8] border border-[rgba(213,200,174,.22)]':'bg-[#e3062c] text-white shadow-[0_0_12px_rgba(227,6,44,.25)]'} hover:scale-110 transition-transform`}>{r}</div>)}</div></div>}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[{title:"Top Scorers",key:"goals",data:topScorers},{title:"Most Assists",key:"assists",data:topAssists},{title:"Most Caps",key:"natMatches",data:topCaps}].map(section=>(
             <div key={section.title} className="bg-white rounded-xl border border-zinc-100 p-3 shadow-sm">
@@ -808,7 +693,7 @@ export default function EliteSquadApp() {
       <div className="fixed top-6 right-6 z-[999] flex gap-3">
         <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} title="Change language" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:text-black transition-all text-[10px] font-black uppercase tracking-widest"><Globe size={16}/><span className="ml-1">{lang.toUpperCase()}</span></button>
         <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 self-center">{user?.username}</span>
-        <button onClick={handleChangePassword} title="Change your password" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-blue-500 hover:text-white transition-all"><Key size={18}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-red-500 hover:text-white transition-all"><LogOut size={18}/></button>
+        <button onClick={handleChangePassword} title="Change your password" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all"><Key size={18}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-[#e3062c] hover:text-white transition-all"><LogOut size={18}/></button>
       </div>
       <TeamSelector onSelect={selectCat}/>
     </div>
@@ -850,10 +735,10 @@ export default function EliteSquadApp() {
               {canManageUsers&&pendingMatches.length>0&&<span className="bg-amber-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingMatches.length}</span>}
               {catMatches.length>0&&<span className="bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{catMatches.length}</span>}
             </button>
-            {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-green-50 hover:border-green-300 hover:text-green-600">
+            {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613]">
               <Users size={14}/><span className="hidden sm:inline">Add Match</span>
             </button>}
-            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600">
+            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-[#f6c744]/10 hover:border-[#f6c744]/30 hover:text-[#f6c744]">
               <Calendar size={14}/><span className="hidden sm:inline">Schedule Match</span>
             </button>}
             <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} />
@@ -914,7 +799,7 @@ export default function EliteSquadApp() {
               <button onClick={handleChangePassword} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <Key size={14}/>Change Password
               </button>
-              <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-red-500 hover:bg-red-50 transition-all text-left">
+              <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all text-left">
                 <LogOut size={14}/>Log Out
               </button>
             </Dropdown>
@@ -944,32 +829,21 @@ export default function EliteSquadApp() {
           </div>
         </div>
 
-        {/* Scout filter — button opens a full panel with every league/region + dual nationality */}
-        {activeTab==="PLAYERS"&&(
-          <div className="max-w-7xl mx-auto px-6 pb-3">
-            <button onClick={()=>setScoutFilterOpen(true)} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[8px] font-black uppercase tracking-wider border transition-all ${(scoutRegionFilter.size>0||scoutDualOnly)?'bg-blue-600 border-blue-600 text-white':'border-zinc-200 bg-white text-zinc-500 hover:border-blue-300'}`}>
-              <Globe size={11}/>Filter{(scoutRegionFilter.size>0||scoutDualOnly)&&<span className="bg-white/25 rounded-full px-1.5">{scoutRegionFilter.size+(scoutDualOnly?1:0)}</span>}
-            </button>
-          </div>
-        )}
-      </header>
+        </header>
 
       {/* ─── DISCIPLINE LEGEND ─── */}
       {activeTab==="PLAYERS"&&(
         <div className="max-w-7xl mx-auto px-6 py-2 flex items-center gap-3 flex-wrap border-b border-zinc-200">
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-[7px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.key}</p>
-            <div className="flex items-center gap-1"><span className="text-[9px]">🟨</span><span className="text-[7px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.oneYellow}</span></div>
-            <div className="flex items-center gap-1"><span className="text-[9px]">🟨🟨</span><span className="text-[7px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.twoYellows}</span></div>
-            <div className="flex items-center gap-1"><span className="text-[9px]">🟥</span><span className="text-[7px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.redCard}</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-2.5 rounded-[3px] bg-[#f6c744] inline-block shadow-sm"/><span className="text-[7px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.oneYellow}</span></div>
+            <div className="flex items-center gap-1.5"><span className="flex -space-x-1"><span className="w-3 h-2.5 rounded-[3px] bg-[#f6c744] inline-block shadow-sm"/><span className="w-3 h-2.5 rounded-[3px] bg-[#f6c744]/70 inline-block shadow-sm"/></span><span className="text-[7px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.twoYellows}</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-2.5 rounded-[3px] bg-[#e3062c] inline-block shadow-sm"/><span className="text-[7px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.redCard}</span></div>
           </div>
           <span className="text-[7px] text-zinc-300 italic hidden sm:block">{tr.discipline.cafRule}</span>
           <div className="ml-auto flex items-center gap-2">
             <button onClick={async()=>{if(await askConfirm("Reset all yellow/red cards for all players in this category?")){setMembers((p:any[])=>p.map(m=>m.teamCategory===teamCat?{...m,yellowCards:0,redCards:0,suspended:false}:m))}}}
-              className="px-2 py-1 rounded-lg border border-zinc-200 text-[6px] font-black uppercase tracking-widest text-zinc-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 transition-all">Reset</button>
-            {p.deletePlayer&&(selectedIds.size===0
-              ?<button onClick={()=>setSelectedIds(new Set(members.filter(m=>m.role==="PLAYERS"&&m.teamCategory===teamCat).map(m=>m.id)))} className="flex items-center gap-1 px-2 py-1 rounded-lg border border-red-200 text-[6px] font-black uppercase tracking-widest text-red-400 hover:bg-red-50 transition-all"><Trash2 size={9}/>Select</button>
-              :<><span className="text-[7px] font-bold text-red-500">{selectedIds.size}</span><button onClick={async()=>{const names=members.filter(m=>selectedIds.has(m.id)).map(m=>m.name).join(", ");if(await askConfirm(`Delete ${selectedIds.size} player(s)?\n\n${names}`)){setMembers(members.filter(m=>!selectedIds.has(m.id)));setSelectedIds(new Set())}}} className="px-2 py-1 rounded-lg bg-red-600 text-white text-[6px] font-black uppercase tracking-widest hover:bg-red-700 transition-all">Delete</button><button onClick={()=>setSelectedIds(new Set())} className="px-2 py-1 rounded-lg border border-zinc-300 text-[6px] font-black uppercase tracking-widest text-zinc-500 hover:bg-zinc-100 transition-all">X</button></>)}
+              className="px-2 py-1 rounded-lg border border-zinc-200 text-[6px] font-black uppercase tracking-widest text-zinc-400 hover:text-[#ff4f66] hover:border-[#e3062c]/40 hover:bg-[#e3062c]/15 transition-all">Reset</button>
           </div>
         </div>
       )}
@@ -984,24 +858,15 @@ export default function EliteSquadApp() {
         )}
         {(()=>{const numCounters: Record<string, number> = { GOALKEEPER: 0, DEFENDER: 0, MIDFIELDER: 0, FORWARD: 0, STAFF: 0 }
         return filtered.map((m,i)=>{
-          const cs=getCardStatus(m);const sel=selectedIds.has(m.id)
+          const cs=getCardStatus(m)
           const n = ++numCounters[m.role==="PLAYERS" ? ((m.position||"FORWARD") in numCounters ? m.position : "FORWARD") : "STAFF"]
           return(
-            <div key={m.id} onClick={()=>setSelMember(m)} className={`group cursor-pointer relative animate-[fadeUp_0.5s_ease-out_both] ${sel?'ring-2 ring-[#E30613] rounded-xl':''}`} style={{animationDelay:`${i*60}ms`}}>
+            <div key={m.id} onClick={()=>setSelMember(m)} className="group cursor-pointer relative animate-[fadeUp_0.5s_ease-out_both]" style={{animationDelay:`${i*60}ms`}}>
               {cs&&(
                 <div className={`absolute z-10 px-2 py-0.5 rounded-full text-[6px] font-black uppercase tracking-wider translate-x-3 translate-y-3 ${cs==="suspended"?'bg-red-600 text-white':'bg-yellow-400 text-yellow-900'}`}>
                   {cs==="suspended"?"BANNED":"WARN"}
                 </div>
               )}
-              {m.dualNationality&&(
-                <div title={`Dual nationality${m.secondNationality?': '+m.secondNationality:''}`} className="absolute z-10 top-2 right-2 w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center shadow">
-                  <Globe size={10} className="text-white"/>
-                </div>
-              )}
-              {p.deletePlayer&&<div onClick={e=>{e.stopPropagation();setSelectedIds(p=>{const n=new Set(p);if(n.has(m.id))n.delete(m.id);else n.add(m.id);return n})}} className={`absolute z-10 top-2 left-2 w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${sel?'bg-[#E30613] border-[#E30613]':'bg-white/80 border-zinc-400 hover:border-[#E30613]'}`}>{sel&&<Check size={12} className="text-white"/>}</div>}
-              {p.useScout&&<button onClick={e=>{e.stopPropagation();handleCardScout(m)}} className="absolute z-10 translate-x-3 translate-y-12 w-7 h-7 rounded-lg bg-zinc-100 hover:bg-[#E30613]/10 border border-zinc-200 hover:border-[#E30613]/30 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
-                <Sparkles size={12} className="text-zinc-400 group-hover:text-[#E30613] transition-colors"/>
-              </button>}
               <PlayerCard
                 name={m.name}
                 club={m.role==="PLAYERS"?m.club||"TUNISIA":m.nationality||"TUNISIA"}
@@ -1035,146 +900,122 @@ export default function EliteSquadApp() {
         const yc=selMember.yellowCards||0
         const rc=selMember.redCards||0
         const ringPct=Math.min(yc/YELLOW_SUSPENSION,1)
-        const ringCircum=2*Math.PI*50
-        const ringOffset=ringCircum*(1-ringPct)
-        const ringColor=yc===0?"#639922":"#BA7517"
+        const mcode = isPlayer ? ({GOALKEEPER:"GK",DEFENDER:"DEF",MIDFIELDER:"MID",FORWARD:"FWD"} as Record<string,string>)[selMember.position] || String(selMember.position).slice(0,3) : "STAFF"
         return(
-          <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/60 overflow-y-auto" onClick={()=>setSelMember(null)}>
-            <div className="relative w-full max-w-lg bg-white rounded-lg shadow-xl overflow-hidden" onClick={e=>e.stopPropagation()}>
+          <div className="pm-backdrop" onClick={()=>setSelMember(null)}>
+            <div className="pm-panel pm-panel-lg" onClick={e=>e.stopPropagation()}>
 
-              {/* PL-style header */}
-              <div className="relative h-36 bg-[#E30613] overflow-hidden">
-                {/* Logo - left, radiant fade */}
-                <div className="absolute left-0 top-0 h-full w-36 z-10" style={{maskImage:'linear-gradient(to right, black 30%, transparent 100%)',WebkitMaskImage:'linear-gradient(to right, black 30%, transparent 100%)'}}>
-                  <div className="w-full h-full flex items-center justify-center">
-                    <img src="/ftf-logo.png" className="w-20 h-20 object-contain drop-shadow" alt="FTF"/>
+              {/* Header */}
+              <div className="pm-head">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <div className="relative w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-[rgba(148,170,210,.2)] bg-[#0b111e]">
+                    {getImageSrc(selMember)?<img src={getImageSrc(selMember)} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} className="w-full h-full object-cover object-top" alt=""/>:<div className="w-full h-full flex items-center justify-center text-lg font-black text-[#e3062c]/40">{mcode}</div>}
+                    <div className="absolute inset-x-0 bottom-0 h-[3px] bg-[#e3062c]" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-[9px] font-bold uppercase tracking-[.2em] text-[#73849e] truncate">{catLabel(selMember.teamCategory)}{selMember.club?` · ${selMember.club}`:""}</p>
+                    <h2 className="mt-0.5 text-[22px] leading-[1.05] font-black uppercase tracking-tight text-[#EDEFF4] truncate">{titleCase(selMember.name)}</h2>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <span className="px-1.5 py-0.5 rounded-sm bg-[#e3062c] text-white text-[8px] font-black uppercase tracking-[.18em]">{mcode}</span>
+                      <span className="text-[8px] font-black uppercase tracking-[.2em] text-[#73849e]">{isPlayer?"TUNISIA WNT":"DELEGATION STAFF"}</span>
+                    </div>
                   </div>
                 </div>
-                {/* Player image - right */}
-                <div className="absolute right-0 top-0 h-full w-44">
-                  {getImageSrc(selMember)!=="/placeholder.jpg"?<div className="w-full h-full" style={{maskImage:'linear-gradient(to left, black 40%, transparent 100%)',WebkitMaskImage:'linear-gradient(to left, black 40%, transparent 100%)'}}><img src={getImageSrc(selMember)} onError={e=>{(e.target as HTMLImageElement).src='/placeholder.jpg'}} className="w-full h-full object-cover object-top" alt=""/></div>:null}
-                </div>
-                {/* Name - center */}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <h2 className="text-white font-black text-2xl text-center drop-shadow-lg px-16">{titleCase(selMember.name)}</h2>
-                </div>
-                {/* Position */}
-                <div className="absolute bottom-3 left-0 right-0 text-center z-10">
-                  <span className="text-[13px] font-bold text-white bg-black/20 px-2.5 py-1 rounded-sm uppercase backdrop-blur-sm">{selMember.position||"STAFF"}</span>
-                </div>
-                {/* Actions */}
-                <div className="absolute top-2 right-2 z-10 flex gap-0.5">
-                  {p.editPlayer&&<button onClick={()=>{setEditingId(selMember.id);setForm({...selMember});setSelMember(null);setIsFormOpen(true)}} className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><Edit3 size={10} className="text-white"/></button>}
-                  {p.deletePlayer&&<button onClick={async()=>{if(await askConfirm(tr.profile.delete+"?")){{setMembers(members.filter(m=>m.id!==selMember.id));setSelMember(null)}}}} className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><Trash2 size={10} className="text-red-200"/></button>}
-                  <button onClick={()=>setSelMember(null)} title="Close" className="w-6 h-6 rounded bg-white/20 hover:bg-white/30 flex items-center justify-center transition-all"><X size={10} className="text-white"/></button>
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-black/20"/>
-              </div>
-
-              {/* Team + category bar */}
-              <div className="flex items-center justify-between px-5 py-2.5 border-b border-zinc-100 bg-zinc-50">
-          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
-                  <span className="text-[13px] font-semibold text-zinc-500 uppercase">{catLabel(selMember.teamCategory)}</span>
-                  <span className="text-zinc-300">|</span>
-                  <span className="text-[13px] font-bold text-zinc-700">{selMember.club||"—"}</span>
+                <div className="flex gap-1.5 shrink-0">
+                  {p.editPlayer&&<button onClick={()=>{setEditingId(selMember.id);setForm({...selMember});setSelMember(null);setIsFormOpen(true)}} className="pm-close" title="Edit"><Edit3 size={13}/></button>}
+                  {p.deletePlayer&&<button onClick={async()=>{if(await askConfirm(tr.profile.delete+"?")){{setMembers(members.filter(m=>m.id!==selMember.id));setSelMember(null)}}}} className="pm-close" title="Delete"><Trash2 size={13}/></button>}
+                  <button onClick={()=>setSelMember(null)} title="Close" className="pm-close"><X size={14}/></button>
                 </div>
               </div>
 
-              {/* Stat row */}
-              <div className={`grid ${isPlayer?'grid-cols-4':'grid-cols-1'} border-b border-zinc-100`}>
-                <div className={`py-3 text-center ${isPlayer?'border-r border-zinc-100':''}`}>
-                  <p className="text-xl font-bold text-zinc-900">{calculateAge(selMember.birthdate)}</p>
-                  <p className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.age}</p>
+              {/* Stat band */}
+              <div className={`grid ${isPlayer?'grid-cols-5':'grid-cols-3'} border-b border-[rgba(148,170,210,.12)] bg-[#0b111e] divide-x divide-[rgba(148,170,210,.1)]`}>
+                <div className="py-3 px-1 text-center">
+                  <p className="text-lg font-black text-[#EDEFF4]">{calculateAge(selMember.birthdate)}</p>
+                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">{tr.profile.age}</p>
                 </div>
-                {isPlayer&&<div className="py-3 text-center border-r border-zinc-100">
-                  <p className="text-xl font-bold text-zinc-900 uppercase">{selMember.natMatches||"—"}</p>
-                  <p className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.caps}</p>
+                {isPlayer&&<div className="py-3 px-1 text-center">
+                  <p className="text-lg font-black text-[#EDEFF4]">{selMember.natMatches||"—"}</p>
+                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">{tr.profile.caps}</p>
                 </div>}
-                {isPlayer&&<div className="py-3 text-center border-r border-zinc-100">
-                  <p className="text-xl font-bold text-zinc-900 uppercase">{selMember.height||"—"}</p>
-                  <p className="text-[12px] text-zinc-400 uppercase font-medium">Height</p>
+                {isPlayer&&<div className="py-3 px-1 text-center">
+                  <p className="text-lg font-black text-[#e3062c]">{selMember.goals||0}</p>
+                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">{tr.profile.goals}</p>
                 </div>}
-                {isPlayer&&<div className="py-3 text-center">
-                  <p className="text-xl font-bold text-zinc-900 uppercase">{selMember.foot||"R"}</p>
-                  <p className="text-[12px] text-zinc-400 uppercase font-medium">Foot</p>
+                {isPlayer&&<div className="py-3 px-1 text-center">
+                  <p className="text-lg font-black text-[#EDEFF4]">{selMember.height||"—"}</p>
+                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">Height</p>
+                </div>}
+                {isPlayer&&<div className="py-3 px-1 text-center">
+                  <p className="text-lg font-black text-[#EDEFF4]">{selMember.foot||"R"}</p>
+                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">Foot</p>
+                </div>}
+                {!isPlayer&&<div className="py-3 px-1 text-center">
+                  <p className="text-lg font-black text-[#e3062c] uppercase truncate">{selMember.position||'COACH'}</p>
+                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">{tr.profile.responsibility}</p>
+                </div>}
+                {!isPlayer&&<div className="py-3 px-1 text-center">
+                  <p className="text-lg font-black text-[#f6c744]">{selMember.natMatches||"—"}</p>
+                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">{tr.profile.license}</p>
                 </div>}
               </div>
 
               {/* Body */}
-              <div className="px-5 py-4 space-y-4 max-h-[55vh] overflow-y-auto">
+              <div className="pm-body pm-scroll">
 
                 {isPlayer?(
                   (p.viewMedical||canManageUsers)&&(
-                    <div className="flex gap-1.5 -mt-1 mb-1">
-                      <button onClick={()=>setProfileTab("profile")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="profile"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Profile</button>
-                      <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Medical</button>
+                    <div className="flex gap-1 -mt-1 mb-2">
+                      <button onClick={()=>setProfileTab("profile")} className={`pm-chip flex-1 justify-center ${profileTab==="profile"?'pm-chip-on':''}`}>Profile</button>
+                      <button onClick={()=>setProfileTab("medical")} className={`pm-chip flex-1 justify-center ${profileTab==="medical"?'pm-chip-on':''}`}>Medical</button>
                     </div>
                   )
                 ):(
-                  <div className="flex gap-1.5 -mt-1 mb-1">
-                    <button onClick={()=>setProfileTab("profile")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="profile"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Profile</button>
-                    <button onClick={()=>setProfileTab("medical")} className={`flex-1 py-1.5 rounded-full text-[12px] font-black uppercase tracking-wider transition-all ${profileTab==="medical"?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500'}`}>Info</button>
+                  <div className="flex gap-1 -mt-1 mb-2">
+                    <button onClick={()=>setProfileTab("profile")} className={`pm-chip flex-1 justify-center ${profileTab==="profile"?'pm-chip-on':''}`}>Profile</button>
+                    <button onClick={()=>setProfileTab("medical")} className={`pm-chip flex-1 justify-center ${profileTab==="medical"?'pm-chip-on':''}`}>Info</button>
                   </div>
                 )}
 
                 {profileTab==="profile"&&(<>
                 {/* Status banner */}
                 {cs&&isPlayer&&(
-                  <div className={`flex items-center gap-1.5 px-3 py-2 rounded text-[12px] font-semibold ${cs==="suspended"?'bg-red-50 text-red-600':'bg-yellow-50 text-yellow-700'}`}>
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[12px] font-bold ${cs==="suspended"?'pm-err':'pm-warn'}`}>
                     {cs==="suspended"?<Ban size={14}/>:<AlertTriangle size={14}/>}
                     {cs==="suspended"?tr.profile.suspended:tr.profile.oneMoreSuspended}
                   </div>
                 )}
 
-                {/* Stats: goals/assists tiles + centered card-accumulation ring */}
                 {isPlayer&&(
                   <>
-                  <div className="grid grid-cols-3 gap-px bg-zinc-200 rounded-xl overflow-hidden">
-                    <div className="bg-white py-3.5 text-center">
-                      <p className="font-mono text-xl font-bold text-zinc-900">{String(selMember.position==="GOALKEEPER"?(selMember.cleansheets??0):(selMember.goals||0)).padStart(2,'0')}</p>
-                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">{selMember.position==="GOALKEEPER"?"Cleansheets":tr.profile.goals}</p>
+                  {/* Discipline */}
+                  <section>
+                    <p className="pm-label mb-1.5">Discipline</p>
+                    <div className="rounded-lg border border-[rgba(148,170,210,.14)] bg-[#0b111e] px-3 py-3.5">
+                      <div className="grid grid-cols-3 divide-x divide-[rgba(148,170,210,.1)]">
+                        <div className="text-center">
+                          <p className="text-xl font-black text-[#f6c744]">{yc}</p>
+                          <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">Yellow Cards</p>
+                        </div>
+                        <div className="text-center">
+                          <p className="text-xl font-black text-[#ff4f66]">{rc}</p>
+                          <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">Red Cards</p>
+                        </div>
+                        <div className="text-center">
+                          <p className={`text-xl font-black ${cs==="suspended"?'text-[#ff4f66]':yc===0?'text-[#7fd6a8]':'text-[#f6c744]'}`}>{cs==="suspended"?"OUT":yc===0?"CLEAN":`${YELLOW_SUSPENSION-yc} LEFT`}</p>
+                          <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">Status</p>
+                        </div>
+                      </div>
+                      <div className="mt-3.5 h-1.5 rounded-full bg-[#0d1526] border border-[rgba(148,170,210,.1)] overflow-hidden">
+                        <div className={`h-full rounded-full transition-all ${cs==="suspended"?'bg-[#e3062c]':yc===0?'bg-[#f6c744]/15':'bg-[#f6c744]'}`} style={{width:`${Math.min(100,ringPct*100)}%`}}/>
+                      </div>
+                      <p className="mt-2 text-[7.5px] font-bold uppercase tracking-[.18em] text-[#54647d]">{cs==="suspended"?"Currently suspended for the next fixture":yc===YELLOW_SUSPENSION-1?"One more yellow card triggers suspension":yc===0?"Clean disciplinary record":`${YELLOW_SUSPENSION-yc} more yellow cards until suspension`}</p>
                     </div>
-                    <div className="bg-white py-3.5 text-center">
-                      <p className="font-mono text-xl font-bold text-zinc-900">{String(selMember.assists||0).padStart(2,'0')}</p>
-                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Assists</p>
+                    <div className="mt-2 rounded-lg border border-[rgba(148,170,210,.1)] px-3 py-2.5 flex items-center justify-between bg-[#0b111e]">
+                      <span className="text-[11px] font-bold uppercase tracking-[.18em] text-[#73849e]">{tr.profile.suspended}</span>
+                      <span className={`px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-wider ${selMember.suspended?'bg-[#e3062c] text-white':'bg-[#0d1526] border border-[rgba(148,170,210,.18)] text-[#54647d]'}`}>{selMember.suspended?tr.profile.yes:tr.profile.no}</span>
                     </div>
-                    <div className="bg-white py-3.5 text-center">
-                      <p className="font-mono text-xl font-bold text-zinc-900">{String(selMember.natMatches||0).padStart(2,'0')}</p>
-                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Matches</p>
-                    </div>
-                  </div>
-
-                  <div className="bg-zinc-50 rounded-xl p-4 text-center">
-                    <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-wider mb-3">{tr.profile.accumulation}</p>
-                    <svg width="100" height="100" viewBox="0 0 120 120" className="mx-auto block">
-                      <circle cx="60" cy="60" r="50" fill="none" stroke="#e4e4e7" strokeWidth="9"/>
-                      {cs==="suspended"?(
-                        <circle cx="60" cy="60" r="50" fill="#fee2e2" stroke="#E24B4A" strokeWidth="9"/>
-                      ):(
-                        <circle cx="60" cy="60" r="50" fill="none" stroke={ringColor} strokeWidth="9" strokeDasharray={ringCircum} strokeDashoffset={ringOffset} strokeLinecap="round" transform="rotate(-90 60 60)"/>
-                      )}
-                      {cs==="suspended"?(
-                        <text x="60" y="66" textAnchor="middle" fontSize="22" fontWeight="700" fill="#791F1F">OUT</text>
-                      ):(<>
-                        <text x="60" y="58" textAnchor="middle" fontSize="30" fontWeight="700" fill="#18181b">{yc}</text>
-                        <text x="60" y="78" textAnchor="middle" fontSize="12" fill="#a1a1aa">of {YELLOW_SUSPENSION}</text>
-                      </>)}
-                    </svg>
-                    <p className={`mt-3 text-[13px] font-bold ${cs==="suspended"?'text-red-600':yc===0?'text-green-700':'text-amber-700'}`}>
-                      {cs==="suspended"?tr.profile.suspended:yc===YELLOW_SUSPENSION-1?"One more yellow triggers a suspension":yc===0?"Clean disciplinary record":`${YELLOW_SUSPENSION-yc} more until suspension`}
-                    </p>
-                    <div className="mt-3 flex justify-center gap-6 border-t border-zinc-200 pt-2.5">
-                      <div><p className="text-base font-bold text-zinc-800">{yc}</p><p className="text-[10px] text-zinc-400 uppercase tracking-wider">Yellow</p></div>
-                      <div><p className="text-base font-bold text-red-600">{rc}</p><p className="text-[10px] text-zinc-400 uppercase tracking-wider">Red</p></div>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 gap-3">
-                    <div className="bg-zinc-50 rounded-lg border border-zinc-200/60 p-3.5 flex items-center justify-between">
-                      <span className="text-[13px] font-medium text-zinc-600">{tr.profile.suspended}</span>
-                      <span className={`text-sm font-bold ${selMember.suspended?'text-red-500':'text-zinc-500'}`}>{selMember.suspended?tr.profile.yes:tr.profile.no}</span>
-                    </div>
-                  </div>
+                  </section>
                   </>
                 )}
 
@@ -1184,92 +1025,85 @@ export default function EliteSquadApp() {
                   const sinceYear=validYears.length>0?Math.min(...validYears):null
                   return(
                   <div className="space-y-3">
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
-                        <Award size={16} className="text-[#E30613] shrink-0"/>
-                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.position||'COACH'}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.responsibility}</span></div>
-                      </div>
-                      <div className="bg-gradient-to-br from-amber-50 to-amber-100 rounded border border-amber-200 p-3 flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-amber-400 flex items-center justify-center shrink-0 shadow"><ShieldCheck size={14} className="text-white"/></div>
-                        <div><p className="text-sm font-bold text-amber-900 uppercase">{selMember.natMatches||'N/A'}</p><span className="text-[12px] text-amber-600 uppercase font-medium">{tr.profile.license}</span></div>
-                      </div>
-                    </div>
-
                     {sinceYear&&(
                       <div className="flex justify-center">
-                        <span className="text-[10px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full bg-zinc-100 text-zinc-500">With the federation since {sinceYear}</span>
+                        <span className="text-[9px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full bg-[#0b111e] border border-[rgba(246,199,68,.3)] text-[#f6c744]">With the federation since {sinceYear}</span>
                       </div>
                     )}
-
-                    <div className="grid grid-cols-3 gap-3">
-                      {selMember.nationality&&<div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
-                        <Globe size={14} className="text-[#E30613] shrink-0"/>
-                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.nationality}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.nationality}</span></div>
+                    <div className="rounded-lg border border-[rgba(148,170,210,.14)] p-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-8 h-8 rounded-lg bg-[#e3062c]/10 text-[#ff4f66] flex items-center justify-center shrink-0"><Award size={14}/></span>
+                        <div className="min-w-0"><p className="text-[13px] font-black text-[#EDEFF4] uppercase truncate">{selMember.position||'COACH'}</p><span className="text-[9px] text-[#54647d] uppercase font-bold tracking-wider">{tr.profile.responsibility}</span></div>
+                      </div>
+                      <div className="flex items-center gap-2.5">
+                        <span className="w-8 h-8 rounded-lg bg-[#f6c744]/10 text-[#f6c744] flex items-center justify-center shrink-0"><ShieldCheck size={14}/></span>
+                        <div className="min-w-0"><p className="text-[13px] font-black text-[#EDEFF4] uppercase truncate">{selMember.natMatches||'N/A'}</p><span className="text-[9px] text-[#54647d] uppercase font-bold tracking-wider">{tr.profile.license}</span></div>
+                      </div>
+                      {selMember.nationality&&<div className="flex items-center gap-2.5">
+                        <span className="w-8 h-8 rounded-lg bg-[#2a6d4a]/15 text-[#7fd6a8] flex items-center justify-center shrink-0"><Globe size={14}/></span>
+                        <div className="min-w-0"><p className="text-[13px] font-black text-[#EDEFF4] uppercase truncate">{selMember.nationality}</p><span className="text-[9px] text-[#54647d] uppercase font-bold tracking-wider">{tr.profile.nationality}</span></div>
                       </div>}
-                      {selMember.languages&&<div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
-                        <BookOpen size={14} className="text-[#E30613] shrink-0"/>
-                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.languages}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.languages}</span></div>
+                      {selMember.languages&&<div className="flex items-center gap-2.5">
+                        <span className="w-8 h-8 rounded-lg bg-[#4a6fa5]/15 text-[#9cb8e4] flex items-center justify-center shrink-0"><BookOpen size={14}/></span>
+                        <div className="min-w-0"><p className="text-[13px] font-black text-[#EDEFF4] uppercase truncate">{selMember.languages}</p><span className="text-[9px] text-[#54647d] uppercase font-bold tracking-wider">{tr.profile.languages}</span></div>
                       </div>}
-                      {selMember.contract&&<div className="bg-zinc-50 rounded border border-zinc-200/60 p-3 flex items-center gap-3">
-                        <Calendar size={14} className="text-[#E30613] shrink-0"/>
-                        <div><p className="text-sm font-bold text-zinc-800 uppercase">{selMember.contract}</p><span className="text-[12px] text-zinc-400 uppercase font-medium">{tr.profile.contract}</span></div>
+                      {selMember.contract&&<div className="flex items-center gap-2.5">
+                        <span className="w-8 h-8 rounded-lg bg-[#4a6fa5]/15 text-[#9cb8e4] flex items-center justify-center shrink-0"><Calendar size={14}/></span>
+                        <div className="min-w-0"><p className="text-[13px] font-black text-[#EDEFF4] uppercase truncate">{selMember.contract}</p><span className="text-[9px] text-[#54647d] uppercase font-bold tracking-wider">{tr.profile.contract}</span></div>
                       </div>}
                     </div>
                   </div>
-                )})()}
+                  )
+                })()}
 
-              {/* AI Update */}
-              <button type="button" onClick={handleAIUpdate} className="w-full py-2.5 rounded-xl border border-purple-200 bg-purple-50 text-purple-600 hover:bg-purple-100 text-[12px] font-black uppercase tracking-wider flex items-center justify-center gap-2 transition-all hover:scale-[1.02]">
-                🤖 AI Update Career
-              </button>
-              {/* History */}
-                <div>
-                  <h4 className="text-[12px] font-bold text-[#E30613] uppercase tracking-wider mb-2">{tr.profile.careerHistory}</h4>
-                  <div className="border border-zinc-200/60 rounded overflow-hidden">
+              {/* Career history */}
+                <section className="mt-4">
+                  <p className="pm-label mb-1.5">{tr.profile.careerHistory}</p>
+                  <div className="rounded-lg border border-[rgba(148,170,210,.14)] overflow-hidden">
                     {selMember.history?.filter((h:any)=>h&&h.year&&!h.year.startsWith("0000")).length>0?(
-                      <div className="divide-y divide-zinc-100">
+                      <div>
                         {selMember.history.filter((h:any)=>h&&h.year&&!h.year.startsWith("0000")).map((h:any,i:number)=>(
-                          <div key={i} className="flex items-center gap-2.5 px-3 py-2.5">
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#E30613] shrink-0"/>
-                            <span className="text-[12px] font-semibold text-[#E30613] w-12 shrink-0">{h.year}</span>
-                            <span className="text-[12px] text-zinc-500">{h.event}</span>
+                          <div key={i} className={`flex items-center gap-2.5 px-3 py-2.5 ${i>0?'border-t border-[rgba(148,170,210,.1)]':''}`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#f6c744] shrink-0"/>
+                            <span className="text-[12px] font-black text-[#f6c744] w-12 shrink-0">{h.year}</span>
+                            <span className="text-[12px] font-medium text-[#a4b2c8] truncate">{h.event}</span>
                           </div>
                         ))}
                       </div>
-                    ):<p className="text-[12px] text-zinc-400 py-4 text-center">No career history</p>}
+                    ):<p className="text-[12px] text-[#54647d] py-4 text-center">No career history</p>}
                   </div>
-                </div>
+                </section>
 
               </>)}
 
               {profileTab==="medical"&&(isPlayer?(
                 <div className="space-y-2.5">
                   {p.editMedical&&(
-                    <button onClick={()=>setAddInjuryOpen(true)} className="w-full py-2 rounded-lg border border-dashed border-[#E30613]/30 text-[12px] font-black uppercase tracking-wider text-[#E30613] hover:bg-[#E30613]/5 transition-all flex items-center justify-center gap-1.5">
+                    <button onClick={()=>setAddInjuryOpen(true)} className="w-full py-2 rounded-lg border border-dashed border-[#e3062c]/40 text-[12px] font-black uppercase tracking-wider text-[#ff4f66] hover:bg-[#e3062c]/5 transition-all flex items-center justify-center gap-1.5">
                       <Plus size={11}/>Log Injury
                     </button>
                   )}
-                  {injuries.length===0&&<p className="text-[12px] text-zinc-400 py-6 text-center">No medical history on record</p>}
+                  {injuries.length===0&&<p className="text-[12px] text-[#54647d] py-6 text-center">No medical history on record</p>}
                   {injuries.map((inj:any)=>{
-                    const colors=inj.status==="active"?{bg:"bg-red-50",border:"border-red-200",text:"text-red-600",pill:"bg-red-500 text-white"}
-                      :inj.status==="recovering"?{bg:"bg-amber-50",border:"border-amber-200",text:"text-amber-700",pill:"bg-amber-500 text-white"}
-                      :{bg:"bg-zinc-50",border:"border-zinc-200",text:"text-zinc-500",pill:"bg-green-100 text-green-700"}
+                    const colors=inj.status==="active"?{bg:"bg-[#e3062c]/5",border:"border-[#e3062c]/40",text:"text-[#ff4f66]",pill:"bg-[#e3062c] text-white"}
+                      :inj.status==="recovering"?{bg:"bg-[#f6c744]/5",border:"border-[#f6c744]/40",text:"text-[#f6c744]",pill:"bg-[#f6c744] text-[#0c1f3d]"}
+                      :{bg:"bg-[#0b111e]",border:"border-[rgba(148,170,210,.14)]",text:"text-[#73849e]",pill:"bg-[#0d1526] text-[#54647d] border border-[rgba(148,170,210,.18)]"}
                     return(
                       <div key={inj.id} className={`rounded-lg border ${colors.border} ${colors.bg} p-3 ${inj.status==="recovered"?'opacity-70':''}`}>
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <p className={`text-[14px] font-bold ${colors.text}`}>{inj.injury_type}</p>
-                            <p className="text-[12px] text-zinc-500 mt-0.5">{inj.body_part?`${inj.body_part} · `:""}{inj.occurred_on?`occurred ${fmtDateWords(inj.occurred_on)}`:""}</p>
+                            <p className="text-[12px] text-[#73849e] mt-0.5">{inj.body_part?`${inj.body_part} · `:""}{inj.occurred_on?`occurred ${fmtDateWords(inj.occurred_on)}`:""}</p>
                           </div>
                           <span className={`shrink-0 text-[12px] font-black uppercase px-2 py-1 rounded ${colors.pill}`}>{inj.status}</span>
                         </div>
-                        {inj.expected_return&&<p className="text-[12px] text-zinc-400 mt-1.5">Expected return: {fmtDateWords(inj.expected_return)}</p>}
-                        {inj.notes&&<p className="text-[12px] text-zinc-500 mt-1.5">{inj.notes}</p>}
-                        <p className="text-[11px] text-zinc-400 mt-1.5">Logged by {inj.logged_by_username||"unknown"}</p>
+                        {inj.expected_return&&<p className="text-[12px] text-[#54647d] mt-1.5">Expected return: {fmtDateWords(inj.expected_return)}</p>}
+                        {inj.notes&&<p className="text-[12px] text-[#73849e] mt-1.5">{inj.notes}</p>}
+                        <p className="text-[11px] text-[#54647d] mt-1.5">Logged by {inj.logged_by_username||"unknown"}</p>
                         {p.editMedical&&inj.status!=="recovered"&&(
                           <div className="flex gap-1.5 mt-2">
-                            {inj.status==="active"&&<button onClick={()=>{updateInjuryStatus(inj.id,"recovering").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg border border-amber-300 text-amber-600 text-[11px] font-black uppercase tracking-wider hover:bg-amber-50">Mark Recovering</button>}
-                            <button onClick={()=>{updateInjuryStatus(inj.id,"recovered").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg border border-green-300 text-green-600 text-[11px] font-black uppercase tracking-wider hover:bg-green-50">Mark Recovered</button>
+                            {inj.status==="active"&&<button onClick={()=>{updateInjuryStatus(inj.id,"recovering").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg pm-btn-soft text-[11px] font-black uppercase tracking-wider">Mark Recovering</button>}
+                            <button onClick={()=>{updateInjuryStatus(inj.id,"recovered").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg pm-btn-ghost text-[11px] font-black uppercase tracking-wider">Mark Recovered</button>
                           </div>
                         )}
                       </div>
@@ -1319,45 +1153,45 @@ export default function EliteSquadApp() {
                 return(
                 <div className="space-y-3">
                   {selMember.bioQuote?(
-                    <p className="text-[12px] italic text-zinc-500 text-center px-2 leading-snug">"{selMember.bioQuote}"</p>
+                    <p className="text-[12px] italic text-[#a4b2c8] text-center px-2 leading-snug">"{selMember.bioQuote}"</p>
                   ):(
-                    <p className="text-[11px] text-zinc-300 text-center px-2 italic">No coaching philosophy added yet</p>
+                    <p className="text-[11px] text-[#54647d] text-center px-2 italic">No coaching philosophy added yet</p>
                   )}
-                  <div className="grid grid-cols-3 gap-px bg-zinc-200 rounded-xl overflow-hidden">
-                    <div className="bg-white py-3.5 text-center">
-                      <p className="font-mono text-xl font-bold text-zinc-900">{String(catMatchesPlayed.length).padStart(2,'0')}</p>
-                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Overseen</p>
+                  <div className="grid grid-cols-3 divide-x divide-[rgba(148,170,210,.1)] rounded-lg border border-[rgba(148,170,210,.14)] bg-[#0b111e] overflow-hidden">
+                    <div className="py-3.5 text-center">
+                      <p className="text-xl font-black text-[#EDEFF4]">{String(catMatchesPlayed.length).padStart(2,'0')}</p>
+                      <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">Overseen</p>
                     </div>
-                    <div className="bg-white py-3.5 text-center">
-                      <p className="text-xl font-bold"><span className="text-green-600">{wins}</span><span className="text-zinc-300 mx-0.5">-</span><span className="text-zinc-500">{draws}</span><span className="text-zinc-300 mx-0.5">-</span><span className="text-red-500">{losses}</span></p>
-                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">W-D-L</p>
+                    <div className="py-3.5 text-center">
+                      <p className="text-xl font-black"><span className="text-[#7fd6a8]">{wins}</span><span className="text-[#54647d] mx-0.5">-</span><span className="text-[#a4b2c8]">{draws}</span><span className="text-[#54647d] mx-0.5">-</span><span className="text-[#ff4f66]">{losses}</span></p>
+                      <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">W-D-L</p>
                     </div>
-                    <div className="bg-white py-3.5 text-center">
-                      <p className="text-xl font-bold text-zinc-900">{catMatchesPlayed.length>0?Math.round((wins/catMatchesPlayed.length)*100):0}%</p>
-                      <p className="text-[10px] text-zinc-400 uppercase tracking-wider">Win Rate</p>
+                    <div className="py-3.5 text-center">
+                      <p className="text-xl font-black text-[#f6c744]">{catMatchesPlayed.length>0?Math.round((wins/catMatchesPlayed.length)*100):0}%</p>
+                      <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[#73849e]">Win Rate</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
-                    <div className="bg-gradient-to-br from-[#E30613] to-red-800 rounded-xl p-3 text-white">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-white/70">Biggest Win</p>
+                    <div className="rounded-lg border border-[rgba(227,6,44,.35)] bg-[#e3062c]/5 p-3 text-[#EDEFF4]">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-[#ff4f66]">Biggest Win</p>
                       {biggestWin?(<>
-                        <p className="text-lg font-black font-mono mt-0.5">{biggestWin.result}</p>
-                        <p className="text-[10px] font-bold text-white/80 truncate">vs {biggestWin.opponent}</p>
+                        <p className="text-lg font-black mt-0.5 text-[#ff4f66]">{biggestWin.result}</p>
+                        <p className="text-[10px] font-bold text-[#a4b2c8] truncate">vs {biggestWin.opponent}</p>
                       </>):(
-                        <p className="text-[10px] font-bold text-white/60 mt-1.5">No wins recorded yet</p>
+                        <p className="text-[10px] font-bold text-[#54647d] mt-1.5">No wins recorded yet</p>
                       )}
                     </div>
-                    <div className="bg-zinc-900 rounded-xl p-3 text-white flex flex-col justify-center items-center text-center">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-white/50">Preferred Formation</p>
-                      <p className="text-lg font-black font-mono mt-0.5">{signatureFormation||"—"}</p>
+                    <div className="rounded-lg border border-[rgba(246,199,68,.35)] bg-[#f6c744]/5 p-3 text-[#EDEFF4] flex flex-col justify-center text-center">
+                      <p className="text-[9px] font-black uppercase tracking-wider text-[#f6c744]">Preferred Formation</p>
+                      <p className="text-lg font-black mt-0.5 text-[#f6c744]">{signatureFormation||"—"}</p>
                     </div>
                   </div>
 
                   {milestones.length>0&&(
                     <div className="flex flex-wrap gap-1.5">
                       {milestones.map(ms=>(
-                        <span key={ms} className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-amber-100 text-amber-700 flex items-center gap-1">🏅 {ms}</span>
+                        <span key={ms} className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#0b111e] border border-[rgba(246,199,68,.3)] text-[#f6c744]"><span className="mr-1">◆</span>{ms}</span>
                       ))}
                     </div>
                   )}
@@ -1379,7 +1213,7 @@ export default function EliteSquadApp() {
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-sm rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase italic tracking-tighter">Log Injury — {selMember.name}</h2>
+              <h2 className="text-sm font-black uppercase tracking-tight">Log Injury — {selMember.name}</h2>
               <button onClick={()=>setAddInjuryOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100"><X size={18}/></button>
             </div>
             <input placeholder="Injury type (e.g. Hamstring strain)" value={injForm.injury_type} onChange={e=>setInjForm({...injForm,injury_type:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
@@ -1416,89 +1250,65 @@ export default function EliteSquadApp() {
           ADD / EDIT MEMBER MODAL
       ═══════════════════════════════════════════ */}
       {isFormOpen&&(
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80 overflow-y-auto">
-          <div className="w-full max-w-lg p-4 sm:p-5 rounded-[2rem] border border-zinc-200 bg-[#FAF8F3] text-zinc-900 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <div><h2 className="text-xl font-black italic uppercase tracking-tighter">{editingId?tr.form.update:tr.form.newEntry}</h2><p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{catLabel(teamCat)} · {activeTab}</p></div>
-              <button onClick={()=>setIsFormOpen(false)} title="Close" className="p-1.5 hover:bg-red-500/10 rounded-xl"><X size={20}/></button>
-            </div>
-            <form onSubmit={saveForm} className="space-y-3">
-              <div className="relative">
-                <div onClick={()=>fileRef.current?.click()} className="flex flex-col items-center gap-2 py-4 rounded-[1.5rem] border-2 border-dashed border-zinc-300 hover:border-[#E30613] cursor-pointer bg-zinc-50 transition-all">
-                  <input type="file" ref={fileRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{const blob=await compressImage(f);const fd=new FormData();fd.append('file',blob,f.name.replace(/\.[^.]+$/,'')+'.jpg');const r=await fetch('/api/upload',{method:'POST',body:fd});const d=await r.json();if(d.url){setForm({...form,image:d.url,imagePath:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,image:r2.result as string});r2.readAsDataURL(f)}}} className="hidden" accept="image/*"/>
-                  {form.image?<img src={form.imagePath?`https://vtjdmuzeohtqxwknfmhw.supabase.co/storage/v1/object/public/members/${form.imagePath}`:form.image} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="w-14 h-14 rounded-2xl object-cover" alt=""/>:<Camera size={22} className="text-zinc-700"/>}
-                  <span className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-500">{tr.form.portraitUpload}</span>
+        <div className="pm-backdrop" style={{zIndex:200}}>
+          <div className="pm-panel pm-panel-md">
+            <div className="pm-head">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className="pm-tick"/>
+                <div className="min-w-0">
+                  <h2 className="pm-title truncate">{editingId?tr.form.update:tr.form.newEntry}</h2>
+                  <p className="pm-sub">{catLabel(teamCat)} · {activeTab}</p>
                 </div>
-                {form.image&&<button type="button" onClick={e=>{e.stopPropagation();setForm({...form,image:""})}} className="absolute -top-1 -right-1 p-1.5 bg-red-600 text-white rounded-full"><Trash2 size={11}/></button>}
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div className="col-span-2"><input placeholder={tr.form.fullName} value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="w-full p-3 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-bold uppercase outline-none" required/></div>
-                <input placeholder={tr.form.clubTeam} value={form.club} onChange={e=>setForm({...form,club:e.target.value})} className="w-full p-3 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-bold uppercase outline-none"/>
-                <input placeholder={tr.form.date} value={form.birthdate} onChange={e=>setForm({...form,birthdate:e.target.value})} className="w-full p-3 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-bold uppercase outline-none"/>
+              <button onClick={()=>setIsFormOpen(false)} title="Close" className="pm-close"><X size={14}/></button>
+            </div>
+            <form onSubmit={saveForm} className="pm-body">
+              <div className="relative">
+                <div onClick={()=>fileRef.current?.click()} className="flex flex-col items-center gap-2 py-5 rounded-lg border border-dashed border-[rgba(148,170,210,.25)] hover:border-[#e3062c]/60 cursor-pointer bg-[#0b111e] transition-all">
+                  <input type="file" ref={fileRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{const blob=await compressImage(f);const fd=new FormData();fd.append('file',blob,f.name.replace(/\.[^.]+$/,'')+'.jpg');const r=await fetch('/api/upload',{method:'POST',body:fd});const d=await r.json();if(d.url){setForm({...form,image:d.url,imagePath:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,image:r2.result as string});r2.readAsDataURL(f)}}} className="hidden" accept="image/*"/>
+                  {form.image?<img src={form.imagePath?`https://vtjdmuzeohtqxwknfmhw.supabase.co/storage/v1/object/public/members/${form.imagePath}`:form.image} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="w-14 h-14 rounded-lg object-cover" alt=""/>:<Camera size={20} className="text-[#54647d]"/>}
+                  <span className="text-[8px] font-black uppercase tracking-[.2em] text-[#73849e]">{tr.form.portraitUpload}</span>
+                </div>
+                {form.image&&<button type="button" onClick={e=>{e.stopPropagation();setForm({...form,image:""})}} className="absolute -top-1 -right-1 p-1.5 bg-[#e3062c] text-white rounded-full"><Trash2 size={11}/></button>}
+              </div>
+              <div className="mt-4 grid grid-cols-2 gap-3">
+                <div className="col-span-2"><input placeholder={tr.form.fullName} value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="pm-field" required/></div>
+                <input placeholder={tr.form.clubTeam} value={form.club} onChange={e=>setForm({...form,club:e.target.value})} className="pm-field"/>
+                <input placeholder={tr.form.date} value={form.birthdate} onChange={e=>setForm({...form,birthdate:e.target.value})} className="pm-field"/>
               </div>
               {activeTab==="PLAYERS"?(
                 <>
-                  <div className="grid grid-cols-2 gap-3">
-                    <select value={form.position} onChange={e=>setForm({...form,position:e.target.value})} className="w-full p-3 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-bold uppercase outline-none" required>
+                  <div className="mt-3 grid grid-cols-2 gap-3">
+                    <select value={form.position} onChange={e=>setForm({...form,position:e.target.value})} className="pm-field pm-select" required>
                       <option value="">{tr.form.position}</option>{PLAYER_POSITIONS.filter(p=>p!=="ALL").map(p=><option key={p} value={p}>{p}</option>)}
                     </select>
-                    <input placeholder={tr.form.heightCm} value={form.height} onChange={e=>setForm({...form,height:e.target.value})} className="w-full p-3 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-bold uppercase outline-none"/>
-                    <input placeholder={tr.form.caps} value={form.natMatches} onChange={e=>setForm({...form,natMatches:e.target.value})} className="w-full p-3 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-bold uppercase outline-none"/>
-                    <div className="grid grid-cols-2 gap-2">
-                      <input placeholder={tr.form.goals} value={form.goals} onChange={e=>setForm({...form,goals:e.target.value})} className="w-full p-3 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-bold uppercase outline-none"/>
-                      <input placeholder={tr.form.assists} value={form.assists} onChange={e=>setForm({...form,assists:e.target.value})} className="w-full p-3 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-bold uppercase outline-none"/>
+                    <input placeholder={tr.form.heightCm} value={form.height} onChange={e=>setForm({...form,height:e.target.value})} className="pm-field"/>
+                    <input placeholder={tr.form.caps} value={form.natMatches} onChange={e=>setForm({...form,natMatches:e.target.value})} className="pm-field"/>
+                    <div className="grid grid-cols-2 gap-3">
+                      <input placeholder={tr.form.goals} value={form.goals} onChange={e=>setForm({...form,goals:e.target.value})} className="pm-field"/>
+                      <input placeholder={tr.form.assists} value={form.assists} onChange={e=>setForm({...form,assists:e.target.value})} className="pm-field"/>
                     </div>
                   </div>
-                  <div className="p-4 rounded-[1.5rem] border border-yellow-200 bg-yellow-50 space-y-3">
-                    <p className="text-[8px] font-black text-yellow-500 uppercase tracking-[0.3em] flex items-center gap-2"><AlertTriangle size={9}/> {tr.form.discipline}</p>
+                  <div className="mt-3 pm-tile">
+                    <p className="pm-label flex items-center gap-1.5"><AlertTriangle size={10} className="text-[#f6c744]"/> {tr.form.discipline}</p>
                     <div className="grid grid-cols-3 gap-2">
-                      <div><label className="text-[7px] font-black uppercase text-zinc-500 mb-1 block">{tr.form.yellowCards}</label><input type="number" min="0" max="10" value={form.yellowCards} onChange={e=>setForm({...form,yellowCards:e.target.value})} className="w-full p-2.5 rounded-lg border border-zinc-200 bg-white text-[10px] font-bold outline-none"/></div>
-                      <div><label className="text-[7px] font-black uppercase text-zinc-500 mb-1 block">{tr.form.redCards}</label><input type="number" min="0" max="5" value={form.redCards} onChange={e=>setForm({...form,redCards:e.target.value})} className="w-full p-2.5 rounded-lg border border-zinc-200 bg-white text-[10px] font-bold outline-none"/></div>
-                      <div><label className="text-[7px] font-black uppercase text-zinc-500 mb-1 block">{tr.form.suspended}</label><button type="button" onClick={()=>setForm({...form,suspended:!form.suspended})} className={`w-full p-2.5 rounded-lg border text-[9px] font-black uppercase transition-all ${form.suspended?'bg-red-600 border-red-600 text-white':'bg-white border-zinc-200 text-zinc-400'}`}>{form.suspended?tr.profile.yes:tr.profile.no}</button></div>
-                    </div>
-                  </div>
-                  <div className="p-4 rounded-[1.5rem] border border-blue-200 bg-blue-50 space-y-3">
-                    <p className="text-[8px] font-black text-blue-500 uppercase tracking-[0.3em] flex items-center gap-2"><Globe size={9}/> Scout Tags</p>
-                    <div>
-                      <label className="text-[7px] font-black uppercase text-zinc-500 mb-1.5 block">League / Region</label>
-                      <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                        {LEAGUES_BY_REGION.map(group=>(
-                          <div key={group.region}>
-                            <p className="text-[6px] font-black uppercase text-zinc-400 mb-1">{group.region}</p>
-                            <div className="flex flex-wrap gap-1.5">
-                              {group.options.map(opt=>(
-                                <button key={opt} type="button" onClick={()=>setForm({...form,leagueRegion:form.leagueRegion===opt?"":opt})}
-                                  className={`px-2.5 py-1.5 rounded-full text-[8px] font-black uppercase tracking-wider transition-all ${form.leagueRegion===opt?'bg-blue-600 text-white':'bg-white border border-zinc-200 text-zinc-500 hover:border-blue-300'}`}>
-                                  {opt}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <button type="button" onClick={()=>setForm({...form,dualNationality:!form.dualNationality})}
-                        className={`px-3 py-2 rounded-lg text-[8px] font-black uppercase tracking-wider transition-all shrink-0 ${form.dualNationality?'bg-blue-600 text-white':'bg-white border border-zinc-200 text-zinc-500'}`}>
-                        {form.dualNationality?"✓ Dual Nationality":"Dual Nationality"}
-                      </button>
-                      {form.dualNationality&&(
-                        <input placeholder="Second nationality (e.g. France)" value={form.secondNationality||""} onChange={e=>setForm({...form,secondNationality:e.target.value})} className="flex-1 p-2 rounded-lg border border-zinc-200 bg-white text-[9px] font-bold outline-none"/>
-                      )}
+                      <div><label className="pm-label">{tr.form.yellowCards}</label><input type="number" min="0" max="10" value={form.yellowCards} onChange={e=>setForm({...form,yellowCards:e.target.value})} className="pm-field"/></div>
+                      <div><label className="pm-label">{tr.form.redCards}</label><input type="number" min="0" max="5" value={form.redCards} onChange={e=>setForm({...form,redCards:e.target.value})} className="pm-field"/></div>
+                      <div><label className="pm-label">{tr.form.suspended}</label><button type="button" onClick={()=>setForm({...form,suspended:!form.suspended})} className={`pm-chip pm-field justify-start ${form.suspended?'pm-chip-on':''}`}>{form.suspended?tr.profile.yes:tr.profile.no}</button></div>
                     </div>
                   </div>
                 </>
               ):(
-                <div className="grid grid-cols-2 gap-2">
-                  <select value={form.position} onChange={e=>setForm({...form,position:e.target.value})} className="col-span-2 w-full p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-[9px] font-bold uppercase outline-none" required>
+                <div className="mt-3 grid grid-cols-2 gap-3">
+                  <select value={form.position} onChange={e=>setForm({...form,position:e.target.value})} className="pm-field pm-select col-span-2" required>
                     <option value="">{tr.form.coachingRole}</option>{COACH_POSITIONS.map(p=><option key={p} value={p}>{p}</option>)}
                   </select>
-                  <select value={form.natMatches} onChange={e=>setForm({...form,natMatches:e.target.value})} className="w-full p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-[9px] font-bold uppercase outline-none">
+                  <select value={form.natMatches} onChange={e=>setForm({...form,natMatches:e.target.value})} className="pm-field pm-select">
                     <option value="">{tr.form.license}</option>{CAF_LICENSES.map(l=><option key={l} value={l}>{l}</option>)}
                   </select>
-                  <input placeholder={tr.form.nationality} value={form.nationality} onChange={e=>setForm({...form,nationality:e.target.value})} className="w-full p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-[9px] font-bold uppercase outline-none"/>
+                  <input placeholder={tr.form.nationality} value={form.nationality} onChange={e=>setForm({...form,nationality:e.target.value})} className="pm-field"/>
                   <div className="col-span-2">
-                    <div className="flex flex-wrap gap-1">
+                    <div className="flex flex-wrap gap-1.5">
                       {LANGUAGES.map(l=>{
                         const sel=(form.languages||"").split(",").map((s:string)=>s.trim()).includes(l)
                         return(
@@ -1506,34 +1316,34 @@ export default function EliteSquadApp() {
                             const current=(form.languages||"").split(",").map((s:string)=>s.trim()).filter(Boolean)
                             const next=sel?current.filter((s:string)=>s!==l):[...current,l]
                             setForm({...form,languages:next.join(", ")})
-                          }} className={`px-2 py-1 rounded text-[7px] font-black uppercase tracking-wider transition-all ${sel?'bg-[#E30613] text-white':'bg-zinc-50 border border-zinc-200 text-zinc-400 hover:border-[#E30613]/30'}`}>{l}</button>
+                          }} className={`pm-chip ${sel?'pm-chip-on':''}`}>{l}</button>
                         )
                       })}
                     </div>
                   </div>
                   <div className="col-span-2">
-                    <textarea placeholder="Coaching philosophy (optional, one line)" value={form.bioQuote||""} onChange={e=>setForm({...form,bioQuote:e.target.value})} rows={2} maxLength={140} className="w-full p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-medium italic outline-none resize-none"/>
+                    <textarea placeholder="Coaching philosophy (optional, one line)" value={form.bioQuote||""} onChange={e=>setForm({...form,bioQuote:e.target.value})} rows={2} maxLength={140} className="pm-field resize-none"/>
                   </div>
-                  <input placeholder={tr.form.contract} value={form.contract} onChange={e=>setForm({...form,contract:e.target.value})} className="w-full p-2.5 rounded-xl border border-zinc-200 bg-zinc-50 text-[9px] font-bold uppercase outline-none"/>
+                  <input placeholder={tr.form.contract} value={form.contract} onChange={e=>setForm({...form,contract:e.target.value})} className="pm-field"/>
                 </div>
               )}
               {/* History */}
-              <div className="p-3 rounded-xl border border-zinc-200 bg-zinc-50 space-y-2">
-                <p className="text-[7px] font-black text-[#E30613] uppercase tracking-[0.3em] flex items-center gap-2"><Briefcase size={8}/> {tr.form.history}</p>
+              <div className="mt-3 pm-tile space-y-2">
+                <p className="pm-label flex items-center gap-1.5"><Briefcase size={10}/> {tr.form.history}</p>
                 <div className="max-h-[80px] overflow-y-auto space-y-1.5">
                   {form.history?.map((h:any,i:number)=>(
                     <div key={i} className="flex gap-1.5">
-                      <input placeholder={tr.form.year} value={h.year} onChange={e=>{const nh=[...form.history];nh[i].year=e.target.value;setForm({...form,history:nh})}} className="w-16 p-1.5 bg-white rounded-lg border border-zinc-200 text-[8px] font-bold outline-none"/>
-                      <input placeholder={tr.form.event} value={h.event} onChange={e=>{const nh=[...form.history];nh[i].event=e.target.value;setForm({...form,history:nh})}} className="flex-1 p-1.5 bg-white rounded-lg border border-zinc-200 text-[8px] font-bold outline-none"/>
-                      <button type="button" onClick={()=>setForm({...form,history:form.history.filter((_:any,idx:number)=>idx!==i)})} className="p-1 text-zinc-500 hover:text-red-500"><X size={10}/></button>
+                      <input placeholder={tr.form.year} value={h.year} onChange={e=>{const nh=[...form.history];nh[i].year=e.target.value;setForm({...form,history:nh})}} className="w-16 pm-field py-1.5 text-[10px]"/>
+                      <input placeholder={tr.form.event} value={h.event} onChange={e=>{const nh=[...form.history];nh[i].event=e.target.value;setForm({...form,history:nh})}} className="flex-1 pm-field py-1.5 text-[10px]"/>
+                      <button type="button" onClick={()=>setForm({...form,history:form.history.filter((_:any,idx:number)=>idx!==i)})} className="p-1 text-[#73849e] hover:text-red-400"><X size={11}/></button>
                     </div>
                   ))}
                 </div>
-                <button type="button" onClick={()=>setForm({...form,history:[...(form.history||[]),{year:"",event:""}]})} className="w-full py-1.5 border border-dashed border-[#E30613]/20 rounded-lg text-[7px] font-black text-[#E30613] hover:bg-[#E30613]/5 uppercase tracking-widest">{tr.form.addEntry}</button>
+                <button type="button" onClick={()=>setForm({...form,history:[...(form.history||[]),{year:"",event:""}]})} className="w-full py-2 border border-dashed border-[#e3062c]/30 rounded-lg text-[7px] font-black text-[#e3062c] hover:bg-[#e3062c]/8 uppercase tracking-widest transition-all">{tr.form.addEntry}</button>
               </div>
-              <div className="flex gap-2 pt-1">
-                <button type="button" onClick={()=>setIsFormOpen(false)} className="flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-[0.2em] border border-zinc-300 bg-zinc-100">{tr.form.cancel}</button>
-                <button className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-xl text-[9px] font-black uppercase tracking-[0.2em] shadow-lg shadow-red-600/20 hover:scale-[1.02] transition-all">{tr.form.saveRecord}</button>
+              <div className="pt-1 flex gap-2">
+                <button type="button" onClick={()=>setIsFormOpen(false)} className="pm-btn pm-btn-ghost flex-1 py-2.5">{tr.form.cancel}</button>
+                <button type="submit" className="pm-btn pm-btn-red flex-[2] py-2.5">{tr.form.saveRecord}</button>
               </div>
             </form>
           </div>
@@ -1548,7 +1358,7 @@ export default function EliteSquadApp() {
           <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 shrink-0">
               <div>
-                <h2 className="text-2xl font-black uppercase italic tracking-tight">Pending Users</h2>
+                <h2 className="text-2xl font-black uppercase tracking-tight">Pending Users</h2>
                 <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{pendingCount} awaiting approval</p>
               </div>
               <button onClick={()=>setPendingReviewOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
@@ -1596,7 +1406,7 @@ export default function EliteSquadApp() {
                     <div className="flex gap-3 px-5 pb-5">
                       <button onClick={doApprove} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Save & Approve</button>
                       <button onClick={doHold} className="flex-1 py-3 rounded-xl border border-zinc-300 bg-white text-zinc-500 text-[8px] font-black uppercase tracking-wider hover:bg-zinc-100 transition-all">Hold</button>
-                      <button onClick={doDelete} className="py-3 px-4 rounded-xl border border-red-200 text-red-500 text-[8px] font-black uppercase tracking-wider hover:bg-red-50 transition-all"><Trash2 size={12}/></button>
+                      <button onClick={doDelete} className="py-3 px-4 rounded-xl border border-[#e3062c]/40 text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all"><Trash2 size={12}/></button>
                     </div>
                   </div>
                 )
@@ -1620,10 +1430,10 @@ export default function EliteSquadApp() {
           <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 shrink-0">
               <div>
-                <h2 className="text-2xl font-black uppercase italic tracking-tight">Pending Matches</h2>
-                <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{pendingMatches.length} awaiting approval</p>
+                <h2 className="text-2xl font-black uppercase tracking-tight">Pending Matches</h2>
+                <p className="text-[8px] font-black text-[#e3062c] uppercase tracking-[0.3em] mt-0.5">{pendingMatches.length} awaiting approval</p>
               </div>
-              <button onClick={()=>setPendingMatchesOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
+              <button onClick={()=>setPendingMatchesOpen(false)} title="Close" className="pm-close shrink-0"><X size={18}/></button>
             </div>
             <div className="p-6 space-y-4 overflow-y-auto">
               {pendingMatches.map(m=>(
@@ -1631,13 +1441,13 @@ export default function EliteSquadApp() {
                   <div className="p-5 pb-4 border-b border-zinc-200">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center"><BookOpen size={18} className="text-amber-600"/></div>
+                        <div className="w-12 h-12 rounded-2xl bg-[#f6c744]/10 border border-[#f6c744]/30 flex items-center justify-center"><BookOpen size={18} className="text-[#f6c744]"/></div>
                         <div>
                           <p className="font-black uppercase text-sm leading-tight">{m.opponent}</p>
                           <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">{fmtDateWords(m.date)} · {m.competition||"Friendly"} · by @{m.submittedBy}</p>
                         </div>
                       </div>
-                      <span className="text-[9px] font-black text-amber-600 bg-amber-100 px-2.5 py-1 rounded-lg uppercase">Pending</span>
+                      <span className="text-[9px] font-black text-[#f6c744] bg-[#f6c744]/15 border border-[#f6c744]/30 px-2.5 py-1 rounded-lg uppercase">Pending</span>
                     </div>
                   </div>
                   <div className="p-5 space-y-2 text-[9px] font-bold text-zinc-600">
@@ -1647,7 +1457,7 @@ export default function EliteSquadApp() {
                   </div>
                   <div className="flex gap-3 px-5 pb-5">
                     <button onClick={()=>approveMatch(m)} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Approve Match</button>
-                    <button onClick={()=>{setMatches(p=>p.filter((x:any)=>x.id!==m.id));setPendingMatchesOpen(false)}} className="py-3 px-5 rounded-xl border border-red-200 text-red-500 text-[8px] font-black uppercase tracking-wider hover:bg-red-50 transition-all"><Trash2 size={12} className="inline mr-1"/>Reject</button>
+                    <button onClick={()=>{setMatches(p=>p.filter((x:any)=>x.id!==m.id));setPendingMatchesOpen(false)}} className="py-3 px-5 rounded-xl border border-[rgba(255,79,102,.35)] text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c]/10 transition-all"><Trash2 size={12} className="inline mr-1"/>Reject</button>
                   </div>
                 </div>
               ))}
@@ -1669,7 +1479,7 @@ export default function EliteSquadApp() {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 shrink-0">
-              <h2 className="text-lg font-black uppercase italic tracking-tight">User Management</h2>
+              <h2 className="text-lg font-black uppercase tracking-tight">User Management</h2>
               <div className="flex items-center gap-2">
                 <button onClick={()=>{syncUsers()}} className="p-2 rounded-xl border border-zinc-200 hover:bg-zinc-100 transition-all" title="Refresh"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
                 <button onClick={()=>setUsersOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={16}/></button>
@@ -1694,7 +1504,7 @@ export default function EliteSquadApp() {
                         <p className="text-[7px] font-black uppercase tracking-wider" style={{color:u.status==="active"?"#16a34a":"#E30613"}}>{u.status==="active"?"ACTIVE":"PENDING"}</p>
                       </div>
                       <div className="flex gap-1.5">
-                        {u.status==="pending"&&canManageUsers&&<button onClick={approveUser} className="px-3 py-1.5 rounded-lg border border-green-300 text-green-600 text-[7px] font-black uppercase tracking-wider hover:bg-green-50 transition-all">Approve</button>}
+                        {u.status==="pending"&&canManageUsers&&<button onClick={approveUser} className="px-3 py-1.5 rounded-lg border border-[#7fd6a8]/30 text-[#7fd6a8] text-[7px] font-black uppercase tracking-wider hover:bg-[#7fd6a8]/10 transition-all">Approve</button>}
                         {canManageUsers&&!currentUser&&(<>
                           <button onClick={async()=>{
                             const pw1=window.prompt(`New password for ${u.username} (min 6 chars):`)
@@ -1702,8 +1512,8 @@ export default function EliteSquadApp() {
                             if(pw1.length<6){alert("Password must be at least 6 characters");return}
                             const {error}=await adminResetPassword(u.username,pw1)
                             if(error){alert("Failed: "+error)}else{alert("Password reset for "+u.username)}
-                          }} className="px-3 py-1.5 rounded-lg border border-blue-200 text-blue-500 text-[7px] font-black uppercase tracking-wider hover:bg-blue-50 transition-all">Reset PW</button>
-                          <button onClick={()=>{deleteProfile(u.username).then(reloadProfiles)}} className="px-3 py-1.5 rounded-lg border border-red-200 text-red-500 text-[7px] font-black uppercase tracking-wider hover:bg-red-50 transition-all">Remove</button>
+                          }} className="px-3 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">Reset PW</button>
+                          <button onClick={()=>{deleteProfile(u.username).then(reloadProfiles)}} className="px-3 py-1.5 rounded-lg border border-[#e3062c]/40 text-[#ff4f66] text-[7px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all">Remove</button>
                         </>)}
                       </div>
                     </div>
@@ -1735,13 +1545,13 @@ export default function EliteSquadApp() {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[85vh]">
             <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Activity size={16}/>Activity Log</h2>
+              <h2 className="text-sm font-black uppercase tracking-tight flex items-center gap-2"><Activity size={16}/>Activity Log</h2>
               <button onClick={()=>setActivityLogOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
             </div>
             <div className="p-4 overflow-y-auto space-y-1.5">
               {activityLog.length===0&&<p className="text-[10px] text-zinc-400 text-center py-8">No activity yet</p>}
               {activityLog.map((a:any)=>{
-                const actionColor=a.action==="insert"?"text-green-600":a.action==="delete"?"text-red-500":"text-blue-600"
+                const actionColor=a.action==="insert"?"text-[#7fd6a8]":a.action==="delete"?"text-[#ff4f66]":"text-[#7ec3ff]"
                 const actionVerb=a.action==="insert"?"added":a.action==="delete"?"deleted":"updated"
                 const buildSentence=()=>{
                   if(a.entity_type==="injuries"){
@@ -1749,9 +1559,9 @@ export default function EliteSquadApp() {
                     return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> <span className="font-bold text-zinc-800">{playerName}</span><span className="text-zinc-500">'s injury record</span></>
                   }
                   if(a.entity_type==="members"){
-                    if(a.action==="insert")return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-green-600">added a new player/staff</span>: <span className="font-bold text-zinc-800">{a.entity_label}</span></>
-                    if(a.action==="delete")return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-red-500">removed</span> <span className="font-bold text-zinc-800">{a.entity_label}</span></>
-                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-blue-600">updated</span> <span className="font-bold text-zinc-800">{a.entity_label}</span>'s profile</>
+                    if(a.action==="insert")return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-[#7fd6a8]">added a new player/staff</span>: <span className="font-bold text-zinc-800">{a.entity_label}</span></>
+                    if(a.action==="delete")return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-[#ff4f66]">removed</span> <span className="font-bold text-zinc-800">{a.entity_label}</span></>
+                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-[#7ec3ff]">updated</span> <span className="font-bold text-zinc-800">{a.entity_label}</span>'s profile</>
                   }
                   if(a.entity_type==="matches"){
                     return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> the match vs <span className="font-bold text-zinc-800">{a.entity_label}</span></>
@@ -1785,9 +1595,9 @@ export default function EliteSquadApp() {
                         {changeEntries.map(([field,val]:any)=>(
                           <div key={field} className="flex items-center gap-1.5 text-[9px]">
                             <span className="font-bold text-zinc-500 shrink-0">{fieldLabel(field)}:</span>
-                            <span className="text-red-400 line-through truncate">{fmtVal(val.from)}</span>
+                            <span className="text-[#ff4f66] line-through truncate">{fmtVal(val.from)}</span>
                             <span className="text-zinc-300">→</span>
-                            <span className="text-green-600 font-bold truncate">{fmtVal(val.to)}</span>
+                            <span className="text-[#7fd6a8] font-bold truncate">{fmtVal(val.to)}</span>
                           </div>
                         ))}
                       </div>
@@ -1815,9 +1625,11 @@ export default function EliteSquadApp() {
         return(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
           <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
-            <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Calendar size={16}/>Upcoming Matches</h2>
-              <button onClick={()=>setUpcomingOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
+            <div className="px-6 pt-5 pb-4 border-b border-[rgba(148,170,210,.14)] shrink-0 flex items-center justify-between">
+              <div className="flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase tracking-tight flex items-center gap-2 text-[#EDEFF4]"><Calendar size={16}/>Upcoming Matches</h2>
+              <button onClick={()=>setUpcomingOpen(false)} title="Close" className="pm-close"><X size={18}/></button>
+            </div>
             </div>
             <div className="p-5 overflow-y-auto space-y-5">
 
@@ -1828,12 +1640,8 @@ export default function EliteSquadApp() {
                 <div className="relative rounded-2xl overflow-hidden" style={{background:"linear-gradient(135deg, #1a1a1a 0%, #E30613 140%)"}}>
                   <div className="relative p-6 text-center">
                     <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/60 mb-2">Next Match {daysUntil(next.date)===0?"· Today":daysUntil(next.date)===1?"· Tomorrow":`· In ${daysUntil(next.date)} days`}</p>
-                    <p className="text-2xl font-black uppercase italic tracking-tight text-white">Tunisia <span className="text-white/50 not-italic mx-1">vs</span> {next.opponent||"TBD"}</p>
+                    <p className="text-2xl font-black uppercase tracking-tight text-white">Tunisia <span className="text-white/50 not-italic mx-1">vs</span> {next.opponent||"TBD"}</p>
                     <p className="text-[12px] font-bold text-white/80 mt-2">{fmtDateWords(next.date)}</p>
-                    <div className="flex items-center justify-center gap-2 mt-3">
-                      <span className="text-[8px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-white/15 text-white">{next.competition||"Friendly"}</span>
-                      {next.venue&&<span className="text-[8px] font-black uppercase tracking-wider px-3 py-1 rounded-full bg-white/15 text-white">{next.venue}</span>}
-                    </div>
                   </div>
                 </div>
               )}
@@ -1867,7 +1675,7 @@ export default function EliteSquadApp() {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
           <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
             <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Newspaper size={16}/>Women's Football News</h2>
+              <h2 className="text-sm font-black uppercase tracking-tight flex items-center gap-2"><Newspaper size={16}/>Women's Football News</h2>
               <button onClick={()=>setNewsOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
             </div>
             <div className="p-5 overflow-y-auto space-y-2">
@@ -1888,49 +1696,6 @@ export default function EliteSquadApp() {
       )}
 
       {/* ═══════════════════════════════════════════
-          SCOUT FILTER PANEL — every league/region + dual nationality
-      ═══════════════════════════════════════════ */}
-      {scoutFilterOpen&&(
-        <div className="fixed inset-0 z-[220] flex items-center justify-center p-2 sm:p-4 bg-black/80">
-          <div className="w-full max-w-sm rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[85vh]">
-            <div className="px-5 pt-4 pb-3 border-b border-zinc-200 shrink-0 flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Globe size={15}/>Scout Filter</h2>
-              <button onClick={()=>setScoutFilterOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-200/60 transition-all"><X size={17}/></button>
-            </div>
-            <div className="p-4 overflow-y-auto space-y-4">
-              <button onClick={()=>setScoutDualOnly(d=>!d)} className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl border text-[10px] font-black uppercase tracking-wider transition-all ${scoutDualOnly?'bg-blue-600 border-blue-600 text-white':'border-zinc-200 bg-white text-zinc-600'}`}>
-                🌐 Dual Nationality Only {scoutDualOnly&&"✓"}
-              </button>
-
-              {LEAGUES_BY_REGION.map(group=>(
-                <div key={group.region}>
-                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">{group.region}</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {group.options.map(opt=>{
-                      const active=scoutRegionFilter.has(opt)
-                      return(
-                        <button key={opt} onClick={()=>{
-                          const next=new Set(scoutRegionFilter)
-                          if(active)next.delete(opt);else next.add(opt)
-                          setScoutRegionFilter(next)
-                        }} className={`px-2.5 py-1.5 rounded-full text-[9px] font-bold transition-all ${active?'bg-blue-600 text-white':'bg-white border border-zinc-200 text-zinc-500 hover:border-blue-300'}`}>
-                          {opt}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="p-4 border-t border-zinc-200 shrink-0 flex gap-2">
-              <button onClick={()=>{setScoutRegionFilter(new Set());setScoutDualOnly(false)}} className="flex-1 py-2.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-white hover:bg-zinc-100 transition-all">Clear All</button>
-              <button onClick={()=>setScoutFilterOpen(false)} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">Show Results</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ═══════════════════════════════════════════
           SQUAD LAB — test formations & lineups, FPL-style
       ═══════════════════════════════════════════ */}
       {squadLabOpen&&(()=>{
@@ -1942,7 +1707,7 @@ export default function EliteSquadApp() {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
           <div className="w-full max-w-2xl rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[92vh]">
             <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Users size={16}/>Squad Lab</h2>
+              <h2 className="text-sm font-black uppercase tracking-tight flex items-center gap-2"><Users size={16}/>Squad Lab</h2>
               <button onClick={()=>{setSquadLabOpen(false);setLabPickerSlot(null)}} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
             </div>
 
@@ -1972,7 +1737,7 @@ export default function EliteSquadApp() {
                     <button onClick={()=>setLabPickerSlot(null)} className="text-[8px] font-bold text-zinc-400 hover:text-zinc-600">Cancel</button>
                   </div>
                   {labSlots[labPickerSlot]&&(
-                    <button onClick={()=>{setLabSlots({...labSlots,[labPickerSlot]:null});setLabPickerSlot(null)}} className="w-full flex items-center gap-2 p-2 rounded-lg bg-red-50 text-red-600 text-[11px] font-bold text-left">
+                    <button onClick={()=>{setLabSlots({...labSlots,[labPickerSlot]:null});setLabPickerSlot(null)}} className="w-full flex items-center gap-2 p-2 rounded-lg bg-[#e3062c]/15 text-[#ff4f66] text-[11px] font-bold text-left">
                       <X size={12}/>Remove {categoryPlayers.find((m:any)=>m.id===labSlots[labPickerSlot!])?.name}
                     </button>
                   )}
@@ -2009,7 +1774,7 @@ export default function EliteSquadApp() {
                           <p className="text-[11px] font-bold text-zinc-800">{t.name}</p>
                           <p className="text-[8px] text-zinc-400">{t.formation} · by {t.created_by_username||"unknown"}</p>
                         </button>
-                        <button onClick={async()=>{if(await askConfirm(`Delete "${t.name}"?`)){await deleteSquadTemplate(t.id);setLabTemplates(await fetchSquadTemplates(teamCat!))}}} className="p-1.5 rounded-lg text-zinc-300 hover:text-red-500 hover:bg-red-50 transition-all"><Trash2 size={12}/></button>
+                        <button onClick={async()=>{if(await askConfirm(`Delete "${t.name}"?`)){await deleteSquadTemplate(t.id);setLabTemplates(await fetchSquadTemplates(teamCat!))}}} className="p-1.5 rounded-lg text-zinc-300 hover:text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all"><Trash2 size={12}/></button>
                       </div>
                     ))}
                   </div>
@@ -2036,7 +1801,7 @@ export default function EliteSquadApp() {
                     </div>
                   ))}
                 </div>
-                <button onClick={()=>setIsMatchOpen(false)} title="Close" className="w-7 h-7 rounded-lg bg-zinc-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><X size={14} className="text-zinc-400"/></button>
+                <button onClick={()=>setIsMatchOpen(false)} title="Close" className="w-7 h-7 rounded-lg bg-[#0d1526] border border-[rgba(148,170,210,.18)] hover:bg-[#e3062c]/20 hover:text-[#ff4f66] hover:border-[#e3062c]/40 flex items-center justify-center transition-all"><X size={14} className="text-zinc-400"/></button>
               </div>
 
               {/* Step content in header */}
@@ -2045,7 +1810,7 @@ export default function EliteSquadApp() {
                   <div>
                     <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Opponent</label>
                     <input placeholder="e.g. ALGERIA" value={matchForm.opponent} onChange={e=>setMatchForm({...matchForm,opponent:e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1).toLowerCase()})}
-                      className="w-full text-lg font-black italic uppercase tracking-tight border-b-2 border-zinc-200 pb-1 outline-none focus:border-[#E30613] bg-transparent placeholder-zinc-200"/>
+                      className="w-full text-lg font-black uppercase tracking-tight border-b-2 border-zinc-200 pb-1 outline-none focus:border-[#E30613] bg-transparent placeholder-zinc-200"/>
                   </div>
                   <div>
                     <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Date</label>
@@ -2053,10 +1818,10 @@ export default function EliteSquadApp() {
                   </div>
                   <div>
                     <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Score</label>
-                    <div className="flex items-center gap-1">
-                      <input placeholder="0" value={matchForm.result.split('-')[0]||''} onChange={e=>{const h=e.target.value.replace(/\D/g,''),a=matchForm.result.split('-')[1]||'';setMatchForm({...matchForm,result:h||a?a?h+'-'+a:h:a})}} className="w-10 text-center p-2 rounded-lg border border-zinc-200 outline-none text-sm font-black"/>
+                    <div className="flex items-center gap-1.5">
+                      <NumBox value={matchForm.result.split('-')[0]||''} set={(v:string)=>{const a=matchForm.result.split('-')[1]||'';setMatchForm({...matchForm,result:a?v+'-'+a:v})}}/>
                       <span className="text-sm font-black text-zinc-400">-</span>
-                      <input placeholder="0" value={matchForm.result.split('-')[1]||''} onChange={e=>{const h=matchForm.result.split('-')[0]||'',a=e.target.value.replace(/\D/g,'');setMatchForm({...matchForm,result:h||a?a?h+'-'+a:h:a})}} className="w-10 text-center p-2 rounded-lg border border-zinc-200 outline-none text-sm font-black"/>
+                      <NumBox value={matchForm.result.split('-')[1]||''} set={(v:string)=>{const h=matchForm.result.split('-')[0]||'';setMatchForm({...matchForm,result:h?h+'-'+v:v})}}/>
                     </div>
                   </div>
                   <div className="col-span-full flex items-center gap-3">
@@ -2070,7 +1835,7 @@ export default function EliteSquadApp() {
                     <div className="flex flex-wrap gap-1.5">
                       {COMPETITIONS.map(comp=>(
                         <button key={comp.label} type="button" onClick={()=>setMatchForm({...matchForm,competition:comp.value})}
-                          className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${matchForm.competition===comp.value?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>
+                          className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${matchForm.competition===comp.value?'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/20':'bg-[#0d1526] border border-[rgba(148,170,210,.2)] text-[#8fa0bd] hover:bg-[#12294e] hover:border-[#e3062c]/40'}`}>
                           {comp.label}
                         </button>
                       ))}
@@ -2081,11 +1846,11 @@ export default function EliteSquadApp() {
                     <p className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mb-2">Match Stats (optional)</p>
                     <div className="grid grid-cols-[1fr_auto_1fr] gap-x-3 gap-y-2 items-center text-[10px] font-bold">
                       <span className="text-right text-zinc-600">Tunisia</span><span className="text-[7px] font-black text-zinc-400 text-center">vs</span><span className="text-zinc-600">{matchForm.opponent||"Opponent"}</span>
-                      <input placeholder="%" value={matchForm.tunisiaPossession} onChange={e=>setMatchForm({...matchForm,tunisiaPossession:e.target.value.replace(/\D/g,'')})} className="text-right p-1.5 rounded border border-zinc-200 outline-none w-14 justify-self-end"/><span className="text-[7px] font-black text-zinc-400">Poss.</span><input placeholder="%" value={matchForm.opponentPossession} onChange={e=>setMatchForm({...matchForm,opponentPossession:e.target.value.replace(/\D/g,'')})} className="p-1.5 rounded border border-zinc-200 outline-none w-14"/>
-                      <input placeholder="0" value={matchForm.tunisiaShots} onChange={e=>setMatchForm({...matchForm,tunisiaShots:e.target.value.replace(/\D/g,'')})} className="text-right p-1.5 rounded border border-zinc-200 outline-none w-14 justify-self-end"/><span className="text-[7px] font-black text-zinc-400">Shots</span><input placeholder="0" value={matchForm.opponentShots} onChange={e=>setMatchForm({...matchForm,opponentShots:e.target.value.replace(/\D/g,'')})} className="p-1.5 rounded border border-zinc-200 outline-none w-14"/>
-                      <input placeholder="0" value={matchForm.tunisiaShotsOnTarget} onChange={e=>setMatchForm({...matchForm,tunisiaShotsOnTarget:e.target.value.replace(/\D/g,'')})} className="text-right p-1.5 rounded border border-zinc-200 outline-none w-14 justify-self-end"/><span className="text-[7px] font-black text-zinc-400">SOT</span><input placeholder="0" value={matchForm.opponentShotsOnTarget} onChange={e=>setMatchForm({...matchForm,opponentShotsOnTarget:e.target.value.replace(/\D/g,'')})} className="p-1.5 rounded border border-zinc-200 outline-none w-14"/>
-                      <input placeholder="0" value={matchForm.tunisiaCorners} onChange={e=>setMatchForm({...matchForm,tunisiaCorners:e.target.value.replace(/\D/g,'')})} className="text-right p-1.5 rounded border border-zinc-200 outline-none w-14 justify-self-end"/><span className="text-[7px] font-black text-zinc-400">Corn.</span><input placeholder="0" value={matchForm.opponentCorners} onChange={e=>setMatchForm({...matchForm,opponentCorners:e.target.value.replace(/\D/g,'')})} className="p-1.5 rounded border border-zinc-200 outline-none w-14"/>
-                      <input placeholder="0" value={matchForm.tunisiaFouls} onChange={e=>setMatchForm({...matchForm,tunisiaFouls:e.target.value.replace(/\D/g,'')})} className="text-right p-1.5 rounded border border-zinc-200 outline-none w-14 justify-self-end"/><span className="text-[7px] font-black text-zinc-400">Fouls</span><input placeholder="0" value={matchForm.opponentFouls} onChange={e=>setMatchForm({...matchForm,opponentFouls:e.target.value.replace(/\D/g,'')})} className="p-1.5 rounded border border-zinc-200 outline-none w-14"/>
+                      <NumBox align="r" max={100} value={matchForm.tunisiaPossession} set={(v:string)=>setMatchForm({...matchForm,tunisiaPossession:v})}/><span className="text-[7px] font-black text-zinc-400">Poss.</span><NumBox max={100} value={matchForm.opponentPossession} set={(v:string)=>setMatchForm({...matchForm,opponentPossession:v})}/>
+                      <NumBox align="r" value={matchForm.tunisiaShots} set={(v:string)=>setMatchForm({...matchForm,tunisiaShots:v})}/><span className="text-[7px] font-black text-zinc-400">Shots</span><NumBox value={matchForm.opponentShots} set={(v:string)=>setMatchForm({...matchForm,opponentShots:v})}/>
+                      <NumBox align="r" value={matchForm.tunisiaShotsOnTarget} set={(v:string)=>setMatchForm({...matchForm,tunisiaShotsOnTarget:v})}/><span className="text-[7px] font-black text-zinc-400">SOT</span><NumBox value={matchForm.opponentShotsOnTarget} set={(v:string)=>setMatchForm({...matchForm,opponentShotsOnTarget:v})}/>
+                      <NumBox align="r" value={matchForm.tunisiaCorners} set={(v:string)=>setMatchForm({...matchForm,tunisiaCorners:v})}/><span className="text-[7px] font-black text-zinc-400">Corn.</span><NumBox value={matchForm.opponentCorners} set={(v:string)=>setMatchForm({...matchForm,opponentCorners:v})}/>
+                      <NumBox align="r" value={matchForm.tunisiaFouls} set={(v:string)=>setMatchForm({...matchForm,tunisiaFouls:v})}/><span className="text-[7px] font-black text-zinc-400">Fouls</span><NumBox value={matchForm.opponentFouls} set={(v:string)=>setMatchForm({...matchForm,opponentFouls:v})}/>
                     </div>
                   </div>
                 </div>
@@ -2108,7 +1873,7 @@ export default function EliteSquadApp() {
                     const t=templates[idx]
                     const orderedIds=(FORMATIONS[t.formation]||[]).map((s:any)=>t.slots[s.slotKey]).filter(Boolean)
                     setMatchForm({...matchForm,squad:[...orderedIds,...matchForm.squad.slice(11)],formation:t.formation,formationSlots:t.slots})
-                  }} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-blue-300 bg-blue-50 text-blue-600 text-[9px] font-black uppercase tracking-wider hover:bg-blue-100 transition-all">
+                  }} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-[#f6c744]/40 bg-[#f6c744]/5 text-[#f6c744] text-[9px] font-black uppercase tracking-wider hover:bg-[#f6c744]/10 transition-all">
                     <Users size={12}/>Load from Squad Lab
                   </button>
                   <div className="grid grid-cols-2 gap-4">
@@ -2136,8 +1901,8 @@ export default function EliteSquadApp() {
 
                     {/* Bench */}
                     <div className="bg-zinc-50 rounded-xl border border-zinc-100 p-4">
-                      <p className="text-[8px] font-black uppercase tracking-wider text-amber-600 mb-3 flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-amber-500"/> BENCH
+                      <p className="text-[8px] font-black uppercase tracking-wider text-[#f6c744] mb-3 flex items-center gap-2">
+                        <span className="w-2 h-2 rounded-full bg-[#f6c744]"/> BENCH
                         <span className="text-zinc-300 font-normal ml-auto text-[7px]">{matchForm.squad.slice(11).length} players</span>
                       </p>
                       <div className="space-y-1.5">
@@ -2146,7 +1911,7 @@ export default function EliteSquadApp() {
                           if(!pl) return null
                           return(
                             <div key={pl.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white border border-zinc-200/60 text-xs">
-                              <span className="text-[6px] font-black px-1 py-0.5 rounded bg-amber-200/60 text-amber-700 shrink-0">BN</span>
+                              <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#f6c744]/10 text-[#f6c744] shrink-0">BN</span>
                               <span className="font-bold truncate flex-1 text-zinc-800">{pl.name}</span>
                               <button onClick={()=>moveUp(pl.id)} className="text-zinc-300 hover:text-amber-500 text-[9px] leading-none">✕</button>
                             </div>
@@ -2197,10 +1962,10 @@ export default function EliteSquadApp() {
                 <div className="space-y-4">
                   {/* Action buttons */}
                   <div className="flex flex-wrap gap-2">
-                    <button onClick={()=>setActionPick("goal")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-50 border border-green-200 text-green-700 text-[9px] font-black uppercase tracking-wider hover:bg-green-100 transition-all shadow-sm">⚽ Goal</button>
-                    <button onClick={()=>setActionPick("yellow")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-yellow-50 border border-yellow-200 text-yellow-700 text-[9px] font-black uppercase tracking-wider hover:bg-yellow-100 transition-all shadow-sm">🟨 Yellow</button>
-                    <button onClick={()=>setActionPick("red")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-red-50 border border-red-200 text-red-700 text-[9px] font-black uppercase tracking-wider hover:bg-red-100 transition-all shadow-sm">🟥 Red</button>
-                    <button onClick={()=>{setActionPick("sub");setSubOutId(null)}} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 border border-blue-200 text-blue-700 text-[9px] font-black uppercase tracking-wider hover:bg-blue-100 transition-all shadow-sm">↔ Sub</button>
+                    <button onClick={()=>setActionPick("goal")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#7fd6a8]/10 border border-[#7fd6a8]/25 text-[#7fd6a8] text-[9px] font-black uppercase tracking-wider hover:bg-[#7fd6a8]/15 transition-all shadow-sm">⚽ Goal</button>
+                    <button onClick={()=>setActionPick("yellow")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#f6c744]/10 border border-[#f6c744]/25 text-[#f6c744] text-[9px] font-black uppercase tracking-wider hover:bg-[#f6c744]/15 transition-all shadow-sm">🟨 Yellow</button>
+                    <button onClick={()=>setActionPick("red")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#e3062c]/10 border border-[#e3062c]/35 text-[#ff4f66] text-[9px] font-black uppercase tracking-wider hover:bg-[#e3062c]/20 transition-all shadow-sm">🟥 Red</button>
+                    <button onClick={()=>{setActionPick("sub");setSubOutId(null)}} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#7ec3ff]/10 border border-[#7ec3ff]/25 text-[#7ec3ff] text-[9px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/15 transition-all shadow-sm">↔ Sub</button>
                   </div>
 
                   {/* Pickers */}
@@ -2212,19 +1977,19 @@ export default function EliteSquadApp() {
 
                   {/* Event cards */}
                   <div className="grid grid-cols-1 gap-2">
-                    {matchForm.scorers.length>0&&<div className="bg-green-50/50 border border-green-100 rounded-xl p-3">
-                      <p className="text-[8px] font-black uppercase tracking-wider text-green-700 mb-2">⚽ Goals</p>
+                    {matchForm.scorers.length>0&&<div className="bg-[#7fd6a8]/5 border border-[#7fd6a8]/15 rounded-xl p-3">
+                      <p className="text-[8px] font-black uppercase tracking-wider text-[#7fd6a8] mb-2">⚽ Goals</p>
                       <div className="space-y-1">
                         {matchForm.scorers.map((s:any)=>{
                           const pl=members.find((m:any)=>m.id===s.playerId)
                           if(!pl)return null
                           return(
-                            <div key={s.playerId} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-green-100/80 group">
+                            <div key={s.playerId} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-[#7fd6a8]/15 group">
                               <span className="font-bold text-xs flex-1 text-zinc-800">{pl.name}</span>
                               <div className="flex items-center gap-1">
-                                <span onClick={()=>editGoals(pl.id,-1)} className={`w-4 h-4 rounded flex items-center justify-center text-[9px] font-black cursor-pointer ${s.goals>1?'bg-green-200 text-green-700':'text-green-200'}`}>–</span>
+                                <span onClick={()=>editGoals(pl.id,-1)} className={`w-4 h-4 rounded flex items-center justify-center text-[9px] font-black cursor-pointer ${s.goals>1?'bg-[#7fd6a8]/25 text-[#7fd6a8]':'text-[#7fd6a8]/30'}`}>–</span>
                                 <span className="w-4 text-center text-xs font-black text-zinc-800">{s.goals}</span>
-                                <span onClick={()=>editGoals(pl.id,1)} className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-black cursor-pointer bg-green-200 text-green-700">+</span>
+                                <span onClick={()=>editGoals(pl.id,1)} className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-black cursor-pointer bg-[#7fd6a8]/25 text-[#7fd6a8]">+</span>
                               </div>
                               <button onClick={()=>removeGoal(pl.id)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </div>
@@ -2240,7 +2005,7 @@ export default function EliteSquadApp() {
                           const pl=members.find((m:any)=>m.id===pid)
                           if(!pl)return null
                           return(
-                            <span key={"y"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-yellow-200 text-[10px] font-bold group">
+                            <span key={"y"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#f6c744]/25 text-[10px] font-bold group">
                               <span className="w-3 h-4 rounded-[2px] bg-yellow-400"/> {pl.name.split(' ').slice(-1)}
                               <button onClick={()=>toggleYellow(pid)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </span>
@@ -2250,7 +2015,7 @@ export default function EliteSquadApp() {
                           const pl=members.find((m:any)=>m.id===pid)
                           if(!pl)return null
                           return(
-                            <span key={"r"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-red-200 text-[10px] font-bold group">
+                            <span key={"r"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#e3062c]/30 text-[10px] font-bold group">
                               <span className="w-3 h-4 rounded-[2px] bg-red-600"/> {pl.name.split(' ').slice(-1)}
                               <button onClick={()=>toggleRed(pid)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </span>
@@ -2259,17 +2024,17 @@ export default function EliteSquadApp() {
                       </div>
                     </div>}
 
-                    {matchForm.subs.length>0&&<div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3">
-                      <p className="text-[8px] font-black uppercase tracking-wider text-blue-700 mb-2">↔ Substitutions</p>
+                    {matchForm.subs.length>0&&<div className="bg-[#7ec3ff]/5 border border-[#7ec3ff]/15 rounded-xl p-3">
+                      <p className="text-[8px] font-black uppercase tracking-wider text-[#7ec3ff] mb-2">↔ Substitutions</p>
                       <div className="flex flex-wrap gap-1.5">
                         {matchForm.subs.map((s:any,i:number)=>{
                           const on=members.find((m:any)=>m.id===s.out)?.name||'?'
                           const inn=members.find((m:any)=>m.id===s["in"])?.name||'?'
                           return(
-                            <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-blue-200 text-[10px] font-bold group">
+                            <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-[#7ec3ff]/20 text-[10px] font-bold group">
                               <span className="text-red-500 line-through">{on}</span>
                               <span className="text-zinc-300">→</span>
-                              <span className="text-green-600">{inn}</span>
+                              <span className="text-[#7fd6a8]">{inn}</span>
                               <button onClick={()=>removeSub(i)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </div>
                           )
@@ -2298,7 +2063,7 @@ export default function EliteSquadApp() {
                 {matchStep===3&&`${matchForm.scorers.reduce((a:number,s:any)=>a+s.goals,0)}⚽ ${matchForm.yellowCards.length}🟨 ${matchForm.redCards.length}🟥${matchForm.subs.length>0&&` ${matchForm.subs.length}↔`}`}
               </span>
               <div className="flex gap-2">
-                {matchStep>0&&<button onClick={()=>setMatchStep(matchStep-1)} className="px-4 py-2 rounded-lg border border-zinc-200 text-xs font-bold text-zinc-500 hover:bg-zinc-50 transition-all">Back</button>}
+                {matchStep>0&&<button onClick={()=>setMatchStep(matchStep-1)} className="px-4 py-2 rounded-lg border border-[rgba(148,170,210,.25)] text-xs font-bold text-[#a4b2c8] hover:bg-[#0d1526] hover:border-[rgba(148,170,210,.4)] transition-all">Back</button>}
                 {matchStep<3&&<button onClick={()=>setMatchStep(matchStep+1)} disabled={matchStep===0&&!matchForm.opponent.trim()} className="px-5 py-2 rounded-full bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all disabled:opacity-40">Next</button>}
                 {matchStep===3&&<button onClick={()=>{const id=Date.now();const nm={...matchForm,id,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username};setMatches((p:any)=>[...p,nm]);if(canManageUsers)approveMatch(nm);setIsMatchOpen(false);setMatchForm(initMatch);setMatchStep(0)}} className="px-5 py-2 rounded-full bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all">Save Match</button>}
               </div>
@@ -2311,15 +2076,23 @@ export default function EliteSquadApp() {
           CUSTOM CONFIRM DIALOG — replaces native browser confirm()
       ═══════════════════════════════════════════ */}
       {confirmState&&(
-        <div className="fixed inset-0 z-[400] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-xs rounded-2xl bg-[#FAF8F3] shadow-2xl p-5 text-center">
-            <div className="w-11 h-11 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-3">
-              <AlertTriangle size={20} className="text-[#E30613]"/>
+        <div className="pm-backdrop" style={{zIndex:400}}>
+          <div className="pm-panel pm-panel-sm">
+            <div className="pm-head">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#e3062c]/12 border border-[#e3062c]/35 flex items-center justify-center">
+                  <AlertTriangle size={14} className="text-[#ff5f72]"/>
+                </div>
+                <span className="pm-title">Confirmation</span>
+              </div>
+              <button onClick={()=>{confirmState.resolve(false);setConfirmState(null)}} className="pm-close"><X size={14}/></button>
             </div>
-            <p className="text-[12px] font-bold text-zinc-800 leading-snug whitespace-pre-line">{confirmState.message}</p>
-            <div className="flex gap-2 mt-4">
-              <button onClick={()=>{confirmState.resolve(false);setConfirmState(null)}} className="flex-1 py-2.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100 hover:bg-zinc-200 transition-all">Cancel</button>
-              <button onClick={()=>{confirmState.resolve(true);setConfirmState(null)}} className="flex-1 py-2.5 rounded-full bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider shadow-lg hover:bg-red-700 transition-all">Confirm</button>
+            <div className="pm-body">
+              <p className="text-[12px] font-semibold text-[#e9edf4] leading-relaxed whitespace-pre-line">{confirmState.message}</p>
+            </div>
+            <div className="pm-foot">
+              <button onClick={()=>{confirmState.resolve(false);setConfirmState(null)}} className="pm-btn pm-btn-ghost">Cancel</button>
+              <button onClick={()=>{confirmState.resolve(true);setConfirmState(null)}} className="pm-btn pm-btn-red">Confirm</button>
             </div>
           </div>
         </div>
@@ -2333,10 +2106,9 @@ export default function EliteSquadApp() {
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-sm rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl p-5 space-y-3.5">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase italic tracking-tighter flex items-center gap-2"><Calendar size={16}/>Schedule Match</h2>
-              <button onClick={()=>setScheduleOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-200/60 transition-all"><X size={18}/></button>
+              <h2 className="text-sm font-black uppercase tracking-tight flex items-center gap-2 text-[#EDEFF4]"><Calendar size={16}/>Schedule Match</h2>
+              <button onClick={()=>setScheduleOpen(false)} title="Close" className="pm-close"><X size={18}/></button>
             </div>
-            <p className="text-[10px] text-zinc-500">Planning ahead? Just set the date and opponent — no result or squad needed yet.</p>
 
             <input placeholder="Opponent" value={scheduleForm.opponent} onChange={e=>setScheduleForm({...scheduleForm,opponent:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[12px] font-bold outline-none"/>
 
@@ -2347,7 +2119,7 @@ export default function EliteSquadApp() {
               <div className="flex flex-wrap gap-1.5">
                 {COMPETITIONS.map(comp=>(
                   <button key={comp.label} onClick={()=>setScheduleForm({...scheduleForm,competition:comp.value})}
-                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${scheduleForm.competition===comp.value?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>
+                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${scheduleForm.competition===comp.value?'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/20':'bg-[#0d1526] border border-[rgba(148,170,210,.2)] text-[#8fa0bd] hover:bg-[#12294e] hover:border-[#e3062c]/40'}`}>
                     {comp.label}
                   </button>
                 ))}
@@ -2357,7 +2129,7 @@ export default function EliteSquadApp() {
             <input placeholder="Venue (optional)" value={scheduleForm.venue} onChange={e=>setScheduleForm({...scheduleForm,venue:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[12px] font-bold outline-none"/>
 
             <div className="flex gap-2 pt-1">
-              <button onClick={()=>setScheduleOpen(false)} className="flex-1 py-2.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
+              <button onClick={()=>setScheduleOpen(false)} className="flex-1 py-2.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-[rgba(148,170,210,.25)] bg-[#0d1526] text-[#a4b2c8] hover:bg-[#12294e] hover:border-[rgba(148,170,210,.4)] transition-all">Cancel</button>
               <button onClick={()=>{
                 if(!scheduleForm.opponent.trim()){alert("Enter an opponent");return}
                 if(!scheduleForm.date){alert("Pick a date");return}
@@ -2366,7 +2138,7 @@ export default function EliteSquadApp() {
                 setMatches((p:any)=>[...p,nm])
                 if(canManageUsers)approveMatch(nm)
                 setScheduleOpen(false)
-              }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">Save Fixture</button>
+              }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/25 hover:bg-red-700 hover:scale-[1.02] transition-all">Save Fixture</button>
             </div>
           </div>
         </div>
@@ -2382,23 +2154,34 @@ export default function EliteSquadApp() {
         return(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80 overflow-y-auto">
           <div className="w-full max-w-4xl rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-zinc-100 shrink-0">
-              <div className="flex items-center gap-4">
-                <div>
-                  <h2 className="text-xl font-black italic uppercase tracking-tighter">{tr.history.matchHistory}</h2>
-                  <p className="text-[8px] font-bold text-[#E30613] uppercase tracking-wider mt-0.5">{catLabel(teamCat)} · {filteredMatches.length} {tr.history.matches}{opponentFilter&&` vs ${opponentFilter}`}</p>
+            <div className="px-6 py-4 border-b border-[rgba(148,170,210,.14)] shrink-0">
+              <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                    <div className="flex items-center gap-3">
+                      <h2 className="text-xl font-black uppercase tracking-tight text-[#EDEFF4]">{tr.history.matchHistory}</h2>
+                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#e3062c]/15 border border-[#e3062c]/30 text-[#ff4f66] text-[8px] font-black tracking-wider whitespace-nowrap"><Calendar size={10}/>{filteredMatches.length} {tr.history.matches}</span>
+                    </div>
+                  </div>
+                <div className="flex items-center gap-3 shrink-0">
+                  {h2h&&<div className="flex items-center gap-1">
+                    <span className="w-9 h-7 rounded-lg bg-[#f6c744] text-[#0c1f3d] text-[10px] font-black flex items-center justify-center">{h2h.w}W</span>
+                    <span className="w-9 h-7 rounded-lg bg-[rgba(148,170,210,.1)] border border-[rgba(148,170,210,.2)] text-[#a4b2c8] text-[10px] font-black flex items-center justify-center">{h2h.d}D</span>
+                    <span className="w-9 h-7 rounded-lg bg-[#e3062c] text-white text-[10px] font-black flex items-center justify-center">{h2h.l}L</span>
+                  </div>}
+                  {uniqueOpponents.length>0&&<select value={opponentFilter} onChange={e=>setOpponentFilter(e.target.value)} className="px-2.5 py-1.5 rounded-lg bg-[#0d1526] border border-[rgba(148,170,210,.2)] outline-none text-[8px] font-bold text-[#a4b2c8]">
+                    <option value="" className="bg-[#0d1526]">All opponents</option>
+                    {uniqueOpponents.map((o:any)=><option key={o} value={o} className="bg-[#0d1526]">{o}</option>)}
+                  </select>}
                 </div>
-                {uniqueOpponents.length>0&&<select value={opponentFilter} onChange={e=>setOpponentFilter(e.target.value)} className="p-2 rounded-lg border border-zinc-200 outline-none text-[8px] font-bold bg-white">
-                  <option value="">All opponents</option>
-                  {uniqueOpponents.map((o:any)=><option key={o} value={o}>{o}</option>)}
-                </select>}
-                {h2h&&<div className="flex items-center gap-2 text-[10px] font-bold"><span className="text-green-600">{h2h.w}W</span><span className="text-yellow-600">{h2h.d}D</span><span className="text-red-600">{h2h.l}L</span></div>}
+                <button onClick={()=>{setIsHistoryOpen(false);setSelMatch(null);setOpponentFilter("")}} className="pm-close shrink-0"><X size={15}/></button>
               </div>
-              <button onClick={()=>{setIsHistoryOpen(false);setSelMatch(null);setOpponentFilter("")}} className="w-8 h-8 rounded-xl bg-zinc-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><X size={15} className="text-zinc-400"/></button>
             </div>
             <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2.5">
               {filteredMatches.length===0&&(
-                <div className="flex flex-col items-center justify-center py-20 gap-3 opacity-25"><Calendar size={40} className="text-zinc-300"/><p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">{tr.history.noMatches}</p></div>
+                <div className="flex flex-col items-center justify-center py-20 gap-4">
+                  <div className="w-16 h-16 rounded-2xl bg-[#e3062c]/10 border border-[#e3062c]/25 flex items-center justify-center"><Calendar size={26} className="text-[#ff4f66]/70"/></div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 opacity-40">{tr.history.noMatches}</p>
+                </div>
               )}
               {filteredMatches.map(match=>{
                 let rs=match.result&&match.result!==''?String(match.result).trim().replace(/\s*-\s*/g,'-'):''
@@ -2407,35 +2190,44 @@ export default function EliteSquadApp() {
                 const isWin=!isNaN(a)&&!isNaN(b)&&a>b
                 const isDraw=!isNaN(a)&&!isNaN(b)&&a===b
                 const isLoss=!isNaN(a)&&!isNaN(b)&&a<b
-                const scoreBg=isWin?'bg-green-500':isDraw?'bg-yellow-500':isLoss?'bg-red-500':'bg-zinc-300'
+                const scoreBg=isWin?'bg-[#f6c744] text-[#0c1f3d]':isDraw?'bg-[#0d1526] border border-[rgba(148,170,210,.22)] text-[#a4b2c8]':isLoss?'bg-[#e3062c] text-white':'bg-[#0d1526] text-[#54647d]'
                 return(
-                <div key={match.id} className="rounded-xl bg-white overflow-hidden shadow-sm border border-zinc-100">
-                  <button onClick={()=>setSelMatch(selMatch?.id===match.id?null:match)} className="w-full text-left transition-all hover:bg-zinc-50">
+                <div key={match.id} className={`rounded-xl bg-[#0b111e] overflow-hidden shadow-md border ${isWin?'border-[rgba(246,199,68,.28)]':isLoss?'border-[rgba(227,6,44,.35)]':'border-[rgba(148,170,210,.14)]'}`}>
+                  <button onClick={()=>setSelMatch(selMatch?.id===match.id?null:match)} className="w-full text-left transition-all hover:bg-[#0d1526]">
                     {/* Scoreboard bar */}
-                    <div className="flex items-center px-4 py-3 border-b border-zinc-100">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <div className={`w-2 h-2 rounded-full ${scoreBg} shrink-0`}/>
+                    <div className="flex items-center px-4 py-2.5 border-b border-[rgba(148,170,210,.1)]">
+                      <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                        <span className={`text-[8px] font-black tracking-wider px-2 py-0.5 rounded-md shrink-0 ${isWin?'bg-[#f6c744] text-[#0c1f3d]':isLoss?'bg-[#e3062c] text-white':isDraw?'bg-[rgba(148,170,210,.15)] text-[#a4b2c8]':'bg-[rgba(148,170,210,.1)] text-[#54647d]'}`}>{isWin?'WIN':isLoss?'LOSS':isDraw?'DRAW':'—'}</span>
                         <div className="flex items-center gap-1.5 text-xs font-bold">
-                          <span className="text-zinc-500">{fmtDateWords(match.date)}</span>
-                          {match.competition&&<><span className="text-zinc-200">·</span><span className="text-zinc-400">{match.competition}</span></>}
+                          <span className="text-[#a4b2c8]">{fmtDateWords(match.date)}</span>
+                          {match.competition&&<><span className="text-[#3a4a63]">·</span><span className="text-[#73849e]">{match.competition}</span></>}
                         </div>
                       </div>
-                      <ChevronDown size={12} className={`text-zinc-300 transition-transform shrink-0 ${selMatch?.id===match.id?'rotate-180':''}`}/>
+                      <ChevronDown size={12} className={`text-[#54647d] transition-transform shrink-0 ${selMatch?.id===match.id?'rotate-180':''}`}/>
                     </div>
                     {/* Score */}
-                    <div className="flex items-center justify-center gap-4 px-4 py-3">
-                      <span className="text-sm font-black text-zinc-800 flex items-center gap-1.5">Tunisia</span>
-                      <span className="text-xl font-black text-zinc-900 bg-zinc-100 px-4 py-1 rounded-lg tracking-widest">{match.result||"—"}</span>
-                      <span className="text-sm font-black text-zinc-800 flex items-center gap-1.5">{match.opponent}</span>
+                    <div className="flex items-center justify-center gap-3 px-4 py-3.5">
+                      <div className="flex items-center flex-1 justify-end gap-2 min-w-0">
+                        <span className="text-[8px] font-black text-[#54647d] uppercase tracking-wider shrink-0">TUN</span>
+                        <span className="text-sm font-black text-[#EDEFF4] truncate">Tunisia</span>
+                      </div>
+                      <div className="flex flex-col items-center shrink-0">
+                        <span className={`text-2xl font-black px-5 py-1.5 rounded-xl tracking-widest shadow-lg ${scoreBg}`}>{match.result||"—"}</span>
+                        <span className={`mt-1.5 text-[7px] font-black uppercase tracking-[0.2em] ${isWin?'text-[#f6c744]':isLoss?'text-[#ff4f66]':'text-[#54647d]'}`}>{isWin?'Full-time win':isLoss?'Full-time loss':isDraw?'Full-time draw':'Final score'}</span>
+                      </div>
+                      <div className="flex items-center flex-1 justify-start gap-2 min-w-0">
+                        <span className="text-sm font-black text-[#EDEFF4] truncate">{match.opponent||'Opponent'}</span>
+                        <span className="text-[8px] font-black text-[#54647d] uppercase tracking-wider shrink-0">OPP</span>
+                      </div>
                     </div>
                   </button>
                   {selMatch?.id===match.id&&(
-                    <div className="border-t border-zinc-100 bg-zinc-50 p-4 space-y-4">
+                    <div className="border-t border-[rgba(148,170,210,.1)] bg-[#0d1526] p-4 space-y-4">
 
                       {/* Lineup */}
                       {Array.isArray(match.squad)&&<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="bg-white rounded-xl border border-zinc-200 p-3">
-                          <p className="text-[7px] font-black uppercase tracking-wider text-[#E30613] mb-2">STARTING XI</p>
+                        <div className="bg-[#0b111e] rounded-lg border border-[rgba(148,170,210,.14)] p-3">
+                          <p className="text-[7px] font-black uppercase tracking-wider text-[#ff4f66] mb-2">STARTING XI</p>
                           <div className="space-y-1">
                             {match.squad.slice(0,11).map((pid:number,i:number)=>{
                               const pl=members.find((m:any)=>m.id===pid)
@@ -2444,16 +2236,16 @@ export default function EliteSquadApp() {
                               return(
                                 <div key={pid} className="flex items-center gap-2 text-[10px]">
                                   <span className="text-zinc-300 font-black w-4 shrink-0 text-right">{i+1}</span>
-                                  <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#E30613]/10 text-[#E30613]">{pl.position.slice(0,3)}</span>
-                                  <span className={`font-bold truncate ${isOut?'line-through text-zinc-400':''}`}>{pl.name}</span>
-                                  {isOut&&<span className="text-[7px] font-black text-red-500 ml-auto">OUT</span>}
+                                  <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#e3062c]/15 text-[#ff4f66]">{pl.position.slice(0,3)}</span>
+                                  <span className={`font-bold truncate ${isOut?'line-through text-[#54647d]':''}`}>{pl.name}</span>
+                                  {isOut&&<span className="text-[7px] font-black text-[#ff4f66] ml-auto">OUT</span>}
                                 </div>
                               )
                             })}
                           </div>
                         </div>
-                        <div className="bg-white rounded-xl border border-zinc-200 p-3">
-                          <p className="text-[7px] font-black uppercase tracking-wider text-amber-600 mb-2">BENCH</p>
+                        <div className="bg-[#0b111e] rounded-lg border border-[rgba(148,170,210,.14)] p-3">
+                          <p className="text-[7px] font-black uppercase tracking-wider text-[#f6c744] mb-2">BENCH</p>
                           <div className="space-y-1">
                             {match.squad.slice(11).map((pid:number)=>{
                               const pl=members.find((m:any)=>m.id===pid)
@@ -2461,9 +2253,9 @@ export default function EliteSquadApp() {
                               const isIn=match.subs?.find((s:any)=>s["in"]===pl.id)
                               return(
                                 <div key={pid} className="flex items-center gap-2 text-[10px]">
-                                  <span className="text-[6px] font-black px-1 py-0.5 rounded bg-amber-200/60 text-amber-700">BN</span>
-                                  <span className={`font-bold truncate ${isIn?'line-through text-zinc-400':''}`}>{pl.name}</span>
-                                  {isIn&&<span className="text-[7px] font-black text-green-600 ml-auto">IN</span>}
+                                  <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#f6c744]/15 text-[#f6c744]">BN</span>
+                                  <span className={`font-bold truncate ${isIn?'line-through text-[#54647d]':''}`}>{pl.name}</span>
+                                  {isIn&&<span className="text-[7px] font-black text-[#7fd6a8] ml-auto">IN</span>}
                                 </div>
                               )
                             })}
@@ -2472,7 +2264,7 @@ export default function EliteSquadApp() {
                       </div>}
 
                       {/* Opponent */}
-                      {Array.isArray(match.opponentSquad)&&match.opponentSquad.length>0&&<div className="bg-white rounded-xl border border-zinc-200 p-3">
+                      {Array.isArray(match.opponentSquad)&&match.opponentSquad.length>0&&<div className="bg-[#0b111e] rounded-lg border border-[rgba(148,170,210,.14)] p-3">
                         <p className="text-[7px] font-black uppercase tracking-wider text-zinc-500 mb-2">{match.opponent}</p>
                         <div className="space-y-1">
                           {match.opponentSquad.map((name:string,i:number)=>(
@@ -2485,17 +2277,17 @@ export default function EliteSquadApp() {
                       </div>}
 
                       {/* Events */}
-                      <div className="bg-white rounded-xl border border-zinc-200 p-3">
-                        <p className="text-[7px] font-black uppercase tracking-wider text-zinc-500 mb-3">MATCH EVENTS</p>
-                        <div className="space-y-1.5 relative before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-px before:bg-zinc-200">
+                      <div className="bg-[#0b111e] rounded-lg border border-[rgba(148,170,210,.14)] p-3">
+                        <p className="text-[7px] font-black uppercase tracking-wider text-zinc-500 mb-3 flex items-center gap-2"><span className="w-3 h-[2px] rounded bg-[#f6c744]"/>MATCH EVENTS</p>
+                        <div className="space-y-1.5 relative before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-px before:bg-[rgba(148,170,210,.15)]">
                           {(Array.isArray(match.scorers)?match.scorers:[]).map((s:any,si:number)=>{
                             const pl=members.find((m:any)=>m.id===s.playerId)
                             if(!pl) return null
                             return Array.from({length:s.goals}).map((_,gi)=>(
                               <div key={`g-${s.playerId}-${gi}`} className="flex items-center gap-3 pl-0 relative">
-                                <div className="w-[19px] h-[19px] rounded-full bg-green-100 border-2 border-green-400 flex items-center justify-center shrink-0 z-10 text-[9px]">⚽</div>
+                                <div className="w-[19px] h-[19px] rounded-full bg-[#f6c744]/15 border-2 border-[#f6c744] flex items-center justify-center shrink-0 z-10 text-[9px]">⚽</div>
                                 <span className="font-bold text-xs text-zinc-800">{pl.name}</span>
-                                <span className="text-[7px] font-bold text-green-600 ml-auto uppercase tracking-wider">Goal</span>
+                                <span className="text-[7px] font-bold text-[#f6c744] ml-auto uppercase tracking-wider">Goal</span>
                               </div>
                             ))
                           }).flat()}
@@ -2504,9 +2296,9 @@ export default function EliteSquadApp() {
                             if(!pl) return null
                             return(
                               <div key={`y-${pid}`} className="flex items-center gap-3 pl-0 relative">
-                                <div className="w-[19px] h-[19px] rounded-full bg-yellow-100 border-2 border-yellow-400 shrink-0 z-10"/>
+                                <div className="w-[19px] h-[19px] rounded-full bg-[#f6c744]/10 border-2 border-[#f6c744]/60 shrink-0 z-10"/>
                                 <span className="font-bold text-xs text-zinc-800">{pl.name}</span>
-                                <span className="text-[7px] font-bold text-yellow-700 ml-auto uppercase tracking-wider">Yellow</span>
+                                <span className="text-[7px] font-bold text-[#f6c744] ml-auto uppercase tracking-wider">Yellow</span>
                               </div>
                             )
                           })}
@@ -2515,9 +2307,9 @@ export default function EliteSquadApp() {
                             if(!pl) return null
                             return(
                               <div key={`r-${pid}`} className="flex items-center gap-3 pl-0 relative">
-                                <div className="w-[19px] h-[19px] rounded-full bg-red-100 border-2 border-red-500 shrink-0 z-10"/>
+                                <div className="w-[19px] h-[19px] rounded-full bg-[#e3062c]/15 border-2 border-[#e3062c] shrink-0 z-10"/>
                                 <span className="font-bold text-xs text-zinc-800">{pl.name}</span>
-                                <span className="text-[7px] font-bold text-red-700 ml-auto uppercase tracking-wider">Red</span>
+                                <span className="text-[7px] font-bold text-[#ff4f66] ml-auto uppercase tracking-wider">Red</span>
                               </div>
                             )
                           })}
@@ -2526,38 +2318,38 @@ export default function EliteSquadApp() {
                             const inn=members.find((m:any)=>m.id===s["in"])?.name||'?'
                             return(
                               <div key={`s-${i}`} className="flex items-center gap-3 pl-0 relative">
-                                <div className="w-[19px] h-[19px] rounded-full bg-blue-100 border-2 border-blue-400 flex items-center justify-center shrink-0 z-10 text-[9px]">↔</div>
-                                <span className="font-bold text-xs text-zinc-800"><span className="text-red-500 line-through">{on}</span> → <span className="text-green-600">{inn}</span></span>
-                                <span className="text-[7px] font-bold text-blue-700 ml-auto uppercase tracking-wider">Sub</span>
+                                <div className="w-[19px] h-[19px] rounded-full bg-[#4a6fa5]/20 border-2 border-[#4a6fa5] flex items-center justify-center shrink-0 z-10 text-[9px]">↔</div>
+                                <span className="font-bold text-xs text-zinc-800"><span className="text-[#ff4f66] line-through">{on}</span> → <span className="text-[#7fd6a8]">{inn}</span></span>
+                                <span className="text-[7px] font-bold text-[#9cb8e4] ml-auto uppercase tracking-wider">Sub</span>
                               </div>
                             )
                           })}
                           {(Array.isArray(match.opponentScorers)?match.opponentScorers:[]).map((s:any,si:number)=>Array.from({length:s.goals}).map((_,gi)=>(
                             <div key={`og-${si}-${gi}`} className="flex items-center gap-3 pl-0 relative">
-                              <div className="w-[19px] h-[19px] rounded-full bg-orange-100 border-2 border-orange-400 flex items-center justify-center shrink-0 z-10 text-[9px]">⚽</div>
+                              <div className="w-[19px] h-[19px] rounded-full bg-[#4a4f5e]/40 border-2 border-[#73849e] flex items-center justify-center shrink-0 z-10 text-[9px]">⚽</div>
                               <span className="font-bold text-xs text-zinc-600">{s.name}</span>
-                              <span className="text-[7px] font-bold text-orange-600 ml-auto uppercase tracking-wider">{match.opponent} Goal</span>
+                              <span className="text-[7px] font-bold text-[#73849e] ml-auto uppercase tracking-wider">{match.opponent} Goal</span>
                             </div>
                           ))).flat()}
                           {(Array.isArray(match.opponentYellowCards)?match.opponentYellowCards:[]).map((name:string,i:number)=>(
                             <div key={`oy-${i}`} className="flex items-center gap-3 pl-0 relative">
-                              <div className="w-[19px] h-[19px] rounded-full bg-yellow-100 border-2 border-yellow-400 shrink-0 z-10"/>
+                              <div className="w-[19px] h-[19px] rounded-full bg-[#f6c744]/10 border-2 border-[#f6c744]/60 shrink-0 z-10"/>
                               <span className="font-bold text-xs text-zinc-600">{name}</span>
-                              <span className="text-[7px] font-bold text-yellow-700 ml-auto uppercase tracking-wider">{match.opponent} Yellow</span>
+                              <span className="text-[7px] font-bold text-[#f6c744] ml-auto uppercase tracking-wider">{match.opponent} Yellow</span>
                             </div>
                           ))}
                           {(Array.isArray(match.opponentRedCards)?match.opponentRedCards:[]).map((name:string,i:number)=>(
                             <div key={`or-${i}`} className="flex items-center gap-3 pl-0 relative">
-                              <div className="w-[19px] h-[19px] rounded-full bg-red-100 border-2 border-red-500 shrink-0 z-10"/>
+                              <div className="w-[19px] h-[19px] rounded-full bg-[#e3062c]/15 border-2 border-[#e3062c] shrink-0 z-10"/>
                               <span className="font-bold text-xs text-zinc-600">{name}</span>
-                              <span className="text-[7px] font-bold text-red-700 ml-auto uppercase tracking-wider">{match.opponent} Red</span>
+                              <span className="text-[7px] font-bold text-[#ff4f66] ml-auto uppercase tracking-wider">{match.opponent} Red</span>
                             </div>
                           ))}
                           {(Array.isArray(match.opponentSubs)?match.opponentSubs:[]).map((s:any,i:number)=>(
                             <div key={`os-${i}`} className="flex items-center gap-3 pl-0 relative">
-                              <div className="w-[19px] h-[19px] rounded-full bg-blue-100 border-2 border-blue-400 flex items-center justify-center shrink-0 z-10 text-[9px]">↔</div>
-                              <span className="font-bold text-xs text-zinc-600"><span className="text-red-500 line-through">{s.out}</span> → <span className="text-green-600">{s.in}</span></span>
-                              <span className="text-[7px] font-bold text-blue-700 ml-auto uppercase tracking-wider">{match.opponent} Sub</span>
+                              <div className="w-[19px] h-[19px] rounded-full bg-[#4a6fa5]/20 border-2 border-[#4a6fa5] flex items-center justify-center shrink-0 z-10 text-[9px]">↔</div>
+                              <span className="font-bold text-xs text-zinc-600"><span className="text-[#ff4f66] line-through">{s.out}</span> → <span className="text-[#7fd6a8]">{s.in}</span></span>
+                              <span className="text-[7px] font-bold text-[#9cb8e4] ml-auto uppercase tracking-wider">{match.opponent} Sub</span>
                             </div>
                           ))}
                           {(!match.scorers||match.scorers.length===0)&&(!match.yellowCards||match.yellowCards.length===0)&&(!match.redCards||match.redCards.length===0)&&(!match.subs||match.subs.length===0)&&(!match.opponentScorers||match.opponentScorers.length===0)&&(!match.opponentYellowCards||match.opponentYellowCards.length===0)&&(!match.opponentRedCards||match.opponentRedCards.length===0)&&(!match.opponentSubs||match.opponentSubs.length===0)&&(
@@ -2567,8 +2359,8 @@ export default function EliteSquadApp() {
                     </div>
 
                       {/* Match Stats */}
-                      {(match.tunisiaPossession||match.opponentPossession||match.tunisiaShots||match.opponentShots)&&<div className="bg-white rounded-xl border border-zinc-200 p-3">
-                        <p className="text-[7px] font-black uppercase tracking-wider text-zinc-500 mb-2">MATCH STATS</p>
+                      {(match.tunisiaPossession||match.opponentPossession||match.tunisiaShots||match.opponentShots)&&<div className="bg-[#0b111e] rounded-lg border border-[rgba(148,170,210,.14)] p-3">
+                        <p className="text-[7px] font-black uppercase tracking-wider text-[#73849e] mb-2 flex items-center gap-2"><span className="w-3 h-[2px] rounded bg-[#e3062c]"/>MATCH STATS</p>
                         <div className="grid grid-cols-[1fr_auto_1fr] gap-x-3 gap-y-1 text-[10px] font-bold items-center">
                           <span className="text-right text-zinc-700">{match.tunisiaPossession||"0"}%</span><span className="text-[7px] font-black text-zinc-400">Poss.</span><span className="text-zinc-500">{match.opponentPossession||"0"}%</span>
                           <span className="text-right text-zinc-700">{match.tunisiaShots||"0"}</span><span className="text-[7px] font-black text-zinc-400">Shots</span><span className="text-zinc-500">{match.opponentShots||"0"}</span>
@@ -2580,8 +2372,8 @@ export default function EliteSquadApp() {
 
                       {/* Match Sheet + Delete */}
                       <div className="flex justify-end gap-2">
-                        <button onClick={()=>setMatchSheetTarget(match)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E30613]/30 bg-white text-[#E30613] text-[8px] font-black uppercase tracking-wider hover:bg-[#E30613] hover:text-white transition-all"><ClipboardCheck size={11}/> Match Sheet</button>
-                        {p.deleteMatch&&<button onClick={async()=>{if(await askConfirm(tr.history.delete+" this match?")){setMatches(m=>m.filter((x:any)=>x.id!==match.id));setSelMatch(null)}}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 bg-white text-red-500 text-[8px] font-black uppercase tracking-wider hover:bg-red-600 hover:text-white transition-all"><Trash2 size={11}/> {tr.history.delete}</button>}
+                        <button onClick={()=>setMatchSheetTarget(match)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg pm-btn-soft text-[#ffbfca] text-[8px] font-black uppercase tracking-wider"><ClipboardCheck size={11}/> Match Sheet</button>
+                        {p.deleteMatch&&<button onClick={async()=>{if(await askConfirm(tr.history.delete+" this match?")){setMatches(m=>m.filter((x:any)=>x.id!==match.id));setSelMatch(null)}}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(255,79,102,.35)] bg-[#e3062c]/10 text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c] hover:text-white transition-all"><Trash2 size={11}/> {tr.history.delete}</button>}
                       </div>
                     </div>
                   )}
@@ -2623,7 +2415,7 @@ export default function EliteSquadApp() {
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   Print / Save PDF
                 </button>
-                <button onClick={()=>setMatchSheetTarget(null)} title="Close" className="w-8 h-8 rounded-lg bg-zinc-100 hover:bg-red-50 hover:text-red-500 flex items-center justify-center transition-all"><X size={15} className="text-zinc-400"/></button>
+                <button onClick={()=>setMatchSheetTarget(null)} title="Close" className="w-8 h-8 rounded-lg bg-zinc-100 hover:bg-[#e3062c]/20 hover:text-[#ff4f66] flex items-center justify-center transition-all"><X size={15} className="text-zinc-400"/></button>
               </div>
             </div>
 
@@ -2633,7 +2425,7 @@ export default function EliteSquadApp() {
                 <img src="/ftf-logo.png" className="h-16 w-16 object-contain" alt=""/>
                 <div className="flex-1">
                   <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Fédération Tunisienne de Football</p>
-                  <h1 className="text-xl font-black uppercase italic tracking-tight">Official Match Sheet</h1>
+                  <h1 className="text-xl font-black uppercase tracking-tight">Official Match Sheet</h1>
                   <p className="text-[10px] font-bold text-[#E30613] uppercase tracking-wider">{catLabel(match.teamCategory)} {match.competition&&`· ${match.competition}`}</p>
                 </div>
                 <div className="text-right text-[10px] font-bold text-zinc-500">
@@ -2749,74 +2541,6 @@ export default function EliteSquadApp() {
         </div>
       )})()}
 
-      {/* ═══════════════════════════════════════════
-          QUICK SCOUT MODAL
-      ═══════════════════════════════════════════ */}
-      {scoutLoading&&(
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60">
-          <div className="p-6 rounded-2xl border border-zinc-200 bg-white shadow-2xl flex items-center gap-3">
-            <Loader2 size={16} className="animate-spin text-[#E30613]"/>
-            <span className="text-[10px] font-black uppercase tracking-wider">Searching Wikipedia + database...</span>
-          </div>
-        </div>
-      )}
-      {scoutPlayer&&scoutResult&&(
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60" onClick={()=>{setScoutPlayer(null);setScoutResult(null)}}>
-          <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-[#FAF8F3] shadow-2xl" onClick={e=>e.stopPropagation()}>
-            <div className="flex items-center justify-between p-4 border-b border-zinc-200">
-              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] flex items-center gap-2">
-                <Sparkles size={14} className="text-[#E30613]"/> AI Search · {scoutPlayer.name.split(' ').slice(-1)}
-              </h3>
-              <button onClick={()=>{setScoutPlayer(null);setScoutResult(null)}} className="p-1.5 rounded-lg hover:bg-zinc-100 text-zinc-400 transition-colors">
-                <X size={14}/>
-              </button>
-            </div>
-            <div className="p-4 space-y-2 max-h-[60vh] overflow-y-auto">
-              {scoutResult.sources?.wikipedia&&(
-                <div className="p-2.5 rounded-xl border border-blue-200 bg-blue-50 text-blue-600 text-[8px] font-bold flex items-center gap-2 mb-3">
-                  <Globe size={11}/> Wikipedia found data for <span className="underline">{scoutResult.sources.wikipedia.name}</span>
-                </div>
-              )}
-              <div className="flex gap-2 mb-3">
-                <button onClick={selectAllDbScout} className="flex-1 py-1.5 rounded-xl border text-[8px] font-black uppercase tracking-wider transition-all hover:bg-green-600 hover:text-white hover:border-green-600 bg-green-600/10 border-green-600/30 text-green-600">Use Database</button>
-                {scoutResult.sources?.wikipedia&&(
-                  <button onClick={selectAllWikiScout} className="flex-1 py-1.5 rounded-xl border text-[8px] font-black uppercase tracking-wider transition-all hover:bg-blue-600 hover:text-white hover:border-blue-600 bg-blue-600/10 border-blue-600/30 text-blue-600">Use Wikipedia</button>
-                )}
-              </div>
-              <div className="grid grid-cols-[auto_1fr_1fr_auto] gap-x-3 gap-y-1.5 text-[9px] font-bold">
-                <div className="text-zinc-500 uppercase tracking-wider">Field</div>
-                <div className="text-green-500 uppercase tracking-wider text-center">Database</div>
-                {scoutResult.sources?.wikipedia&&<div className="text-blue-500 uppercase tracking-wider text-center">Wikipedia</div>}
-                <div className="text-zinc-500 uppercase tracking-wider text-right">Use</div>
-                {scoutFields.map(f=>{
-                  const dbData=scoutResult.sources?.database
-                  const wikiData=scoutResult.sources?.wikipedia
-                  const dbVal=f.key==="history"?`${dbData?.history?.length||0} entries`:(dbData?.[f.key]!=null&&dbData[f.key]!==""?String(dbData[f.key]):"—")
-                  const wikiVal=wikiData?(f.key==="history"?`${wikiData?.history?.length||0} entries`:(wikiData?.[f.key]!=null&&wikiData[f.key]!==""?String(wikiData[f.key]):"—")):null
-                  const checked=scoutUseWiki[f.key]
-                  return(
-                    <React.Fragment key={f.key}>
-                      <div className="text-zinc-400">{f.label}</div>
-                      <div className="text-center px-1.5 py-1 rounded-lg border border-green-200 bg-green-50">{dbVal}</div>
-                      {wikiData&&(
-                        <div className={`text-center px-1.5 py-1 rounded-lg border ${checked?'border-blue-300 bg-blue-50':'border-zinc-200'}`}>{wikiVal}</div>
-                      )}
-                      <button onClick={()=>toggleScoutField(f.key)} disabled={f.key==="assists"&&!wikiData?.assists}
-                        className={`p-1 rounded-lg border transition-all text-center ${checked?'bg-blue-600 border-blue-600 text-white':'border-zinc-300 text-zinc-400 hover:border-zinc-400'} ${f.key==="assists"&&!wikiData?.assists?'opacity-30 cursor-not-allowed':'cursor-pointer'}`}>
-                        {checked?<Check size={10}/>:null}
-                      </button>
-                    </React.Fragment>
-                  )
-                })}
-              </div>
-            </div>
-            <div className="flex gap-2 p-4 border-t border-zinc-200">
-              <button onClick={()=>{setScoutPlayer(null);setScoutResult(null)}} className="flex-1 py-2.5 rounded-xl border border-zinc-300 text-zinc-500 hover:border-zinc-400 text-[9px] font-black uppercase tracking-wider">Cancel</button>
-              <button onClick={applyCardScout} className="flex-1 py-2.5 rounded-xl border text-[9px] font-black uppercase tracking-wider bg-[#E30613] border-[#E30613] text-white hover:bg-red-700">Apply Selection</button>
-            </div>
-          </div>
-        </div>
-      )}
       {/* Keyframes for alive UI */}
       <style>{`@keyframes fadeUp{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}@keyframes shine{0%{transform:translateX(-100%) skewX(-20deg)}100%{transform:translateX(200%) skewX(-20deg)}}@keyframes lineupReveal{0%{opacity:0;transform:translateY(45px) scale(1.28);filter:blur(9px)}55%{opacity:1;filter:blur(0px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0px)}}`}</style>
     </main>
