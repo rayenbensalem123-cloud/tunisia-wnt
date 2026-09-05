@@ -17,7 +17,6 @@ interface PlayerCardProps {
   assists?: number;
   yellows?: number;
   reds?: number;
-  entranceDelay?: number;
 }
 
 const posAbbr: Record<string, string> = {
@@ -45,7 +44,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   assists,
   yellows,
   reds,
-  entranceDelay = 0,
 }) => {
   const code = fullPosition ? "STAFF" : (posAbbr[position] || position.slice(0, 4));
   const num = String(n ?? "—").padStart(2, "0");
@@ -65,11 +63,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           alt={name}
           onClick={triggerPop}
           onError={e=>{(e.target as HTMLImageElement).src='/placeholder.jpg'}}
-          className="absolute inset-0 w-full h-full object-cover object-top animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_backwards] cursor-pointer"
+          className="absolute inset-0 w-full h-full object-cover object-top cursor-pointer"
           style={{
             willChange:"transform",
-            animationDelay:`${entranceDelay}ms`,
-            animation: popped ? "none" : undefined,
             backfaceVisibility:"hidden",
             WebkitBackfaceVisibility:"hidden",
             transition:"transform 0.5s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease",
@@ -80,7 +76,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             transformOrigin: "center 40%",
           }}
         />
-        {!popped && <div className="absolute inset-0 pointer-events-none group-hover:scale-105 transition-transform duration-700" />}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0c1f3d]/75 via-transparent to-[#0c1f3d]/20 pointer-events-none" />
         <div className="absolute left-0 top-0 border-t-[26px] border-l-[26px] border-t-[#e3062c] border-l-transparent pointer-events-none" />
         <span className="absolute bottom-2 left-2 text-[13px] font-black italic leading-none text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,.65)] pointer-events-none">{fullPosition ? "T" : code}</span>
