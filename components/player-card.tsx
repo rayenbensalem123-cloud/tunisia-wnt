@@ -16,6 +16,7 @@ interface PlayerCardProps {
   assists?: number;
   yellows?: number;
   reds?: number;
+  entranceDelay?: number;
 }
 
 const posAbbr: Record<string, string> = {
@@ -43,13 +44,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   assists,
   yellows,
   reds,
+  entranceDelay = 0,
 }) => {
   const code = fullPosition ? "STAFF" : (posAbbr[position] || position.slice(0, 4));
   const num = String(n ?? "—").padStart(2, "0");
   return (
     <article className="player-squad-card w-72 h-[25rem] bg-[#112950] text-[#f7f1e6] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
       <div className="player-card-photo relative w-[7.5rem] shrink-0 overflow-hidden border-r border-[#2a4568]">
-        <img src={imageSrc} alt={name} onError={e=>{(e.target as HTMLImageElement).src='/placeholder.jpg'}} className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105" style={{willChange:"transform", transform:"translateZ(0)"}} />
+        <img src={imageSrc} alt={name} onError={e=>{(e.target as HTMLImageElement).src='/placeholder.jpg'}} className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105 animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_both]" style={{willChange:"transform", animationDelay:`${entranceDelay}ms`, backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}} />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0c1f3d]/75 via-transparent to-[#0c1f3d]/20" />
         <div className="absolute left-0 top-0 border-t-[26px] border-l-[26px] border-t-[#e3062c] border-l-transparent" />
         <span className="absolute bottom-2 left-2 text-[13px] font-black italic leading-none text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,.65)]">{fullPosition ? "T" : code}</span>
