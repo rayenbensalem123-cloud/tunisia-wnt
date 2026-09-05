@@ -86,14 +86,6 @@ body {
   border-bottom-color: #e3062c !important;
   box-shadow: 0 14px 38px rgba(0, 0, 0, .6);
 }
-.ftf-portal header::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #e3062c 0%, rgba(227, 6, 44, .5) 45%, rgba(227, 6, 44, 0) 100%);
-  z-index: 2;
-}
 .ftf-portal header h1 {
   color: #fff; letter-spacing: .06em; font-weight: 700;
   text-transform: uppercase; font-style: normal !important;
