@@ -1,4 +1,5 @@
-import React from 'react';
+"use client"
+import React, { useState, useRef } from 'react';
 
 interface PlayerCardProps {
   name: string;
@@ -48,13 +49,40 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
 }) => {
   const code = fullPosition ? "STAFF" : (posAbbr[position] || position.slice(0, 4));
   const num = String(n ?? "—").padStart(2, "0");
+  const [popped, setPopped] = useState(false);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const triggerPop = (e: React.MouseEvent) => {
+    e.stopPropagation(); // don't open the full profile, this is just the media effect
+    setPopped(true);
+    if (timerRef.current) clearTimeout(timerRef.current);
+    timerRef.current = setTimeout(() => setPopped(false), 2600); // ~one loop of a short reveal clip
+  };
   return (
     <article className="player-squad-card w-72 h-[25rem] bg-[#112950] text-[#f7f1e6] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
-      <div className="player-card-photo relative w-[7.5rem] shrink-0 overflow-hidden border-r border-[#2a4568]">
-        <img src={imageSrc} alt={name} onError={e=>{(e.target as HTMLImageElement).src='/placeholder.jpg'}} className="absolute inset-0 w-full h-full object-cover object-top transition-transform duration-700 group-hover:scale-105 animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_both]" style={{willChange:"transform", animationDelay:`${entranceDelay}ms`, backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}} />
-        <div className="absolute inset-0 bg-gradient-to-t from-[#0c1f3d]/75 via-transparent to-[#0c1f3d]/20" />
-        <div className="absolute left-0 top-0 border-t-[26px] border-l-[26px] border-t-[#e3062c] border-l-transparent" />
-        <span className="absolute bottom-2 left-2 text-[13px] font-black italic leading-none text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,.65)]">{fullPosition ? "T" : code}</span>
+      <div className="player-card-photo relative w-[7.5rem] shrink-0 border-r border-[#2a4568]" style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}>
+        <img
+          src={imageSrc}
+          alt={name}
+          onClick={triggerPop}
+          onError={e=>{(e.target as HTMLImageElement).src='/placeholder.jpg'}}
+          className="absolute inset-0 w-full h-full object-cover object-top animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_both] cursor-pointer"
+          style={{
+            willChange:"transform",
+            animationDelay:`${entranceDelay}ms`,
+            backfaceVisibility:"hidden",
+            WebkitBackfaceVisibility:"hidden",
+            transition:"transform 0.5s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease",
+            transform: popped
+              ? "translateZ(90px) scale(1.5) rotateY(-4deg)"
+              : "translateZ(0) scale(1) rotateY(0deg)",
+            filter: popped ? "drop-shadow(0 20px 30px rgba(0,0,0,0.55))" : "none",
+            transformOrigin: "center 40%",
+          }}
+        />
+        {!popped && <div className="absolute inset-0 pointer-events-none group-hover:scale-105 transition-transform duration-700" />}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0c1f3d]/75 via-transparent to-[#0c1f3d]/20 pointer-events-none" />
+        <div className="absolute left-0 top-0 border-t-[26px] border-l-[26px] border-t-[#e3062c] border-l-transparent pointer-events-none" />
+        <span className="absolute bottom-2 left-2 text-[13px] font-black italic leading-none text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,.65)] pointer-events-none">{fullPosition ? "T" : code}</span>
       </div>
 
       <div className="flex-1 px-4 py-4 flex flex-col min-w-0 relative">
