@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 
 interface PlayerCardProps {
   name: string;
@@ -17,6 +17,7 @@ interface PlayerCardProps {
   assists?: number;
   yellows?: number;
   reds?: number;
+  entranceDelay?: number;
 }
 
 const posAbbr: Record<string, string> = {
@@ -44,86 +45,68 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   assists,
   yellows,
   reds,
+  entranceDelay = 0,
 }) => {
   const code = fullPosition ? "STAFF" : (posAbbr[position] || position.slice(0, 4));
   const num = String(n ?? "—").padStart(2, "0");
   const [popped, setPopped] = useState(false);
-  const [hovering, setHovering] = useState(false);
-  const [posterReady, setPosterReady] = useState(false);
+  const [imgFailed, setImgFailed] = useState(false);
+  const noPhoto = !imageSrc || imageSrc === "/placeholder.jpg" || imgFailed;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const gifRef = useRef<HTMLImageElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const isGif = /\.gif($|\?)/i.test(imageSrc);
-
-  // Freeze the gif on a snapshot canvas by default; hovering reveals the live, moving gif underneath.
-  const captureSnapshot = () => {
-    const img = gifRef.current, canvas = canvasRef.current;
-    if (!img || !canvas || !img.naturalWidth) return;
-    canvas.width = img.naturalWidth;
-    canvas.height = img.naturalHeight;
-    const ctx = canvas.getContext("2d");
-    if (ctx) { ctx.drawImage(img, 0, 0); setPosterReady(true); }
-  };
-
   const triggerPop = (e: React.MouseEvent) => {
     e.stopPropagation(); // don't open the full profile, this is just the media effect
     setPopped(true);
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setPopped(false), 2600); // ~one loop of a short reveal clip
   };
-  const mediaTransformStyle = {
-    willChange:"transform",
-    backfaceVisibility:"hidden" as const,
-    WebkitBackfaceVisibility:"hidden" as const,
-    transition:"transform 0.5s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease",
-    transform: popped ? "translateZ(90px) scale(1.5) rotateY(-4deg)" : "translateZ(0) scale(1) rotateY(0deg)",
-    filter: popped ? "drop-shadow(0 20px 30px rgba(0,0,0,0.55))" : "none",
-    transformOrigin: "center 40%",
-  };
   return (
     <article className="player-squad-card w-72 h-[25rem] bg-[#112950] text-[#f7f1e6] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
-      <div
-        className="player-card-photo relative w-44 shrink-0 border-r border-[#2a4568]"
-        style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}
-        onMouseEnter={()=>setHovering(true)}
-        onMouseLeave={()=>setHovering(false)}
-      >
-        {isGif && (
-          <img
-            ref={gifRef}
-            src={imageSrc}
-            alt={name}
-            crossOrigin="anonymous"
-            onLoad={captureSnapshot}
+      <div className="player-card-photo relative w-28 shrink-0 border-r border-[#2a4568]" style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}>
+        {noPhoto ? (
+          <div
             onClick={triggerPop}
-            onError={e=>{(e.target as HTMLImageElement).src='/placeholder.jpg'}}
-            className="absolute inset-0 w-full h-full object-cover object-top cursor-pointer"
-            style={mediaTransformStyle}
-          />
-        )}
-        {isGif ? (
-          <canvas
-            ref={canvasRef}
-            onClick={triggerPop}
-            className="absolute inset-0 w-full h-full cursor-pointer"
+            className="absolute inset-0 w-full h-full animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_backwards] cursor-pointer"
             style={{
-              objectFit:"cover",
-              opacity: (hovering && posterReady) ? 0 : 1,
-              transition:"opacity 0.35s ease",
+              willChange:"transform",
+              animationDelay:`${entranceDelay}ms`,
+              animation: popped ? "none" : undefined,
+              transition:"transform 0.5s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease",
+              transform: popped
+                ? "translateZ(90px) scale(1.5) rotateY(-4deg)"
+                : "translateZ(0) scale(1) rotateY(0deg)",
+              filter: popped ? "drop-shadow(0 20px 30px rgba(0,0,0,0.55))" : "none",
+              transformOrigin: "center 40%",
+              zIndex: popped ? 10 : undefined,
             }}
-          />
+          >
+            <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_20%_12%,#1b3a66_0%,#112950_45%,#0a1c38_100%)]" />
+            <div className="absolute inset-0 opacity-[.13]" style={{backgroundImage:"repeating-linear-gradient(-55deg, transparent 0 14px, #f7f1e6 14px 15px)"}} />
+            <span className="absolute inset-0 flex items-center justify-center text-[2.6rem] font-black italic leading-none text-[#f7f1e6]/[.22] select-none">{fullPosition ? "T" : code}</span>
+            <span className="absolute bottom-1.5 left-2 text-[6px] font-black uppercase tracking-[.3em] text-[#a89c8a]/70 select-none">TUNISIA WNT</span>
+          </div>
         ) : (
           <img
             src={imageSrc}
             alt={name}
             onClick={triggerPop}
-            onError={e=>{(e.target as HTMLImageElement).src='/placeholder.jpg'}}
-            className="absolute inset-0 w-full h-full object-cover object-top cursor-pointer"
-            style={mediaTransformStyle}
+            onError={() => setImgFailed(true)}
+            className="absolute inset-0 w-full h-full object-cover object-top animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_backwards] cursor-pointer"
+            style={{
+              willChange:"transform",
+              animationDelay:`${entranceDelay}ms`,
+              animation: popped ? "none" : undefined,
+              backfaceVisibility:"hidden",
+              WebkitBackfaceVisibility:"hidden",
+              transition:"transform 0.5s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease",
+              transform: popped
+                ? "translateZ(90px) scale(1.5) rotateY(-4deg)"
+                : "translateZ(0) scale(1) rotateY(0deg)",
+              filter: popped ? "drop-shadow(0 20px 30px rgba(0,0,0,0.55))" : "none",
+              transformOrigin: "center 40%",
+            }}
           />
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0c1f3d]/75 via-transparent to-[#0c1f3d]/20 pointer-events-none" />
-        <div className="absolute left-0 top-0 border-t-[26px] border-l-[26px] border-t-[#e3062c] border-l-transparent pointer-events-none" />
         <span className="absolute bottom-2 left-2 text-[13px] font-black italic leading-none text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,.65)] pointer-events-none">{fullPosition ? "T" : code}</span>
       </div>
 
