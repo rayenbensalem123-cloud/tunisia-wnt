@@ -2057,7 +2057,6 @@ export default function EliteSquadApp() {
             {/* ── FOOTER ── */}
             <div className="px-6 py-4 border-t border-zinc-100 flex items-center justify-between">
               <span className="text-[9px] font-bold text-zinc-400">
-                {matchStep===0&&"⚽ New match details"}
                 {matchStep===1&&`👥 ${matchForm.squad.length} players in squad`}
                 {matchStep===2&&`📋 ${matchForm.opponentSquad.filter((n:string)=>n.trim()).length} opponent players`}
                 {matchStep===3&&`${matchForm.scorers.reduce((a:number,s:any)=>a+s.goals,0)}⚽ ${matchForm.yellowCards.length}🟨 ${matchForm.redCards.length}🟥${matchForm.subs.length>0&&` ${matchForm.subs.length}↔`}`}
