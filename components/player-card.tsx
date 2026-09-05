@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 
 interface PlayerCardProps {
   name: string;
@@ -48,34 +48,80 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   const code = fullPosition ? "STAFF" : (posAbbr[position] || position.slice(0, 4));
   const num = String(n ?? "—").padStart(2, "0");
   const [popped, setPopped] = useState(false);
+  const [hovering, setHovering] = useState(false);
+  const [posterReady, setPosterReady] = useState(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const gifRef = useRef<HTMLImageElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isGif = /\.gif($|\?)/i.test(imageSrc);
+
+  // Freeze the gif on a snapshot canvas by default; hovering reveals the live, moving gif underneath.
+  const captureSnapshot = () => {
+    const img = gifRef.current, canvas = canvasRef.current;
+    if (!img || !canvas || !img.naturalWidth) return;
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    const ctx = canvas.getContext("2d");
+    if (ctx) { ctx.drawImage(img, 0, 0); setPosterReady(true); }
+  };
+
   const triggerPop = (e: React.MouseEvent) => {
     e.stopPropagation(); // don't open the full profile, this is just the media effect
     setPopped(true);
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setPopped(false), 2600); // ~one loop of a short reveal clip
   };
+  const mediaTransformStyle = {
+    willChange:"transform",
+    backfaceVisibility:"hidden" as const,
+    WebkitBackfaceVisibility:"hidden" as const,
+    transition:"transform 0.5s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease",
+    transform: popped ? "translateZ(90px) scale(1.5) rotateY(-4deg)" : "translateZ(0) scale(1) rotateY(0deg)",
+    filter: popped ? "drop-shadow(0 20px 30px rgba(0,0,0,0.55))" : "none",
+    transformOrigin: "center 40%",
+  };
   return (
     <article className="player-squad-card w-72 h-[25rem] bg-[#112950] text-[#f7f1e6] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
-      <div className="player-card-photo relative w-[7.5rem] shrink-0 border-r border-[#2a4568]" style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}>
-        <img
-          src={imageSrc}
-          alt={name}
-          onClick={triggerPop}
-          onError={e=>{(e.target as HTMLImageElement).src='/placeholder.jpg'}}
-          className="absolute inset-0 w-full h-full object-cover object-top cursor-pointer"
-          style={{
-            willChange:"transform",
-            backfaceVisibility:"hidden",
-            WebkitBackfaceVisibility:"hidden",
-            transition:"transform 0.5s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease",
-            transform: popped
-              ? "translateZ(90px) scale(1.5) rotateY(-4deg)"
-              : "translateZ(0) scale(1) rotateY(0deg)",
-            filter: popped ? "drop-shadow(0 20px 30px rgba(0,0,0,0.55))" : "none",
-            transformOrigin: "center 40%",
-          }}
-        />
+      <div
+        className="player-card-photo relative w-44 shrink-0 border-r border-[#2a4568]"
+        style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}
+        onMouseEnter={()=>setHovering(true)}
+        onMouseLeave={()=>setHovering(false)}
+      >
+        {isGif && (
+          <img
+            ref={gifRef}
+            src={imageSrc}
+            alt={name}
+            crossOrigin="anonymous"
+            onLoad={captureSnapshot}
+            onClick={triggerPop}
+            onError={e=>{(e.target as HTMLImageElement).src='/placeholder.jpg'}}
+            className="absolute inset-0 w-full h-full object-cover object-top cursor-pointer"
+            style={mediaTransformStyle}
+          />
+        )}
+        {isGif ? (
+          <canvas
+            ref={canvasRef}
+            onClick={triggerPop}
+            className="absolute inset-0 w-full h-full cursor-pointer"
+            style={{
+              objectFit:"cover",
+              opacity: (hovering && posterReady) ? 0 : 1,
+              transition:"opacity 0.35s ease",
+            }}
+          />
+        ) : (
+          <img
+            src={imageSrc}
+            alt={name}
+            onClick={triggerPop}
+            onError={e=>{(e.target as HTMLImageElement).src='/placeholder.jpg'}}
+            className="absolute inset-0 w-full h-full object-cover object-top cursor-pointer"
+            style={mediaTransformStyle}
+          />
+        )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0c1f3d]/75 via-transparent to-[#0c1f3d]/20 pointer-events-none" />
         <div className="absolute left-0 top-0 border-t-[26px] border-l-[26px] border-t-[#e3062c] border-l-transparent pointer-events-none" />
         <span className="absolute bottom-2 left-2 text-[13px] font-black italic leading-none text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,.65)] pointer-events-none">{fullPosition ? "T" : code}</span>
