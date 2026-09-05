@@ -65,10 +65,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           alt={name}
           onClick={triggerPop}
           onError={e=>{(e.target as HTMLImageElement).src='/placeholder.jpg'}}
-          className="absolute inset-0 w-full h-full object-cover object-top animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_both] cursor-pointer"
+          className="absolute inset-0 w-full h-full object-cover object-top animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_backwards] cursor-pointer"
           style={{
             willChange:"transform",
             animationDelay:`${entranceDelay}ms`,
+            animation: popped ? "none" : undefined,
             backfaceVisibility:"hidden",
             WebkitBackfaceVisibility:"hidden",
             transition:"transform 0.5s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease",
