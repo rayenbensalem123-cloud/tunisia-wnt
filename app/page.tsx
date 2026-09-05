@@ -883,7 +883,6 @@ export default function EliteSquadApp() {
                 assists={m.role==="PLAYERS"?Number(m.assists)||0:undefined}
                 yellows={m.yellowCards}
                 reds={m.redCards}
-                entranceDelay={i*60}
               />
             </div>
           )
@@ -2542,7 +2541,7 @@ export default function EliteSquadApp() {
       )})()}
 
       {/* Keyframes for alive UI */}
-      <style>{`@keyframes fadeUp{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}@keyframes shine{0%{transform:translateX(-100%) skewX(-20deg)}100%{transform:translateX(200%) skewX(-20deg)}}@keyframes lineupReveal{0%{opacity:0;transform:translateY(45px) scale(1.28);filter:blur(9px)}55%{opacity:1;filter:blur(0px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0px)}}`}</style>
+      <style>{`@keyframes fadeUp{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}@keyframes shine{0%{transform:translateX(-100%) skewX(-20deg)}100%{transform:translateX(200%) skewX(-20deg)}}`}</style>
     </main>
   )
 }
