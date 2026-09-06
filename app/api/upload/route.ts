@@ -6,7 +6,8 @@ export async function POST(req: Request) {
   const file = form.get('file') as File
   if (!file) return NextResponse.json({ error: 'No file' }, { status: 400 })
   const ext = file.name.split('.').pop()
-  const path = `images/${Date.now()}.${ext}`
+  const folder = (form.get('folder') as string) === 'passports' ? 'passports' : 'images'
+  const path = `${folder}/${Date.now()}.${ext}`
   const { data, error } = await supabaseAdmin.storage.from('members').upload(path, file, { contentType: file.type || undefined })
   if (error) {
     console.error('upload err', error)

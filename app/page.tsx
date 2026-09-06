@@ -5,7 +5,7 @@ import {
   LogOut, Goal, History, Trash2, Trophy,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper
+  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
@@ -405,7 +405,7 @@ export default function EliteSquadApp() {
   const reloadProfiles=async()=>{const data=await fetchAllProfiles();setRawProfiles(data)}
   const syncUsers=()=>{reloadProfiles()}
   const [selMember,setSelMember]=useState<any>(null)
-  const [profileTab,setProfileTab]=useState<"profile"|"medical">("profile")
+  const [profileTab,setProfileTab]=useState<"profile"|"medical"|"passport">("profile")
   const [injuries,setInjuries]=useState<any[]>([])
   const [addInjuryOpen,setAddInjuryOpen]=useState(false)
   const [injForm,setInjForm]=useState({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""})
@@ -440,8 +440,10 @@ export default function EliteSquadApp() {
   const pendingUsers = fetchedUsers.filter(u=>u.status==="pending")
   const pendingCount = pendingUsers.length
   const fileRef=useRef<HTMLInputElement>(null)
+  const passRef=useRef<HTMLInputElement>(null)
+  const [passportZoom,setPassportZoom]=useState(false)
 
-  const initForm={name:"",club:"",position:"",image:"",natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",bioQuote:"",leagueRegion:"",dualNationality:false,secondNationality:""}
+  const initForm={name:"",club:"",position:"",image:"",passportImage:"",natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",bioQuote:"",leagueRegion:"",dualNationality:false,secondNationality:""}
   const [form,setForm]=useState<any>(initForm)
   const initMatch={opponent:"",date:"",result:"",venue:"",competition:"",squad:[] as number[],scorers:[] as {playerId:number,goals:number}[],yellowCards:[] as number[],redCards:[] as number[],subs:[] as {out:number;in:number}[],notes:"",opponentSquad:[] as string[],opponentScorers:[] as {name:string,goals:number}[],opponentYellowCards:[] as string[],opponentRedCards:[] as string[],opponentSubs:[] as {out:string;in:string}[],tunisiaPossession:"",opponentPossession:"",tunisiaShots:"",opponentShots:"",tunisiaShotsOnTarget:"",opponentShotsOnTarget:"",tunisiaCorners:"",opponentCorners:"",tunisiaFouls:"",opponentFouls:""}
   const countryFlags:Record<string,string>={"Tunisia":"tn","Algeria":"dz","Egypt":"eg","Morocco":"ma","Senegal":"sn","Nigeria":"ng","Cameroon":"cm","Ghana":"gh","Ivory Coast":"ci","Côte d'Ivoire":"ci","Cote d'Ivoire":"ci","Mali":"ml","Burkina Faso":"bf","South Africa":"za","DR Congo":"cd","DRC":"cd","Congo":"cg","Zambia":"zm","Equatorial Guinea":"gq","Guinea":"gn","Guinea-Bissau":"gw","Benin":"bj","Togo":"tg","Sierra Leone":"sl","Liberia":"lr","Sudan":"sd","South Sudan":"ss","Uganda":"ug","Kenya":"ke","Tanzania":"tz","Rwanda":"rw","Burundi":"bi","Ethiopia":"et","Eritrea":"er","Somalia":"so","Angola":"ao","Namibia":"na","Botswana":"bw","Zimbabwe":"zw","Mozambique":"mz","Malawi":"mw","Lesotho":"ls","Eswatini":"sz","Madagascar":"mg","Mauritius":"mu","Cape Verde":"cv","Mauritania":"mr","Gambia":"gm","Gabon":"ga","Chad":"td","Niger":"ne","Libya":"ly","France":"fr","England":"gb-eng","Spain":"es","Germany":"de","Italy":"it","Netherlands":"nl","Portugal":"pt","Belgium":"be","Croatia":"hr","Switzerland":"ch","Sweden":"se","Denmark":"dk","Norway":"no","Poland":"pl","Brazil":"br","Argentina":"ar","Uruguay":"uy","Colombia":"co","Chile":"cl","Peru":"pe","Ecuador":"ec","Mexico":"mx","USA":"us","United States":"us","Canada":"ca","Japan":"jp","South Korea":"kr","Korea Republic":"kr","Saudi Arabia":"sa","Iran":"ir","Australia":"au","New Zealand":"nz"}
@@ -971,6 +973,7 @@ export default function EliteSquadApp() {
                     <div className="flex gap-1 -mt-1 mb-2">
                       <button onClick={()=>setProfileTab("profile")} className={`pm-chip flex-1 justify-center ${profileTab==="profile"?'pm-chip-on':''}`}>Profile</button>
                       <button onClick={()=>setProfileTab("medical")} className={`pm-chip flex-1 justify-center ${profileTab==="medical"?'pm-chip-on':''}`}>Medical</button>
+                      <button onClick={()=>setProfileTab("passport")} className={`pm-chip flex-1 justify-center ${profileTab==="passport"?'pm-chip-on':''}`}>{tr.profile.passport}</button>
                     </div>
                   )
                 ):(
@@ -1079,6 +1082,23 @@ export default function EliteSquadApp() {
                 </section>
 
               </>)}
+
+              {profileTab==="passport"&&isPlayer&&(
+                <div className="flex items-center justify-center py-4">
+                  {selMember.passportImage?(
+                    <button type="button" onClick={()=>setPassportZoom(true)} className="group relative rounded-xl border border-[rgba(148,170,210,.2)] bg-[#0b111e] overflow-hidden max-w-full cursor-zoom-in" title="Click to zoom">
+                      <img src={selMember.passportImage} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} alt={`${selMember.name} passport`} className="max-h-[46vh] max-w-full object-contain" style={{imageRendering:"auto"}}/>
+                      <span className="absolute inset-x-0 bottom-0 py-1.5 text-[9px] font-black uppercase tracking-[.25em] text-center text-[#fff] bg-gradient-to-t from-black/80 to-transparent">{tr.profile.passport} · {titleCase(selMember.name)}</span>
+                    </button>
+                  ):(
+                    <div className="flex flex-col items-center gap-3 py-10 text-center">
+                      <span className="w-14 h-14 rounded-2xl bg-[#0b111e] border border-[rgba(148,170,210,.16)] flex items-center justify-center text-[#54647d]"><IdCard color="#54647d" size={24}/></span>
+                      <p className="max-w-[260px] text-[12px] font-semibold text-[#54647d]">{tr.profile.noPassport}</p>
+                      {p.editPlayer&&<button type="button" onClick={()=>{setEditingId(selMember.id);setForm({...selMember});setSelMember(null);setIsFormOpen(true)}} className="px-3 py-1.5 rounded-lg pm-btn-soft text-[11px] font-black uppercase tracking-wider">Upload Scan</button>}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {profileTab==="medical"&&(isPlayer?(
                 <div className="space-y-2.5">
@@ -1276,6 +1296,17 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 </div>
                 {form.image&&<button type="button" onClick={e=>{e.stopPropagation();setForm({...form,image:""})}} className="absolute -top-1 -right-1 p-1.5 bg-[#e3062c] text-white rounded-full"><Trash2 size={11}/></button>}
               </div>
+              {activeTab==="PLAYERS"&&(
+                <div className="relative mt-3">
+                  <div onClick={()=>passRef.current?.click()} className="flex flex-col items-center gap-2 py-4 rounded-lg border border-dashed border-[rgba(148,170,210,.25)] hover:border-[#f6c744]/60 cursor-pointer bg-[#0b111e] transition-all">
+                    <input type="file" ref={passRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f,1800,0.85);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);fd.append('folder','passports');const r=await fetch('/api/upload',{method:'POST',body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,passportImage:d.url});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,passportImage:r2.result as string});r2.readAsDataURL(f)}}}
+ className="hidden" accept="image/jpeg,image/png"/>
+                    {form.passportImage?<img src={form.passportImage} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="max-h-24 rounded-lg object-contain" alt=""/>:<IdCard size={20} className="text-[#54647d]"/>}
+                    <span className="text-[8px] font-black uppercase tracking-[.2em] text-[#73849e]">{tr.form.passportUpload}</span>
+                  </div>
+                  {form.passportImage&&<button type="button" onClick={e=>{e.stopPropagation();setForm({...form,passportImage:""})}} className="absolute -top-1 -right-1 p-1.5 bg-[#e3062c] text-white rounded-full"><Trash2 size={11}/></button>}
+                </div>
+              )}
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="col-span-2"><input placeholder={tr.form.fullName} value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="pm-field" required/></div>
                 <input placeholder={tr.form.clubTeam} value={form.club} onChange={e=>setForm({...form,club:e.target.value})} className="pm-field"/>
@@ -1352,6 +1383,17 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               </div>
             </form>
           </div>
+        </div>
+      )}
+
+      {/* ═══════════════════════════════════════════
+          PASSPORT ZOOM LIGHTBOX
+      ═══════════════════════════════════════════ */}
+      {passportZoom&&selMember?.passportImage&&(
+        <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm" onClick={()=>setPassportZoom(false)}>
+          <button onClick={()=>setPassportZoom(false)} title="Close" className="absolute top-4 right-4 p-2.5 rounded-full bg-white/10 text-white hover:bg-[#e3062c] transition-all"><X size={18}/></button>
+          <img src={selMember.passportImage} alt={`${selMember.name} passport`} className="max-h-[92vh] max-w-[92vw] object-contain rounded-lg shadow-2xl" onClick={e=>e.stopPropagation()}/>
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[.3em] text-white/70">{tr.profile.passport} · {titleCase(selMember.name)}</p>
         </div>
       )}
 
