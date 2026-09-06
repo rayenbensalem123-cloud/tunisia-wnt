@@ -43,7 +43,7 @@ const YELLOW_SUSPENSION = 2
 const REAL_TUNISIA_SENIORS: any[] = []
 
 const titleCase=(s:string)=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())
-const getImageSrc=(m:any)=>{if(m?.imagePath)return `https://vtjdmuzeohtqxwknfmhw.supabase.co/storage/v1/object/public/members/${m.imagePath}`;const i=String(m?.image||m?.image_url||"").trim();if(!i||i.startsWith("data:"))return "";return i}
+const getImageSrc=(m:any)=>{if(m?.imagePath)return `https://vtjdmuzeohtqxwknfmhw.supabase.co/storage/v1/object/public/members/${m.imagePath}`;const i=String(m?.image||m?.image_url||"").trim();if(!i)return "";if(i.startsWith("data:image/svg+xml"))return "";return i}
 const compressImage=async(file:File,maxDim=1200,quality=0.82):Promise<Blob>=>{
   const img=await new Promise<HTMLImageElement>((res,rej)=>{const o=new Image();o.onload=()=>res(o);o.onerror=rej;o.src=URL.createObjectURL(file)})
   let w=img.width,h=img.height
@@ -195,12 +195,15 @@ const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onC
 
   return(
     <div ref={ref} className="relative">
-      <button type="button" onClick={()=>setOpen(o=>!o)} className="w-full flex items-center gap-2 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold text-left">
-        <Calendar size={13} className="text-[#E30613] shrink-0"/>
-        <span className={value?"text-zinc-900":"text-zinc-400"}>{value?new Date(value+"T00:00:00").toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"}):placeholder}</span>
+      <button type="button" onClick={()=>setOpen(o=>!o)} className="w-full flex items-center justify-between gap-2 px-4 py-4 bg-[#101725] border border-[rgba(148,170,210,.14)] rounded-2xl text-xs font-bold text-left transition-all hover:border-[#E30613]/40">
+        <span className="flex items-center gap-2">
+          <Calendar size={13} className="text-[#f6c744] shrink-0"/>
+          <span className={value?"text-[#EDEFF4]":"text-[#8fa0bd]"}>{value?new Date(value+"T00:00:00").toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"}):placeholder}</span>
+        </span>
+        <ChevronDown size={12} className={open?"text-[#E30613] rotate-180 transition-transform":"text-[#54647d] transition-transform"}/>
       </button>
       {open&&(
-        <div className="absolute z-[300] top-full mt-1.5 left-0 w-64 rounded-2xl bg-[#FAF8F3] border border-zinc-200 shadow-2xl p-3">
+        <div className="absolute z-[300] top-full mt-1.5 left-0 w-64 rounded-2xl bg-[#101725] border border-[rgba(148,170,210,.2)] shadow-2xl p-3">
           <div className="flex items-center justify-between mb-2 px-1">
             <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronLeft size={14}/></button>
             <span className="text-[11px] font-black uppercase tracking-wider">{monthName}</span>
@@ -725,9 +728,9 @@ export default function EliteSquadApp() {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="hidden sm:flex items-center px-3 py-2 rounded-xl border border-zinc-200 bg-zinc-50 w-40">
-              <Search size={13} className="mr-2 text-zinc-400 shrink-0"/>
-              <input placeholder={tr.header.search} className="bg-transparent text-[10px] font-bold outline-none w-full uppercase text-zinc-900 placeholder-zinc-400" value={search} onChange={e=>setSearch(e.target.value)}/>
+            <div className="hidden sm:flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-[rgba(148,170,210,.22)] bg-[#0c1f3d]/70 w-44 transition-all focus-within:border-[#E30613]/60 focus-within:bg-[#12294e] focus-within:shadow-[0_0_0_3px_rgba(227,6,44,.12)] hover:border-[#E30613]/35">
+              <Search size={13} className="text-[#f6c744] shrink-0"/>
+              <input placeholder={tr.header.search} value={search} onChange={e=>setSearch(e.target.value)} className="bg-transparent text-[10px] font-bold outline-none w-full uppercase text-[#EDEFF4] placeholder-[#8fa0bd]"/>
             </div>
             <button onClick={()=>{if(canManageUsers&&pendingMatches.length>0)setPendingMatchesOpen(true);else setIsHistoryOpen(true)}} title="Match history" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613]">
               <BookOpen size={14}/>
@@ -1265,7 +1268,8 @@ export default function EliteSquadApp() {
             <form onSubmit={saveForm} className="pm-body">
               <div className="relative">
                 <div onClick={()=>fileRef.current?.click()} className="flex flex-col items-center gap-2 py-5 rounded-lg border border-dashed border-[rgba(148,170,210,.25)] hover:border-[#e3062c]/60 cursor-pointer bg-[#0b111e] transition-all">
-                  <input type="file" ref={fileRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{const blob=await compressImage(f);const fd=new FormData();fd.append('file',blob,f.name.replace(/\.[^.]+$/,'')+'.jpg');const r=await fetch('/api/upload',{method:'POST',body:fd});const d=await r.json();if(d.url){setForm({...form,image:d.url,imagePath:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,image:r2.result as string});r2.readAsDataURL(f)}}} className="hidden" accept="image/*"/>
+                  <input type="file" ref={fileRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);const r=await fetch('/api/upload',{method:'POST',body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,image:d.url,imagePath:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,image:r2.result as string});r2.readAsDataURL(f)}}}
+className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   {form.image?<img src={form.imagePath?`https://vtjdmuzeohtqxwknfmhw.supabase.co/storage/v1/object/public/members/${form.imagePath}`:form.image} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="w-14 h-14 rounded-lg object-cover" alt=""/>:<Camera size={20} className="text-[#54647d]"/>}
                   <span className="text-[8px] font-black uppercase tracking-[.2em] text-[#73849e]">{tr.form.portraitUpload}</span>
                 </div>
@@ -1624,40 +1628,73 @@ export default function EliteSquadApp() {
         }
         return(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
-          <div className="w-full max-w-lg rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
+          <div className="w-full max-w-lg rounded-3xl bg-[#0d1526] border border-[rgba(148,170,210,.16)] shadow-2xl flex flex-col max-h-[88vh] overflow-hidden">
+
             <div className="px-6 pt-5 pb-4 border-b border-[rgba(148,170,210,.14)] shrink-0 flex items-center justify-between">
-              <div className="flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase tracking-tight flex items-center gap-2 text-[#EDEFF4]"><Calendar size={16}/>Upcoming Matches</h2>
-              <button onClick={()=>setUpcomingOpen(false)} title="Close" className="pm-close"><X size={18}/></button>
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-[#E30613]/15 border border-[#E30613]/40 flex items-center justify-center">
+                  <Calendar size={14} className="text-[#ff5f72]"/>
+                </div>
+                <div>
+                  <h2 className="text-sm font-black uppercase tracking-tight text-[#EDEFF4]">Upcoming Matches</h2>
+                  <p className="text-[8px] font-bold uppercase tracking-wider text-[#8fa0bd] mt-0.5">{upcoming.length} fixture{upcoming.length===1?"":"s"} scheduled</p>
+                </div>
+              </div>
+              <button onClick={()=>setUpcomingOpen(false)} title="Close" className="w-7 h-7 rounded-lg bg-[#12294e] border border-[rgba(148,170,210,.18)] hover:bg-[#e3062c]/20 hover:text-[#ff5f72] hover:border-[#e3062c]/40 flex items-center justify-center transition-all"><X size={14} className="text-[#8fa0bd]"/></button>
             </div>
-            </div>
+
             <div className="p-5 overflow-y-auto space-y-5">
 
-              {!next&&<p className="text-[11px] text-zinc-400 py-10 text-center bg-zinc-100/60 rounded-2xl">No upcoming matches scheduled yet</p>}
+              {/* Empty state */}
+              {!next&&(
+                <div className="flex flex-col items-center justify-center py-12 text-center opacity-90">
+                  <div className="w-16 h-16 rounded-2xl border border-dashed border-[rgba(246,199,68,.4)] bg-[#f6c744]/5 flex items-center justify-center mb-4">
+                    <Calendar size={22} className="text-[#f6c744]"/>
+                  </div>
+                  <p className="text-[12px] font-black uppercase tracking-widest text-[#EDEFF4]">No fixtures yet</p>
+                  <p className="text-[10px] text-[#8fa0bd] mt-1.5 max-w-[220px]">Schedule an upcoming match and it will live here</p>
+                </div>
+              )}
 
               {/* Featured hero card — the very next match, given real visual weight */}
               {next&&(
-                <div className="relative rounded-2xl overflow-hidden" style={{background:"linear-gradient(135deg, #1a1a1a 0%, #E30613 140%)"}}>
-                  <div className="relative p-6 text-center">
-                    <p className="text-[9px] font-black uppercase tracking-[0.25em] text-white/60 mb-2">Next Match {daysUntil(next.date)===0?"· Today":daysUntil(next.date)===1?"· Tomorrow":`· In ${daysUntil(next.date)} days`}</p>
-                    <p className="text-2xl font-black uppercase tracking-tight text-white">Tunisia <span className="text-white/50 not-italic mx-1">vs</span> {next.opponent||"TBD"}</p>
-                    <p className="text-[12px] font-bold text-white/80 mt-2">{fmtDateWords(next.date)}</p>
+                <div className="relative rounded-3xl overflow-hidden" style={{background:"linear-gradient(140deg, #12294e 0%, #0b1322 58%, #E30613 175%)"}}>
+                  <div className="absolute inset-0" style={{background:"radial-gradient(600px 200px at 20% -10%, rgba(227,6,19,.25), transparent 60%)"}}/>
+                  <div className="relative p-6">
+                    <div className="flex items-center justify-between mb-5">
+                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-[0.2em] shadow-lg shadow-[#E30613]/30">
+                        Next Match {daysUntil(next.date)===0?"· Today":daysUntil(next.date)===1?"· Tomorrow":`· In ${daysUntil(next.date)} days`}
+                      </span>
+                      <span className="px-2.5 py-1 rounded-full border border-[#f6c744]/40 text-[#f6c744] text-[8px] font-black uppercase tracking-wider">{next.competition||"Friendly"}</span>
+                    </div>
+                    <p className="text-[26px] font-black uppercase tracking-tight text-white leading-none">
+                      Tunisia <span className="text-[#ff4f66] not-italic mx-1.5 font-serif text-[30px]">vs</span> {next.opponent||"TBD"}
+                    </p>
+                    <p className="text-[10px] font-bold text-white/70 mt-3.5">{fmtDateWords(next.date)}</p>
+                    <div className="flex items-center gap-2 mt-5">
+                      <MapPin size={11} className="text-[#f6c744]"/><span className="text-[10px] font-bold text-white/85">{next.venue||"Venue TBD"}</span>
+                    </div>
                   </div>
+                  <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#E30613]"/>
                 </div>
               )}
 
               {/* Later fixtures — smaller, secondary treatment */}
               {rest.length>0&&(
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-2">Also Coming Up</p>
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[#8fa0bd] mb-2.5">Also Coming Up</p>
                   <div className="space-y-2">
                     {rest.map((m:any)=>(
-                      <div key={m.id} className="flex items-center justify-between gap-3 p-3 rounded-xl bg-white border border-zinc-200/60">
-                        <div>
-                          <p className="text-[12px] font-bold">Tunisia vs {m.opponent||"TBD"}</p>
-                          <p className="text-[9px] text-zinc-500 mt-0.5">{m.competition||"Friendly"}{m.venue?` · ${m.venue}`:""}</p>
+                      <div key={m.id} className="flex items-center gap-4 p-3.5 rounded-2xl bg-[#101725] border border-[rgba(148,170,210,.14)] hover:border-[#E30613]/40 transition-all">
+                        <div className="w-11 shrink-0 text-center rounded-xl bg-[#12294e] border border-[rgba(148,170,210,.16)] py-2">
+                          <p className="text-[7px] font-black uppercase text-[#f6c744]">{(m.date||"").split("-")[1]}</p>
+                          <p className="text-lg font-black leading-none text-[#EDEFF4]">{(m.date||"").split("-")[2]}</p>
                         </div>
-                        <span className="shrink-0 text-[10px] font-black text-zinc-600 bg-zinc-50 border border-zinc-200 rounded-full px-3 py-1.5">{fmtDateWords(m.date)}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[13px] font-black text-[#EDEFF4] truncate">Tunisia <span className="text-[#ff4f66] font-serif not-italic">vs</span> {m.opponent||"TBD"}</p>
+                          <p className="text-[9px] text-[#8fa0bd] mt-0.5 truncate">{m.competition||"Friendly"}{m.venue?` · ${m.venue}`:""}</p>
+                        </div>
+                        <span className="shrink-0 text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f6c744]/10 border border-[#f6c744]/30 text-[#f6c744]">In {Math.max(0,daysUntil(m.date))}d</span>
                       </div>
                     ))}
                   </div>
@@ -1787,51 +1824,58 @@ export default function EliteSquadApp() {
 
       {isMatchOpen&&(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
-          <div className="w-full max-w-2xl rounded-2xl bg-[#FAF8F3] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+          <div className="w-full max-w-2xl rounded-3xl bg-[#0d1526] border border-[rgba(148,170,210,.16)] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
 
             {/* ── HEADER ── */}
-            <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0">
+            <div className="px-6 pt-5 pb-4 border-b border-[rgba(148,170,210,.14)] shrink-0">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-3">
-                  {["Info","Squad","Opponent","Actions"].map((label,i)=>(
-                    <div key={i} className="flex items-center gap-1.5">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[9px] font-black transition-all ${i<=matchStep?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-300'}`}>{i+1}</div>
-                      <span className={`text-[9px] font-bold uppercase tracking-wider hidden sm:inline ${i<=matchStep?'text-zinc-800':'text-zinc-300'}`}>{label}</span>
-                      {i<3&&<span className="text-zinc-200 mx-1">—</span>}
-                    </div>
-                  ))}
+                  <div className="w-8 h-8 rounded-xl bg-[#E30613]/15 border border-[#E30613]/40 flex items-center justify-center">
+                    <Plus size={14} className="text-[#ff5f72]"/>
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-black uppercase tracking-tight text-[#EDEFF4]">New Match</h2>
+                    <p className="text-[8px] font-bold uppercase tracking-wider text-[#8fa0bd] mt-0.5">{["Opponent first","Lock the squad","Opposition lineup","Match actions"][matchStep]}</p>
+                  </div>
                 </div>
-                <button onClick={()=>setIsMatchOpen(false)} title="Close" className="w-7 h-7 rounded-lg bg-[#0d1526] border border-[rgba(148,170,210,.18)] hover:bg-[#e3062c]/20 hover:text-[#ff4f66] hover:border-[#e3062c]/40 flex items-center justify-center transition-all"><X size={14} className="text-zinc-400"/></button>
+                <button onClick={()=>setIsMatchOpen(false)} title="Close" className="w-7 h-7 rounded-lg bg-[#12294e] border border-[rgba(148,170,210,.18)] hover:bg-[#e3062c]/20 hover:text-[#ff5f72] hover:border-[#e3062c]/40 flex items-center justify-center transition-all"><X size={14} className="text-[#8fa0bd]"/></button>
               </div>
 
-              {/* Step content in header */}
-              {matchStep===0&&(
-                <div className="grid grid-cols-[1fr_auto_auto] gap-3 items-end">
-                  <div>
-                    <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Opponent</label>
-                    <input placeholder="e.g. ALGERIA" value={matchForm.opponent} onChange={e=>setMatchForm({...matchForm,opponent:e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1).toLowerCase()})}
-                      className="w-full text-lg font-black uppercase tracking-tight border-b-2 border-zinc-200 pb-1 outline-none focus:border-[#E30613] bg-transparent placeholder-zinc-200"/>
-                  </div>
-                  <div>
-                    <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Date</label>
-                    <div className="w-36"><DatePicker value={matchForm.date} onChange={(v)=>setMatchForm({...matchForm,date:v})} placeholder="Match date"/></div>
-                  </div>
-                  <div>
-                    <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Score</label>
+              {/* Stepper */}
+              <div className="flex items-center">
+                {["Info","Squad","Opponent","Actions"].map((label,i)=>(
+                  <div key={i} className={`flex items-center ${i<=matchStep?"":"opacity-40"}`}>
                     <div className="flex items-center gap-1.5">
-                      <NumBox value={matchForm.result.split('-')[0]||''} set={(v:string)=>{const a=matchForm.result.split('-')[1]||'';setMatchForm({...matchForm,result:a?v+'-'+a:v})}}/>
-                      <span className="text-sm font-black text-zinc-400">-</span>
-                      <NumBox value={matchForm.result.split('-')[1]||''} set={(v:string)=>{const h=matchForm.result.split('-')[0]||'';setMatchForm({...matchForm,result:h?h+'-'+v:v})}}/>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black border transition-all ${i<matchStep?'bg-[#E30613] border-[#E30613] text-white':i===matchStep?'bg-[#E30613] border-[#E30613] text-white shadow-lg shadow-[#E30613]/30':'bg-[#0d1526] border-[rgba(148,170,210,.25)] text-[#8fa0bd]'}`}>{i<matchStep?<Check size={10}/>:i+1}</div>
+                      <span className={`text-[8px] font-bold uppercase tracking-wider hidden sm:inline ${i<=matchStep?'text-[#EDEFF4]':'text-[#54647d]'}`}>{label}</span>
+                    </div>
+                    {i<3&&<span className={`h-px w-7 mx-2 ${i<matchStep?'bg-[#E30613]/60':'bg-[rgba(148,170,210,.2)]'}`}/>}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ── BODY ── */}
+            <div className="flex-1 overflow-y-auto px-6 py-4">
+
+              {/* ── STEP 1: MATCH INFO ── */}
+              {matchStep===0&&(
+                <div className="space-y-4">
+
+                  <div className="grid grid-cols-[1fr_220px] gap-3">
+                    <div>
+                      <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[#8fa0bd] mb-2 block">Opponent</label>
+                      <input placeholder="e.g. ALGERIA" value={matchForm.opponent} onChange={e=>setMatchForm({...matchForm,opponent:e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1).toLowerCase()})}
+                        className="w-full rounded-2xl bg-[#101725] border border-[rgba(148,170,210,.14)] focus:border-[#E30613]/50 px-4 py-4 text-xl font-black uppercase tracking-tight outline-none text-[#EDEFF4] placeholder-[#54647d] transition-all"/>
+                    </div>
+                    <div>
+                      <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[#8fa0bd] mb-2 block">Match Date</label>
+                      <DatePicker value={matchForm.date} onChange={(v)=>setMatchForm({...matchForm,date:v})} placeholder="Match date"/>
                     </div>
                   </div>
-                  <div className="col-span-full flex items-center gap-3">
-                    <div className="flex-1">
-                      <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1 block">Venue</label>
-                      <input placeholder="Stadium name" value={matchForm.venue} onChange={e=>setMatchForm({...matchForm,venue:e.target.value})} className="w-full p-2 rounded-lg border border-zinc-200 outline-none text-xs font-bold uppercase"/>
-                    </div>
-                  </div>
-                  <div className="col-span-full">
-                    <label className="text-[7px] font-bold text-zinc-400 uppercase tracking-wider mb-1.5 block">Competition</label>
+
+                  <div>
+                    <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[#8fa0bd] mb-2 block">Competition</label>
                     <div className="flex flex-wrap gap-1.5">
                       {COMPETITIONS.map(comp=>(
                         <button key={comp.label} type="button" onClick={()=>setMatchForm({...matchForm,competition:comp.value})}
@@ -1841,24 +1885,36 @@ export default function EliteSquadApp() {
                       ))}
                     </div>
                   </div>
+
+                  <div className="grid grid-cols-[1fr_auto] gap-3">
+                    <div>
+                      <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[#8fa0bd] mb-2 block">Venue</label>
+                      <input placeholder="Stadium name" value={matchForm.venue} onChange={e=>setMatchForm({...matchForm,venue:e.target.value})} className="w-full p-3 rounded-2xl bg-[#101725] border border-[rgba(148,170,210,.14)] outline-none text-xs font-bold uppercase text-[#EDEFF4] placeholder-[#54647d] focus:border-[#E30613]/50 transition-all"/>
+                    </div>
+                    <div>
+                      <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[#8fa0bd] mb-2 block">Score</label>
+                      <div className="flex items-center gap-2 p-2.5 rounded-2xl bg-[#101725] border border-[rgba(148,170,210,.14)]">
+                        <NumBox value={matchForm.result.split('-')[0]||''} set={(v:string)=>{const a=matchForm.result.split('-')[1]||'';setMatchForm({...matchForm,result:a?v+'-'+a:v})}}/>
+                        <span className="text-sm font-black text-[#ff4f66]">–</span>
+                        <NumBox value={matchForm.result.split('-')[1]||''} set={(v:string)=>{const h=matchForm.result.split('-')[0]||'';setMatchForm({...matchForm,result:h?h+'-'+v:v})}}/>
+                      </div>
+                    </div>
+                  </div>
+
                   {/* ── MATCH STATS ── */}
-                  <div className="col-span-full mt-4">
-                    <p className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mb-2">Match Stats (optional)</p>
-                    <div className="grid grid-cols-[1fr_auto_1fr] gap-x-3 gap-y-2 items-center text-[10px] font-bold">
-                      <span className="text-right text-zinc-600">Tunisia</span><span className="text-[7px] font-black text-zinc-400 text-center">vs</span><span className="text-zinc-600">{matchForm.opponent||"Opponent"}</span>
-                      <NumBox align="r" max={100} value={matchForm.tunisiaPossession} set={(v:string)=>setMatchForm({...matchForm,tunisiaPossession:v})}/><span className="text-[7px] font-black text-zinc-400">Poss.</span><NumBox max={100} value={matchForm.opponentPossession} set={(v:string)=>setMatchForm({...matchForm,opponentPossession:v})}/>
-                      <NumBox align="r" value={matchForm.tunisiaShots} set={(v:string)=>setMatchForm({...matchForm,tunisiaShots:v})}/><span className="text-[7px] font-black text-zinc-400">Shots</span><NumBox value={matchForm.opponentShots} set={(v:string)=>setMatchForm({...matchForm,opponentShots:v})}/>
-                      <NumBox align="r" value={matchForm.tunisiaShotsOnTarget} set={(v:string)=>setMatchForm({...matchForm,tunisiaShotsOnTarget:v})}/><span className="text-[7px] font-black text-zinc-400">SOT</span><NumBox value={matchForm.opponentShotsOnTarget} set={(v:string)=>setMatchForm({...matchForm,opponentShotsOnTarget:v})}/>
-                      <NumBox align="r" value={matchForm.tunisiaCorners} set={(v:string)=>setMatchForm({...matchForm,tunisiaCorners:v})}/><span className="text-[7px] font-black text-zinc-400">Corn.</span><NumBox value={matchForm.opponentCorners} set={(v:string)=>setMatchForm({...matchForm,opponentCorners:v})}/>
-                      <NumBox align="r" value={matchForm.tunisiaFouls} set={(v:string)=>setMatchForm({...matchForm,tunisiaFouls:v})}/><span className="text-[7px] font-black text-zinc-400">Fouls</span><NumBox value={matchForm.opponentFouls} set={(v:string)=>setMatchForm({...matchForm,opponentFouls:v})}/>
+                  <div className="rounded-2xl bg-[#101725] border border-[rgba(148,170,210,.14)] p-4">
+                    <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#8fa0bd] mb-3 flex items-center gap-2"><Activity size={11} className="text-[#f6c744]"/>Match Stats <span className="font-bold text-[#54647d] normal-case tracking-normal">(optional)</span></p>
+                    <div className="grid grid-cols-[1fr_auto_1fr] gap-x-3 gap-y-2.5 items-center text-[10px] font-bold">
+                      <span className="text-right text-[#EDEFF4]">Tunisia</span><span className="text-[7px] font-black text-[#ff4f66] text-center">vs</span><span className="text-[#EDEFF4]">{matchForm.opponent||"Opponent"}</span>
+                      <NumBox align="r" max={100} value={matchForm.tunisiaPossession} set={(v:string)=>setMatchForm({...matchForm,tunisiaPossession:v})}/><span className="text-[7px] font-black text-[#f6c744]">Poss.</span><NumBox max={100} value={matchForm.opponentPossession} set={(v:string)=>setMatchForm({...matchForm,opponentPossession:v})}/>
+                      <NumBox align="r" value={matchForm.tunisiaShots} set={(v:string)=>setMatchForm({...matchForm,tunisiaShots:v})}/><span className="text-[7px] font-black text-[#f6c744]">Shots</span><NumBox value={matchForm.opponentShots} set={(v:string)=>setMatchForm({...matchForm,opponentShots:v})}/>
+                      <NumBox align="r" value={matchForm.tunisiaShotsOnTarget} set={(v:string)=>setMatchForm({...matchForm,tunisiaShotsOnTarget:v})}/><span className="text-[7px] font-black text-[#f6c744]">SOT</span><NumBox value={matchForm.opponentShotsOnTarget} set={(v:string)=>setMatchForm({...matchForm,opponentShotsOnTarget:v})}/>
+                      <NumBox align="r" value={matchForm.tunisiaCorners} set={(v:string)=>setMatchForm({...matchForm,tunisiaCorners:v})}/><span className="text-[7px] font-black text-[#f6c744]">Corn.</span><NumBox value={matchForm.opponentCorners} set={(v:string)=>setMatchForm({...matchForm,opponentCorners:v})}/>
+                      <NumBox align="r" value={matchForm.tunisiaFouls} set={(v:string)=>setMatchForm({...matchForm,tunisiaFouls:v})}/><span className="text-[7px] font-black text-[#f6c744]">Fouls</span><NumBox value={matchForm.opponentFouls} set={(v:string)=>setMatchForm({...matchForm,opponentFouls:v})}/>
                     </div>
                   </div>
                 </div>
               )}
-            </div>
-
-            {/* ── BODY ── */}
-            <div className="flex-1 overflow-y-auto px-6 py-4">
 
               {/* ── STEP 2: OUR SQUAD ── */}
               {matchStep===1&&(
@@ -2055,8 +2111,8 @@ export default function EliteSquadApp() {
             </div>
 
             {/* ── FOOTER ── */}
-            <div className="px-6 py-4 border-t border-zinc-100 flex items-center justify-between">
-              <span className="text-[9px] font-bold text-zinc-400">
+            <div className="px-6 py-4 border-t border-[rgba(148,170,210,.14)] flex items-center justify-between">
+              <span className="text-[9px] font-bold text-[#8fa0bd]">
                 {matchStep===1&&`👥 ${matchForm.squad.length} players in squad`}
                 {matchStep===2&&`📋 ${matchForm.opponentSquad.filter((n:string)=>n.trim()).length} opponent players`}
                 {matchStep===3&&`${matchForm.scorers.reduce((a:number,s:any)=>a+s.goals,0)}⚽ ${matchForm.yellowCards.length}🟨 ${matchForm.redCards.length}🟥${matchForm.subs.length>0&&` ${matchForm.subs.length}↔`}`}

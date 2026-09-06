@@ -44,7 +44,7 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
       <div className="bg-white rounded-[2.5rem] w-full max-w-lg p-10 shadow-2xl relative overflow-hidden">
         <div className="absolute top-0 right-0 w-32 h-32 bg-zinc-50 -mr-16 -mt-16 rotate-45" />
         
-        <button onClick={() => onOpenChange(false)} className="absolute top-6 right-6 text-zinc-400 hover:text-black transition-colors">
+        <button onClick={() => onOpenChange(false)} className="absolute top-6 right-6 text-zinc-400 hover:text-[#E30613] transition-colors">
           <X size={24} />
         </button>
 
@@ -61,7 +61,7 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
                 {formData.image ? (
                   <img src={formData.image} className="w-full h-full object-cover" alt="Preview" />
                 ) : (
-                  <Camera className="text-zinc-300" size={28} />
+                  <Camera className="text-[#f6c744]" size={28} />
                 )}
               </div>
               <div className="flex-1">
@@ -131,7 +131,7 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
             />
           </div>
 
-          <button type="submit" className="w-full bg-black text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-tighter hover:bg-[#E30613] transition-all flex items-center justify-center gap-2 shadow-xl">
+          <button type="submit" className="w-full bg-[#E30613] text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-tighter hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-xl">
             <ShieldCheck size={16} /> Confirm Staff
           </button>
         </form>

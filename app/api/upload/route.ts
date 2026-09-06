@@ -7,10 +7,10 @@ export async function POST(req: Request) {
   if (!file) return NextResponse.json({ error: 'No file' }, { status: 400 })
   const ext = file.name.split('.').pop()
   const path = `images/${Date.now()}.${ext}`
-  const { data, error } = await supabaseAdmin.storage.from('members').upload(path, file, { upsert: true })
+  const { data, error } = await supabaseAdmin.storage.from('members').upload(path, file, { upsert: true, contentType: file.type || undefined })
   if (error) {
     console.error('upload err', error)
-    return NextResponse.json({ url: '/placeholder.jpg', path: '' })
+    return NextResponse.json({ error: error.message || 'upload failed' }, { status: 200 })
   }
   const { data: urlData } = supabaseAdmin.storage.from('members').getPublicUrl(path)
   return NextResponse.json({ url: urlData.publicUrl, path })

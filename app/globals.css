@@ -98,8 +98,8 @@ body {
   background-color: rgba(18, 48, 90, .8) !important;
 }
 .ftf-portal header .bg-zinc-100 { background-color: rgba(24, 60, 106, .85) !important; }
-.ftf-portal header input { color: #f4efe7 !important; }
-.ftf-portal header input::placeholder { color: #9b8f7d !important; }
+.ftf-portal header input { color: #EDEFF4 !important; }
+  .ftf-portal header input::placeholder { color: #8fa0bd !important; }
 .ftf-portal header .bg-\[\#E30613\]:not([class*="/"]) { background: linear-gradient(135deg, #ef183e, #bf0020) !important; }
 .ftf-portal header .bg-blue-600 { background-color: #12305a !important; }
 .ftf-portal header .bg-amber-500 { background-color: #f6c744 !important; color: #0c1f3d !important; }

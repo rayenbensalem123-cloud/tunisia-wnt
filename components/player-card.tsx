@@ -1,5 +1,5 @@
 "use client"
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 
 interface PlayerCardProps {
   name: string;
@@ -51,6 +51,22 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   const num = String(n ?? "—").padStart(2, "0");
   const [popped, setPopped] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
+  const [gifMoving, setGifMoving] = useState(false);
+  const isGif = /\.gif(?:\?|#|$)|^data:image\/gif/i.test(imageSrc || "");
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  useEffect(() => {
+    if (!isGif || gifMoving) return;
+    const im = new Image();
+    im.src = imageSrc;
+    im.onload = () => {
+      const cv = canvasRef.current;
+      if (cv) {
+        cv.width = im.naturalWidth;
+        cv.height = im.naturalHeight;
+        cv.getContext("2d")?.drawImage(im, 0, 0, im.naturalWidth, im.naturalHeight);
+      }
+    };
+  }, [isGif, gifMoving, imageSrc]);
   const noPhoto = !imageSrc || imageSrc === "/placeholder.jpg" || imgFailed;
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const triggerPop = (e: React.MouseEvent) => {
@@ -59,6 +75,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => setPopped(false), 2600); // ~one loop of a short reveal clip
   };
+  const frozen = isGif && !gifMoving;
   return (
     <article className="player-squad-card w-72 h-[25rem] bg-[#112950] text-[#f7f1e6] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
       <div className="player-card-photo relative w-28 shrink-0 border-r border-[#2a4568]" style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}>
@@ -85,11 +102,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             <span className="absolute bottom-1.5 left-2 text-[6px] font-black uppercase tracking-[.3em] text-[#a89c8a]/70 select-none">TUNISIA WNT</span>
           </div>
         ) : (
+          <>
           <img
             src={imageSrc}
             alt={name}
             onClick={triggerPop}
             onError={() => setImgFailed(true)}
+            onMouseEnter={isGif ? () => setGifMoving(true) : undefined}
+            onMouseLeave={isGif ? () => setGifMoving(false) : undefined}
             className="absolute inset-0 w-full h-full object-cover object-top animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_backwards] cursor-pointer"
             style={{
               willChange:"transform",
@@ -97,7 +117,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               animation: popped ? "none" : undefined,
               backfaceVisibility:"hidden",
               WebkitBackfaceVisibility:"hidden",
-              transition:"transform 0.5s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease",
+              opacity: frozen ? 0 : 1,
+              transition:"transform 0.5s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease, opacity 0.3s ease",
               transform: popped
                 ? "translateZ(90px) scale(1.5) rotateY(-4deg)"
                 : "translateZ(0) scale(1) rotateY(0deg)",
@@ -105,6 +126,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               transformOrigin: "center 40%",
             }}
           />
+          {isGif && (
+            <canvas
+              ref={canvasRef}
+              className={`absolute inset-0 w-full h-full pointer-events-none transition-opacity duration-300 ${frozen ? "opacity-100" : "opacity-0"}`}
+              style={{ objectFit: "cover", objectPosition: "top" }}
+            />
+          )}
+        </>
         )}
         <div className="absolute inset-0 bg-gradient-to-t from-[#0c1f3d]/75 via-transparent to-[#0c1f3d]/20 pointer-events-none" />
         <span className="absolute bottom-2 left-2 text-[13px] font-black italic leading-none text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,.65)] pointer-events-none">{fullPosition ? "T" : code}</span>

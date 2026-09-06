@@ -34,8 +34,13 @@ export function PlayersProvider({ children }: { children: React.ReactNode }) {
     setCoaches(newList); localStorage.setItem("squad_coaches_final", JSON.stringify(newList))
   }
 
+  const deleteCoach = (id: string) => {
+    const newList = coaches.filter(c => c.id !== id)
+    setCoaches(newList); localStorage.setItem("squad_coaches_final", JSON.stringify(newList))
+  }
+
   return (
-    <PlayersContext.Provider value={{ players, coaches, addPlayer, updatePlayer, addCoach, updateCoach }}>
+    <PlayersContext.Provider value={{ players, coaches, addPlayer, updatePlayer, addCoach, updateCoach, deleteCoach }}>
       {children}
     </PlayersContext.Provider>
   )
