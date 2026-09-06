@@ -1,18 +1,24 @@
 "use client"
 import React, { useState } from "react"
-import { Download, Upload, Printer, FileSpreadsheet, FileJson, X } from "lucide-react"
+import { Download, Upload, Printer, FileSpreadsheet, FileJson, X, FileText, Check } from "lucide-react"
 
 type Props = {
   members: any[]
   matches: any[]
   teamCat: string | null
   onImport: (data: { members: any[]; matches: any[] }) => void
+  onImportPlayers?: (rows: { name: string; team?: string; camp?: string }[]) => void
 }
 
-export function ExportTools({ members, matches, teamCat, onImport }: Props) {
+export function ExportTools({ members, matches, teamCat, onImport, onImportPlayers }: Props) {
   const [open, setOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [importData, setImportData] = useState("")
+  const [pdfOpen, setPdfOpen] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const [pdfError, setPdfError] = useState("")
+  const [rows, setRows] = useState<{ name: string; team?: string; camp?: string }[]>([])
+  const [fileName, setFileName] = useState("")
 
   const catMembers = members.filter(m => m.teamCategory === teamCat)
 
@@ -64,8 +70,44 @@ export function ExportTools({ members, matches, teamCat, onImport }: Props) {
     } catch {}
   }
 
+  const openPdf = () => { setPdfOpen(true); setRows([]); setFileName(""); setPdfError(""); setBusy(false) }
+
+  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
+    e.target.value = ""
+    if (!f) return
+    setBusy(true); setPdfError(""); setFileName(f.name); setRows([])
+    try {
+      const fd = new FormData()
+      fd.append('file', f, f.name)
+      const r = await fetch('/api/import-players', { method: 'POST', body: fd })
+      const d = await r.json()
+      if (d.error) { setPdfError(d.error) }
+      else {
+        setRows(d.rows || [])
+        if (d.scannedPages > 0 && (d.rows || []).length === 0) {
+          setPdfError(`This PDF has ${d.scannedPages} scanned page(s) with no text. Scanned files can't be auto-read — please type the names manually or use a text PDF.`)
+        }
+      }
+    } catch (e: any) {
+      setPdfError('Could not process PDF: ' + (e?.message || 'unknown'))
+    }
+    setBusy(false)
+  }
+
+  const updateRow = (i: number, key: 'name' | 'team' | 'camp', val: string) => {
+    setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [key]: val } : r))
+  }
+
+  const confirmImport = () => {
+    const valid = rows.filter(r => r.name && r.name.trim())
+    if (!valid.length) return
+    onImportPlayers?.(valid)
+    setPdfOpen(false); setRows([]); setFileName(""); setOpen(false)
+  }
+
   return (
-    <div className="relative">
+    <div className="relative" onClick={(e) => e.stopPropagation()}>
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-300 bg-white text-zinc-500 hover:text-zinc-900 text-[9px] font-black uppercase tracking-widest transition-all"
@@ -77,7 +119,7 @@ export function ExportTools({ members, matches, teamCat, onImport }: Props) {
       {open && (
         <>
           <div className="fixed inset-0 z-[180]" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-12 z-[190] w-52 rounded-2xl border border-zinc-200 bg-white shadow-2xl overflow-hidden text-zinc-900">
+          <div className="absolute right-0 top-12 z-[190] w-56 rounded-2xl border border-zinc-200 bg-white shadow-2xl overflow-hidden text-zinc-900">
             <div className="divide-y divide-zinc-200">
               <button onClick={() => { exportCSV(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
                 <FileSpreadsheet size={13} className="text-green-500" /> CSV Roster
@@ -91,6 +133,11 @@ export function ExportTools({ members, matches, teamCat, onImport }: Props) {
               <button onClick={() => { setOpen(false); setImportOpen(true) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
                 <Upload size={13} className="text-orange-500" /> Import JSON
               </button>
+              {onImportPlayers && (
+                <button onClick={() => { setOpen(false); openPdf() }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
+                  <FileText size={13} className="text-red-500" /> Import Players (PDF)
+                </button>
+              )}
               <div className="h-px bg-zinc-200" />
               <button onClick={() => { handlePrint(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
                 <Printer size={13} /> Print Roster
@@ -118,6 +165,53 @@ export function ExportTools({ members, matches, teamCat, onImport }: Props) {
               <button onClick={() => setImportOpen(false)} className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
               <button onClick={handleImport} className="flex-[2] py-3 bg-[#E30613] text-white rounded-xl text-[10px] font-black uppercase tracking-wider">Import</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {pdfOpen && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="w-full max-w-2xl flex flex-col max-h-[90vh] p-6 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900">
+            <div className="flex items-center justify-between mb-4 shrink-0">
+              <div>
+                <h2 className="text-xl font-black italic uppercase tracking-tighter">Import Players (PDF)</h2>
+                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400 mt-1">New names create cards · existing names update team · camps recorded</p>
+              </div>
+              <button onClick={() => setPdfOpen(false)} className="p-2 hover:bg-red-500/10 rounded-xl"><X size={20} /></button>
+            </div>
+
+            <label className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 cursor-pointer transition-all ${fileName ? 'border-green-400 bg-green-50' : 'border-zinc-300 bg-zinc-50 hover:border-red-400'}`}>
+              <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={onFile} />
+              <FileText size={28} className={fileName ? 'text-green-500' : 'text-zinc-400'} />
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{busy ? 'Reading PDF…' : fileName ? fileName : 'Click to choose a PDF'}</span>
+              <span className="text-[8px] text-zinc-400">Columns: Name, Team, Camp (one player per row)</span>
+            </label>
+
+            {pdfError && <p className="mt-3 text-[10px] font-bold text-red-500 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{pdfError}</p>}
+
+            {rows.length > 0 && (
+              <>
+                <div className="mt-4 max-h-[45vh] overflow-y-auto rounded-2xl border border-zinc-200">
+                  <div className="sticky top-0 bg-zinc-100 grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-2 text-[8px] font-black uppercase tracking-wider text-zinc-500">
+                    <span>Name</span><span>Team</span><span>Camp</span>
+                  </div>
+                  {rows.map((r, i) => (
+                    <div key={i} className={`grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-1.5 ${i>0?'border-t border-zinc-100':''}`}>
+                      <input value={r.name} onChange={e => updateRow(i, 'name', e.target.value)} className="text-[11px] font-bold outline-none border-b border-transparent focus:border-red-400 px-1 py-0.5"/>
+                      <input value={r.team || ''} onChange={e => updateRow(i, 'team', e.target.value)} className="text-[11px] outline-none border-b border-transparent focus:border-red-400 px-1 py-0.5"/>
+                      <input value={r.camp || ''} onChange={e => updateRow(i, 'camp', e.target.value)} className="text-[11px] outline-none border-b border-transparent focus:border-red-400 px-1 py-0.5"/>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-2 text-[8px] font-black uppercase tracking-wider text-zinc-400">{rows.length} player(s) detected — review/edit then confirm</p>
+                <div className="flex gap-3 mt-3 shrink-0">
+                  <button onClick={() => setPdfOpen(false)} className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
+                  <button onClick={confirmImport} className="flex items-center justify-center gap-1.5 flex-[2] py-3 bg-[#E30613] text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-red-700">
+                    <Check size={13}/> Import {rows.filter(r => r.name && r.name.trim()).length}
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -447,7 +447,7 @@ export default function EliteSquadApp() {
   const passRef=useRef<HTMLInputElement>(null)
   const [passportZoom,setPassportZoom]=useState(false)
 
-  const initForm={name:"",club:"",position:"",image:"",passportImage:"",jerseyNumber:"",natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",bioQuote:"",leagueRegion:"",dualNationality:false,secondNationality:""}
+  const initForm={name:"",club:"",position:"",image:"",passportImage:"",jerseyNumber:"",camps:[],natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",bioQuote:"",leagueRegion:"",dualNationality:false,secondNationality:""}
   const [form,setForm]=useState<any>(initForm)
   const initMatch={opponent:"",date:"",result:"",venue:"",competition:"",squad:[] as number[],scorers:[] as {playerId:number,goals:number}[],yellowCards:[] as number[],redCards:[] as number[],subs:[] as {out:number;in:number}[],notes:"",opponentSquad:[] as string[],opponentScorers:[] as {name:string,goals:number}[],opponentYellowCards:[] as string[],opponentRedCards:[] as string[],opponentSubs:[] as {out:string;in:string}[],tunisiaPossession:"",opponentPossession:"",tunisiaShots:"",opponentShots:"",tunisiaShotsOnTarget:"",opponentShotsOnTarget:"",tunisiaCorners:"",opponentCorners:"",tunisiaFouls:"",opponentFouls:""}
   const countryFlags:Record<string,string>={"Tunisia":"tn","Algeria":"dz","Egypt":"eg","Morocco":"ma","Senegal":"sn","Nigeria":"ng","Cameroon":"cm","Ghana":"gh","Ivory Coast":"ci","Côte d'Ivoire":"ci","Cote d'Ivoire":"ci","Mali":"ml","Burkina Faso":"bf","South Africa":"za","DR Congo":"cd","DRC":"cd","Congo":"cg","Zambia":"zm","Equatorial Guinea":"gq","Guinea":"gn","Guinea-Bissau":"gw","Benin":"bj","Togo":"tg","Sierra Leone":"sl","Liberia":"lr","Sudan":"sd","South Sudan":"ss","Uganda":"ug","Kenya":"ke","Tanzania":"tz","Rwanda":"rw","Burundi":"bi","Ethiopia":"et","Eritrea":"er","Somalia":"so","Angola":"ao","Namibia":"na","Botswana":"bw","Zimbabwe":"zw","Mozambique":"mz","Malawi":"mw","Lesotho":"ls","Eswatini":"sz","Madagascar":"mg","Mauritius":"mu","Cape Verde":"cv","Mauritania":"mr","Gambia":"gm","Gabon":"ga","Chad":"td","Niger":"ne","Libya":"ly","France":"fr","England":"gb-eng","Spain":"es","Germany":"de","Italy":"it","Netherlands":"nl","Portugal":"pt","Belgium":"be","Croatia":"hr","Switzerland":"ch","Sweden":"se","Denmark":"dk","Norway":"no","Poland":"pl","Brazil":"br","Argentina":"ar","Uruguay":"uy","Colombia":"co","Chile":"cl","Peru":"pe","Ecuador":"ec","Mexico":"mx","USA":"us","United States":"us","Canada":"ca","Japan":"jp","South Korea":"kr","Korea Republic":"kr","Saudi Arabia":"sa","Iran":"ir","Australia":"au","New Zealand":"nz"}
@@ -561,6 +561,41 @@ export default function EliteSquadApp() {
   const handleImport=(data:{members:any[],matches:any[]})=>{
     if(data.members?.length) setMembers(data.members)
     if(data.matches?.length) setMatches(data.matches)
+  }
+
+  const normName=(s:string)=>(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/['’]/g,"").replace(/[^a-z0-9 ]/g,"").replace(/\s+/g," ").trim()
+  const handleImportPlayers=(rows:{name:string;team?:string;camp?:string}[])=>{
+    if(!rows.length)return
+    setMembers(prev=>{
+      const list=[...prev].map(m=>({...m,camps:Array.isArray(m.camps)?m.camps:[],club:m.club||""}))
+      let created=0,updated=0
+      for(const r of rows){
+        if(!r.name)continue
+        const key=normName(r.name)
+        const existing=list.find(m=>m.role==="PLAYERS"&&normName(m.name)===key)
+        if(existing){
+          let changed=false
+          const nextClub=r.team&&r.team.trim()?r.team.trim():existing.club
+          if(r.team&&r.team.trim()&&nextClub!==existing.club){existing.club=nextClub;changed=true}
+          if(r.camp&&r.camp.trim()){
+            const c=r.camp.trim()
+            if(!existing.camps.some((x:string)=>normName(x)===normName(c))){existing.camps=[...existing.camps,c];changed=true}
+          }
+          existing.updatedAt=Date.now()
+          if(changed)updated++
+        }else{
+          list.push({
+            id:Date.now()+Math.random()*1000, role:"PLAYERS", teamCategory:teamCat,
+            name:r.name.trim(), club:r.team?.trim()||"", position:"FORWARD",
+            camps:r.camp&&r.camp.trim()?[r.camp.trim()]:[],
+            goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",image:"",imagePath:"",passportImage:"",jerseyNumber:"",updatedAt:Date.now(),
+          })
+          created++
+        }
+      }
+      console.log(`Players import: ${created} created, ${updated} updated`)
+      return list
+    })
   }
 
   const toggleSelect=(id:number)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])
@@ -791,7 +826,7 @@ export default function EliteSquadApp() {
                 <span className="hidden sm:inline">Tools</span><ChevronDown size={11}/>
               </button>
             }>
-              {p.exportData&&<div className="px-1"><ExportTools members={members} matches={matches} teamCat={teamCat} onImport={handleImport} /></div>}
+              {p.exportData&&<div className="px-1"><ExportTools members={members} matches={matches} teamCat={teamCat} onImport={handleImport} onImportPlayers={handleImportPlayers} /></div>}
               <button onClick={()=>window.print()} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 Print
@@ -1135,6 +1170,23 @@ export default function EliteSquadApp() {
                         ))}
                       </div>
                     ):<p className="text-[12px] text-[#54647d] py-4 text-center">No career history</p>}
+                  </div>
+                </section>
+
+                {/* Camps participated */}
+                <section className="mt-4">
+                  <p className="pm-label mb-1.5">Camps</p>
+                  <div className="rounded-lg border border-[rgba(148,170,210,.14)] overflow-hidden">
+                    {selMember.camps?.filter(Boolean).length>0?(
+                      <div>
+                        {selMember.camps.filter(Boolean).map((c:string,i:number)=>(
+                          <div key={i} className={`flex items-center gap-2.5 px-3 py-2.5 ${i>0?'border-t border-[rgba(148,170,210,.1)]':''}`}>
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#e3062c] shrink-0"/>
+                            <span className="text-[12px] font-medium text-[#a4b2c8] truncate">{c}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ):<p className="text-[12px] text-[#54647d] py-4 text-center">No camps recorded</p>}
                   </div>
                 </section>
 
