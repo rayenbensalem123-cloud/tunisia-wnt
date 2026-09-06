@@ -533,7 +533,13 @@ export default function EliteSquadApp() {
     m.role===activeTab&&m.teamCategory===teamCat&&
     m.name.toLowerCase().includes(search.toLowerCase())&&
     (filterPos==="ALL"||m.position===filterPos)
-  ),[members,activeTab,search,filterPos,teamCat])
+  ).sort((a:any,b:any)=>{
+    const posOrder:Record<string,number>={GOALKEEPER:0,DEFENDER:1,MIDFIELDER:2,FORWARD:3}
+    const ar=a.role==="PLAYERS"?posOrder[a.position]??9:10
+    const br=b.role==="PLAYERS"?posOrder[b.position]??9:10
+    if(ar!==br)return ar-br
+    return a.name.localeCompare(b.name)
+  }),[members,activeTab,search,filterPos,teamCat])
 
   const catPlayers=useMemo(()=>members.filter(m=>m.role==="PLAYERS"&&m.teamCategory===teamCat),[members,teamCat])
   const catMatches=useMemo(()=>matches.filter(m=>m.teamCategory===teamCat&&m.status==="approved"),[matches,teamCat])
