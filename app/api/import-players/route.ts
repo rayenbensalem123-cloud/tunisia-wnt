@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   try {
     // Dynamic import so the heavy pdfjs module isn't bundled into the main route graph eagerly
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-    // Resolve the worker from the real filesystem (pnpm symlink path resolves fine at runtime)
+    // pdfjs-dist is external (serverExternalPackages), so the real filesystem files exist at runtime
     pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(path.join(process.cwd(), 'node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs')).href
     const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), useWorkerFetch: false, isEvalSupported: false }).promise
 
