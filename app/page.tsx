@@ -327,21 +327,22 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-5xl">
           {teams.map((t,i)=>(
-            <button key={t.cat} onClick={()=>onSelect(t.cat)} className="group relative h-[300px] rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 text-left border border-[rgba(148,170,210,.16)] bg-[#101b33] hover:border-[#e3062c]/60 animate-[fadeUp_0.55s_ease-out_both]" style={{animationDelay:`${i*130+200}ms`}}>
+            <button key={t.cat} onClick={()=>onSelect(t.cat)} className="group relative h-[300px] rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 text-left border border-[rgba(148,170,210,.16)] bg-[linear-gradient(180deg,#142c52,#0e1f3e)] hover:border-[#f6c744]/50 hover:shadow-[0_18px_50px_rgba(0,0,0,.45),0_0_24px_rgba(246,199,68,.08)] animate-[fadeUp_0.55s_ease-out_both]" style={{animationDelay:`${i*130+200}ms`}}>
               <div className={`absolute inset-x-0 h-[3px] bg-gradient-to-r ${t.bar}`}/>
+              <div className="absolute inset-0 bg-[radial-gradient(420px_220px_at_50%_0%,rgba(227,6,44,.14),transparent_65%)] pointer-events-none"/>
               <div className="absolute -right-6 -bottom-10 text-[150px] font-black leading-none text-[#e3062c]/10 select-none pointer-events-none">{t.abbr}</div>
               <div className="relative p-6 flex flex-col h-full">
                 <div className="flex items-center justify-between">
                   <svg width="46" height="52" viewBox="0 0 80 90" fill="none">
-                    <path d="M40 2 L78 18 L78 48 C78 68 40 88 40 88 C40 88 2 68 2 48 L2 18 Z" stroke="#e3062c" strokeWidth="3" strokeOpacity=".55"/>
+                    <path d="M40 2 L78 18 L78 48 C78 68 40 88 40 88 C40 88 2 68 2 48 L2 18 Z" stroke="#f6c744" strokeWidth="3" strokeOpacity=".55"/>
                     <text x="40" y="50" textAnchor="middle" dominantBaseline="middle" fontSize="30" fontWeight="900" fill="#EDEFF4">{t.abbr}</text>
                   </svg>
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-[#73849e]">TUNISIA WNT</span>
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-[#f6c744]/70">TUNISIA WNT</span>
                 </div>
                 <div className="mt-auto">
                   <h2 className="text-[26px] font-black uppercase tracking-tight text-[#EDEFF4] leading-none">{t.label}</h2>
-                  <p className="text-[9px] font-bold uppercase tracking-[.28em] text-[#73849e] mt-1.5">{t.sub}</p>
-                  <div className="mt-5 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-[#ff5f72]">
+                  <p className="text-[9px] font-bold uppercase tracking-[.28em] text-[#8fa0bd] mt-1.5">{t.sub}</p>
+                  <div className="mt-5 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-[#ff5f72] group-hover:text-[#f6c744] transition-colors duration-300">
                     {tr.teamSelect.enter} <ChevronRight size={14} className="transition-transform duration-300 group-hover:translate-x-1"/>
                   </div>
                 </div>
@@ -730,33 +731,37 @@ export default function EliteSquadApp() {
 
   // ── RENDER GATES ──
   if(buffering||!authChecked||!loaded) return(
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white text-zinc-900 relative overflow-hidden">
-      {/* Ambient glow */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#E30613]/5 blur-[100px] animate-pulse"/>
-      <div className="relative flex flex-col items-center gap-8">
+    <div className="fed-screen min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+      {/* Red aura */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[520px] h-[520px] rounded-full bg-[#E30613]/12 blur-[110px] animate-pulse pointer-events-none"/>
+      <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] rounded-full bg-[#f6c744]/6 blur-[90px] pointer-events-none"/>
+      <div className="relative z-10 flex flex-col items-center gap-8">
         {/* Logo with floating effect */}
         <div className="relative animate-[float_3s_ease-in-out_infinite]">
-          <div className="w-40 h-40 rounded-full bg-white shadow-2xl shadow-red-500/10 flex items-center justify-center border border-zinc-100">
-            <img src="/ftf-logo.png" className="h-24" alt=""/>
+          <div className="w-40 h-40 rounded-full bg-[#101b33] border border-[rgba(148,170,210,.18)] shadow-2xl shadow-red-500/10 flex items-center justify-center">
+            <div className="w-28 h-28 rounded-full bg-[linear-gradient(135deg,#0f172e,#142c52)] border border-[rgba(246,199,68,.22)] flex items-center justify-center">
+              <img src="/ftf-logo.png" className="h-16" alt=""/>
+            </div>
           </div>
-          {/* Ring spinner */}
+          {/* Ring spinner - red */}
           <div className="absolute -inset-3">
             <div className="w-full h-full rounded-full border-[3px] border-transparent border-t-[#E30613] border-r-[#E30613]/30 animate-spin" style={{animationDuration:'1.8s'}}/>
           </div>
+          {/* Ring spinner - gold */}
           <div className="absolute -inset-1.5">
-            <div className="w-full h-full rounded-full border border-transparent border-b-[#E30613]/20 border-l-[#E30613]/10 animate-spin" style={{animationDuration:'2.5s',animationDirection:'reverse'}}/>
+            <div className="w-full h-full rounded-full border border-transparent border-b-[#f6c744]/60 border-l-[#f6c744]/25 animate-spin" style={{animationDuration:'2.5s',animationDirection:'reverse'}}/>
           </div>
         </div>
         {/* Loading dots */}
         <div className="flex items-center gap-1.5">
           <div className="w-2 h-2 rounded-full bg-[#E30613] animate-[loadDot_1.4s_ease-in-out_infinite]"/>
-          <div className="w-2 h-2 rounded-full bg-[#E30613] animate-[loadDot_1.4s_ease-in-out_infinite_0.2s]"/>
+          <div className="w-2 h-2 rounded-full bg-[#f6c744] animate-[loadDot_1.4s_ease-in-out_infinite_0.2s]"/>
           <div className="w-2 h-2 rounded-full bg-[#E30613] animate-[loadDot_1.4s_ease-in-out_infinite_0.4s]"/>
         </div>
         {/* Text */}
-        <div className="flex flex-col items-center gap-1">
-          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-zinc-500">{tr.login.loadingDb}</p>
-          <p className="text-[7px] font-medium text-zinc-300 uppercase tracking-[0.25em]">Fédération Tunisienne de Football</p>
+        <div className="flex flex-col items-center gap-1.5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[#edeff4]">{tr.login.loadingDb}</p>
+          <p className="text-[7px] font-medium uppercase tracking-[0.25em] text-[#f6c744]/70">Fédération Tunisienne de Football</p>
         </div>
       </div>
       <style>{`@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}@keyframes loadDot{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}`}</style>
@@ -766,9 +771,9 @@ export default function EliteSquadApp() {
   if(!teamCat) return(
     <div className="relative">
       <div className="fixed top-6 right-6 z-[999] flex gap-3">
-        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} title="Change language" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:text-black transition-all text-[10px] font-black uppercase tracking-widest"><Globe size={16}/><span className="ml-1">{lang.toUpperCase()}</span></button>
-        <span className="text-[9px] font-black uppercase tracking-wider text-zinc-400 self-center">{user?.username}</span>
-        <button onClick={handleChangePassword} title="Change your password" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all"><Key size={18}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-3 rounded-xl border border-zinc-300 bg-white/80 text-zinc-600 hover:bg-[#e3062c] hover:text-white transition-all"><LogOut size={18}/></button>
+        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} title="Change language" className="p-3 rounded-xl border border-[rgba(148,170,210,.22)] bg-[#101b33]/90 text-[#c3cfe0] hover:text-[#f6c744] hover:border-[#f6c744]/40 hover:shadow-[0_0_18px_rgba(246,199,68,.12)] transition-all text-[10px] font-black uppercase tracking-widest backdrop-blur-sm"><Globe size={16}/><span className="ml-1">{lang.toUpperCase()}</span></button>
+        <span className="text-[9px] font-black uppercase tracking-wider text-[#f6c744]/80 self-center">{user?.username}</span>
+        <button onClick={handleChangePassword} title="Change your password" className="p-3 rounded-xl border border-[rgba(148,170,210,.22)] bg-[#101b33]/90 text-[#c3cfe0] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] transition-all backdrop-blur-sm"><Key size={18}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-3 rounded-xl border border-[rgba(148,170,210,.22)] bg-[#101b33]/90 text-[#c3cfe0] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_18px_rgba(227,6,44,.25)] transition-all backdrop-blur-sm"><LogOut size={18}/></button>
       </div>
       <TeamSelector onSelect={selectCat}/>
     </div>
