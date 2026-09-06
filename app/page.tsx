@@ -729,7 +729,7 @@ export default function EliteSquadApp() {
   }
 
   // ── RENDER GATES ──
-  if(buffering||!authChecked) return(
+  if(buffering||!authChecked||!loaded) return(
     <div className="min-h-screen flex flex-col items-center justify-center bg-white text-zinc-900 relative overflow-hidden">
       {/* Ambient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-[#E30613]/5 blur-[100px] animate-pulse"/>

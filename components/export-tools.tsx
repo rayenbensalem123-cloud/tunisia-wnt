@@ -1,5 +1,6 @@
 "use client"
 import React, { useState } from "react"
+import { createPortal } from "react-dom"
 import { Download, Upload, Printer, FileSpreadsheet, FileJson, X, FileText, Check } from "lucide-react"
 
 type Props = {
@@ -147,8 +148,9 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
         </>
       )}
 
-      {importOpen && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      {
+  importOpen && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onMouseDownCapture={(e) => e.stopPropagation()}>
           <div className="w-full max-w-lg p-6 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black italic uppercase tracking-tighter">Import JSON</h2>
@@ -167,11 +169,13 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
             </div>
           </div>
         </div>
-      )}
+      , document.body)
+      }
 
-      {pdfOpen && (
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-          <div className="w-full max-w-2xl flex flex-col max-h-[90vh] p-6 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900">
+      {
+      pdfOpen && typeof document !== "undefined" && createPortal(
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onMouseDownCapture={(e) => e.stopPropagation()}>
+          <div className="w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden p-6 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900">
             <div className="flex items-center justify-between mb-4 shrink-0">
               <div>
                 <h2 className="text-xl font-black italic uppercase tracking-tighter">Import Players (PDF)</h2>
@@ -180,18 +184,18 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
               <button onClick={() => setPdfOpen(false)} className="p-2 hover:bg-red-500/10 rounded-xl"><X size={20} /></button>
             </div>
 
-            <label className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 cursor-pointer transition-all ${fileName ? 'border-green-400 bg-green-50' : 'border-zinc-300 bg-zinc-50 hover:border-red-400'}`}>
+            <label className={`shrink-0 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 cursor-pointer transition-all ${fileName ? 'border-green-400 bg-green-50' : 'border-zinc-300 bg-zinc-50 hover:border-red-400'}`}>
               <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={onFile} />
-              <FileText size={28} className={fileName ? 'text-green-500' : 'text-zinc-400'} />
+              <FileText size={24} className={fileName ? 'text-green-500' : 'text-zinc-400'} />
               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{busy ? 'Reading PDF…' : fileName ? fileName : 'Click to choose a PDF'}</span>
               <span className="text-[8px] text-zinc-400">Columns: Name, Team, Camp (one player per row)</span>
             </label>
 
-            {pdfError && <p className="mt-3 text-[10px] font-bold text-red-500 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{pdfError}</p>}
+            {pdfError && <p className="shrink-0 mt-3 text-[10px] font-bold text-red-500 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{pdfError}</p>}
 
             {rows.length > 0 && (
               <>
-                <div className="mt-4 max-h-[45vh] overflow-y-auto rounded-2xl border border-zinc-200">
+                <div className="flex-1 min-h-0 mt-4 overflow-y-auto rounded-2xl border border-zinc-200">
                   <div className="sticky top-0 bg-zinc-100 grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-2 text-[8px] font-black uppercase tracking-wider text-zinc-500">
                     <span>Name</span><span>Team</span><span>Camp</span>
                   </div>
@@ -203,8 +207,8 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
                     </div>
                   ))}
                 </div>
-                <p className="mt-2 text-[8px] font-black uppercase tracking-wider text-zinc-400">{rows.length} player(s) detected — review/edit then confirm</p>
-                <div className="flex gap-3 mt-3 shrink-0">
+                <p className="shrink-0 mt-2 text-[8px] font-black uppercase tracking-wider text-zinc-400">{rows.length} player(s) detected — review/edit then confirm</p>
+                <div className="shrink-0 flex gap-3 mt-3">
                   <button onClick={() => setPdfOpen(false)} className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
                   <button onClick={confirmImport} className="flex items-center justify-center gap-1.5 flex-[2] py-3 bg-[#E30613] text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-red-700">
                     <Check size={13}/> Import {rows.filter(r => r.name && r.name.trim()).length}
@@ -214,7 +218,8 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
             )}
           </div>
         </div>
-      )}
+      , document.body)
+      }
     </div>
   )
 }
