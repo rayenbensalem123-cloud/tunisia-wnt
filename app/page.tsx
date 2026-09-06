@@ -11,6 +11,7 @@ import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
 import { ExportTools } from "@/components/export-tools"
 import { PlayerCard } from "@/components/player-card"
+import { CountryFlag } from "@/components/country-flag"
 import { FormationPitch, FORMATIONS } from "@/components/formation-pitch"
 import { supabase } from "@/lib/supabase"
 import {
@@ -444,7 +445,6 @@ export default function EliteSquadApp() {
   const [form,setForm]=useState<any>(initForm)
   const initMatch={opponent:"",date:"",result:"",venue:"",competition:"",squad:[] as number[],scorers:[] as {playerId:number,goals:number}[],yellowCards:[] as number[],redCards:[] as number[],subs:[] as {out:number;in:number}[],notes:"",opponentSquad:[] as string[],opponentScorers:[] as {name:string,goals:number}[],opponentYellowCards:[] as string[],opponentRedCards:[] as string[],opponentSubs:[] as {out:string;in:string}[],tunisiaPossession:"",opponentPossession:"",tunisiaShots:"",opponentShots:"",tunisiaShotsOnTarget:"",opponentShotsOnTarget:"",tunisiaCorners:"",opponentCorners:"",tunisiaFouls:"",opponentFouls:""}
   const countryFlags:Record<string,string>={"Tunisia":"tn","Algeria":"dz","Egypt":"eg","Morocco":"ma","Senegal":"sn","Nigeria":"ng","Cameroon":"cm","Ghana":"gh","Ivory Coast":"ci","Côte d'Ivoire":"ci","Cote d'Ivoire":"ci","Mali":"ml","Burkina Faso":"bf","South Africa":"za","DR Congo":"cd","DRC":"cd","Congo":"cg","Zambia":"zm","Equatorial Guinea":"gq","Guinea":"gn","Guinea-Bissau":"gw","Benin":"bj","Togo":"tg","Sierra Leone":"sl","Liberia":"lr","Sudan":"sd","South Sudan":"ss","Uganda":"ug","Kenya":"ke","Tanzania":"tz","Rwanda":"rw","Burundi":"bi","Ethiopia":"et","Eritrea":"er","Somalia":"so","Angola":"ao","Namibia":"na","Botswana":"bw","Zimbabwe":"zw","Mozambique":"mz","Malawi":"mw","Lesotho":"ls","Eswatini":"sz","Madagascar":"mg","Mauritius":"mu","Cape Verde":"cv","Mauritania":"mr","Gambia":"gm","Gabon":"ga","Chad":"td","Niger":"ne","Libya":"ly","France":"fr","England":"gb-eng","Spain":"es","Germany":"de","Italy":"it","Netherlands":"nl","Portugal":"pt","Belgium":"be","Croatia":"hr","Switzerland":"ch","Sweden":"se","Denmark":"dk","Norway":"no","Poland":"pl","Brazil":"br","Argentina":"ar","Uruguay":"uy","Colombia":"co","Chile":"cl","Peru":"pe","Ecuador":"ec","Mexico":"mx","USA":"us","United States":"us","Canada":"ca","Japan":"jp","South Korea":"kr","Korea Republic":"kr","Saudi Arabia":"sa","Iran":"ir","Australia":"au","New Zealand":"nz"}
-  const flagImg=(name:string)=>{const c=countryFlags[name];return c?<img src={`https://flagcdn.com/16x12/${c}.png`} alt="" className="w-4 h-3 inline-block align-middle rounded-sm"/>:null}
   const [matchForm,setMatchForm]=useState<any>(initMatch)
 
   const [loaded,setLoaded]=useState(false)
@@ -1044,6 +1044,7 @@ export default function EliteSquadApp() {
                       </div>
                       {selMember.nationality&&<div className="flex items-center gap-2.5">
                         <span className="w-8 h-8 rounded-lg bg-[#2a6d4a]/15 text-[#7fd6a8] flex items-center justify-center shrink-0"><Globe size={14}/></span>
+                        <CountryFlag name={selMember.nationality} className="w-6 h-[15px] rounded-sm"/>
                         <div className="min-w-0"><p className="text-[13px] font-black text-[#EDEFF4] uppercase truncate">{selMember.nationality}</p><span className="text-[9px] text-[#54647d] uppercase font-bold tracking-wider">{tr.profile.nationality}</span></div>
                       </div>}
                       {selMember.languages&&<div className="flex items-center gap-2.5">
@@ -1180,7 +1181,7 @@ export default function EliteSquadApp() {
                       <p className="text-[9px] font-black uppercase tracking-wider text-[#ff4f66]">Biggest Win</p>
                       {biggestWin?(<>
                         <p className="text-lg font-black mt-0.5 text-[#ff4f66]">{biggestWin.result}</p>
-                        <p className="text-[10px] font-bold text-[#a4b2c8] truncate">vs {biggestWin.opponent}</p>
+                        <p className="text-[10px] font-bold text-[#a4b2c8] truncate flex items-center gap-1.5"><span className="italic shrink-0">vs</span><CountryFlag name={biggestWin.opponent} className="w-4 h-2.5 rounded-[2px]"/><span className="truncate">{biggestWin.opponent}</span></p>
                       </>):(
                         <p className="text-[10px] font-bold text-[#54647d] mt-1.5">No wins recorded yet</p>
                       )}
@@ -1447,7 +1448,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-2xl bg-[#f6c744]/10 border border-[#f6c744]/30 flex items-center justify-center"><BookOpen size={18} className="text-[#f6c744]"/></div>
                         <div>
-                          <p className="font-black uppercase text-sm leading-tight">{m.opponent}</p>
+                          <div className="flex items-center gap-2"><CountryFlag name={m.opponent} className="w-6 h-4 rounded-sm"/><p className="font-black uppercase text-sm leading-tight">{m.opponent}</p></div>
                           <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">{fmtDateWords(m.date)} · {m.competition||"Friendly"} · by @{m.submittedBy}</p>
                         </div>
                       </div>
@@ -1667,8 +1668,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                       </span>
                       <span className="px-2.5 py-1 rounded-full border border-[#f6c744]/40 text-[#f6c744] text-[8px] font-black uppercase tracking-wider">{next.competition||"Friendly"}</span>
                     </div>
-                    <p className="text-[26px] font-black uppercase tracking-tight text-white leading-none">
-                      Tunisia <span className="text-[#ff4f66] not-italic mx-1.5 font-serif text-[30px]">vs</span> {next.opponent||"TBD"}
+                    <p className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[26px] font-black uppercase tracking-tight text-white leading-none">
+                      <span className="flex items-center gap-2.5"><CountryFlag name="Tunisia" className="w-8 h-[22px] rounded-md ring-white/20"/><span>Tunisia</span></span>
+                      <span className="text-[#ff4f66] not-italic font-serif text-[30px]">vs</span>
+                      <span className="flex items-center gap-2.5"><CountryFlag name={next.opponent} className="w-8 h-[22px] rounded-md ring-white/20"/><span>{next.opponent||"TBD"}</span></span>
                     </p>
                     <p className="text-[10px] font-bold text-white/70 mt-3.5">{fmtDateWords(next.date)}</p>
                     <div className="flex items-center gap-2 mt-5">
@@ -1691,7 +1694,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           <p className="text-lg font-black leading-none text-[#EDEFF4]">{(m.date||"").split("-")[2]}</p>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-[13px] font-black text-[#EDEFF4] truncate">Tunisia <span className="text-[#ff4f66] font-serif not-italic">vs</span> {m.opponent||"TBD"}</p>
+                          <p className="flex items-center gap-1.5 text-[13px] font-black text-[#EDEFF4] truncate"><CountryFlag name="Tunisia" className="w-5 h-3 rounded-[2px]"/><span className="shrink-0">Tunisia</span><span className="text-[#ff4f66] font-serif not-italic shrink-0">vs</span><CountryFlag name={m.opponent} className="w-5 h-3 rounded-[2px]"/><span className="truncate">{m.opponent||"TBD"}</span></p>
                           <p className="text-[9px] text-[#8fa0bd] mt-0.5 truncate">{m.competition||"Friendly"}{m.venue?` · ${m.venue}`:""}</p>
                         </div>
                         <span className="shrink-0 text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f6c744]/10 border border-[#f6c744]/30 text-[#f6c744]">In {Math.max(0,daysUntil(m.date))}d</span>
@@ -1905,7 +1908,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   <div className="rounded-2xl bg-[#101725] border border-[rgba(148,170,210,.14)] p-4">
                     <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[#8fa0bd] mb-3 flex items-center gap-2"><Activity size={11} className="text-[#f6c744]"/>Match Stats <span className="font-bold text-[#54647d] normal-case tracking-normal">(optional)</span></p>
                     <div className="grid grid-cols-[1fr_auto_1fr] gap-x-3 gap-y-2.5 items-center text-[10px] font-bold">
-                      <span className="text-right text-[#EDEFF4]">Tunisia</span><span className="text-[7px] font-black text-[#ff4f66] text-center">vs</span><span className="text-[#EDEFF4]">{matchForm.opponent||"Opponent"}</span>
+                      <span className="flex items-center justify-end gap-1.5 text-right text-[#EDEFF4]"><CountryFlag name="Tunisia" className="w-5 h-3"/><span>Tunisia</span></span><span className="text-[7px] font-black text-[#ff4f66] text-center">vs</span><span className="flex items-center justify-start gap-1.5 text-left text-[#EDEFF4]"><CountryFlag name={matchForm.opponent} className="w-5 h-3"/><span>{matchForm.opponent||"Opponent"}</span></span>
                       <NumBox align="r" max={100} value={matchForm.tunisiaPossession} set={(v:string)=>setMatchForm({...matchForm,tunisiaPossession:v})}/><span className="text-[7px] font-black text-[#f6c744]">Poss.</span><NumBox max={100} value={matchForm.opponentPossession} set={(v:string)=>setMatchForm({...matchForm,opponentPossession:v})}/>
                       <NumBox align="r" value={matchForm.tunisiaShots} set={(v:string)=>setMatchForm({...matchForm,tunisiaShots:v})}/><span className="text-[7px] font-black text-[#f6c744]">Shots</span><NumBox value={matchForm.opponentShots} set={(v:string)=>setMatchForm({...matchForm,opponentShots:v})}/>
                       <NumBox align="r" value={matchForm.tunisiaShotsOnTarget} set={(v:string)=>setMatchForm({...matchForm,tunisiaShotsOnTarget:v})}/><span className="text-[7px] font-black text-[#f6c744]">SOT</span><NumBox value={matchForm.opponentShotsOnTarget} set={(v:string)=>setMatchForm({...matchForm,opponentShotsOnTarget:v})}/>
@@ -2265,12 +2268,14 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                       <div className="flex items-center flex-1 justify-end gap-2 min-w-0">
                         <span className="text-[8px] font-black text-[#54647d] uppercase tracking-wider shrink-0">TUN</span>
                         <span className="text-sm font-black text-[#EDEFF4] truncate">Tunisia</span>
+                        <CountryFlag name="Tunisia" className="w-5 h-3 rounded-[2px]"/>
                       </div>
                       <div className="flex flex-col items-center shrink-0">
                         <span className={`text-2xl font-black px-5 py-1.5 rounded-xl tracking-widest shadow-lg ${scoreBg}`}>{match.result||"—"}</span>
                         <span className={`mt-1.5 text-[7px] font-black uppercase tracking-[0.2em] ${isWin?'text-[#f6c744]':isLoss?'text-[#ff4f66]':'text-[#54647d]'}`}>{isWin?'Full-time win':isLoss?'Full-time loss':isDraw?'Full-time draw':'Final score'}</span>
                       </div>
                       <div className="flex items-center flex-1 justify-start gap-2 min-w-0">
+                        <CountryFlag name={match.opponent} className="w-5 h-3 rounded-[2px]"/>
                         <span className="text-sm font-black text-[#EDEFF4] truncate">{match.opponent||'Opponent'}</span>
                         <span className="text-[8px] font-black text-[#54647d] uppercase tracking-wider shrink-0">OPP</span>
                       </div>
