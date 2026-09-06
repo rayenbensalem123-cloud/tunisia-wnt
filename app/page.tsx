@@ -810,7 +810,7 @@ export default function EliteSquadApp() {
             </div>
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="hidden sm:flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.12)] bg-black/[.04] w-44 transition-all focus-within:border-[#E30613]/50 focus-within:bg-black/[.06] focus-within:shadow-[0_0_0_3px_rgba(227,6,44,.1)] hover:border-[rgba(var(--line-rgb),.28)]">
+            <div className="portal-search hidden sm:flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border w-44 transition-all focus-within:border-[#E30613]/50 focus-within:shadow-[0_0_0_3px_rgba(227,6,44,.1)]">
               <Search size={13} className="text-[var(--c-textDim)] shrink-0"/>
               <input placeholder={tr.header.search} value={search} onChange={e=>setSearch(e.target.value)} className="bg-transparent text-[10px] font-bold outline-none w-full uppercase text-[var(--c-text)] placeholder-[var(--c-textMid)]"/>
             </div>
