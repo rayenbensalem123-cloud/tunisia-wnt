@@ -694,6 +694,25 @@ button {
   background-color: #0e2345 !important;
 }
 
+/* Light mode — outline/secondary buttons: white panels, dark text */
+html[data-theme="light"] .ftf-portal button[class*="border-zinc-200"],
+html[data-theme="light"] .ftf-portal button[class*="border-zinc-300"] {
+  background-color: #ffffff !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+  box-shadow: 0 1px 2px rgba(15,23,42,.04) !important;
+}
+html[data-theme="light"] .ftf-portal button[class*="border-zinc-200"]:hover:not(:disabled),
+html[data-theme="light"] .ftf-portal button[class*="border-zinc-300"]:hover:not(:disabled) {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+html[data-theme="light"] .ftf-portal button[class*="border-zinc-200"]:active:not(:disabled),
+html[data-theme="light"] .ftf-portal button[class*="border-zinc-300"]:active:not(:disabled) {
+  background-color: #e8edf4 !important;
+}
+
 /* ── SEGMENTED TABS (Stats/Players/Staff + team pills) ── */
 .ftf-portal div.flex.p-1.rounded-xl {
   background: #0a1f3c !important;
@@ -714,12 +733,32 @@ button {
   background: #17335f !important;
 }
 
+/* Light mode — segmented tabs: light well, dark inactive text */
+html[data-theme="light"] .ftf-portal div.flex.p-1.rounded-xl {
+  background: #e8edf4 !important;
+  border-color: #e2e8f0 !important;
+}
+html[data-theme="light"] .ftf-portal div.flex.p-1.rounded-xl > button:not([class*="bg-[#E30613]"]):not([class*="bg-[#E30613]/"]) {
+  color: #64748b !important;
+}
+html[data-theme="light"] .ftf-portal div.flex.p-1.rounded-xl > button:not([class*="bg-[#E30613]"]):not([class*="bg-[#E30613]/"]):hover {
+  color: #0f172a !important;
+  background: #ffffff !important;
+}
+
 /* ── PILL FILTER CHIPS (positions/ALL) ── */
 .ftf-portal div.flex.gap-1\.5.flex-wrap > button {
   border-radius: .4rem !important;
 }
 .ftf-portal div.flex.gap-1\.5.flex-wrap > button[class*="border-zinc-200"][class*="bg-white"] {
   background: #0e2345 !important;
+}
+
+/* Light mode — pill filter chips */
+html[data-theme="light"] .ftf-portal div.flex.gap-1\.5.flex-wrap > button[class*="border-zinc-200"][class*="bg-white"] {
+  background: #ffffff !important;
+  border-color: #e2e8f0 !important;
+  color: #475569 !important;
 }
 
 /* ── ICON-only buttons (plus, close, back chevron, etc.) ── */
@@ -738,6 +777,23 @@ button {
 .ftf-portal button[class*="w-8"]:not([class*="px-"]):hover {
   background: #17335f !important;
   color: #fff !important;
+}
+
+/* Light mode — icon buttons: white panels, dark icons */
+html[data-theme="light"] .ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]),
+html[data-theme="light"] .ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]),
+html[data-theme="light"] .ftf-portal button[class*="w-7"]:not([class*="px-"]),
+html[data-theme="light"] .ftf-portal button[class*="w-8"]:not([class*="px-"]) {
+  background: #ffffff !important;
+  color: #475569 !important;
+  border-color: #e2e8f0 !important;
+}
+html[data-theme="light"] .ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]):hover,
+html[data-theme="light"] .ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]):hover,
+html[data-theme="light"] .ftf-portal button[class*="w-7"]:not([class*="px-"]):hover,
+html[data-theme="light"] .ftf-portal button[class*="w-8"]:not([class*="px-"]):hover {
+  background: #f1f5f9 !important;
+  color: #0f172a !important;
 }
 
 /* ── FLAT GHOST menu buttons (dropdown rows, header links) ── */
