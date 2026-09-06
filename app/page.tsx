@@ -14,6 +14,7 @@ import { PlayerCard } from "@/components/player-card"
 import { CountryFlag } from "@/components/country-flag"
 import { FormationPitch, FORMATIONS } from "@/components/formation-pitch"
 import { supabase } from "@/lib/supabase"
+import JSZip from "jszip"
 import {
   signInUsername, fetchMyProfile, registerUser,
   fetchAllProfiles, updateProfile, deleteProfile,
@@ -568,22 +569,23 @@ export default function EliteSquadApp() {
     const targets=members.filter(m=>selectedIds.includes(m.id)&&m.role==="PLAYERS"&&m.passportImage)
     if(targets.length===0){setExportMsg("No passports in this selection");return}
     setExportMsg("")
-    const pend=await Promise.all(targets.map(async m=>{
-      let href=m.passportImage
-      const ext=(m.passportImage.split('?')[0].match(/\.(\w{3,4})$/)||[])[1]||"jpg"
-      let revoke=false
-      if(!m.passportImage.startsWith("data:")&&!m.passportImage.startsWith("blob:")){
-        try{href=URL.createObjectURL(await (await fetch(m.passportImage)).blob());revoke=true}catch(e){console.error("export fail",m.name,e);return null}
-      }
-      return {name:m.name,href,ext,revoke}
+    const zip=new JSZip()
+    await Promise.all(targets.map(async(m)=>{
+      try{
+        let blob:Blob
+        if(m.passportImage.startsWith("data:")){const b=await fetch(m.passportImage);blob=await b.blob()}
+        else if(m.passportImage.startsWith("blob:")){const b=await fetch(m.passportImage);blob=await b.blob()}
+        else{const b=await fetch(m.passportImage);if(b.ok)blob=await b.blob();else return}
+        const ext=(m.passportImage.split('?')[0].match(/\.(\w{3,4})$/)||[])[1]||"jpg"
+        const safeName=m.name.replace(/[^\p{L}\p{N}]+/gu,"_")
+        zip.file(`${safeName}_passport.${ext}`,blob)
+      }catch(e){console.error("export fail",m.name,e)}
     }))
-    for(const d of pend.filter(Boolean) as any[]){
-      const a=document.createElement("a")
-      a.href=d.href
-      a.download=`${d.name.replace(/[^\p{L}\p{N}]+/gu,"_")}_passport.${d.ext}`
-      document.body.appendChild(a);a.click();a.remove()
-      if(d.revoke)setTimeout(()=>URL.revokeObjectURL(d.href),5000)
-    }
+    if(Object.keys(zip.files).length===0){setExportMsg("Export failed");return}
+    const content=await zip.generateAsync({type:"blob"})
+    const url=URL.createObjectURL(content)
+    const a=document.createElement("a");a.href=url;a.download=`${catLabel(teamCat)}_passports.zip`;document.body.appendChild(a);a.click();a.remove()
+    setTimeout(()=>URL.revokeObjectURL(url),10000)
   }
 
   const approveMatch=(match:any)=>{
