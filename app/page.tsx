@@ -5,7 +5,7 @@ import {
   LogOut, Goal, History, Trash2, Trophy,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download
+  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
@@ -1820,9 +1820,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 </div>
               )}
 
-              {/* Featured hero card — the very next match, given real visual weight */}
+              {/* Featured hero card — the very next match, given real visual weight.
+                  Stays a dark navy banner in BOTH themes (it's a hero accent, not a panel). */}
               {next&&(
-                <div className="relative rounded-3xl overflow-hidden" style={{background:"linear-gradient(140deg, var(--c-panel2) 0%, var(--c-ink) 58%, #E30613 175%)"}}>
+                <div className="relative rounded-3xl overflow-hidden" style={{background:"linear-gradient(140deg, #142c52 0%, #0b1322 58%, #E30613 175%)"}}>
                   <div className="absolute inset-0" style={{background:"radial-gradient(600px 200px at 20% -10%, rgba(227,6,19,.25), transparent 60%)"}}/>
                   <div className="relative p-6">
                     <div className="flex items-center justify-between mb-5">
@@ -1839,6 +1840,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     <p className="text-[10px] font-bold text-white/70 mt-3.5">{fmtDateWords(next.date)}</p>
                     <div className="flex items-center gap-2 mt-5">
                       <MapPin size={11} className="text-[#f6c744]"/><span className="text-[10px] font-bold text-white/85">{next.venue||"Venue TBD"}</span>
+                      <View size={11} className="text-[#f6c744] ml-2"/><span className="text-[10px] font-bold text-white/85">{next.competition||"Friendly"}</span>
                     </div>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#E30613]"/>
