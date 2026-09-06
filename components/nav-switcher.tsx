@@ -13,16 +13,16 @@ export function NavSwitcher() {
   const isCoachesActive = pathname === "/coaches"
 
   return (
-    <div className="flex bg-[#0b1322] p-1 rounded-2xl border border-[rgba(148,170,210,.16)]">
+    <div className="flex bg-[var(--c-ink)] p-1 rounded-2xl border border-[rgba(var(--line-rgb),.16)]">
       <Link href="/">
         <button
           className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${
             isPlayersActive
               ? "bg-[#E30613] text-white shadow-lg shadow-[#E30613]/25"
-              : "text-[#8fa0bd] hover:text-[#EDEFF4] hover:bg-[#12294e]"
+              : "text-[var(--c-textFaint)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel2)]"
           }`}
         >
-          <Users size={14} className={isPlayersActive ? "text-white" : "text-[#54647d]"} />
+          <Users size={14} className={isPlayersActive ? "text-white" : "text-[var(--c-textDim)]"} />
           Players
         </button>
       </Link>
@@ -32,10 +32,10 @@ export function NavSwitcher() {
           className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-[10px] font-black uppercase transition-all ${
             isCoachesActive
               ? "bg-[#E30613] text-white shadow-lg shadow-[#E30613]/25"
-              : "text-[#8fa0bd] hover:text-[#EDEFF4] hover:bg-[#12294e]"
+              : "text-[var(--c-textFaint)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel2)]"
           }`}
         >
-          <Briefcase size={14} className={isCoachesActive ? "text-white" : "text-[#54647d]"} />
+          <Briefcase size={14} className={isCoachesActive ? "text-white" : "text-[var(--c-textDim)]"} />
           Coaches
         </button>
       </Link>

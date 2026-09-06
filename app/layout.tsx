@@ -4,6 +4,7 @@ import Script from "next/script"
 import "./globals.css";
 import { LanguageProvider } from "@/lib/language-context";
 import { PlayersProvider } from "@/lib/players-context";
+import { ThemeProvider } from "@/lib/theme-context";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -50,16 +51,19 @@ export default function RootLayout({
                   navigator.serviceWorker.register("/sw.js");
                 });
               }
+              (function(){var t=localStorage.getItem('ftf-theme')||'dark';document.documentElement.setAttribute('data-theme',t)})()
             `,
           }}
         />
       </head>
       <body className={inter.className}>
-        <LanguageProvider>
-          <PlayersProvider>
-            {children}
-          </PlayersProvider>
-        </LanguageProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <PlayersProvider>
+              {children}
+            </PlayersProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

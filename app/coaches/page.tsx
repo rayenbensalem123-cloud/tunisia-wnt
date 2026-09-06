@@ -42,11 +42,11 @@ export default function CoachesPage() {
       </div>
 
       {coaches.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 gap-5 rounded-2xl border-2 border-dashed border-[rgba(148,170,210,.18)] text-center">
-          <div className="w-16 h-16 rounded-2xl bg-[#12294e] border border-[rgba(148,170,210,.18)] flex items-center justify-center"><Briefcase size={26} className="text-[#f6c744]"/></div>
+        <div className="flex flex-col items-center justify-center py-24 gap-5 rounded-2xl border-2 border-dashed border-[rgba(var(--line-rgb),.18)] text-center">
+          <div className="w-16 h-16 rounded-2xl bg-[var(--c-panel2)] border border-[rgba(var(--line-rgb),.18)] flex items-center justify-center"><Briefcase size={26} className="text-[#f6c744]"/></div>
           <div>
-            <p className="text-[13px] font-black uppercase tracking-widest text-[#EDEFF4]">No staff registered</p>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-[#73849e] mt-1.5">Hire your technical body to build the delegation</p>
+            <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">No staff registered</p>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">Hire your technical body to build the delegation</p>
           </div>
           <button onClick={handleHire} className="mt-2 px-6 py-3 rounded-full bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg">
             <UserPlus size={15} /> Hire Staff
@@ -71,7 +71,7 @@ export default function CoachesPage() {
                   className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" 
                   alt={coach.name} 
                 />
-                <div className="absolute top-4 left-4 bg-[#0c1f3d]/85 backdrop-blur-md px-2 py-1 rounded-sm border border-[#e3062c]/45">
+                <div className="absolute top-4 left-4 bg-[var(--c-bg)]/85 backdrop-blur-md px-2 py-1 rounded-sm border border-[#e3062c]/45">
                   <span className="text-[8px] font-black text-white uppercase tracking-widest">{coach.role}</span>
                 </div>
               </div>
@@ -117,13 +117,13 @@ export default function CoachesPage() {
               <div className="absolute bottom-16 left-1/2 -translate-x-1/2 flex gap-2 opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0 duration-300">
                 <button 
                   onClick={() => handleEdit(coach)} 
-                  className="w-8 h-8 bg-[#12294e] text-white rounded-full flex items-center justify-center hover:bg-[#E30613] transition-colors shadow-lg"
+                  className="w-8 h-8 bg-[var(--c-panel2)] text-white rounded-full flex items-center justify-center hover:bg-[#E30613] transition-colors shadow-lg"
                 >
                   <Edit2 className="w-3.5 h-3.5" />
                 </button>
                 <button 
                   onClick={() => deleteCoach(coach.id)}
-                  className="w-8 h-8 bg-[#12294e] text-white rounded-full flex items-center justify-center hover:bg-[#E30613] transition-colors shadow-lg"
+                  className="w-8 h-8 bg-[var(--c-panel2)] text-white rounded-full flex items-center justify-center hover:bg-[#E30613] transition-colors shadow-lg"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
