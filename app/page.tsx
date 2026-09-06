@@ -5,7 +5,7 @@ import {
   LogOut, Goal, History, Trash2, Trophy,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard
+  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
@@ -434,6 +434,9 @@ export default function EliteSquadApp() {
   const [pendingReviewOpen,setPendingReviewOpen]=useState(false)
   const [pendingMatchesOpen,setPendingMatchesOpen]=useState(false)
   const [renderTick,setRenderTick]=useState(0)
+  const [selectMode,setSelectMode]=useState(false)
+  const [selectedIds,setSelectedIds]=useState<number[]>([])
+  const [exportMsg,setExportMsg]=useState("")
   const [actionPick,setActionPick]=useState<"goal"|"yellow"|"red"|"sub"|null>(null)
   const [subOutId,setSubOutId]=useState<number|null>(null)
   const [matchStep,setMatchStep]=useState(0)
@@ -557,6 +560,30 @@ export default function EliteSquadApp() {
   const handleImport=(data:{members:any[],matches:any[]})=>{
     if(data.members?.length) setMembers(data.members)
     if(data.matches?.length) setMatches(data.matches)
+  }
+
+  const toggleSelect=(id:number)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])
+  const exitSelectMode=()=>{setSelectMode(false);setSelectedIds([]);setExportMsg("")}
+  const exportSelectedPassports=async()=>{
+    const targets=members.filter(m=>selectedIds.includes(m.id)&&m.role==="PLAYERS"&&m.passportImage)
+    if(targets.length===0){setExportMsg("No passports in this selection");return}
+    setExportMsg("")
+    const pend=await Promise.all(targets.map(async m=>{
+      let href=m.passportImage
+      const ext=(m.passportImage.split('?')[0].match(/\.(\w{3,4})$/)||[])[1]||"jpg"
+      let revoke=false
+      if(!m.passportImage.startsWith("data:")&&!m.passportImage.startsWith("blob:")){
+        try{href=URL.createObjectURL(await (await fetch(m.passportImage)).blob());revoke=true}catch(e){console.error("export fail",m.name,e);return null}
+      }
+      return {name:m.name,href,ext,revoke}
+    }))
+    for(const d of pend.filter(Boolean) as any[]){
+      const a=document.createElement("a")
+      a.href=d.href
+      a.download=`${d.name.replace(/[^\p{L}\p{N}]+/gu,"_")}_passport.${d.ext}`
+      document.body.appendChild(a);a.click();a.remove()
+      if(d.revoke)setTimeout(()=>URL.revokeObjectURL(d.href),5000)
+    }
   }
 
   const approveMatch=(match:any)=>{
@@ -815,6 +842,7 @@ export default function EliteSquadApp() {
               </button>
             </Dropdown>
 
+            {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} title={selectMode?"Exit selection":"Select players to export passports"} className={`p-2 rounded-full transition-all ${selectMode?'bg-[#f6c744] text-[#0c1f3d]':'bg-zinc-900 text-white hover:bg-zinc-700'}`}><ListChecks size={16}/></button>}
             {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="p-2 rounded-full bg-[#E30613] text-white hover:bg-red-700 transition-all"><Plus size={16}/></button>}
           </div>
         </div>
@@ -872,7 +900,15 @@ export default function EliteSquadApp() {
           const cs=getCardStatus(m)
           const n = ++numCounters[m.role==="PLAYERS" ? ((m.position||"FORWARD") in numCounters ? m.position : "FORWARD") : "STAFF"]
           return(
-            <div key={m.id} onClick={()=>setSelMember(m)} className="group cursor-pointer relative animate-[fadeUp_0.5s_ease-out_both]" style={{animationDelay:`${i*60}ms`}}>
+            <div key={m.id} onClick={()=>selectMode?toggleSelect(m.id):setSelMember(m)} className={`group cursor-pointer relative animate-[fadeUp_0.5s_ease-out_both] ${selectMode?'select-none':''}`} style={{animationDelay:`${i*60}ms`}}>
+              {selectMode&&(
+                <div className={`absolute top-3 left-3 z-20 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedIds.includes(m.id)?'bg-[#e3062c] border-[#e3062c] text-white':'bg-[#0c1f3d]/80 border-white/60 text-transparent'}`}>
+                  <Check size={13}/>
+                </div>
+              )}
+              {selectMode&&(
+                <div className={`absolute inset-0 z-[15] rounded-2xl pointer-events-none transition-all ${selectedIds.includes(m.id)?'ring-[3px] ring-[#e3062c] bg-[#e3062c]/10':'ring-2 ring-white/30'}`}/>
+              )}
               {cs&&(
                 <div className={`absolute z-10 px-2 py-0.5 rounded-full text-[6px] font-black uppercase tracking-wider translate-x-3 translate-y-3 ${cs==="suspended"?'bg-red-600 text-white':'bg-yellow-400 text-yellow-900'}`}>
                   {cs==="suspended"?"BANNED":"WARN"}
@@ -901,6 +937,17 @@ export default function EliteSquadApp() {
         })})()}
 
       </div>
+
+      {/* ─── PASSPORT SELECTION EXPORT BAR ─── */}
+      {selectMode&&(
+        <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[300] flex items-center gap-3 px-5 py-3 rounded-2xl bg-[#0c1f3d] border border-[rgba(148,170,210,.35)] shadow-2xl">
+          <span className="text-[9px] font-black uppercase tracking-[.2em] text-[#f7f1e6]">{selectedIds.length} selected</span>
+          <button onClick={()=>setSelectedIds(filtered.map((m:any)=>m.id))} className="px-2.5 py-1.5 rounded-lg bg-white/10 text-[#f7f1e6] text-[8px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">Select All</button>
+          <button onClick={exportSelectedPassports} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#e3062c] text-white text-[9px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Download size={11}/>Export</button>
+          <button onClick={exitSelectMode} className="px-2.5 py-1.5 rounded-lg bg-white/10 text-[#73849e] text-[8px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">Cancel</button>
+          {exportMsg&&<span className="text-[8px] font-black uppercase tracking-widest text-[#f6c744]">{exportMsg}</span>}
+        </div>
+      )}
 
       {/* ═══════════════════════════════════════════
           PROFILE MODAL
