@@ -79,6 +79,9 @@
   --c-cream3: #f3f0e8;
   --c-cream4: #e8dcc8;
   --line-rgb: 148,170,210;
+  --acc-gold: #f6c744;
+  --acc-red: #ff5f72;
+  --acc-blue: #7ec3ff;
 }
 
 /* ── Light theme ── */
@@ -122,6 +125,9 @@ html[data-theme="light"] {
   --c-cream3: #57534e;
   --c-cream4: #78716c;
   --line-rgb: 40,55,80;
+  --acc-gold: #8a6100;
+  --acc-red: #c2253c;
+  --acc-blue: #1e66a8;
 }
 
 /* Football operations identity — the dashboard is intentionally built around

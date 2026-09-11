@@ -246,7 +246,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             {filtered.length === 0 && (
               <div className="mt-8 flex flex-col items-center justify-center py-20 gap-5 rounded-3xl border-2 border-dashed border-[rgba(var(--line-rgb),.18)] text-center">
                 <div className="w-16 h-16 rounded-2xl bg-[var(--c-panel2)] border border-[rgba(var(--line-rgb),.16)] flex items-center justify-center">
-                  <CalendarRange size={26} className="text-[#f6c744]"/>
+                  <CalendarRange size={26} className="text-[var(--acc-gold)]"/>
                 </div>
                 <div>
                   <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">Aucun rassemblement enregistré</p>
@@ -276,7 +276,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                     <div className="p-6">
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                          <span className="inline-block px-2.5 py-1 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[#ff5f72] text-[7px] font-black uppercase tracking-widest">{catName(s.teamCategory)}</span>
+                          <span className="inline-block px-2.5 py-1 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[var(--acc-red)] text-[7px] font-black uppercase tracking-widest">{catName(s.teamCategory)}</span>
                           <h3 className="mt-3 text-[15px] font-black uppercase tracking-tight text-[var(--c-text)] truncate">{s.name}</h3>
                           <p className="mt-1.5 flex items-center gap-1.5 text-[9px] font-bold text-[var(--c-textDim)]">
                             <MapPin size={11}/>{s.location || "Lieu —"}
@@ -301,7 +301,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                         {hasPlayers && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">{s.players.length} joueurs</span>}
                         {hasStaff && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">Staff</span>}
                         {hasReport && <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[7px] font-black uppercase tracking-wider">Rapport</span>}
-                        {hasPhotos && <span className="px-2 py-0.5 rounded-md bg-[#7ec3ff]/10 border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider">{s.images.length} photos</span>}
+                        {hasPhotos && <span className="px-2 py-0.5 rounded-md bg-[#7ec3ff]/10 border border-[#7ec3ff]/30 text-[var(--acc-blue)] text-[7px] font-black uppercase tracking-wider">{s.images.length} photos</span>}
                       </div>
 
                       <div className="mt-6 flex items-center gap-2">
@@ -309,7 +309,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                           Ouvrir le dossier
                         </button>
                         {canManage && (
-                          <button onClick={(e) => { e.stopPropagation(); startEdit(s) }} title="Modifier" className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[#f6c744] hover:border-[#f6c744]/40 transition-all"><Pencil size={15}/></button>
+                          <button onClick={(e) => { e.stopPropagation(); startEdit(s) }} title="Modifier" className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--acc-gold)] hover:border-[#f6c744]/40 transition-all"><Pencil size={15}/></button>
                         )}
                         {canManage && (
                           <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(s) }} title="Supprimer" className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><Trash2 size={15}/></button>
@@ -419,7 +419,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                       <a href={draft.reportUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/15 transition-all">
                         <Download size={12}/> Ouvrir le rapport
                       </a>
-                      <button onClick={() => setDraft({ ...draft, reportUrl: "", reportName: "" })} className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[#ff4f66] text-[9px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all">
+                      <button onClick={() => setDraft({ ...draft, reportUrl: "", reportName: "" })} className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--acc-red)] text-[9px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all">
                         <Trash2 size={12}/> Retirer
                       </button>
                     </div>
@@ -533,7 +533,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
             <button onClick={onEdit} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 shadow-md shadow-[#E30613]/20 transition-all">
               <Pencil size={13}/> Modifier
             </button>
-            <button onClick={onDelete} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#ff4f66]/30 bg-[#E30613]/10 text-[#ff5f72] hover:bg-[#E30613]/20 text-[9px] font-black uppercase tracking-wider transition-all">
+            <button onClick={onDelete} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#ff4f66]/30 bg-[#E30613]/10 text-[var(--acc-red)] hover:bg-[#E30613]/20 text-[9px] font-black uppercase tracking-wider transition-all">
               <Trash2 size={13}/> Supprimer
             </button>
           </div>
@@ -616,7 +616,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
               ? 'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/25'
               : 'bg-[var(--c-panel3)] text-[var(--c-textMid)] border border-[rgba(var(--line-rgb),.16)] hover:text-[var(--c-text)] hover:border-[#f6c744]/30'}`}>
             {label}
-            <span className={`px-1.5 py-0.5 rounded-md text-[7px] font-black ${tab === k ? 'bg-white/20 text-white' : 'bg-[var(--c-panel2)] text-[var(--c-textDim)]'}`}>{n}</span>
+            <span className={`px-1.5 py-0.5 rounded-md text-[7px] font-black ${tab === k ? 'bg-[rgba(255,255,255,0.18)] text-white' : 'bg-[var(--c-panel2)] text-[var(--c-textDim)]'}`}>{n}</span>
           </button>
         ))}
       </div>
@@ -648,7 +648,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
                           <div className="h-0.5 bg-gradient-to-r from-[#f6c744]/70 to-transparent"/>
                           <div className="p-4 sm:p-5">
                             <div className="flex items-center gap-2 flex-wrap text-[9px] font-bold text-[var(--c-textDim)]">
-                              {p.time && <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#E30613]/10 border border-[#E30613]/25 text-[#ff5f72]"><Clock size={10}/>{p.time}</span>}
+                              {p.time && <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#E30613]/10 border border-[#E30613]/25 text-[var(--acc-red)]"><Clock size={10}/>{p.time}</span>}
                               <span className="text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Séance {i + 1}</span>
                             </div>
                             <p className="mt-2.5 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)]">{p.activity || "Séance"}</p>
@@ -686,9 +686,9 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
                       <div key={id} className="grid grid-cols-[44px_1fr] sm:grid-cols-[56px_1fr_140px_100px] gap-3 items-center px-5 py-3 hover:bg-[var(--c-panel3)]/50 transition-colors">
                         <div className="flex items-center justify-center">
                           {num ? (
-                            <span className="w-8 h-8 rounded-lg bg-[#E30613]/15 border border-[#E30613]/40 text-[#ff5f72] text-[11px] font-black italic flex items-center justify-center">{num}</span>
+                            <span className="w-8 h-8 rounded-lg bg-[#E30613]/15 border border-[#E30613]/40 text-[var(--acc-red)] text-[11px] font-black italic flex items-center justify-center">{num}</span>
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[#f6c744] uppercase">{(m?.name || "?")[0]}</div>
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[var(--acc-gold)] uppercase">{(m?.name || "?")[0]}</div>
                           )}
                         </div>
                         <div className="min-w-0">
@@ -722,11 +722,11 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
                 const role = (stage.staffRoles || []).find(r => r.memberId === id)?.role
                 return (
                   <div key={`${id}-${idx}`} className="flex items-center gap-3.5 rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 p-4 hover:border-[#7ec3ff]/35 transition-all">
-                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7ec3ff]/20 to-[#E30613]/20 border border-[#7ec3ff]/25 flex items-center justify-center text-[15px] font-black text-[#7ec3ff] uppercase shrink-0">{(m?.name || "?")[0]}</div>
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7ec3ff]/20 to-[#E30613]/20 border border-[#7ec3ff]/25 flex items-center justify-center text-[15px] font-black text-[var(--acc-blue)] uppercase shrink-0">{(m?.name || "?")[0]}</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
                       <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase tracking-wider">{m?.role === "PLAYERS" ? "Staff" : (m?.role || "—")}</p>
-                      {role && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-[#7ec3ff]/12 border border-[#7ec3ff]/35 text-[#7ec3ff] text-[7px] font-black uppercase tracking-widest">{role}</span>}
+                      {role && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-[#7ec3ff]/12 border border-[#7ec3ff]/35 text-[var(--acc-blue)] text-[7px] font-black uppercase tracking-widest">{role}</span>}
                     </div>
                   </div>
                 )
@@ -804,7 +804,7 @@ function ProgramTab({ draft, setDraft }: { draft: Stage; setDraft: React.Dispatc
     <div>
       <div className="flex items-center justify-between mb-3">
         <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Programme d'entraînement</p>
-        <button onClick={add} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--c-panel3)] border border-[#f6c744]/30 text-[#f6c744] text-[8px] font-black uppercase tracking-wider hover:border-[#f6c744]/60 transition-all"><Plus size={11}/> Ajouter</button>
+        <button onClick={add} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--c-panel3)] border border-[#f6c744]/30 text-[var(--acc-gold)] text-[8px] font-black uppercase tracking-wider hover:border-[#f6c744]/60 transition-all"><Plus size={11}/> Ajouter</button>
       </div>
       {items.length === 0 && <p className="text-[10px] font-bold text-[var(--c-textDim)] py-8 text-center border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">Aucune séance — ajoutez la première.</p>}
       <div className="space-y-2.5">
@@ -843,12 +843,12 @@ function PlayersTab({ draft, setDraft, members }: { draft: Stage; setDraft: Reac
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {pool.map(m => (
           <button key={m.id} onClick={() => toggle(m.id)} className="flex items-center gap-2.5 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-2.5 text-left hover:border-[#f6c744]/40 hover:bg-[var(--c-panel3)]/70 transition-all">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[#f6c744] uppercase shrink-0">{(m.name||"?")[0]}</div>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[var(--acc-gold)] uppercase shrink-0">{(m.name||"?")[0]}</div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m.name}</p>
               <p className="text-[7px] font-bold text-[var(--c-textDim)] uppercase">{m.position || "—"}</p>
             </div>
-            <span className="w-6 h-6 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[#f6c744]"><Plus size={11}/></span>
+            <span className="w-6 h-6 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[var(--acc-gold)]"><Plus size={11}/></span>
           </button>
         ))}
         {pool.length === 0 && <p className="col-span-full text-[10px] font-bold text-[var(--c-textDim)] text-center py-8 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">Aucun joueur disponible.</p>}
@@ -896,12 +896,12 @@ function StaffTab({ draft, setDraft, members }: { draft: Stage; setDraft: React.
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {pool.map(m => (
           <button key={m.id} onClick={() => toggle(m.id)} className="flex items-center gap-2.5 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-2.5 text-left hover:border-[#7ec3ff]/40 hover:bg-[var(--c-panel3)]/70 transition-all">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[#7ec3ff] uppercase shrink-0">{(m.name||"?")[0]}</div>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[var(--acc-blue)] uppercase shrink-0">{(m.name||"?")[0]}</div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m.name}</p>
               <p className="text-[7px] font-bold text-[var(--c-textDim)] uppercase">{m.role || "STAFF"}</p>
             </div>
-            <span className="w-6 h-6 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[#7ec3ff]"><Plus size={11}/></span>
+            <span className="w-6 h-6 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[var(--acc-blue)]"><Plus size={11}/></span>
           </button>
         ))}
         {pool.length === 0 && <p className="col-span-full text-[10px] font-bold text-[var(--c-textDim)] text-center py-8 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">Aucun staff disponible.</p>}
@@ -914,7 +914,7 @@ function StaffTab({ draft, setDraft, members }: { draft: Stage; setDraft: React.
             const roleVal = (draft.staffRoles || []).find(r => r.memberId === id)?.role || ""
             return (
               <div key={id} className="flex items-center gap-3 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-3 flex-wrap">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[#7ec3ff] uppercase shrink-0">{(m?.name||"?")[0]}</div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[var(--acc-blue)] uppercase shrink-0">{(m?.name||"?")[0]}</div>
                 <p className="flex-1 min-w-32 text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
                 <input value={roleVal} onChange={e => setRole(id, e.target.value)} placeholder="Rôle (ex: Sélectionneur, Kiné…)" className="w-52 px-3 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[9px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
                 <button onClick={() => toggle(id)} className="p-1.5 rounded-lg text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><X size={13}/></button>
