@@ -217,7 +217,6 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                 <h2 className="mt-5 text-4xl sm:text-5xl font-black italic uppercase tracking-tighter leading-[0.95]">
                   Rassemblements <span className="text-[#f6c744]">Nationaux</span>
                 </h2>
-                <p className="mt-4 text-[10px] font-black text-white/60 uppercase tracking-[0.22em]">Programme · Convocations · Encadrement · Rapport · Photos</p>
               </div>
             </div>
 
@@ -239,7 +238,6 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                   <Plus size={16} strokeWidth={3}/>
                 </span>
                 <span className="leading-none">Créer un nouveau rassemblement</span>
-                <span className="hidden md:inline text-[8px] font-semibold tracking-[0.18em] text-white/60 uppercase ml-1">Programme · Convocations · Staff · Rapport · Photos</span>
               </button>
             )}
 
@@ -338,7 +336,6 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
               <div>
                 <p className="text-[8px] font-black uppercase tracking-[0.25em] text-[var(--c-textDim)]">Rassemblements / {editing ? "Modifier" : "Nouveau"}</p>
                 <h2 className="mt-1 text-2xl font-black italic uppercase tracking-tight text-[var(--c-text)]">{editing ? "Modifier le Rassemblement" : "Nouveau Rassemblement"}</h2>
-                <p className="mt-1 text-[9px] font-bold text-[var(--c-textDim)] uppercase tracking-wider">Programme · Convocations · Staff · Rapport · Photos</p>
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setView("list")} className="px-5 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]/40 text-[9px] font-black uppercase tracking-wider transition-all">Annuler</button>
