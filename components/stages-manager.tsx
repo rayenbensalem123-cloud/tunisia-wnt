@@ -1,6 +1,6 @@
 "use client"
 import React, { useState } from "react"
-import { ChevronLeft, X, Plus, ArrowLeft, Calendar, MapPin, Users, FileText, Image as ImageIcon, Trash2, Save, Pencil, Download, Check, Briefcase, CalendarRange, Clock } from "lucide-react"
+import { ChevronLeft, X, Plus, ArrowLeft, Calendar, CalendarDays, MapPin, Users, FileText, Image as ImageIcon, Trash2, Save, Pencil, Download, Check, Briefcase, CalendarRange, Clock, Activity } from "lucide-react"
 import ThemeToggle from "@/components/theme-toggle"
 
 type Stage = {
@@ -60,6 +60,13 @@ const durDays = (s: Stage): number | null => {
   const b = new Date(s.endDate + "T00:00:00")
   const d = Math.round((b.getTime() - a.getTime()) / 86400000)
   return d >= 0 ? d + 1 : null
+}
+
+const stageStatus = (s: Stage): { key: "done" | "live" | "upcoming"; label: string } => {
+  const today = new Date().toISOString().slice(0, 10)
+  if (s.endDate && s.endDate < today) return { key: "done", label: "Terminé" }
+  if (s.startDate && s.startDate > today) return { key: "upcoming", label: "À venir" }
+  return { key: "live", label: "En cours" }
 }
 
 let toastTimer: any = null
@@ -479,7 +486,41 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
   const [tab, setTab] = useState<TabKey>("program")
   const memberById = (id: number) => members.find(m => m.id === id)
   const dur = durDays(stage)
+  const status = stageStatus(stage)
   const d = stage.startDate ? new Date(stage.startDate + "T00:00:00") : null
+  const sessions = (stage.program || []).length
+  const photos = (stage.images || []).length
+  const players = stage.players || []
+  const staff = stage.staff || []
+
+  const statusStyles = {
+    done: "bg-[#E30613]/20 text-[#ffd0d7] border-[#ff5f72]/40",
+    live: "bg-[#f6c744]/20 text-[#f6c744] border-[#f6c744]/45",
+    upcoming: "bg-[#7ec3ff]/15 text-[#7ec3ff] border-[#7ec3ff]/40",
+  } as const
+
+  const statusDot = {
+    done: "bg-[#ff5f72]",
+    live: "bg-[#f6c744]",
+    upcoming: "bg-[#7ec3ff]",
+  } as const
+
+  const groupedDays: { label: string; items: NonNullable<Stage["program"]> }[] = []
+  for (const p of stage.program || []) {
+    const label = (p.day || "Jour").trim().toUpperCase()
+    const last = groupedDays[groupedDays.length - 1]
+    if (last && last.label === label) last.items.push(p)
+    else groupedDays.push({ label, items: [p] })
+  }
+
+  const tabs: [TabKey, string, number][] = [
+    ["program", "Programme", sessions],
+    ["players", "Joueurs", players.length],
+    ["staff", "Staff", staff.length],
+    ["report", "Rapport", stage.reportUrl ? 1 : 0],
+    ["photos", "Photos", photos],
+  ]
+
   return (
     <>
       {/* Breadcrumb */}
@@ -487,56 +528,101 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
         <button onClick={onBack} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-panel3)]/70 text-[var(--c-textMid)] hover:text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider transition-all">
           <ArrowLeft size={13}/> Tous les rassemblements
         </button>
-        <div className="flex gap-2">
-          {canManage && (
-            <>
-              <button onClick={onEdit} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-panel3)]/70 text-[var(--c-textDim)] hover:text-[#f6c744] hover:border-[#f6c744]/40 text-[9px] font-black uppercase tracking-wider transition-all">
-                <Pencil size={13}/> Modifier
-              </button>
-              <button onClick={onDelete} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#ff4f66]/30 bg-[#E30613]/10 text-[#ff5f72] hover:bg-[#E30613]/20 text-[9px] font-black uppercase tracking-wider transition-all">
-                <Trash2 size={13}/> Supprimer
-              </button>
-            </>
-          )}
-        </div>
+        {canManage && (
+          <div className="flex gap-2">
+            <button onClick={onEdit} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 shadow-md shadow-[#E30613]/20 transition-all">
+              <Pencil size={13}/> Modifier
+            </button>
+            <button onClick={onDelete} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#ff4f66]/30 bg-[#E30613]/10 text-[#ff5f72] hover:bg-[#E30613]/20 text-[9px] font-black uppercase tracking-wider transition-all">
+              <Trash2 size={13}/> Supprimer
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Detail hero */}
-      <div className="relative overflow-hidden rounded-[28px] mt-5 px-7 sm:px-10 py-9 bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white">
-        <div className="absolute inset-0 opacity-[0.08] pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 82% 16%, #f6c744 0, transparent 40%)" }}/>
-        <div className="absolute -right-3 -top-8 text-[90px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">{stage.name.slice(0, 12)}</div>
-        <div className="relative">
-          <div className="flex items-start justify-between gap-6 flex-wrap">
-            <div className="flex items-center gap-5 flex-wrap">
-              {d && (
-                <div className="rounded-2xl bg-white/[0.08] border border-white/20 px-5 py-3.5 text-center min-w-[88px]">
-                  <p className="text-[30px] font-black italic leading-none text-[#f6c744]">{String(d.getDate()).padStart(2, "0")}</p>
-                  <p className="mt-1 text-[8px] font-black text-white/65 uppercase tracking-widest">{MONTHS[d.getMonth()]} {d.getFullYear()}</p>
+      {/* ─── DETAIL HERO ─── */}
+      <div className="relative overflow-hidden rounded-[28px] mt-5 text-white bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c]">
+        <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#E30613] via-[#f6c744] to-[#E30613]"/>
+        <div className="absolute -right-4 -top-10 text-[110px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">{stage.name.slice(0, 14)}</div>
+
+        <div className="relative px-7 sm:px-10 py-9 flex flex-col lg:flex-row lg:items-start gap-7">
+          {/* Date block */}
+          {d && (
+            <div className="shrink-0 flex flex-row lg:flex-col items-center gap-3 lg:gap-0 lg:items-stretch">
+              <div className="rounded-2xl bg-white/[0.08] border border-white/20 px-6 py-4 text-center min-w-[96px]">
+                <p className="text-[40px] font-black italic leading-none text-[#f6c744]">{String(d.getDate()).padStart(2, "0")}</p>
+                <p className="mt-1.5 text-[9px] font-black text-white/70 uppercase tracking-widest">{MONTHS[d.getMonth()]} {d.getFullYear()}</p>
+              </div>
+              <div className="lg:mt-4 h-8 lg:h-0 w-px lg:w-full bg-white/15"/>
+              {dur !== null && (
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-4 lg:gap-x-0">
+                  {[...Array(Math.min(dur, 14))].map((_, i) => (
+                    <span key={i} className="w-1 h-1 rounded-full bg-[#f6c744]/70"/>
+                  ))}
+                  <span className="hidden lg:block col-span-full mt-1.5 text-[7px] font-black text-white/50 uppercase tracking-widest text-center">{dur} jours</span>
                 </div>
               )}
-              <div>
-                <span className="inline-block px-2.5 py-1 rounded-md bg-[#E30613]/40 border border-[#ff5f72]/50 text-[#ffd0d7] text-[7px] font-black uppercase tracking-widest">{CATS.find(c => c.value === stage.teamCategory)?.label || stage.teamCategory}</span>
-                <h2 className="mt-3 text-3xl sm:text-4xl font-black italic uppercase tracking-tighter leading-none">{stage.name}</h2>
-                <div className="mt-3 flex items-center gap-3 text-[9px] font-bold text-white/60 flex-wrap">
-                  <span className="flex items-center gap-1.5"><MapPin size={11}/>{stage.location || "Lieu —"}</span>
-                  <span className="flex items-center gap-1.5"><Calendar size={11}/>{fmtDate(stage.startDate)} → {fmtDate(stage.endDate)}</span>
-                  {dur !== null && <span className="px-2 py-0.5 rounded-md bg-white/[0.08] border border-white/15">{dur} jours</span>}
-                  {stage.createdByUsername && <span className="flex items-center gap-1.5 opacity-70">Créé par {stage.createdByUsername}</span>}
-                </div>
-              </div>
             </div>
+          )}
+
+          {/* Identity */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#E30613]/45 border border-[#ff5f72]/55 text-[#ffd0d7] text-[7px] font-black uppercase tracking-widest">
+                {CATS.find(c => c.value === stage.teamCategory)?.label || stage.teamCategory}
+              </span>
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[7px] font-black uppercase tracking-widest ${statusStyles[status.key]}`}>
+                <span className={`w-1.5 h-1.5 rounded-full ${statusDot[status.key]}`}/>
+                {status.label}
+              </span>
+              {stage.id != null && <span className="text-[9px] font-black italic text-white/40 uppercase tracking-[0.2em]">Camp #{stage.id}</span>}
+            </div>
+
+            <h2 className="mt-4 text-3xl sm:text-[42px] font-black italic uppercase tracking-tighter leading-[0.98]">{stage.name}</h2>
+
+            <div className="mt-4 flex items-center gap-3 text-[9px] font-bold text-white/60 flex-wrap">
+              <span className="flex items-center gap-1.5"><MapPin size={11}/>{stage.location || "Lieu —"}</span>
+              <span className="flex items-center gap-1.5"><Calendar size={11}/>{fmtDate(stage.startDate)} → {fmtDate(stage.endDate)}</span>
+              <span className="flex items-center gap-1.5"><Clock size={11}/>{dur !== null ? `${dur} jours` : "Durée —"}</span>
+              <span className="flex items-center gap-1.5"><CalendarDays size={11}/>{sessions} séance{sessions > 1 ? "s" : ""}</span>
+            </div>
+
+            {/* Quick stats strip */}
+            <div className="mt-6 grid grid-cols-3 gap-3 max-w-md">
+              {[
+                { label: "Joueurs", value: players.length, icon: <Users size={14}/> },
+                { label: "Staff", value: staff.length, icon: <Briefcase size={14}/> },
+                { label: "Photos", value: photos, icon: <ImageIcon size={14}/> },
+              ].map(x => (
+                <div key={x.label} className="rounded-xl bg-white/[0.07] border border-white/15 px-4 py-3">
+                  <div className="flex items-center gap-1.5 text-white/55">{x.icon}<span className="text-[7px] font-black uppercase tracking-widest">{x.label}</span></div>
+                  <p className="mt-1 text-xl font-black italic leading-none text-[#f6c744]">{x.value}</p>
+                </div>
+              ))}
+            </div>
+
+            {stage.createdByUsername && (
+              <p className="mt-4 text-[8px] font-bold text-white/40 uppercase tracking-widest">Créé par {stage.createdByUsername}</p>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="mt-6 flex gap-1 flex-wrap">
-        {([["program","Programme"],["players",`Joueurs (${(stage.players||[]).length})`],["staff",`Staff (${(stage.staff||[]).length})`],["report","Rapport"],["photos",`Photos (${(stage.images||[]).length})`]] as [TabKey,string][]).map(([k,label]) => (
-          <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${tab===k?'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25':'bg-[var(--c-panel3)] text-[var(--c-textMid)] border border-[rgba(var(--line-rgb),.16)] hover:text-[var(--c-text)]'}`}>{label}</button>
+      {/* ─── TABS (segmented) ─── */}
+      <div className="mt-7 flex flex-wrap gap-1.5">
+        {tabs.map(([k, label, n]) => (
+          <button key={k} onClick={() => setTab(k)}
+            className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${tab === k
+              ? 'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/25'
+              : 'bg-[var(--c-panel3)] text-[var(--c-textMid)] border border-[rgba(var(--line-rgb),.16)] hover:text-[var(--c-text)] hover:border-[#f6c744]/30'}`}>
+            {label}
+            <span className={`px-1.5 py-0.5 rounded-md text-[7px] font-black ${tab === k ? 'bg-white/20 text-white' : 'bg-[var(--c-panel2)] text-[var(--c-textDim)]'}`}>{n}</span>
+          </button>
         ))}
       </div>
 
       <div className="mt-5">
+        {/* ── PROGRAMME ── */}
         {tab === "program" && (
           <div>
             {(stage.program || []).length === 0 && (
@@ -545,28 +631,40 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
                 <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucun programme enregistré.</p>
               </div>
             )}
-            {(stage.program || []).length > 0 && (
-              <div className="relative pl-7">
-                <div className="absolute left-[13px] top-2 bottom-2 w-px bg-gradient-to-b from-[#f6c744]/50 via-[rgba(var(--line-rgb),.3)] to-transparent"/>
-                <div className="space-y-4">
-                  {(stage.program || []).map((p, i) => (
-                    <div key={i} className="relative">
-                      <span className="absolute -left-7 top-3.5 w-[9px] h-[9px] rounded-full bg-[#f6c744] border-2 border-[var(--c-surface)] shadow-[0_0_0_3px_rgba(246,199,68,.15)]"/>
-                      <div className="rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 p-4 sm:p-5">
-                        <div className="flex items-center gap-3 flex-wrap text-[9px] font-bold text-[var(--c-textDim)]">
-                          <span className="flex items-center gap-1.5"><Calendar size={11}/>{p.day || "Jour"}</span>
-                          {p.time && <span className="flex items-center gap-1.5"><Clock size={11}/>{p.time}</span>}
-                        </div>
-                        <p className="mt-2 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)]">{p.activity || ""}</p>
-                        {p.details && <p className="mt-1 text-[10px] font-bold text-[var(--c-textDim)]">{p.details}</p>}
-                      </div>
+            {groupedDays.length > 0 && (
+              <div className="space-y-6">
+                {groupedDays.map((g, gi) => (
+                  <div key={gi}>
+                    <div className="flex items-center gap-3 mb-3">
+                      <span className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#E30613] to-[#ff2b3a] text-white text-[8px] font-black uppercase tracking-widest shadow-md shadow-[#E30613]/20">
+                        <Activity size={11}/> {g.label}
+                      </span>
+                      <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{g.items.length} séance{g.items.length > 1 ? "s" : ""}</span>
+                      <div className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/>
                     </div>
-                  ))}
-                </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {g.items.map((p, i) => (
+                        <div key={i} className="group rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 hover:border-[#f6c744]/35 hover:bg-[var(--c-panel3)]/80 transition-all overflow-hidden">
+                          <div className="h-0.5 bg-gradient-to-r from-[#f6c744]/70 to-transparent"/>
+                          <div className="p-4 sm:p-5">
+                            <div className="flex items-center gap-2 flex-wrap text-[9px] font-bold text-[var(--c-textDim)]">
+                              {p.time && <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#E30613]/10 border border-[#E30613]/25 text-[#ff5f72]"><Clock size={10}/>{p.time}</span>}
+                              <span className="text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Séance {i + 1}</span>
+                            </div>
+                            <p className="mt-2.5 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)]">{p.activity || "Séance"}</p>
+                            {p.details && <p className="mt-1.5 text-[10px] font-bold text-[var(--c-textDim)] leading-relaxed">{p.details}</p>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>
         )}
+
+        {/* ── JOUEURS ── */}
         {tab === "players" && (
           <div>
             {(stage.players || []).length === 0 && (
@@ -575,23 +673,41 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
                 <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucune convocation.</p>
               </div>
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-              {(stage.players || []).map(id => {
-                const m = memberById(id)
-                return (
-                  <div key={id} className="flex items-center gap-3 rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 p-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[11px] font-black text-[#f6c744] uppercase shrink-0">{(m?.name||"?")[0]}</div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
-                      <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase">{m?.position || "—"}</p>
-                    </div>
-                    <span className="px-2 py-1 rounded-md bg-[var(--c-panel2)] border border-[#E30613]/25 text-[#ff5f72] text-[7px] font-black uppercase tracking-wider shrink-0">CONVOQUÉ</span>
-                  </div>
-                )
-              })}
-            </div>
+            {(stage.players || []).length > 0 && (
+              <div className="rounded-2xl border border-[rgba(var(--line-rgb),.12)] bg-[var(--c-panel2)]/40 overflow-hidden">
+                <div className="hidden sm:grid grid-cols-[56px_1fr_140px_100px_100px] gap-3 px-5 py-3 text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)] border-b border-[rgba(var(--line-rgb),.12)]">
+                  <span>N°</span><span>Joueuse</span><span>Poste</span><span>Club</span><span>Statut</span>
+                </div>
+                <div className="divide-y divide-[rgba(var(--line-rgb),.1)]">
+                  {(stage.players || []).map((id, idx) => {
+                    const m: any = memberById(id)
+                    const num = m?.jerseyNumber
+                    return (
+                      <div key={id} className="grid grid-cols-[44px_1fr] sm:grid-cols-[56px_1fr_140px_100px_100px] gap-3 items-center px-5 py-3 hover:bg-[var(--c-panel3)]/50 transition-colors">
+                        <div className="flex items-center justify-center">
+                          {num ? (
+                            <span className="w-8 h-8 rounded-lg bg-[#E30613]/15 border border-[#E30613]/40 text-[#ff5f72] text-[11px] font-black italic flex items-center justify-center">{num}</span>
+                          ) : (
+                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[#f6c744] uppercase">{(m?.name || "?")[0]}</div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
+                          <p className="sm:hidden text-[8px] font-bold text-[var(--c-textDim)] uppercase">{m?.position || "—"}</p>
+                        </div>
+                        <div className="hidden sm:block text-[9px] font-bold uppercase text-[var(--c-textMid)] truncate">{m?.position || "—"}</div>
+                        <div className="hidden sm:block text-[9px] font-bold uppercase text-[var(--c-textMid)] truncate">{m?.club || "—"}</div>
+                        <div className="hidden sm:flex"><span className="px-2 py-1 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[#ff5f72] text-[7px] font-black uppercase tracking-wider">Convoqué</span></div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
+
+        {/* ── STAFF ── */}
         {tab === "staff" && (
           <div>
             {(stage.staff || []).length === 0 && (
@@ -602,33 +718,42 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {(stage.staff || []).map((id, idx) => {
-                const m = memberById(id)
+                const m: any = memberById(id)
                 const role = (stage.staffRoles || []).find(r => r.memberId === id)?.role
                 return (
-                  <div key={`${id}-${idx}`} className="flex items-center gap-3 rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 p-3">
-                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[11px] font-black text-[#7ec3ff] uppercase shrink-0">{(m?.name||"?")[0]}</div>
+                  <div key={`${id}-${idx}`} className="flex items-center gap-3.5 rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 p-4 hover:border-[#7ec3ff]/35 transition-all">
+                    <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7ec3ff]/20 to-[#E30613]/20 border border-[#7ec3ff]/25 flex items-center justify-center text-[15px] font-black text-[#7ec3ff] uppercase shrink-0">{(m?.name || "?")[0]}</div>
                     <div className="flex-1 min-w-0">
                       <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
-                      {role && <p className="text-[8px] font-bold text-[#7ec3ff] uppercase tracking-wider">{role}</p>}
+                      <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase tracking-wider">{m?.role === "PLAYERS" ? "Staff" : (m?.role || "—")}</p>
+                      {role && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-[#7ec3ff]/12 border border-[#7ec3ff]/35 text-[#7ec3ff] text-[7px] font-black uppercase tracking-widest">{role}</span>}
                     </div>
-                    <Briefcase size={14} className="text-[var(--c-textDim)] shrink-0"/>
                   </div>
                 )
               })}
             </div>
           </div>
         )}
+
+        {/* ── RAPPORT ── */}
         {tab === "report" && (
           <div>
             {stage.reportUrl ? (
-              <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-emerald-500/30 bg-emerald-500/5 p-12 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
-                  <FileText size={26} className="text-emerald-500"/>
+              <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/5 overflow-hidden">
+                <div className="h-1 bg-gradient-to-r from-emerald-500/70 to-transparent"/>
+                <div className="flex flex-col sm:flex-row items-center gap-6 p-10 text-center sm:text-left">
+                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                    <FileText size={30} className="text-emerald-500"/>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-emerald-500/80">Rapport officiel</p>
+                    <p className="mt-1.5 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)] truncate">{stage.reportName || "Rapport de fin de rassemblement"}</p>
+                    <p className="mt-1 text-[9px] font-bold text-[var(--c-textDim)]">Document PDF déposé à la clôture du rassemblement.</p>
+                  </div>
+                  <a href={stage.reportUrl} target="_blank" rel="noreferrer" className="shrink-0 flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/25 transition-all">
+                    <Download size={14}/> Ouvrir le PDF
+                  </a>
                 </div>
-                <p className="text-[12px] font-black uppercase tracking-wider text-[var(--c-text)]">{stage.reportName || "Rapport de fin de rassemblement"}</p>
-                <a href={stage.reportUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/15 transition-all">
-                  <Download size={14}/> Ouvrir le rapport PDF
-                </a>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
@@ -638,19 +763,30 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
             )}
           </div>
         )}
+
+        {/* ── PHOTOS ── */}
         {tab === "photos" && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div>
             {(stage.images || []).length === 0 && (
-              <div className="col-span-full flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+              <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
                 <ImageIcon size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
                 <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucune photo du rassemblement.</p>
               </div>
             )}
-            {(stage.images || []).map((img, i) => (
-              <a key={img + i} href={img} target="_blank" rel="noreferrer" className="group relative rounded-xl overflow-hidden border border-[rgba(var(--line-rgb),.16)]">
-                <img src={img} alt={`photo ${i+1}`} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"/>
-              </a>
-            ))}
+            {(stage.images || []).length > 0 && (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+                {(stage.images || []).map((img, i) => {
+                  const span = i % 4 === 0
+                  return (
+                    <a key={img + i} href={img} target="_blank" rel="noreferrer" className={`group relative rounded-2xl overflow-hidden border border-[rgba(var(--line-rgb),.14)] ${span ? 'col-span-2 row-span-1' : ''}`}>
+                      <img src={img} alt={`photo ${i+1}`} className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${span ? 'h-56 sm:h-64' : 'h-40'}`}/>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"/>
+                      <span className="absolute bottom-2 right-2 px-2 py-1 rounded-md bg-black/60 text-white text-[7px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">{i + 1} / {(stage.images || []).length}</span>
+                    </a>
+                  )
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>
