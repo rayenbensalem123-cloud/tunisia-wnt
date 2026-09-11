@@ -310,9 +310,9 @@ const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
 const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
   const { tr } = useTranslate()
   const teams:{cat:TeamCategory;label:string;sub:string;abbr:string;bar:string;img:string;tint:string}[]=[
-    {cat:"SENIORS",label:"SENIORS",sub:"Senior National Team",abbr:"S",bar:"from-[#ff2747] to-[#a30420]",img:"/flags/4x3/tn.svg",tint:"rgba(227,6,44,.14)"},
-    {cat:"U20",label:"U-20",sub:"Under 20 National Team",abbr:"20",bar:"from-[#ff2747] to-[#8f0319]",img:"/flags/4x3/tn.svg",tint:"rgba(178,20,42,.2)"},
-    {cat:"U17",label:"U-17",sub:"Under 17 National Team",abbr:"17",bar:"from-[#ff2747] to-[#75020f]",img:"/flags/4x3/tn.svg",tint:"rgba(150,12,32,.26)"},
+    {cat:"SENIORS",label:"SENIORS",sub:"Senior National Team",abbr:"S",bar:"from-[#ff2747] to-[#a30420]",img:"/cats/seniors.jpg",tint:"rgba(227,6,44,.14)"},
+    {cat:"U20",label:"U-20",sub:"Under 20 National Team",abbr:"20",bar:"from-[#ff2747] to-[#8f0319]",img:"/cats/u20.jpg",tint:"rgba(178,20,42,.2)"},
+    {cat:"U17",label:"U-17",sub:"Under 17 National Team",abbr:"17",bar:"from-[#ff2747] to-[#75020f]",img:"/cats/u17.jpg",tint:"rgba(150,12,32,.26)"},
   ]
   return(
     <div className="fed-screen min-h-screen flex flex-col relative overflow-hidden">
@@ -332,27 +332,26 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-5xl">
           {teams.map((t,i)=>(
-            <button key={t.cat} onClick={()=>onSelect(t.cat)} className="group relative h-[340px] rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 text-left border border-[rgba(var(--line-rgb),.16)] bg-[linear-gradient(180deg,var(--c-panelG1),var(--c-panelG2))] hover:border-[#f6c744]/50 hover:shadow-[0_18px_50px_rgba(0,0,0,.45),0_0_24px_rgba(246,199,68,.08)] animate-[fadeUp_0.55s_ease-out_both]" style={{animationDelay:`${i*130+200}ms`}}>
-              {/* Picture banner */}
-              <div className="relative h-[128px] shrink-0 overflow-hidden">
-                <img src={t.img} alt={`${t.label} – Tunisia`} className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"/>
-                <div className="absolute inset-0 group-hover:opacity-100 opacity-80 transition-opacity duration-300" style={{background:`linear-gradient(200deg, ${t.tint} 0%, rgba(14,31,62,.72) 78%)`}}/>
-                <div className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${t.bar}`}/>
-                <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[#101b33] to-transparent"/>
-              </div>
-              <div className="absolute -right-6 -bottom-10 text-[150px] font-black leading-none text-[#e3062c]/10 select-none pointer-events-none">{t.abbr}</div>
-              <div className="relative p-6 flex flex-col h-full">
+            <button key={t.cat} onClick={()=>onSelect(t.cat)} className="group relative h-[340px] rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 text-left border border-[rgba(var(--line-rgb),.18)] bg-[#101b33] hover:border-[#f6c744]/60 hover:shadow-[0_22px_60px_rgba(0,0,0,.6),0_0_28px_rgba(246,199,68,.12)] animate-[fadeUp_0.55s_ease-out_both]" style={{animationDelay:`${i*130+200}ms`}}>
+              {/* Full-box background photo */}
+              <img src={t.img} alt={`${t.label} – Tunisia`} className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"/>
+              {/* Readability overlays */}
+              <div className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${t.bar}`}/>
+              <div className="absolute inset-0 bg-gradient-to-t from-[#070f1c] via-[#0a1322]/45 to-[#0a1322]/15 group-hover:via-[#0a1322]/55 transition-all duration-300"/>
+              <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-[#070f1c]/95 to-transparent pointer-events-none"/>
+              {/* Content — category on the photo */}
+              <div className="relative z-10 p-6 flex flex-col h-full text-white">
                 <div className="flex items-center justify-between">
-                  <svg width="46" height="52" viewBox="0 0 80 90" fill="none">
-                    <path d="M40 2 L78 18 L78 48 C78 68 40 88 40 88 C40 88 2 68 2 48 L2 18 Z" stroke="#f6c744" strokeWidth="3" strokeOpacity=".55"/>
-                    <text x="40" y="50" textAnchor="middle" dominantBaseline="middle" fontSize="30" fontWeight="900" fill="var(--c-text)">{t.abbr}</text>
+                  <svg width="40" height="46" viewBox="0 0 80 90" fill="none" className="drop-shadow-[0_2px_8px_rgba(0,0,0,.6)]">
+                    <path d="M40 2 L78 18 L78 48 C78 68 40 88 40 88 C40 88 2 68 2 48 L2 18 Z" stroke="#f6c744" strokeWidth="3" strokeOpacity=".9"/>
+                    <text x="40" y="50" textAnchor="middle" dominantBaseline="middle" fontSize="30" fontWeight="900" fill="#ffffff">{t.abbr}</text>
                   </svg>
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-[#f6c744]/70">TUNISIA WNT</span>
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/70 drop-shadow-[0_1px_4px_rgba(0,0,0,.7)]">TUNISIA WNT</span>
                 </div>
                 <div className="mt-auto">
-                  <h2 className="text-[26px] font-black uppercase tracking-tight text-[var(--c-text)] leading-none">{t.label}</h2>
-                  <p className="text-[9px] font-bold uppercase tracking-[.28em] text-[var(--c-textFaint)] mt-1.5">{t.sub}</p>
-                  <div className="mt-5 flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-[#ff5f72] group-hover:text-[#f6c744] transition-colors duration-300">
+                  <h2 className="text-[30px] font-black uppercase tracking-tight text-white leading-none drop-shadow-[0_2px_12px_rgba(0,0,0,.65)]">{t.label}</h2>
+                  <p className="mt-1.5 text-[9px] font-bold uppercase tracking-[.28em] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,.7)]">{t.sub}</p>
+                  <div className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/25 text-[9px] font-black uppercase tracking-widest text-[#f6c744] group-hover:bg-[#e3062c] group-hover:border-[#ff5f72]/60 group-hover:text-white transition-colors duration-300">
                     {tr.teamSelect.enter} <ChevronRight size={14} className="transition-transform duration-300 group-hover:translate-x-1"/>
                   </div>
                 </div>
