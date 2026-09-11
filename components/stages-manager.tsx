@@ -2,6 +2,7 @@
 import React, { useState } from "react"
 import { ChevronLeft, X, Plus, ArrowLeft, Calendar, CalendarDays, MapPin, Users, FileText, Image as ImageIcon, Trash2, Save, Pencil, Download, Check, Briefcase, CalendarRange, Clock, Activity } from "lucide-react"
 import ThemeToggle from "@/components/theme-toggle"
+import { useTheme } from "@/lib/theme-context"
 
 type Stage = {
   id?: number
@@ -493,15 +494,18 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
   const players = stage.players || []
   const staff = stage.staff || []
 
+  const { theme } = useTheme()
+  const light = theme === "light"
+
   const statusStyles = {
-    done: "bg-[#E30613]/20 text-[#ffd0d7] border-[#ff5f72]/40",
-    live: "bg-[#f6c744]/20 text-[#f6c744] border-[#f6c744]/45",
-    upcoming: "bg-[#7ec3ff]/15 text-[#7ec3ff] border-[#7ec3ff]/40",
+    done: light ? "bg-[#fff0f2] text-[#c2253c] border-[#ff5f72]/45" : "bg-[#E30613]/20 text-[#ffd0d7] border-[#ff5f72]/40",
+    live: light ? "bg-[#fff7dd] text-[#8a6100] border-[#f6c744]/60" : "bg-[#f6c744]/20 text-[#f6c744] border-[#f6c744]/45",
+    upcoming: light ? "bg-[#eaf4ff] text-[#1e66a8] border-[#7ec3ff]/55" : "bg-[#7ec3ff]/15 text-[#7ec3ff] border-[#7ec3ff]/40",
   } as const
 
   const statusDot = {
     done: "bg-[#ff5f72]",
-    live: "bg-[#f6c744]",
+    live: light ? "bg-[#b98a04]" : "bg-[#f6c744]",
     upcoming: "bg-[#7ec3ff]",
   } as const
 
@@ -541,25 +545,29 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
       </div>
 
       {/* ─── DETAIL HERO ─── */}
-      <div className="relative overflow-hidden rounded-[28px] mt-5 text-white bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c]">
+      <div className={`relative overflow-hidden rounded-[28px] mt-5 ${light
+        ? 'bg-gradient-to-br from-white via-[#f1f6fc] to-[#fdeeef] text-[#0c1f3d] border border-[rgba(15,23,42,.09)] shadow-xl shadow-[#0c1f3d]/10'
+        : 'bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white'}`}>
         <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#E30613] via-[#f6c744] to-[#E30613]"/>
-        <div className="absolute -right-4 -top-10 text-[110px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">{stage.name.slice(0, 14)}</div>
+        <div className={`absolute -right-4 -top-10 text-[110px] font-black italic uppercase tracking-tighter select-none pointer-events-none ${light ? 'text-[#0c1f3d]/[0.06]' : 'text-white/[0.05]'}`}>{stage.name.slice(0, 14)}</div>
 
         <div className="relative px-7 sm:px-10 py-9 flex flex-col lg:flex-row lg:items-start gap-7">
           {/* Date block */}
           {d && (
             <div className="shrink-0 flex flex-row lg:flex-col items-center gap-3 lg:gap-0 lg:items-stretch">
-              <div className="rounded-2xl bg-white/[0.08] border border-white/20 px-6 py-4 text-center min-w-[96px]">
-                <p className="text-[40px] font-black italic leading-none text-[#f6c744]">{String(d.getDate()).padStart(2, "0")}</p>
-                <p className="mt-1.5 text-[9px] font-black text-white/70 uppercase tracking-widest">{MONTHS[d.getMonth()]} {d.getFullYear()}</p>
+              <div className={`rounded-2xl text-center min-w-[96px] ${light
+                ? 'bg-white px-6 py-4 border border-[#0c1f3d]/15 shadow-lg shadow-[#0c1f3d]/10'
+                : 'bg-white/[0.08] border border-white/20 px-6 py-4'}`}>
+                <p className={`text-[40px] font-black italic leading-none ${light ? 'text-[#E30613]' : 'text-[#f6c744]'}`}>{String(d.getDate()).padStart(2, "0")}</p>
+                <p className={`mt-1.5 text-[9px] font-black uppercase tracking-widest ${light ? 'text-[#0c1f3d]/55' : 'text-white/70'}`}>{MONTHS[d.getMonth()]} {d.getFullYear()}</p>
               </div>
-              <div className="lg:mt-4 h-8 lg:h-0 w-px lg:w-full bg-white/15"/>
+              <div className={`lg:mt-4 h-8 lg:h-0 w-px lg:w-full ${light ? 'bg-[#0c1f3d]/15' : 'bg-white/15'}`}/>
               {dur !== null && (
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-4 lg:gap-x-0">
                   {[...Array(Math.min(dur, 14))].map((_, i) => (
-                    <span key={i} className="w-1 h-1 rounded-full bg-[#f6c744]/70"/>
+                    <span key={i} className={`w-1 h-1 rounded-full ${light ? 'bg-[#E30613]/60' : 'bg-[#f6c744]/70'}`}/>
                   ))}
-                  <span className="hidden lg:block col-span-full mt-1.5 text-[7px] font-black text-white/50 uppercase tracking-widest text-center">{dur} jours</span>
+                  <span className={`hidden lg:block col-span-full mt-1.5 text-[7px] font-black uppercase tracking-widest text-center ${light ? 'text-[#0c1f3d]/45' : 'text-white/50'}`}>{dur} jours</span>
                 </div>
               )}
             </div>
@@ -568,19 +576,21 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
           {/* Identity */}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#E30613]/45 border border-[#ff5f72]/55 text-[#ffd0d7] text-[7px] font-black uppercase tracking-widest">
+              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[7px] font-black uppercase tracking-widest ${light
+                ? 'bg-[#fff0f2] border border-[#ff5f72]/45 text-[#c2253c]'
+                : 'bg-[#E30613]/45 border border-[#ff5f72]/55 text-[#ffd0d7]'}`}>
                 {CATS.find(c => c.value === stage.teamCategory)?.label || stage.teamCategory}
               </span>
               <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[7px] font-black uppercase tracking-widest ${statusStyles[status.key]}`}>
                 <span className={`w-1.5 h-1.5 rounded-full ${statusDot[status.key]}`}/>
                 {status.label}
               </span>
-              {stage.id != null && <span className="text-[9px] font-black italic text-white/40 uppercase tracking-[0.2em]">Camp #{stage.id}</span>}
+              <span className={`text-[9px] font-black italic uppercase tracking-[0.2em] ${light ? 'text-[#0c1f3d]/40' : 'text-white/40'}`}>Camp #{stage.id}</span>
             </div>
 
             <h2 className="mt-4 text-3xl sm:text-[42px] font-black italic uppercase tracking-tighter leading-[0.98]">{stage.name}</h2>
 
-            <div className="mt-4 flex items-center gap-3 text-[9px] font-bold text-white/60 flex-wrap">
+            <div className={`mt-4 flex items-center gap-3 text-[9px] font-bold flex-wrap ${light ? 'text-[#0c1f3d]/60' : 'text-white/60'}`}>
               <span className="flex items-center gap-1.5"><MapPin size={11}/>{stage.location || "Lieu —"}</span>
               <span className="flex items-center gap-1.5"><Calendar size={11}/>{fmtDate(stage.startDate)} → {fmtDate(stage.endDate)}</span>
               <span className="flex items-center gap-1.5"><Clock size={11}/>{dur !== null ? `${dur} jours` : "Durée —"}</span>
@@ -593,7 +603,12 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
                 { label: "Joueurs", value: players.length, icon: <Users size={14}/> },
                 { label: "Staff", value: staff.length, icon: <Briefcase size={14}/> },
                 { label: "Photos", value: photos, icon: <ImageIcon size={14}/> },
-              ].map(x => (
+              ].map(x => light ? (
+                <div key={x.label} className="rounded-xl bg-[#0c1f3d] border border-[#ff5f72]/25 px-4 py-3 shadow-md shadow-[#0c1f3d]/15">
+                  <div className="flex items-center gap-1.5 text-white/55">{x.icon}<span className="text-[7px] font-black uppercase tracking-widest">{x.label}</span></div>
+                  <p className="mt-1 text-xl font-black italic leading-none text-[#f6c744]">{x.value}</p>
+                </div>
+              ) : (
                 <div key={x.label} className="rounded-xl bg-white/[0.07] border border-white/15 px-4 py-3">
                   <div className="flex items-center gap-1.5 text-white/55">{x.icon}<span className="text-[7px] font-black uppercase tracking-widest">{x.label}</span></div>
                   <p className="mt-1 text-xl font-black italic leading-none text-[#f6c744]">{x.value}</p>
@@ -602,7 +617,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
             </div>
 
             {stage.createdByUsername && (
-              <p className="mt-4 text-[8px] font-bold text-white/40 uppercase tracking-widest">Créé par {stage.createdByUsername}</p>
+              <p className={`mt-4 text-[8px] font-bold uppercase tracking-widest ${light ? 'text-[#0c1f3d]/45' : 'text-white/40'}`}>Créé par {stage.createdByUsername}</p>
             )}
           </div>
         </div>
