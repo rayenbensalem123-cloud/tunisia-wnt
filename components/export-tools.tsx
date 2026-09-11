@@ -150,7 +150,7 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
 
       {
   importOpen && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onMouseDownCapture={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80" onMouseDownCapture={(e) => e.stopPropagation()}>
           <div className="w-full max-w-lg p-6 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-black italic uppercase tracking-tighter">Import JSON</h2>
@@ -174,7 +174,7 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
 
       {
       pdfOpen && typeof document !== "undefined" && createPortal(
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onMouseDownCapture={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80" onMouseDownCapture={(e) => e.stopPropagation()}>
           <div className="w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden p-6 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900">
             <div className="flex items-center justify-between mb-4 shrink-0">
               <div>

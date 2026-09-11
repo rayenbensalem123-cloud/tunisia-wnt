@@ -71,7 +71,7 @@ export default function CoachesPage() {
                   className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 scale-105 group-hover:scale-100" 
                   alt={coach.name} 
                 />
-                <div className="absolute top-4 left-4 bg-[var(--c-bg)]/85 backdrop-blur-md px-2 py-1 rounded-sm border border-[#e3062c]/45">
+                <div className="absolute top-4 left-4 bg-[var(--c-bg)] px-2 py-1 rounded-sm border border-[#e3062c]/45">
                   <span className="text-[8px] font-black text-white uppercase tracking-widest">{coach.role}</span>
                 </div>
               </div>
