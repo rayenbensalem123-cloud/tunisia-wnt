@@ -335,10 +335,7 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
         {/* Header */}
         <div className="flex flex-col items-center mb-14 animate-[fadeUp_0.7s_ease-out_both]">
           <div className="relative mb-5">
-            <div className="absolute inset-0 bg-[#e3062c]/10 rounded-full w-16 h-16"/>
-            <div className="relative w-16 h-16 rounded-2xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] flex items-center justify-center">
-              <img src="/ftf-logo.png" className="h-9" alt=""/>
-            </div>
+            <img src="/ftf-logo.png" className="h-14 drop-shadow-[0_8px_24px_rgba(0,0,0,.55)]" alt=""/>
           </div>
           <div className="h-px w-10 bg-[#e3062c]"/>
           <h1 className="mt-4 text-3xl md:text-4xl font-black uppercase tracking-tight text-center leading-none text-[var(--c-text)]">{tr.teamSelect.eliteSquad}</h1>
@@ -812,11 +809,11 @@ export default function EliteSquadApp() {
   if(authChecked&&!user) return <LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>setBuffering(false),1200))}}/>
   if(!teamCat) return(
     <div className="relative">
-      <div className="fixed top-6 right-6 z-[999] flex gap-3">
+      <div className="fixed top-6 right-6 z-[999] flex items-center gap-2.5">
         <ThemeToggle/>
-        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} title="Change language" className="p-3 rounded-xl border border-[rgba(var(--line-rgb),.22)] bg-[var(--c-panel3)]/90 text-[var(--c-textBlue2)] hover:text-[#f6c744] hover:border-[#f6c744]/40 hover:shadow-[0_0_18px_rgba(246,199,68,.12)] transition-all text-[10px] font-black uppercase tracking-widest backdrop-blur-sm"><Globe size={16}/><span className="ml-1">{lang.toUpperCase()}</span></button>
-        <span className="text-[9px] font-black uppercase tracking-wider text-[#f6c744]/80 self-center">{user?.username}</span>
-        <button onClick={handleChangePassword} title="Change your password" className="p-3 rounded-xl border border-[rgba(var(--line-rgb),.22)] bg-[var(--c-panel3)]/90 text-[var(--c-textBlue2)] hover:bg-[#f6c744] hover:text-[var(--c-bg)] hover:border-[#f6c744] transition-all backdrop-blur-sm"><Key size={18}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-3 rounded-xl border border-[rgba(var(--line-rgb),.22)] bg-[var(--c-panel3)]/90 text-[var(--c-textBlue2)] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_18px_rgba(227,6,44,.25)] transition-all backdrop-blur-sm"><LogOut size={18}/></button>
+        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} title="Change language" className="px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><Globe size={15}/><span>{lang.toUpperCase()}</span></button>
+        <span className="px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.16)] bg-[#0d1f3c]/55 backdrop-blur-md text-[#f6c744]/90 text-[9px] font-black uppercase tracking-wider">{user?.username}</span>
+        <button onClick={handleChangePassword} title="Change your password" className="p-2.5 rounded-lg border border-[rgba(148,170,210,.25)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#7ec3ff] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all"><Key size={15}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-2.5 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_16px_rgba(227,6,44,.35)] transition-all"><LogOut size={15}/></button>
       </div>
       <TeamSelector onSelect={selectCat}/>
     </div>
