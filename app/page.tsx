@@ -320,7 +320,7 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
         {/* Header */}
         <div className="flex flex-col items-center mb-14 animate-[fadeUp_0.7s_ease-out_both]">
           <div className="relative mb-5">
-            <div className="absolute inset-0 bg-[#e3062c]/20 blur-2xl rounded-full w-16 h-16"/>
+            <div className="absolute inset-0 bg-[#e3062c]/10 rounded-full w-16 h-16"/>
             <div className="relative w-16 h-16 rounded-2xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] flex items-center justify-center">
               <img src="/ftf-logo.png" className="h-9" alt=""/>
             </div>
@@ -757,9 +757,6 @@ export default function EliteSquadApp() {
   if(buffering||!authChecked||!loaded) return(
     <div className="fed-screen min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
       <ThemeToggle className="absolute top-6 right-6 z-20"/>
-      {/* Red aura */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[520px] h-[520px] rounded-full bg-[#E30613]/12 blur-[110px] animate-pulse pointer-events-none"/>
-      <div className="absolute bottom-0 right-1/4 w-[300px] h-[300px] rounded-full bg-[#f6c744]/6 blur-[90px] pointer-events-none"/>
       <div className="relative z-10 flex flex-col items-center gap-8">
         {/* Logo with floating effect */}
         <div className="relative animate-[float_3s_ease-in-out_infinite]">
@@ -811,8 +808,6 @@ export default function EliteSquadApp() {
       {!loaded&&<div className="fixed inset-0 z-[999] bg-white flex items-center justify-center"><div className="flex flex-col items-center gap-3"><div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin"/><p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Loading...</p></div></div>}
       {/* Ambient animated background */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-1/4 left-1/3 w-[600px] h-[600px] rounded-full bg-[#E30613]/5 blur-[120px] animate-[pulse_4s_ease-in-out_infinite]"/>
-        <div className="absolute bottom-1/4 right-1/3 w-[400px] h-[400px] rounded-full bg-amber-500/5 blur-[100px] animate-[pulse_5s_ease-in-out_infinite_1s]"/>
         <div className="absolute inset-0 flex items-center justify-center">
           <img src="/ftf-logo.png" className="w-[60%] opacity-[0.03] grayscale animate-[spin_60s_linear_infinite]" alt=""/>
         </div>
@@ -823,7 +818,7 @@ export default function EliteSquadApp() {
       ) : (
       <>
       {/* ─── HEADER ─── */}
-      <header className="sticky top-0 z-[100] bg-white/95 backdrop-blur-md border-b border-zinc-200 relative">
+      <header className="sticky top-0 z-[100] border-b relative">
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E30613]/40 to-transparent animate-[pulse_3s_ease-in-out_infinite]"/>
         <div className="max-w-7xl mx-auto px-6 pt-3 pb-2 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">

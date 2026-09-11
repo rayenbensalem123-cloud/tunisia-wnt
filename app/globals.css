@@ -44,6 +44,7 @@
   --c-surface: #0d1526;
   --c-raised: #101725;
   --c-bg: #0c1f3d;
+  --c-header: rgba(12, 31, 61, .72);
   --c-panel: #112950;
   --c-panel2: #12294e;
   --c-panel3: #101b33;
@@ -86,6 +87,7 @@ html[data-theme="light"] {
   --c-surface: #ffffff;
   --c-raised: #f5f8fc;
   --c-bg: #eef2f8;
+  --c-header: rgba(238, 242, 248, .72);
   --c-panel: #ffffff;
   --c-panel2: #f0f5fb;
   --c-panel3: #f8fafd;
@@ -169,7 +171,9 @@ html[data-theme="light"] .ftf-portal {
 
 /* ── Broadcast header: navy bar, solid red baseline rail, red crest line ── */
 .ftf-portal header.border-b {
-  background: linear-gradient(180deg, #0e2547 0%, #0b1f3d 60%, #081a35 100%) !important;
+  background: linear-gradient(180deg, rgba(14, 37, 71, .78) 0%, rgba(11, 31, 61, .72) 60%, rgba(8, 26, 53, .8) 100%) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  backdrop-filter: blur(14px) !important;
   border-bottom: 3px solid #e3062c !important;
   border-bottom-color: #e3062c !important;
   box-shadow: 0 14px 38px rgba(0, 0, 0, .6);
@@ -312,7 +316,7 @@ html[data-theme="light"] .ftf-portal header .portal-search input { background-co
 }
 
 /* Modal system: all operations are presented as match-centre panels. */
-.ftf-portal .fixed.inset-0 {
+.ftf-portal .fixed.inset-0:not(.pointer-events-none) {
   backdrop-filter: blur(7px);
 }
 .ftf-portal .fixed.inset-0 > div:not(.absolute):not(.pointer-events-none) {
