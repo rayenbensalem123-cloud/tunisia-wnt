@@ -171,6 +171,14 @@ html[data-theme="light"] body {
 html[data-theme="light"] .ftf-portal {
   background-image: linear-gradient(180deg, #eef2f8 0%, #f4f7fb 55%, #eef2f8 100%) !important;
 }
+
+/* Ambient background photo shim (keeps the dashboard readable over the photo) */
+.ftf-home-bg-shim {
+  background: linear-gradient(180deg, rgba(8,18,38,.86) 0%, rgba(8,18,38,.55) 45%, rgba(8,18,38,.88) 100%);
+}
+html[data-theme="light"] .ftf-home-bg-shim {
+  background: linear-gradient(180deg, rgba(238,242,248,.9) 0%, rgba(238,242,248,.62) 50%, rgba(238,242,248,.92) 100%);
+}
 .ftf-portal :not(code):not(pre):not(svg):not([class*="font-mono"]) {
   font-family: 'Oswald', 'Arial Narrow', Arial, sans-serif !important;
 }

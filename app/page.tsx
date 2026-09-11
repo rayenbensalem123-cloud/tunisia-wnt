@@ -104,8 +104,15 @@ const profileToAppUser = (p: any): AppUser => ({
   perms: p.permissions,
 })
 
-const LOGIN_AND_REGISTER_STYLE = "fed-screen min-h-screen flex items-center justify-center text-[var(--c-text)]"
+const LOGIN_AND_REGISTER_STYLE = "fed-screen min-h-screen flex items-center justify-center relative overflow-hidden text-[var(--c-text)]"
 const LOGIN_CARD_STYLE = "fed-card p-8 text-center space-y-6 max-w-md w-full mx-4 relative z-10"
+
+const FedBg=()=>(
+  <>
+    <img src="/cats/home-bg.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-center grayscale opacity-[0.45] scale-110 pointer-events-none" aria-hidden="true"/>
+    <div className="absolute inset-0 bg-gradient-to-b from-[#0a1c38]/80 via-[#0a1322]/55 to-[#0a1c38]/88 pointer-events-none"/>
+  </>
+)
 
 // ─────────────────────────────────────────────
 // REGISTER SCREEN
@@ -126,6 +133,7 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
   }
   return(
     <div className={LOGIN_AND_REGISTER_STYLE}>
+      <FedBg/>
       <div className={`${LOGIN_CARD_STYLE} relative`}>
         <ThemeToggle className="absolute top-4 right-16 p-2 bg-[var(--c-input2)] text-[var(--c-textMid)] hover:text-white"/>
         <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")}
@@ -282,6 +290,7 @@ const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
   }
   return(
     <div className={LOGIN_AND_REGISTER_STYLE}>
+      <FedBg/>
       <ThemeToggle className="absolute top-6 right-6"/>
       <div className={LOGIN_CARD_STYLE}>
         <div>
@@ -317,9 +326,9 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
   return(
     <div className="fed-screen min-h-screen flex flex-col relative overflow-hidden">
       {/* Page background photo */}
-      <img src="/cats/home-bg.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-center grayscale opacity-[0.2] scale-110 pointer-events-none" aria-hidden="true"/>
-      <div className="absolute inset-0 bg-gradient-to-b from-[#060d1c]/95 via-[#0a1322]/88 to-[#0a1322]/96 pointer-events-none"/>
-      <div className="absolute inset-0 bg-[radial-gradient(1100px_480px_at_50%_-180px,rgba(227,6,44,.14),transparent_70%),radial-gradient(900px_420px_at_88%_110%,rgba(246,199,68,.07),transparent_70%)] pointer-events-none"/>
+      <img src="/cats/home-bg.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-center grayscale opacity-[0.62] scale-110 pointer-events-none" aria-hidden="true"/>
+      <div className="absolute inset-0 bg-gradient-to-b from-[#060d1c]/72 via-[#0a1322]/42 to-[#0a1322]/88 pointer-events-none"/>
+      <div className="absolute inset-0 bg-[radial-gradient(1100px_480px_at_50%_-180px,rgba(227,6,44,.18),transparent_70%),radial-gradient(900px_420px_at_88%_110%,rgba(246,199,68,.1),transparent_70%)] pointer-events-none"/>
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 py-12">
         {/* Header */}
         <div className="flex flex-col items-center mb-14 animate-[fadeUp_0.7s_ease-out_both]">
@@ -764,6 +773,7 @@ export default function EliteSquadApp() {
   // ── RENDER GATES ──
   if(buffering||!authChecked||!loaded) return(
     <div className="fed-screen min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
+      <FedBg/>
       <ThemeToggle className="absolute top-6 right-6 z-20"/>
       <div className="relative z-10 flex flex-col items-center gap-8">
         {/* Logo with floating effect */}
@@ -814,11 +824,10 @@ export default function EliteSquadApp() {
   return(
     <main className="ftf-portal min-h-screen bg-zinc-50 text-zinc-900 relative">
       {!loaded&&<div className="fixed inset-0 z-[999] bg-white flex items-center justify-center"><div className="flex flex-col items-center gap-3"><div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin"/><p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Loading...</p></div></div>}
-      {/* Ambient animated background */}
+      {/* Ambient background photo */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <img src="/ftf-logo.png" className="w-[60%] opacity-[0.03] grayscale animate-[spin_60s_linear_infinite]" alt=""/>
-        </div>
+        <img src="/cats/home-bg.webp" className="absolute inset-0 w-full h-full object-cover object-center grayscale opacity-[0.18] scale-105" alt=""/>
+        <div className="absolute inset-0 ftf-home-bg-shim"/>
       </div>
 
       {stagesOpen ? (
