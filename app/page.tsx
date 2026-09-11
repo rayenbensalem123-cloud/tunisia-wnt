@@ -334,7 +334,7 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
           {teams.map((t,i)=>(
             <button key={t.cat} onClick={()=>onSelect(t.cat)} className="group relative h-[340px] rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 text-left border border-[rgba(var(--line-rgb),.18)] bg-[#101b33] hover:border-[#f6c744]/60 hover:shadow-[0_22px_60px_rgba(0,0,0,.6),0_0_28px_rgba(246,199,68,.12)] animate-[fadeUp_0.55s_ease-out_both]" style={{animationDelay:`${i*130+200}ms`}}>
               {/* Full-box background photo */}
-              <img src={t.img} alt={`${t.label} – Tunisia`} className="absolute inset-0 w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700"/>
+              <img src={t.img} alt={`${t.label} – Tunisia`} className="absolute inset-0 w-full h-full object-cover object-center grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"/>
               {/* Readability overlays */}
               <div className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${t.bar}`}/>
               <div className="absolute inset-0 bg-gradient-to-t from-[#070f1c] via-[#0a1322]/45 to-[#0a1322]/15 group-hover:via-[#0a1322]/55 transition-all duration-300"/>
