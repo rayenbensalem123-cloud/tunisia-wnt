@@ -89,6 +89,41 @@ export const matchToDb = (m: any) => {
   }
 }
 
+export const campFromDb = (r: any) => ({
+  id: r.id,
+  name: r.name || '',
+  location: r.location || '',
+  startDate: r.start_date || '',
+  endDate: r.end_date || '',
+  teamCategory: r.team_category || '',
+  program: Array.isArray(r.program) ? r.program : [],
+  players: Array.isArray(r.players) ? r.players : [],
+  staff: Array.isArray(r.staff) ? r.staff : [],
+  staffRoles: Array.isArray(r.staff_roles) ? r.staff_roles : [],
+  reportUrl: r.report_url || '',
+  reportName: r.report_name || '',
+  images: Array.isArray(r.images) ? r.images : [],
+  createdByUsername: r.created_by_username || '',
+  updatedAt: r.updated_at ? new Date(r.updated_at).getTime() : Date.now(),
+})
+
+export const campToDb = (c: any) => ({
+  id: typeof c.id === 'number' && c.id < 2147483647 ? c.id : undefined,
+  name: c.name || '',
+  location: c.location || '',
+  start_date: c.startDate || '',
+  end_date: c.endDate || '',
+  team_category: c.teamCategory || '',
+  program: Array.isArray(c.program) ? c.program : [],
+  players: Array.isArray(c.players) ? c.players : [],
+  staff: Array.isArray(c.staff) ? c.staff : [],
+  staff_roles: Array.isArray(c.staffRoles) ? c.staffRoles : [],
+  report_url: c.reportUrl || '',
+  report_name: c.reportName || '',
+  images: Array.isArray(c.images) ? c.images : [],
+  created_by_username: c.createdByUsername || null,
+})
+
 // ─────────────────────────────────────────────
 // AUTH
 // ─────────────────────────────────────────────
@@ -263,8 +298,14 @@ export async function fetchMatches() {
   return (data ?? []).map(matchFromDb)
 }
 
+export async function fetchCamps() {
+  const { data, error } = await supabase.from('camps').select('*')
+  if (error) { console.error('fetchCamps', error); return [] }
+  return (data ?? []).map(campFromDb)
+}
+
 async function diffSync(
-  table: 'members' | 'matches',
+  table: 'members' | 'matches' | 'camps',
   prevMap: Map<any, any>,
   nextList: any[],
   toDb: (x: any) => any
@@ -313,6 +354,9 @@ export async function syncMembers(prevMap: Map<any, any>, nextList: any[]) {
 export async function syncMatches(prevMap: Map<any, any>, nextList: any[]) {
   return diffSync('matches', prevMap, nextList, matchToDb)
 }
+export async function syncCamps(prevMap: Map<any, any>, nextList: any[]) {
+  return diffSync('camps', prevMap, nextList, campToDb)
+}
 
 // ─────────────────────────────────────────────
 // REALTIME
@@ -321,6 +365,7 @@ export async function subscribeRealtime(handlers: {
   onMembers?: () => void
   onMatches?: () => void
   onProfiles?: () => void
+  onCamps?: () => void
 }) {
   const { data } = await supabase.auth.getSession()
   if (data.session?.access_token) {
@@ -330,6 +375,7 @@ export async function subscribeRealtime(handlers: {
     .channel('app-realtime')
     .on('postgres_changes', { event: '*', schema: 'public', table: 'members' }, () => handlers.onMembers?.())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => handlers.onMatches?.())
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'camps' }, () => handlers.onCamps?.())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => handlers.onProfiles?.())
     .subscribe()
   return () => { supabase.removeChannel(channel) }

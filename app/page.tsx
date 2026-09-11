@@ -5,7 +5,7 @@ import {
   LogOut, Goal, History, Trash2, Trophy,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View
+  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
@@ -19,11 +19,12 @@ import JSZip from "jszip"
 import {
   signInUsername, fetchMyProfile, registerUser,
   fetchAllProfiles, updateProfile, deleteProfile,
-  fetchMembers, fetchMatches, syncMembers, syncMatches,
+  fetchMembers, fetchMatches, syncMembers, syncMatches, fetchCamps, syncCamps,
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
   fetchInjuries, addInjury, updateInjuryStatus,
-  fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate,
+  fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate
 } from "@/lib/app-data"
+import { StagesManager } from "@/components/stages-manager"
 
 // ─────────────────────────────────────────────
 // CONSTANTS
@@ -84,14 +85,15 @@ interface UserPerms {
   addMatch: boolean; deleteMatch: boolean
   exportData: boolean
   viewMedical: boolean; editMedical: boolean
+  addCamps: boolean
 }
 interface AppUser {
   username: string; firstName: string; lastName: string; status: "active" | "pending"
   perms: UserPerms
 }
 
-const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false }
-  const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true }
+const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false, addCamps:false }
+  const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true }
 
 // Maps a DB profiles row -> the shape the UI already expects
 const profileToAppUser = (p: any): AppUser => ({
@@ -368,6 +370,7 @@ const PERM_LABELS: {key:keyof UserPerms;label:string}[] = [
   {key:"addMatch",label:"Add Match"},{key:"deleteMatch",label:"Delete Match"},
   {key:"exportData",label:"Export Data"},
   {key:"viewMedical",label:"View Medical"},{key:"editMedical",label:"Edit Medical"},
+  {key:"addCamps",label:"Manage Camps (Stages)"},
 ]
 
 // ═════════════════════════════════════════════
@@ -380,8 +383,10 @@ export default function EliteSquadApp() {
   const [buffering,setBuffering]=useState(false)
   const [members,setMembers]=useState<any[]>([])
   const [matches,setMatches]=useState<any[]>([])
+  const [camps,setCamps]=useState<any[]>([])
   const membersSnapshot=useRef<Map<any,any>>(new Map())
   const matchesSnapshot=useRef<Map<any,any>>(new Map())
+  const campsSnapshot=useRef<Map<any,any>>(new Map())
   const applyingRemote=useRef(false)
   const handleChangePassword=async()=>{
     const pw1=window.prompt("New password (min 6 characters):")
@@ -473,6 +478,13 @@ export default function EliteSquadApp() {
     setMatches(data)
     setTimeout(()=>{applyingRemote.current=false},0)
   }
+  const reloadCamps=async()=>{
+    const data=await fetchCamps()
+    applyingRemote.current=true
+    campsSnapshot.current=new Map(data.map((c:any)=>[c.id,c]))
+    setCamps(data)
+    setTimeout(()=>{applyingRemote.current=false},0)
+  }
 
   // Check for an existing Supabase Auth session on mount, then load data.
   // A watchdog timeout guarantees the loading screen always clears, even if
@@ -486,7 +498,7 @@ export default function EliteSquadApp() {
       clearTimeout(watchdog)
       setAuthChecked(true)
       try{
-        await Promise.all([reloadMembers(),reloadMatches()])
+        await Promise.all([reloadMembers(),reloadMatches(),reloadCamps()])
         await reloadProfiles()
       }catch(e){console.error("initial data load failed",e)}
       setLoaded(true)
@@ -507,6 +519,7 @@ export default function EliteSquadApp() {
       onMembers:reloadMembers,
       onMatches:reloadMatches,
       onProfiles:reloadProfiles,
+      onCamps:reloadCamps,
     }).then(fn=>{ if(!cancelled) unsub=fn; else fn() })
     return ()=>{cancelled=true;unsub()}
   },[user?.id])
@@ -526,6 +539,13 @@ export default function EliteSquadApp() {
       matchesSnapshot.current=new Map(matches.map((m:any)=>[m.id,m]))
     })
   },[matches])
+  useEffect(()=>{
+    if(!loaded||applyingRemote.current)return
+    if(JSON.stringify([...campsSnapshot.current.values()])===JSON.stringify(camps))return
+    syncCamps(campsSnapshot.current,camps).then(()=>{
+      campsSnapshot.current=new Map(camps.map((c:any)=>[c.id,c]))
+    })
+  },[camps])
 
   const selectCat=(cat:TeamCategory)=>{
     setTeamCat(cat);setFilterPos("ALL");setActiveTab("PLAYERS");setSearch("")
@@ -537,6 +557,7 @@ export default function EliteSquadApp() {
   const [labPickerSlot,setLabPickerSlot]=useState<string|null>(null)
   const [labTemplates,setLabTemplates]=useState<any[]>([])
   const [labTemplateName,setLabTemplateName]=useState("")
+  const [stagesOpen,setStagesOpen]=useState(false)
   const filtered=useMemo(()=>members.filter(m=>
     m.role===activeTab&&m.teamCategory===teamCat&&
     m.name.toLowerCase().includes(search.toLowerCase())&&
@@ -851,6 +872,9 @@ export default function EliteSquadApp() {
               {p.addMatch&&<button onClick={async()=>{setLabSlots({});setLabTemplateName("");setSquadLabOpen(true);setLabTemplates(await fetchSquadTemplates(teamCat))}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <Users size={14}/>Squad Lab
               </button>}
+              <button onClick={()=>setStagesOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                <CalendarRange size={14}/>Stages (Camps)
+              </button>
               <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <Newspaper size={14}/>Women's Football News
               </button>
@@ -1876,6 +1900,28 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
       {/* ═══════════════════════════════════════════
           WOMEN'S FOOTBALL NEWS — automated feed
       ═══════════════════════════════════════════ */}
+
+      {/* ═══════════════════════════════════════════
+          STAGES (CAMPS) MANAGER
+      ═══════════════════════════════════════════ */}
+      <StagesManager
+        open={stagesOpen}
+        onClose={()=>setStagesOpen(false)}
+        stages={camps}
+        members={members}
+        teamCat={teamCat}
+        canManage={!!(canManageUsers||p.addCamps)}
+        onSave={async(stage)=>{ 
+          const next=[...(camps||[])];
+          const idx=(camps||[]).findIndex((c:any)=>(c.id||0)===stage.id)
+          if(idx>=0){const copy=[...next];copy[idx]={...copy[idx],...stage};setCamps(copy)}
+          else{setCamps([...next,{...stage,id:typeof stage.id==='number'&&stage.id<2147483647?stage.id:Date.now(),createdByUsername:user?.username}])}
+          return true
+        }}
+        onDelete={async(id)=>{setCamps((c:any[])=>c.filter((x:any)=>x.id!==id));return true}}
+        onRefresh={reloadCamps}
+      />
+
       {newsOpen&&(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
           <div className="w-full max-w-lg rounded-2xl bg-[var(--c-cream2)] text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
