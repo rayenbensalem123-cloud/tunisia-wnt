@@ -309,10 +309,10 @@ const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
 // ─────────────────────────────────────────────
 const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
   const { tr } = useTranslate()
-  const teams:{cat:TeamCategory;label:string;sub:string;abbr:string;bar:string}[]=[
-    {cat:"SENIORS",label:"SENIORS",sub:"Senior National Team",abbr:"S",bar:"from-[#ff2747] to-[#a30420]"},
-    {cat:"U20",label:"U-20",sub:"Under 20 National Team",abbr:"20",bar:"from-[#ff2747] to-[#8f0319]"},
-    {cat:"U17",label:"U-17",sub:"Under 17 National Team",abbr:"17",bar:"from-[#ff2747] to-[#75020f]"},
+  const teams:{cat:TeamCategory;label:string;sub:string;abbr:string;bar:string;img:string;tint:string}[]=[
+    {cat:"SENIORS",label:"SENIORS",sub:"Senior National Team",abbr:"S",bar:"from-[#ff2747] to-[#a30420]",img:"/flags/4x3/tn.svg",tint:"rgba(227,6,44,.14)"},
+    {cat:"U20",label:"U-20",sub:"Under 20 National Team",abbr:"20",bar:"from-[#ff2747] to-[#8f0319]",img:"/flags/4x3/tn.svg",tint:"rgba(178,20,42,.2)"},
+    {cat:"U17",label:"U-17",sub:"Under 17 National Team",abbr:"17",bar:"from-[#ff2747] to-[#75020f]",img:"/flags/4x3/tn.svg",tint:"rgba(150,12,32,.26)"},
   ]
   return(
     <div className="fed-screen min-h-screen flex flex-col relative overflow-hidden">
@@ -332,9 +332,14 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-5xl">
           {teams.map((t,i)=>(
-            <button key={t.cat} onClick={()=>onSelect(t.cat)} className="group relative h-[300px] rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 text-left border border-[rgba(var(--line-rgb),.16)] bg-[linear-gradient(180deg,var(--c-panelG1),var(--c-panelG2))] hover:border-[#f6c744]/50 hover:shadow-[0_18px_50px_rgba(0,0,0,.45),0_0_24px_rgba(246,199,68,.08)] animate-[fadeUp_0.55s_ease-out_both]" style={{animationDelay:`${i*130+200}ms`}}>
-              <div className={`absolute inset-x-0 h-[3px] bg-gradient-to-r ${t.bar}`}/>
-              <div className="absolute inset-0 bg-[radial-gradient(420px_220px_at_50%_0%,rgba(227,6,44,.14),transparent_65%)] pointer-events-none"/>
+            <button key={t.cat} onClick={()=>onSelect(t.cat)} className="group relative h-[340px] rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 text-left border border-[rgba(var(--line-rgb),.16)] bg-[linear-gradient(180deg,var(--c-panelG1),var(--c-panelG2))] hover:border-[#f6c744]/50 hover:shadow-[0_18px_50px_rgba(0,0,0,.45),0_0_24px_rgba(246,199,68,.08)] animate-[fadeUp_0.55s_ease-out_both]" style={{animationDelay:`${i*130+200}ms`}}>
+              {/* Picture banner */}
+              <div className="relative h-[128px] shrink-0 overflow-hidden">
+                <img src={t.img} alt={`${t.label} – Tunisia`} className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"/>
+                <div className="absolute inset-0 group-hover:opacity-100 opacity-80 transition-opacity duration-300" style={{background:`linear-gradient(200deg, ${t.tint} 0%, rgba(14,31,62,.72) 78%)`}}/>
+                <div className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${t.bar}`}/>
+                <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-[#101b33] to-transparent"/>
+              </div>
               <div className="absolute -right-6 -bottom-10 text-[150px] font-black leading-none text-[#e3062c]/10 select-none pointer-events-none">{t.abbr}</div>
               <div className="relative p-6 flex flex-col h-full">
                 <div className="flex items-center justify-between">
