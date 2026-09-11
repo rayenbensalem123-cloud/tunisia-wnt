@@ -670,20 +670,20 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
             {(stage.players || []).length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
                 <Users size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucune convocation.</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucun joueur.</p>
               </div>
             )}
             {(stage.players || []).length > 0 && (
               <div className="rounded-2xl border border-[rgba(var(--line-rgb),.12)] bg-[var(--c-panel2)]/40 overflow-hidden">
-                <div className="hidden sm:grid grid-cols-[56px_1fr_140px_100px_100px] gap-3 px-5 py-3 text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)] border-b border-[rgba(var(--line-rgb),.12)]">
-                  <span>N°</span><span>Joueuse</span><span>Poste</span><span>Club</span><span>Statut</span>
+                <div className="hidden sm:grid grid-cols-[56px_1fr_140px_100px] gap-3 px-5 py-3 text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)] border-b border-[rgba(var(--line-rgb),.12)]">
+                  <span>N°</span><span>Joueuse</span><span>Poste</span><span>Club</span>
                 </div>
                 <div className="divide-y divide-[rgba(var(--line-rgb),.1)]">
                   {(stage.players || []).map((id, idx) => {
                     const m: any = memberById(id)
                     const num = m?.jerseyNumber
                     return (
-                      <div key={id} className="grid grid-cols-[44px_1fr] sm:grid-cols-[56px_1fr_140px_100px_100px] gap-3 items-center px-5 py-3 hover:bg-[var(--c-panel3)]/50 transition-colors">
+                      <div key={id} className="grid grid-cols-[44px_1fr] sm:grid-cols-[56px_1fr_140px_100px] gap-3 items-center px-5 py-3 hover:bg-[var(--c-panel3)]/50 transition-colors">
                         <div className="flex items-center justify-center">
                           {num ? (
                             <span className="w-8 h-8 rounded-lg bg-[#E30613]/15 border border-[#E30613]/40 text-[#ff5f72] text-[11px] font-black italic flex items-center justify-center">{num}</span>
@@ -697,8 +697,8 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
                         </div>
                         <div className="hidden sm:block text-[9px] font-bold uppercase text-[var(--c-textMid)] truncate">{m?.position || "—"}</div>
                         <div className="hidden sm:block text-[9px] font-bold uppercase text-[var(--c-textMid)] truncate">{m?.club || "—"}</div>
-                        <div className="hidden sm:flex"><span className="px-2 py-1 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[#ff5f72] text-[7px] font-black uppercase tracking-wider">Convoqué</span></div>
-                      </div>
+                        
+                        </div>
                     )
                   })}
                 </div>
