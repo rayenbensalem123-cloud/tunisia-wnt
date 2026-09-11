@@ -851,16 +851,16 @@ export default function EliteSquadApp() {
               <Search size={13} className="text-[var(--c-textDim)] shrink-0"/>
               <input placeholder={tr.header.search} value={search} onChange={e=>setSearch(e.target.value)} className="bg-transparent text-[10px] font-bold outline-none w-full uppercase text-[var(--c-text)] placeholder-[var(--c-textMid)]"/>
             </div>
-            <button onClick={()=>{if(canManageUsers&&pendingMatches.length>0)setPendingMatchesOpen(true);else setIsHistoryOpen(true)}} title="Match history" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613]">
+            <button onClick={()=>{if(canManageUsers&&pendingMatches.length>0)setPendingMatchesOpen(true);else setIsHistoryOpen(true)}} title="Match history" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.5)]">
               <BookOpen size={14}/>
               <span className="hidden sm:inline">{tr.header.matches}</span>
               {canManageUsers&&pendingMatches.length>0&&<span className="bg-amber-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingMatches.length}</span>}
               {catMatches.length>0&&<span className="bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{catMatches.length}</span>}
             </button>
-            {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-[#E30613]/10 hover:border-[#E30613]/30 hover:text-[#E30613]">
+            {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#ff5f72] hover:border-[rgba(227,6,44,.5)]">
               <Users size={14}/><span className="hidden sm:inline">Add Match</span>
             </button>}
-            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-[#f6c744]/10 hover:border-[#f6c744]/30 hover:text-[#f6c744]">
+            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.5)]">
               <Calendar size={14}/><span className="hidden sm:inline">Schedule Match</span>
             </button>}
             <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} />
@@ -869,11 +869,24 @@ export default function EliteSquadApp() {
             <div className="w-px h-6 bg-zinc-200 mx-0.5"/>
 
             <Dropdown trigger={
-              <button title="Tools" className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-200 text-[9px] font-black uppercase tracking-widest transition-all text-zinc-500 hover:bg-zinc-100">
+              <button title="Menu" className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(246,199,68,.35)] bg-[#0d1f3c]/75 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0d1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.22)]">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                <span className="hidden sm:inline">Tools</span><ChevronDown size={11}/>
+                <span className="hidden sm:inline">Menu</span><ChevronDown size={11}/>
+                {canManageUsers&&pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}
               </button>
             }>
+              {canManageUsers&&(<>
+                <button onClick={()=>setPendingReviewOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                  <Bell size={14}/>Pending Approvals{pendingCount>0&&<span className="ml-auto bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingCount}</span>}
+                </button>
+                <button onClick={()=>setUsersOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                  <Users size={14}/>Manage Users
+                </button>
+                <button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                  <Activity size={14}/>Activity Log
+                </button>
+                <div className="h-px bg-zinc-200 my-1 mx-2"/>
+              </>)}
               {p.exportData&&<div className="px-1"><ExportTools members={members} matches={matches} teamCat={teamCat} onImport={handleImport} onImportPlayers={handleImportPlayers} /></div>}
               <button onClick={()=>window.print()} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
@@ -896,30 +909,11 @@ export default function EliteSquadApp() {
               </button>
             </Dropdown>
 
-            {canManageUsers&&(
-              <Dropdown trigger={
-                <button title="Admin" className="relative flex items-center gap-1.5 px-3 py-2 rounded-xl border border-[#E30613]/20 bg-[#E30613]/5 text-[9px] font-black uppercase tracking-widest transition-all text-[#E30613] hover:bg-[#E30613]/10">
-                  <ShieldCheck size={14}/><span className="hidden sm:inline">Admin</span><ChevronDown size={11}/>
-                  {pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}
-                </button>
-              }>
-                <button onClick={()=>setPendingReviewOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                  <Bell size={14}/>Pending Approvals{pendingCount>0&&<span className="ml-auto bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingCount}</span>}
-                </button>
-                <button onClick={()=>setUsersOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                  <Users size={14}/>Manage Users
-                </button>
-                <button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                  <Activity size={14}/>Activity Log
-                </button>
-              </Dropdown>
-            )}
-
             <Dropdown trigger={
-              <button title="Account" className="flex items-center gap-1.5 px-2 py-1.5 rounded-xl border border-zinc-200 hover:bg-zinc-100 transition-all">
-                <div className="w-6 h-6 rounded-full bg-zinc-800 text-white flex items-center justify-center text-[9px] font-black uppercase shrink-0">{(user?.username||"?")[0]}</div>
-                <span className="hidden sm:inline text-[8px] font-black uppercase tracking-wider text-zinc-500">{user?.username}</span>
-                <ChevronDown size={11} className="text-zinc-400"/>
+              <button title="Account" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md hover:border-[rgba(246,199,68,.5)] transition-all fc-keep">
+                <div className="w-6 h-6 rounded-full border border-[#f6c744]/60 bg-gradient-to-br from-[#12305a] to-[#0c1f3d] text-[#f6c744] flex items-center justify-center text-[9px] font-black uppercase shrink-0">{(user?.username||"?")[0]}</div>
+                <span className="hidden sm:inline text-[8px] font-black uppercase tracking-wider text-[#cdc2b0]">{user?.username}</span>
+                <ChevronDown size={11} className="text-[#a89c89]"/>
               </button>
             }>
               <button onClick={handleChangePassword} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
@@ -930,8 +924,8 @@ export default function EliteSquadApp() {
               </button>
             </Dropdown>
 
-            {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} title={selectMode?"Exit selection":"Select players to export passports"} className={`p-2 rounded-full transition-all ${selectMode?'bg-[#f6c744] text-[var(--c-bg)]':'bg-zinc-900 text-white hover:bg-zinc-700'}`}><ListChecks size={16}/></button>}
-            {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="p-2 rounded-full bg-[#E30613] text-white hover:bg-red-700 transition-all"><Plus size={16}/></button>}
+            {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} title={selectMode?"Exit selection":"Select players to export passports"} className={`p-2 rounded-lg border backdrop-blur-md transition-all fc-keep ${selectMode?'bg-[#f6c744] border-[#f6c744] text-[#0c1f3d] shadow-[0_0_14px_rgba(246,199,68,.3)]':'border-[rgba(246,199,68,.35)] bg-[#0d1f3c]/70 text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0d1f3d]'}`}><ListChecks size={16}/></button>}
+            {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="p-2 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_14px_rgba(227,6,44,.35)] transition-all fc-keep"><Plus size={16}/></button>}
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 pb-3 flex items-center gap-3 flex-wrap">

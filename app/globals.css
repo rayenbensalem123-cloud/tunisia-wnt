@@ -793,36 +793,36 @@ html[data-theme="light"] .ftf-portal div.flex.gap-1\.5.flex-wrap > button[class*
 }
 
 /* ── ICON-only buttons (plus, close, back chevron, etc.) ── */
-.ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]),
-.ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]),
-.ftf-portal button[class*="w-7"]:not([class*="px-"]),
-.ftf-portal button[class*="w-8"]:not([class*="px-"]) {
+.ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]):not([class*="fc-keep"]),
+.ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]):not([class*="fc-keep"]),
+.ftf-portal button[class*="w-7"]:not([class*="px-"]):not([class*="fc-keep"]),
+.ftf-portal button[class*="w-8"]:not([class*="px-"]):not([class*="fc-keep"]) {
   background: #0a1f3c !important;
   color: #d8cfc0 !important;
   border-color: rgba(148, 170, 210, .16) !important;
   border-radius: .4rem !important;
 }
-.ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]):hover,
-.ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]):hover,
-.ftf-portal button[class*="w-7"]:not([class*="px-"]):hover,
-.ftf-portal button[class*="w-8"]:not([class*="px-"]):hover {
+.ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]):not([class*="fc-keep"]):hover,
+.ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]):not([class*="fc-keep"]):hover,
+.ftf-portal button[class*="w-7"]:not([class*="px-"]):not([class*="fc-keep"]):hover,
+.ftf-portal button[class*="w-8"]:not([class*="px-"]):not([class*="fc-keep"]):hover {
   background: #17335f !important;
   color: #fff !important;
 }
 
 /* Light mode — icon buttons: white panels, dark icons */
-html[data-theme="light"] .ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]),
-html[data-theme="light"] .ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]),
-html[data-theme="light"] .ftf-portal button[class*="w-7"]:not([class*="px-"]),
-html[data-theme="light"] .ftf-portal button[class*="w-8"]:not([class*="px-"]) {
+html[data-theme="light"] .ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]):not([class*="fc-keep"]),
+html[data-theme="light"] .ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]):not([class*="fc-keep"]),
+html[data-theme="light"] .ftf-portal button[class*="w-7"]:not([class*="px-"]):not([class*="fc-keep"]),
+html[data-theme="light"] .ftf-portal button[class*="w-8"]:not([class*="px-"]):not([class*="fc-keep"]) {
   background: #ffffff !important;
   color: #475569 !important;
   border-color: #e2e8f0 !important;
 }
-html[data-theme="light"] .ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]):hover,
-html[data-theme="light"] .ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]):hover,
-html[data-theme="light"] .ftf-portal button[class*="w-7"]:not([class*="px-"]):hover,
-html[data-theme="light"] .ftf-portal button[class*="w-8"]:not([class*="px-"]):hover {
+html[data-theme="light"] .ftf-portal button[class*="p-1.5"]:not([class*="bg-[#E30613]"]):not([class*="fc-keep"]):hover,
+html[data-theme="light"] .ftf-portal button[class*="p-2"]:not([class*="px-"]):not([class*="bg-[#E30613]"]):not([class*="fc-keep"]):hover,
+html[data-theme="light"] .ftf-portal button[class*="w-7"]:not([class*="px-"]):not([class*="fc-keep"]):hover,
+html[data-theme="light"] .ftf-portal button[class*="w-8"]:not([class*="px-"]):not([class*="fc-keep"]):hover {
   background: #f1f5f9 !important;
   color: #0f172a !important;
 }
