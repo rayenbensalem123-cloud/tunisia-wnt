@@ -918,6 +918,19 @@ button[class*="w-full"][class*="bg-[#E30613]"]:focus-visible {
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 
+/* Loading screen → content hand-off: loader ghosts away while the
+   team-select/login screen rises in beneath it. */
+@keyframes loader-ghost {
+  0% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-26px); }
+}
+@keyframes content-reveal {
+  0% { opacity: 0; transform: translateY(18px) scale(.985); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.loader-ghost { animation: loader-ghost .75s ease-out both; }
+.content-reveal { animation: content-reveal .8s cubic-bezier(.2, .7, .3, 1) both; }
+
 /* Reduced motion: respect accessibility preferences */
 @media (prefers-reduced-motion: reduce) {
   .ftf-portal button, .ftf-portal header,

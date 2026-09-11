@@ -397,6 +397,8 @@ export default function EliteSquadApp() {
   const [user,setUser]=useState<{id:string;username:string;firstName:string;lastName:string;role:string;perms:UserPerms}|null>(null)
   const [authChecked,setAuthChecked]=useState(false)
   const [buffering,setBuffering]=useState(false)
+  const [leaving,setLeaving]=useState(false)
+  const beginFadeIn=()=>{setLeaving(true);setTimeout(()=>setLeaving(false),800)}
   const [members,setMembers]=useState<any[]>([])
   const [matches,setMatches]=useState<any[]>([])
   const [camps,setCamps]=useState<any[]>([])
@@ -506,7 +508,7 @@ export default function EliteSquadApp() {
   // A watchdog timeout guarantees the loading screen always clears, even if
   // a Supabase call hangs (never resolves instead of rejecting).
   useEffect(()=>{
-    const watchdog = setTimeout(()=>{ setAuthChecked(true); setLoaded(true) }, 4000)
+    const watchdog = setTimeout(()=>{ setAuthChecked(true); setLoaded(true); beginFadeIn() }, 4000)
     ;(async()=>{
       try{
         await loadMyUser()
@@ -518,6 +520,7 @@ export default function EliteSquadApp() {
         await reloadProfiles()
       }catch(e){console.error("initial data load failed",e)}
       setLoaded(true)
+      beginFadeIn()
     })()
     const { data: sub } = supabase.auth.onAuthStateChange((event)=>{
       if(event==="SIGNED_OUT") setUser(null)
@@ -770,44 +773,8 @@ export default function EliteSquadApp() {
   }
 
   // ── RENDER GATES ──
-  if(buffering||!authChecked||!loaded) return(
-    <div className="fed-screen min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
-      <FedBg/>
-      <ThemeToggle className="absolute top-6 right-6 z-20"/>
-      <div className="relative z-10 flex flex-col items-center gap-8">
-        {/* Logo with floating effect */}
-        <div className="relative animate-[float_3s_ease-in-out_infinite]">
-          <div className="w-40 h-40 rounded-full bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] shadow-2xl shadow-red-500/10 flex items-center justify-center">
-            <div className="w-28 h-28 rounded-full bg-[linear-gradient(135deg,var(--c-grad1),var(--c-panelG1))] border border-[rgba(246,199,68,.22)] flex items-center justify-center">
-              <img src="/ftf-logo.png" className="h-16" alt=""/>
-            </div>
-          </div>
-          {/* Ring spinner - red */}
-          <div className="absolute -inset-3">
-            <div className="w-full h-full rounded-full border-[3px] border-transparent border-t-[#E30613] border-r-[#E30613]/30 animate-spin" style={{animationDuration:'1.8s'}}/>
-          </div>
-          {/* Ring spinner - gold */}
-          <div className="absolute -inset-1.5">
-            <div className="w-full h-full rounded-full border border-transparent border-b-[#f6c744]/60 border-l-[#f6c744]/25 animate-spin" style={{animationDuration:'2.5s',animationDirection:'reverse'}}/>
-          </div>
-        </div>
-        {/* Loading dots */}
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full bg-[#E30613] animate-[loadDot_1.4s_ease-in-out_infinite]"/>
-          <div className="w-2 h-2 rounded-full bg-[#f6c744] animate-[loadDot_1.4s_ease-in-out_infinite_0.2s]"/>
-          <div className="w-2 h-2 rounded-full bg-[#E30613] animate-[loadDot_1.4s_ease-in-out_infinite_0.4s]"/>
-        </div>
-        {/* Text */}
-        <div className="flex flex-col items-center gap-1.5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[var(--c-text)]">{tr.login.loadingDb}</p>
-          <p className="text-[7px] font-medium uppercase tracking-[0.25em] text-[#f6c744]/70">Fédération Tunisienne de Football</p>
-        </div>
-      </div>
-      <style>{`@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}@keyframes loadDot{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}`}</style>
-    </div>
-  )
-  if(authChecked&&!user) return <LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>setBuffering(false),1200))}}/>
-  if(!teamCat) return(
+  const busy=buffering||!authChecked||!loaded
+  const renderTeamSelect=()=>(
     <div className="relative">
       <div className="fixed top-6 right-6 z-[999] flex items-center gap-2.5">
         <ThemeToggle/>
@@ -818,6 +785,51 @@ export default function EliteSquadApp() {
       <TeamSelector onSelect={selectCat}/>
     </div>
   )
+  if(busy||leaving) return(
+    <div className="relative min-h-screen">
+      {leaving&&!busy&&(
+        <div className="content-reveal min-h-screen">
+          {user?renderTeamSelect():<LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>{setBuffering(false);beginFadeIn()},1200))}}/>}
+        </div>
+      )}
+      <div data-x="loader-overlay" className={`fed-screen min-h-screen flex flex-col items-center justify-center relative overflow-hidden${leaving?" loader-ghost pointer-events-none":""}`}>
+        <FedBg/>
+        <ThemeToggle className="absolute top-6 right-6 z-20"/>
+        <div className="relative z-10 flex flex-col items-center gap-8">
+          {/* Logo with floating effect */}
+          <div className="relative animate-[float_3s_ease-in-out_infinite]">
+            <div className="w-40 h-40 rounded-full bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] shadow-2xl shadow-red-500/10 flex items-center justify-center">
+              <div className="w-28 h-28 rounded-full bg-[linear-gradient(135deg,var(--c-grad1),var(--c-panelG1))] border border-[rgba(246,199,68,.22)] flex items-center justify-center">
+                <img src="/ftf-logo.png" className="h-16" alt=""/>
+              </div>
+            </div>
+            {/* Ring spinner - red */}
+            <div className="absolute -inset-3">
+              <div className="w-full h-full rounded-full border-[3px] border-transparent border-t-[#E30613] border-r-[#E30613]/30 animate-spin" style={{animationDuration:'1.8s'}}/>
+            </div>
+            {/* Ring spinner - gold */}
+            <div className="absolute -inset-1.5">
+              <div className="w-full h-full rounded-full border border-transparent border-b-[#f6c744]/60 border-l-[#f6c744]/25 animate-spin" style={{animationDuration:'2.5s',animationDirection:'reverse'}}/>
+            </div>
+          </div>
+          {/* Loading dots */}
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-[#E30613] animate-[loadDot_1.4s_ease-in-out_infinite]"/>
+            <div className="w-2 h-2 rounded-full bg-[#f6c744] animate-[loadDot_1.4s_ease-in-out_infinite_0.2s]"/>
+            <div className="w-2 h-2 rounded-full bg-[#E30613] animate-[loadDot_1.4s_ease-in-out_infinite_0.4s]"/>
+          </div>
+          {/* Text */}
+          <div className="flex flex-col items-center gap-1.5">
+            <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[var(--c-text)]">{tr.login.loadingDb}</p>
+            <p className="text-[7px] font-medium uppercase tracking-[0.25em] text-[#f6c744]/70">Fédération Tunisienne de Football</p>
+          </div>
+        </div>
+        <style>{`@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}@keyframes loadDot{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}`}</style>
+      </div>
+    </div>
+  )
+  if(authChecked&&!user) return <LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>{setBuffering(false);beginFadeIn()},1200))}}/>
+  if(!teamCat) return renderTeamSelect()
 
   // ── MAIN SQUAD VIEW ──
   return(
