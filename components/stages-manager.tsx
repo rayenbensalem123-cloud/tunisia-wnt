@@ -85,14 +85,6 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
 
   const sorted = [...stages].sort((a, b) => (b.startDate || "").localeCompare(a.startDate || ""))
   const filtered = filtCat === "ALL" ? sorted : sorted.filter(s => s.teamCategory === filtCat)
-  const today = new Date().toISOString().slice(0, 10)
-
-  const stats = {
-    total: sorted.length,
-    players: sorted.reduce((a, s) => a + (s.players?.length || 0), 0),
-    active: sorted.filter(s => !s.endDate || s.endDate >= today).length,
-    reports: sorted.filter(s => s.reportUrl).length,
-  }
 
   const startCreate = () => {
     const base = emptyStage(teamCat)
@@ -209,35 +201,15 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
 
             {/* ─── HERO ─── */}
             <div className="relative overflow-hidden rounded-[28px] mt-6 px-7 sm:px-10 py-10 sm:py-12 bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white">
-              <div className="absolute inset-0 opacity-[0.08] pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 18% 40%, #ffffff 0, transparent 45%), radial-gradient(circle at 82% 12%, #f6c744 0, transparent 40%)" }}/>
               <div className="absolute -right-4 -top-8 text-[110px] sm:text-[150px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">Stages</div>
-              <div className="absolute -bottom-16 -left-10 w-64 h-64 rounded-full bg-[#f6c744]/[0.07] blur-[70px] pointer-events-none"/>
-              <div className="relative flex flex-col xl:flex-row xl:items-end xl:justify-between gap-8">
-                <div className="max-w-xl">
-                  <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f6c744]/15 border border-[#f6c744]/40 text-[#f6c744] text-[8px] font-black uppercase tracking-[0.25em]">
-                    <CalendarRange size={12}/> Portail Camps
-                  </span>
-                  <h2 className="mt-5 text-4xl sm:text-5xl font-black italic uppercase tracking-tighter leading-[0.95]">
-                    Stages de <span className="text-[#f6c744]">Préparation</span>
-                  </h2>
-                  <p className="mt-4 text-[10px] font-black text-white/60 uppercase tracking-[0.22em]">Programme · Convocations · Encadrement · Rapport · Photos</p>
-                </div>
-                <div className="flex gap-3 flex-wrap xl:justify-end shrink-0">
-                  {[
-                    { n: stats.total, l: "Stages", icon: <Calendar size={14}/> },
-                    { n: stats.players, l: "Convocations", icon: <Users size={14}/> },
-                    { n: stats.active, l: "À venir / En cours", icon: <Clock size={14}/> },
-                    { n: stats.reports, l: "Rapports", icon: <Download size={14}/> },
-                  ].map((st, i) => (
-                    <div key={i} className="min-w-[128px] rounded-2xl bg-white/[0.06] border border-white/15 backdrop-blur px-5 py-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-[26px] font-black italic leading-none text-[#f6c744]">{st.n}</p>
-                        <span className="text-white/40">{st.icon}</span>
-                      </div>
-                      <p className="mt-2 text-[8px] font-black uppercase tracking-widest text-white/55">{st.l}</p>
-                    </div>
-                  ))}
-                </div>
+              <div className="relative">
+                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f6c744]/15 border border-[#f6c744]/40 text-[#f6c744] text-[8px] font-black uppercase tracking-[0.25em]">
+                  <CalendarRange size={12}/> Portail Camps
+                </span>
+                <h2 className="mt-5 text-4xl sm:text-5xl font-black italic uppercase tracking-tighter leading-[0.95]">
+                  Stages de <span className="text-[#f6c744]">Préparation</span>
+                </h2>
+                <p className="mt-4 text-[10px] font-black text-white/60 uppercase tracking-[0.22em]">Programme · Convocations · Encadrement · Rapport · Photos</p>
               </div>
             </div>
 
@@ -537,9 +509,9 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
           <div className="flex items-start justify-between gap-6 flex-wrap">
             <div className="flex items-center gap-5 flex-wrap">
               {d && (
-                <div className="rounded-2xl bg-white/[0.06] border border-white/15 backdrop-blur px-5 py-3.5 text-center min-w-[88px]">
+                <div className="rounded-2xl bg-white/[0.08] border border-white/20 px-5 py-3.5 text-center min-w-[88px]">
                   <p className="text-[30px] font-black italic leading-none text-[#f6c744]">{String(d.getDate()).padStart(2, "0")}</p>
-                  <p className="mt-1 text-[8px] font-black text-white/60 uppercase tracking-widest">{MONTHS[d.getMonth()]} {d.getFullYear()}</p>
+                  <p className="mt-1 text-[8px] font-black text-white/65 uppercase tracking-widest">{MONTHS[d.getMonth()]} {d.getFullYear()}</p>
                 </div>
               )}
               <div>
