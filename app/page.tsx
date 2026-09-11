@@ -823,11 +823,11 @@ export default function EliteSquadApp() {
   return(
     <main className="ftf-portal min-h-screen bg-zinc-50 text-zinc-900 relative">
       {!loaded&&<div className="fixed inset-0 z-[999] bg-white flex items-center justify-center"><div className="flex flex-col items-center gap-3"><div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin"/><p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Loading...</p></div></div>}
-      {/* Ambient background photo */}
+      {/* Ambient rotating logo background */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        <img src="/cats/home-bg.webp" className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.24] scale-105" alt=""/>
-        <div className="absolute inset-0 bg-[#e3062c]/35 mix-blend-color"/>
-        <div className="absolute inset-0 ftf-home-bg-shim"/>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <img src="/ftf-logo.png" className="w-[60%] opacity-[0.03] grayscale animate-[spin_60s_linear_infinite]" alt=""/>
+        </div>
       </div>
 
       {stagesOpen ? (
