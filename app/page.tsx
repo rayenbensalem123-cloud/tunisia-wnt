@@ -326,11 +326,11 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
   ]
   return(
     <div className="fed-screen min-h-screen flex flex-col relative overflow-hidden">
-      {/* Page background photo */}
-      <img src="/cats/home-bg.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.65] scale-110 pointer-events-none" aria-hidden="true"/>
+      {/* Page background photo — blue cast matching the loading screen */}
+      <img src="/cats/home-bg.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.45] scale-110 pointer-events-none" aria-hidden="true"/>
       <div className="absolute inset-0 bg-[#e3062c]/40 mix-blend-color pointer-events-none"/>
-      <div className="absolute inset-0 bg-gradient-to-b from-[#060d1c]/70 via-[#0a1322]/40 to-[#0a1322]/86 pointer-events-none"/>
-      <div className="absolute inset-0 bg-[radial-gradient(1100px_480px_at_50%_-180px,rgba(227,6,44,.16),transparent_70%),radial-gradient(900px_420px_at_88%_110%,rgba(246,199,68,.1),transparent_70%)] pointer-events-none"/>
+      <div className="absolute inset-0 bg-gradient-to-b from-[#0a1c38]/78 via-[#0a1322]/52 to-[#0a1c38]/86 pointer-events-none"/>
+      <div className="absolute inset-0 bg-[radial-gradient(1100px_480px_at_50%_-180px,rgba(23,60,120,.18),transparent_70%)] pointer-events-none"/>
       <div className="relative z-10 flex flex-col items-center justify-center min-h-screen px-6 py-12">
         {/* Header */}
         <div className="flex flex-col items-center mb-14 animate-[fadeUp_0.7s_ease-out_both]">
