@@ -797,9 +797,9 @@ export default function EliteSquadApp() {
     <div className="relative">
       <div className="fixed top-6 right-6 z-[999] flex gap-3">
         <ThemeToggle/>
-        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} title="Change language" className="p-3 rounded-xl border border-[rgba(var(--line-rgb),.22)] bg-[var(--c-panel3)] text-[var(--c-textBlue2)] hover:text-[#f6c744] hover:border-[#f6c744]/40 hover:shadow-[0_0_18px_rgba(246,199,68,.12)] transition-all text-[10px] font-black uppercase tracking-widest"><Globe size={16}/><span className="ml-1">{lang.toUpperCase()}</span></button>
+        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} title="Change language" className="p-3 rounded-xl border border-[rgba(var(--line-rgb),.22)] bg-[var(--c-panel3)]/90 text-[var(--c-textBlue2)] hover:text-[#f6c744] hover:border-[#f6c744]/40 hover:shadow-[0_0_18px_rgba(246,199,68,.12)] transition-all text-[10px] font-black uppercase tracking-widest backdrop-blur-sm"><Globe size={16}/><span className="ml-1">{lang.toUpperCase()}</span></button>
         <span className="text-[9px] font-black uppercase tracking-wider text-[#f6c744]/80 self-center">{user?.username}</span>
-        <button onClick={handleChangePassword} title="Change your password" className="p-3 rounded-xl border border-[rgba(var(--line-rgb),.22)] bg-[var(--c-panel3)] text-[var(--c-textBlue2)] hover:bg-[#f6c744] hover:text-[var(--c-bg)] hover:border-[#f6c744] transition-all"><Key size={18}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-3 rounded-xl border border-[rgba(var(--line-rgb),.22)] bg-[var(--c-panel3)] text-[var(--c-textBlue2)] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_18px_rgba(227,6,44,.25)] transition-all"><LogOut size={18}/></button>
+        <button onClick={handleChangePassword} title="Change your password" className="p-3 rounded-xl border border-[rgba(var(--line-rgb),.22)] bg-[var(--c-panel3)]/90 text-[var(--c-textBlue2)] hover:bg-[#f6c744] hover:text-[var(--c-bg)] hover:border-[#f6c744] transition-all backdrop-blur-sm"><Key size={18}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-3 rounded-xl border border-[rgba(var(--line-rgb),.22)] bg-[var(--c-panel3)]/90 text-[var(--c-textBlue2)] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_18px_rgba(227,6,44,.25)] transition-all backdrop-blur-sm"><LogOut size={18}/></button>
       </div>
       <TeamSelector onSelect={selectCat}/>
     </div>
@@ -823,7 +823,7 @@ export default function EliteSquadApp() {
       ) : (
       <>
       {/* ─── HEADER ─── */}
-      <header className="sticky top-0 z-[100] bg-[var(--c-bg)] border-b border-[rgba(var(--line-rgb),.12)] relative">
+      <header className="sticky top-0 z-[100] bg-white/95 backdrop-blur-md border-b border-zinc-200 relative">
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E30613]/40 to-transparent animate-[pulse_3s_ease-in-out_infinite]"/>
         <div className="max-w-7xl mx-auto px-6 pt-3 pb-2 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
