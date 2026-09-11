@@ -1,7 +1,7 @@
 "use client"
 import React, { useState } from "react"
-import { createPortal } from "react-dom"
-import { X, Plus, ArrowLeft, Calendar, MapPin, Users, ClipboardList, FileText, Image as ImageIcon, Trash2, Save, Pencil, Download, Check, Star, Briefcase } from "lucide-react"
+import { ChevronLeft, X, Plus, ArrowLeft, Calendar, MapPin, Users, FileText, Image as ImageIcon, Trash2, Save, Pencil, Download, Check, Briefcase, CalendarRange, Clock } from "lucide-react"
+import ThemeToggle from "@/components/theme-toggle"
 
 type Stage = {
   id?: number
@@ -30,6 +30,7 @@ type Props = {
   onSave: (stage: Stage) => Promise<boolean> | boolean
   onDelete?: (id: number) => Promise<boolean> | boolean
   onRefresh?: () => void
+  user?: { username?: string }
 }
 
 const emptyStage = (cat: string | null): Stage => ({
@@ -45,6 +46,22 @@ const CATS: { value: string; label: string }[] = [
   { value: "U17", label: "U-17" },
 ]
 
+const MONTHS = ["JAN", "FÉV", "MAR", "AVR", "MAI", "JUIN", "JUIL", "AOÛT", "SEPT", "OCT", "NOV", "DÉC"]
+
+const fmtDate = (iso: string) => {
+  if (!iso) return "—"
+  const [y, m, d] = iso.split("-")
+  return `${d}/${m}/${y}`
+}
+
+const durDays = (s: Stage): number | null => {
+  if (!s.startDate || !s.endDate) return null
+  const a = new Date(s.startDate + "T00:00:00")
+  const b = new Date(s.endDate + "T00:00:00")
+  const d = Math.round((b.getTime() - a.getTime()) / 86400000)
+  return d >= 0 ? d + 1 : null
+}
+
 let toastTimer: any = null
 function useToast() {
   const [msg, setMsg] = useState<string | null>(null)
@@ -56,33 +73,43 @@ function useToast() {
   return { msg, show }
 }
 
-export function StagesManager({ open, onClose, stages, members, teamCat, canManage, onSave, onDelete, onRefresh }: Props) {
+export function StagesManager({ open, onClose, stages, members, teamCat, canManage, onSave, onDelete, onRefresh, user }: Props) {
   const [view, setView] = useState<"list" | "edit" | "detail">("list")
   const [editing, setEditing] = useState<Stage | null>(null)
   const [tab, setTab] = useState<TabKey>("program")
   const [draft, setDraft] = useState<Stage>(emptyStage(teamCat))
   const [busy, setBusy] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Stage | null>(null)
+  const [filtCat, setFiltCat] = useState<string>("ALL")
   const { msg, show } = useToast()
 
   const sorted = [...stages].sort((a, b) => (b.startDate || "").localeCompare(a.startDate || ""))
+  const filtered = filtCat === "ALL" ? sorted : sorted.filter(s => s.teamCategory === filtCat)
+  const today = new Date().toISOString().slice(0, 10)
 
-const startCreate = () => {
-  const base = emptyStage(teamCat)
-  const now = new Date()
-  const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-  base.startDate = fmt(now)
-  base.endDate = fmt(new Date(now.getTime() + 7 * 86400000))
-  setDraft(base); setTab("program"); setView("edit"); setEditing(null)
-}
+  const stats = {
+    total: sorted.length,
+    players: sorted.reduce((a, s) => a + (s.players?.length || 0), 0),
+    active: sorted.filter(s => !s.endDate || s.endDate >= today).length,
+    reports: sorted.filter(s => s.reportUrl).length,
+  }
 
-const startEdit = (s: Stage) => {
-  setDraft(JSON.parse(JSON.stringify(s))); setTab("program"); setView("edit"); setEditing(s)
-}
+  const startCreate = () => {
+    const base = emptyStage(teamCat)
+    const now = new Date()
+    const fmt = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
+    base.startDate = fmt(now)
+    base.endDate = fmt(new Date(now.getTime() + 7 * 86400000))
+    setDraft(base); setTab("program"); setView("edit"); setEditing(null)
+  }
 
-const openDetail = (s: Stage) => {
-  setEditing(s); setTab("program"); setView("detail")
-}
+  const startEdit = (s: Stage) => {
+    setDraft(JSON.parse(JSON.stringify(s))); setTab("program"); setView("edit"); setEditing(s)
+  }
+
+  const openDetail = (s: Stage) => {
+    setEditing(s); setTab("program"); setView("detail")
+  }
 
   const canSubmit = draft.name.trim().length > 0
   const catName = (c?: string) => CATS.find(x => x.value === c)?.label || c || "Seniors"
@@ -143,180 +170,268 @@ const openDetail = (s: Stage) => {
 
   if (!open) return null
 
-  return createPortal(
-    <div className="fixed inset-0 z-[400] flex items-center justify-center p-2 sm:p-4 bg-black/85 backdrop-blur-sm" onMouseDownCapture={(e) => e.stopPropagation()}>
-      <div className="w-full max-w-4xl rounded-3xl bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.18)] shadow-2xl flex flex-col max-h-[92vh] overflow-hidden">
-
-        {/* Header */}
-        <div className="px-6 pt-5 pb-4 border-b border-[rgba(var(--line-rgb),.14)] shrink-0 flex items-center justify-between gap-3">
+  return (
+    <div className="min-h-screen flex flex-col">
+      {/* ═══ TOP BAR ═══ */}
+      <div className="sticky top-0 z-[100] border-b border-[rgba(var(--line-rgb),.12)] bg-[rgba(var(--c-bg),.82)] backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#E30613]/15 border border-[#E30613]/40 flex items-center justify-center shrink-0">
-              <Calendar size={16} className="text-[#ff5f72]"/>
-            </div>
-            <div className="min-w-0">
-              <h2 className="text-lg font-black italic uppercase tracking-tight truncate">{view === "edit" ? (editing ? "Modifier le Stage" : "Nouveau Stage") : "Stages (Camps)"}</h2>
-              <p className="text-[8px] font-black uppercase tracking-[0.3em] text-[var(--c-textDim)]">Programme · Convocations · Staff · Rapport · Photos</p>
+            <button onClick={onClose} title="Retour au tableau de bord" className="p-2 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]/60 transition-all shrink-0">
+              <ChevronLeft size={17}/>
+            </button>
+            <img src="/ftf-logo.png" className="h-9" alt="FTF"/>
+            <div className="leading-tight min-w-0">
+              <h1 className="text-sm font-black italic uppercase tracking-wider text-[var(--c-text)] truncate">Stages de Préparation</h1>
+              <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em]">Rassemblements & Camps</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {view === "edit" && (
-              <button onClick={() => setView("list")} className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]/60 transition-all" title="Back">
-                <ArrowLeft size={16}/>
-              </button>
-            )}
-            <button onClick={onClose} title="Close" className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><X size={16}/></button>
+            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[rgba(var(--line-rgb),.16)] bg-[var(--c-panel3)]/80">
+              <div className="w-5 h-5 rounded-full bg-[#E30613] text-white flex items-center justify-center text-[8px] font-black uppercase">{(user?.username || "?")[0]}</div>
+              <span className="text-[8px] font-black uppercase tracking-wider text-[var(--c-textMid)]">{user?.username || "—"}</span>
+            </div>
+            <ThemeToggle className="p-2"/>
           </div>
         </div>
+      </div>
 
-        {msg && (
-          <div className="shrink-0 mx-6 mt-4 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[10px] font-black uppercase tracking-wider flex items-center gap-2">
-            <Check size={13}/>{msg}
-          </div>
-        )}
+      {/* Toast */}
+      {msg && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[500] flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider shadow-2xl animate-[fadeUp_0.3s_ease-out_both]">
+          <Check size={14}/>{msg}
+        </div>
+      )}
 
-        {/* ───────── List view ───────── */}
+      <div className="max-w-7xl mx-auto px-6 pb-20 w-full">
+
         {view === "list" && (
-          <div className="flex-1 overflow-y-auto p-6 space-y-3">
+          <>
+
+            {/* ─── HERO ─── */}
+            <div className="relative overflow-hidden rounded-[28px] mt-6 px-7 sm:px-10 py-10 sm:py-12 bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white">
+              <div className="absolute inset-0 opacity-[0.08] pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 18% 40%, #ffffff 0, transparent 45%), radial-gradient(circle at 82% 12%, #f6c744 0, transparent 40%)" }}/>
+              <div className="absolute -right-4 -top-8 text-[110px] sm:text-[150px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">Stages</div>
+              <div className="absolute -bottom-16 -left-10 w-64 h-64 rounded-full bg-[#f6c744]/[0.07] blur-[70px] pointer-events-none"/>
+              <div className="relative flex flex-col xl:flex-row xl:items-end xl:justify-between gap-8">
+                <div className="max-w-xl">
+                  <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f6c744]/15 border border-[#f6c744]/40 text-[#f6c744] text-[8px] font-black uppercase tracking-[0.25em]">
+                    <CalendarRange size={12}/> Portail Camps
+                  </span>
+                  <h2 className="mt-5 text-4xl sm:text-5xl font-black italic uppercase tracking-tighter leading-[0.95]">
+                    Stages de <span className="text-[#f6c744]">Préparation</span>
+                  </h2>
+                  <p className="mt-4 text-[10px] font-black text-white/60 uppercase tracking-[0.22em]">Programme · Convocations · Encadrement · Rapport · Photos</p>
+                </div>
+                <div className="flex gap-3 flex-wrap xl:justify-end shrink-0">
+                  {[
+                    { n: stats.total, l: "Stages", icon: <Calendar size={14}/> },
+                    { n: stats.players, l: "Convocations", icon: <Users size={14}/> },
+                    { n: stats.active, l: "À venir / En cours", icon: <Clock size={14}/> },
+                    { n: stats.reports, l: "Rapports", icon: <Download size={14}/> },
+                  ].map((st, i) => (
+                    <div key={i} className="min-w-[128px] rounded-2xl bg-white/[0.06] border border-white/15 backdrop-blur px-5 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <p className="text-[26px] font-black italic leading-none text-[#f6c744]">{st.n}</p>
+                        <span className="text-white/40">{st.icon}</span>
+                      </div>
+                      <p className="mt-2 text-[8px] font-black uppercase tracking-widest text-white/55">{st.l}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* ─── FILTER + CREATE ─── */}
+            <div className="mt-8 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
+              <div className="flex p-1 rounded-2xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.14)] self-start">
+                <button onClick={() => setFiltCat("ALL")} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filtCat === "ALL" ? 'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25' : 'text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>Tous</button>
+                {CATS.map(c => (
+                  <button key={c.value} onClick={() => setFiltCat(c.value)} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filtCat === c.value ? 'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25' : 'text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{c.label}</button>
+                ))}
+              </div>
+              <p className="text-[9px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{filtered.length} stage(s)</p>
+            </div>
+
+            {/* ─── CREATE CTA ─── */}
             {canManage && (
-              <button onClick={startCreate} className="group w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl bg-gradient-to-r from-[#b30510] via-[#E30613] to-[#ff2b3a] text-white text-[11px] font-black uppercase tracking-widest shadow-xl shadow-[#E30613]/30 hover:shadow-[#E30613]/55 hover:scale-[1.005] active:scale-[0.99] transition-all">
-                <span className="w-7 h-7 rounded-full bg-[#f6c744] text-[#7a4b00] flex items-center justify-center shadow-md shadow-black/25 group-hover:rotate-90 transition-transform duration-300 relative z-10">
-                  <Plus size={15} strokeWidth={3}/>
+              <button onClick={startCreate} className="group mt-5 w-full flex items-center justify-center gap-3 py-5 px-6 rounded-2xl bg-gradient-to-r from-[#b30510] via-[#E30613] to-[#ff2b3a] text-white text-[11px] font-black uppercase tracking-widest shadow-xl shadow-[#E30613]/30 hover:shadow-[#E30613]/55 hover:scale-[1.004] active:scale-[0.99] transition-all">
+                <span className="w-8 h-8 rounded-full bg-[#f6c744] text-[#7a4b00] flex items-center justify-center shadow-md shadow-black/25 group-hover:rotate-90 transition-transform duration-300">
+                  <Plus size={16} strokeWidth={3}/>
                 </span>
                 <span className="leading-none">Créer un nouveau stage</span>
-                <span className="hidden sm:inline text-[8px] font-semibold tracking-[0.18em] text-white/60 uppercase ml-1">Programme · Convocations · Staff · Rapport · Photos</span>
+                <span className="hidden md:inline text-[8px] font-semibold tracking-[0.18em] text-white/60 uppercase ml-1">Programme · Convocations · Staff · Rapport · Photos</span>
               </button>
             )}
 
-            {sorted.length === 0 && !canManage && (
-              <div className="text-center py-16 text-[var(--c-textDim)]">
-                <Calendar size={40} className="mx-auto mb-3 opacity-40"/>
-                <p className="text-[11px] font-black uppercase tracking-widest">Aucun stage enregistré</p>
+            {/* ─── EMPTY STATE ─── */}
+            {filtered.length === 0 && (
+              <div className="mt-8 flex flex-col items-center justify-center py-20 gap-5 rounded-3xl border-2 border-dashed border-[rgba(var(--line-rgb),.18)] text-center">
+                <div className="w-16 h-16 rounded-2xl bg-[var(--c-panel2)] border border-[rgba(var(--line-rgb),.16)] flex items-center justify-center">
+                  <CalendarRange size={26} className="text-[#f6c744]"/>
+                </div>
+                <div>
+                  <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">Aucun stage enregistré</p>
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">Créez votre premier stage de préparation</p>
+                </div>
+                {canManage && (
+                  <button onClick={startCreate} className="mt-1 px-6 py-3 rounded-full bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-[#E30613]/25 hover:bg-red-700 transition-all">
+                    <Plus size={15}/> Créer un stage
+                  </button>
+                )}
               </div>
             )}
 
-            {sorted.map(s => {
-              const hasPlayers = (s.players?.length || 0) > 0
-              const hasReport = !!s.reportUrl
-              const hasPhotos = (s.images?.length || 0) > 0
-              const hasProgram = (s.program?.length || 0) > 0
-              const hasStaff = (s.staff?.length || 0) > 0
-              const dateLabel = s.startDate && s.endDate ? `${s.startDate.slice(8,10)}/${s.startDate.slice(5,7)} → ${s.endDate.slice(8,10)}/${s.endDate.slice(5,7)}` : (s.startDate || "—")
-              return (
-                <div key={s.id ?? s.name} className="group rounded-2xl border border-[rgba(var(--line-rgb),.16)] bg-[var(--c-panel2)]/60 hover:bg-[var(--c-panel2)] hover:border-[#f6c744]/35 transition-all overflow-hidden">
-                  <div className="flex items-center gap-4 p-4 cursor-pointer" onClick={() => s.id && openDetail(s)}>
-                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center shrink-0">
-                      <Calendar size={17} className="text-[#f6c744]"/>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-[13px] font-black uppercase tracking-wide text-[var(--c-text)] truncate">{s.name}</p>
-                        <span className="px-2 py-0.5 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[#ff5f72] text-[7px] font-black uppercase tracking-widest">{catName(s.teamCategory)}</span>
+            {/* ─── CARDS GRID ─── */}
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filtered.map((s, idx) => {
+                const hasPlayers = (s.players?.length || 0) > 0
+                const hasReport = !!s.reportUrl
+                const hasPhotos = (s.images?.length || 0) > 0
+                const hasProgram = (s.program?.length || 0) > 0
+                const hasStaff = (s.staff?.length || 0) > 0
+                const dur = durDays(s)
+                const d = s.startDate ? new Date(s.startDate + "T00:00:00") : null
+                return (
+                  <div key={s.id ?? s.name} className="group rounded-3xl border border-[rgba(var(--line-rgb),.16)] bg-[var(--c-panel2)]/55 hover:bg-[var(--c-panel2)] hover:border-[#f6c744]/35 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden shadow-none hover:shadow-2xl hover:shadow-black/10">
+                    <div className="h-1.5 bg-gradient-to-r from-[#E30613] via-[#f6c744] to-[#E30613]"/>
+                    <div className="p-6">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="min-w-0">
+                          <span className="inline-block px-2.5 py-1 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[#ff5f72] text-[7px] font-black uppercase tracking-widest">{catName(s.teamCategory)}</span>
+                          <h3 className="mt-3 text-[15px] font-black uppercase tracking-tight text-[var(--c-text)] truncate">{s.name}</h3>
+                          <p className="mt-1.5 flex items-center gap-1.5 text-[9px] font-bold text-[var(--c-textDim)]">
+                            <MapPin size={11}/>{s.location || "Lieu —"}
+                          </p>
+                        </div>
+                        {d && (
+                          <div className="shrink-0 text-center rounded-2xl bg-[#E30613]/10 border border-[#E30613]/25 px-3.5 py-2.5 min-w-[62px]">
+                            <p className="text-[22px] font-black italic leading-none text-[#E30613]">{String(d.getDate()).padStart(2, "0")}</p>
+                            <p className="mt-1 text-[7px] font-black text-[var(--c-textMid)] uppercase tracking-widest">{MONTHS[d.getMonth()]}</p>
+                            <p className="text-[7px] font-bold text-[var(--c-textMid)]">{d.getFullYear()}</p>
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-3 mt-1.5 text-[9px] font-bold text-[var(--c-textDim)] flex-wrap">
-                        <span className="flex items-center gap-1"><MapPin size={10}/>{s.location || "Lieu —"}</span>
-                        {s.startDate && <span className="flex items-center gap-1"><Calendar size={10}/>{dateLabel}</span>}
+
+                      <div className="mt-4 flex items-center gap-3 text-[9px] font-bold text-[var(--c-textDim)] flex-wrap">
+                        <span className="flex items-center gap-1.5"><Calendar size={11}/>{s.startDate ? fmtDate(s.startDate) : "—"} {s.endDate ? `→ ${fmtDate(s.endDate)}` : ""}</span>
+                        {dur !== null && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.16)]">{dur} j</span>}
                       </div>
-                      <div className="flex gap-1.5 mt-2 flex-wrap">
+
+                      <div className="mt-4 flex gap-1.5 flex-wrap">
                         {hasProgram && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">Programme</span>}
                         {hasPlayers && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">{s.players.length} joueurs</span>}
                         {hasStaff && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">Staff</span>}
                         {hasReport && <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[7px] font-black uppercase tracking-wider">Rapport</span>}
                         {hasPhotos && <span className="px-2 py-0.5 rounded-md bg-[#7ec3ff]/10 border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider">{s.images.length} photos</span>}
                       </div>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      {canManage && (
-                        <>
-                          <button onClick={(e) => { e.stopPropagation(); startEdit(s) }} title="Edit" className="p-2 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[#f6c744] hover:border-[#f6c744]/40 transition-all"><Pencil size={14}/></button>
-                          <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(s) }} title="Delete" className="p-2 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><Trash2 size={14}/></button>
-                        </>
-                      )}
-                      <button onClick={() => s.id && openDetail(s)} className="px-4 py-2 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">Ouvrir</button>
+
+                      <div className="mt-6 flex items-center gap-2">
+                        <button onClick={() => s.id && openDetail(s)} className="flex-1 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-md shadow-[#E30613]/20">
+                          Ouvrir le dossier
+                        </button>
+                        {canManage && (
+                          <button onClick={(e) => { e.stopPropagation(); startEdit(s) }} title="Modifier" className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[#f6c744] hover:border-[#f6c744]/40 transition-all"><Pencil size={15}/></button>
+                        )}
+                        {canManage && (
+                          <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(s) }} title="Supprimer" className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><Trash2 size={15}/></button>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
+                )
+              })}
+            </div>
+          </>
         )}
 
-        {/* ───────── Detail view ───────── */}
         {view === "detail" && editing && (
           <StageDetail stage={editing} members={members} canManage={canManage}
             onBack={() => setView("list")}
             onEdit={() => { setDraft(JSON.parse(JSON.stringify(editing))); setTab("program"); setView("edit") }}
-            onRefresh={onRefresh} />
+            onDelete={() => setDeleteTarget(editing)} />
         )}
 
-        {/* ───────── Edit view ───────── */}
         {view === "edit" && (
           <>
-            <div className="flex gap-1 px-6 pt-4 shrink-0 flex-wrap">
+            {/* ─── EDIT HEADER ─── */}
+            <div className="mt-6 flex items-end justify-between gap-4 flex-wrap">
+              <div>
+                <p className="text-[8px] font-black uppercase tracking-[0.25em] text-[var(--c-textDim)]">Stages / {editing ? "Modifier" : "Nouveau"}</p>
+                <h2 className="mt-1 text-2xl font-black italic uppercase tracking-tight text-[var(--c-text)]">{editing ? "Modifier le Stage" : "Nouveau Stage"}</h2>
+                <p className="mt-1 text-[9px] font-bold text-[var(--c-textDim)] uppercase tracking-wider">Programme · Convocations · Staff · Rapport · Photos</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => setView("list")} className="px-5 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]/40 text-[9px] font-black uppercase tracking-wider transition-all">Annuler</button>
+                <button onClick={save} disabled={!canSubmit || busy} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-40 shadow-lg shadow-[#E30613]/25">
+                  <Save size={14}/> {busy ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Créer le stage'}
+                </button>
+              </div>
+            </div>
+
+            {/* ─── BASIC INFO ─── */}
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              <div className="sm:col-span-2">
+                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Nom du stage *</label>
+                <input
+                  value={draft.name}
+                  onChange={e => setDraft({ ...draft, name: e.target.value })}
+                  placeholder="ex: Stage de préparation — Mars"
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+              </div>
+              <div>
+                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Lieu</label>
+                <input
+                  value={draft.location}
+                  onChange={e => setDraft({ ...draft, location: e.target.value })}
+                  placeholder="ex: Tunis"
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+              </div>
+              <div>
+                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Catégorie</label>
+                <select value={draft.teamCategory} onChange={e => setDraft({ ...draft, teamCategory: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all">
+                  {CATS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Début</label>
+                <input type="date" value={draft.startDate} onChange={e => setDraft({ ...draft, startDate: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+              </div>
+              <div>
+                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Fin</label>
+                <input type="date" value={draft.endDate} onChange={e => setDraft({ ...draft, endDate: e.target.value })}
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+              </div>
+            </div>
+
+            {/* ─── TABS ─── */}
+            <div className="mt-6 flex gap-1.5 flex-wrap">
               {([["program","Programme"],["players","Convocations"],["staff","Staff"],["report","Rapport PDF"],["photos","Photos"]] as [TabKey,string][]).map(([k,label]) => (
                 <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${tab===k?'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25':'bg-[var(--c-panel3)] text-[var(--c-textMid)] border border-[rgba(var(--line-rgb),.16)] hover:text-[var(--c-text)]'}`}>{label}</button>
               ))}
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
-              {/* Basic info */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-5">
-                <div className="sm:col-span-2">
-                  <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Nom du stage *</label>
-                  <input
-                    value={draft.name}
-                    onChange={e => setDraft({ ...draft, name: e.target.value })}
-                    placeholder="ex: Stage de préparation — Mars"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
-                </div>
-                <div>
-                  <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Lieu</label>
-                  <input
-                    value={draft.location}
-                    onChange={e => setDraft({ ...draft, location: e.target.value })}
-                    placeholder="ex: Tunis"
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
-                </div>
-                <div>
-                  <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Catégorie</label>
-                  <select value={draft.teamCategory} onChange={e => setDraft({ ...draft, teamCategory: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all">
-                    {CATS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Début</label>
-                  <input type="date" value={draft.startDate} onChange={e => setDraft({ ...draft, startDate: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
-                </div>
-                <div>
-                  <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Fin</label>
-                  <input type="date" value={draft.endDate} onChange={e => setDraft({ ...draft, endDate: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
-                </div>
-              </div>
-
-              {/* Programme */}
+            {/* ─── TAB CONTENT ─── */}
+            <div className="mt-5">
               {tab === "program" && (
                 <ProgramTab draft={draft} setDraft={setDraft}/>
               )}
 
-              {/* Convocations */}
               {tab === "players" && (
                 <PlayersTab draft={draft} setDraft={setDraft} members={availablePlayers.length ? availablePlayers : allCandidates.filter(m => (m.role||'').toUpperCase()==='PLAYERS')}/>
               )}
 
-              {/* Staff */}
               {tab === "staff" && (
                 <StaffTab draft={draft} setDraft={setDraft} members={availableStaff.length ? availableStaff : allCandidates.filter(m => (m.role||'').toUpperCase()!=='PLAYERS')}/>
               )}
 
-              {/* Rapport */}
               {tab === "report" && (
                 <div>
                   <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">Rapport de fin de stage (PDF)</p>
-                  <label className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-8 cursor-pointer transition-all ${draft.reportUrl ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#E30613]/50'}`}>
+                  <label className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-9 cursor-pointer transition-all ${draft.reportUrl ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#E30613]/50'}`}>
                     <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={onReportFile}/>
-                    <FileText size={28} className={draft.reportUrl ? 'text-emerald-500' : 'text-[var(--c-textDim)]'}/>
+                    <FileText size={30} className={draft.reportUrl ? 'text-emerald-500' : 'text-[var(--c-textDim)]'}/>
                     <span className="text-[11px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? 'Upload…' : draft.reportUrl ? draft.reportName || 'Rapport joint ✓' : 'Déposez le rapport PDF ici'}</span>
                     <span className="text-[8px] text-[var(--c-textDim)]">Glissez-déposez ou cliquez pour choisir · PDF uniquement</span>
                   </label>
@@ -333,13 +448,12 @@ const openDetail = (s: Stage) => {
                 </div>
               )}
 
-              {/* Photos */}
               {tab === "photos" && (
                 <div>
                   <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">Photos du stage</p>
-                  <label className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 cursor-pointer transition-all mb-4 ${'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#f6c744]/50'}`}>
+                  <label className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-7 cursor-pointer transition-all mb-4 ${'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#f6c744]/50'}`}>
                     <input type="file" accept="image/*" multiple className="hidden" onChange={onPhotos}/>
-                    <ImageIcon size={24} className="text-[var(--c-textDim)]"/>
+                    <ImageIcon size={26} className="text-[var(--c-textDim)]"/>
                     <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? 'Upload…' : 'Ajouter des photos'}</span>
                     <span className="text-[8px] text-[var(--c-textDim)]">Glissez-déposez ou cliquez · jusqu'à 12 images</span>
                   </label>
@@ -356,147 +470,210 @@ const openDetail = (s: Stage) => {
                 </div>
               )}
             </div>
-
-            {/* Footer */}
-            <div className="px-6 py-4 border-t border-[rgba(var(--line-rgb),.14)] shrink-0 flex items-center justify-between gap-3">
-              <p className="text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)]">{canSubmit ? "Prêt à enregistrer" : "Nom du stage requis"}</p>
-              <div className="flex gap-2">
-                <button onClick={() => setView("list")} className="px-5 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider transition-all">Annuler</button>
-                <button onClick={save} disabled={!canSubmit || busy} className="flex items-center gap-1.5 px-6 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-40 shadow-lg shadow-[#E30613]/25">
-                  <Save size={13}/> {busy ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Créer le stage'}
-                </button>
-              </div>
-            </div>
           </>
         )}
       </div>
 
-      {/* Delete confirm */}
+      {/* ─── DELETE CONFIRM ─── */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-[410] flex items-center justify-center bg-black/60 backdrop-blur-sm" onMouseDownCapture={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[450] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="w-full max-w-sm rounded-2xl bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.18)] shadow-2xl p-6">
-            <h3 className="text-sm font-black uppercase tracking-tight mb-2">Supprimer ce stage ?</h3>
-            <p className="text-[10px] font-bold text-[var(--c-textDim)] mb-4">« {deleteTarget.name} » sera définitivement supprimé.</p>
+            <h3 className="text-sm font-black uppercase tracking-tight text-[var(--c-text)] mb-2">Supprimer ce stage ?</h3>
+            <p className="text-[10px] font-bold text-[var(--c-textDim)] mb-5">« {deleteTarget.name} » sera définitivement supprimé, ainsi que son programme, ses convocations et ses documents.</p>
             <div className="flex gap-2">
               <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] text-[9px] font-black uppercase tracking-wider transition-all">Annuler</button>
               <button onClick={async () => {
                 if (deleteTarget.id && onDelete) await onDelete(deleteTarget.id)
                 onRefresh?.()
                 setDeleteTarget(null)
+                setView("list")
               }} className="flex-1 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">Supprimer</button>
             </div>
           </div>
         </div>
       )}
-    </div>,
-  document.body)
+    </div>
+  )
 }
 
-function StageDetail({ stage, members, canManage, onBack, onEdit }: {
+function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
   stage: Stage
   members: any[]
   canManage: boolean
   onBack: () => void
   onEdit: () => void
-  onRefresh?: () => void
   onDelete?: () => void
 }) {
   const [tab, setTab] = useState<TabKey>("program")
   const memberById = (id: number) => members.find(m => m.id === id)
+  const dur = durDays(stage)
+  const d = stage.startDate ? new Date(stage.startDate + "T00:00:00") : null
   return (
     <>
-      <div className="flex items-center justify-between px-6 pt-4 pb-2 shrink-0 flex-wrap gap-3">
-        <div>
-          <h3 className="text-base font-black uppercase tracking-tight text-[var(--c-text)]">{stage.name}</h3>
-          <p className="flex items-center gap-2 mt-1 text-[9px] font-bold text-[var(--c-textDim)] flex-wrap">
-            <span className="flex items-center gap-1"><MapPin size={10}/>{stage.location || "Lieu —"}</span>
-            {stage.startDate && <span className="flex items-center gap-1"><Calendar size={10}/>{stage.startDate} → {stage.endDate}</span>}
-            <span className="px-2 py-0.5 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[#ff5f72] text-[7px] font-black uppercase tracking-widest">{(CATS.find(c=>c.value===stage.teamCategory)||{}).label || stage.teamCategory}</span>
-          </p>
-        </div>
+      {/* Breadcrumb */}
+      <div className="mt-6 flex items-center justify-between gap-3 flex-wrap">
+        <button onClick={onBack} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-panel3)]/70 text-[var(--c-textMid)] hover:text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider transition-all">
+          <ArrowLeft size={13}/> Tous les stages
+        </button>
         <div className="flex gap-2">
-          {canManage && <button onClick={onEdit} className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[#f6c744] hover:border-[#f6c744]/40 text-[9px] font-black uppercase tracking-wider transition-all"><Pencil size={13}/> Modifier</button>}
-          <button onClick={onBack} className="px-4 py-2 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textMid)] text-[9px] font-black uppercase tracking-wider hover:text-[var(--c-text)] transition-all flex items-center gap-1.5"><ArrowLeft size={13}/> Retour</button>
+          {canManage && (
+            <>
+              <button onClick={onEdit} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-panel3)]/70 text-[var(--c-textDim)] hover:text-[#f6c744] hover:border-[#f6c744]/40 text-[9px] font-black uppercase tracking-wider transition-all">
+                <Pencil size={13}/> Modifier
+              </button>
+              <button onClick={onDelete} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#ff4f66]/30 bg-[#E30613]/10 text-[#ff5f72] hover:bg-[#E30613]/20 text-[9px] font-black uppercase tracking-wider transition-all">
+                <Trash2 size={13}/> Supprimer
+              </button>
+            </>
+          )}
         </div>
       </div>
-      <div className="flex gap-1 px-6 pt-1 shrink-0 flex-wrap">
+
+      {/* Detail hero */}
+      <div className="relative overflow-hidden rounded-[28px] mt-5 px-7 sm:px-10 py-9 bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white">
+        <div className="absolute inset-0 opacity-[0.08] pointer-events-none" style={{ backgroundImage: "radial-gradient(circle at 82% 16%, #f6c744 0, transparent 40%)" }}/>
+        <div className="absolute -right-3 -top-8 text-[90px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">{stage.name.slice(0, 12)}</div>
+        <div className="relative">
+          <div className="flex items-start justify-between gap-6 flex-wrap">
+            <div className="flex items-center gap-5 flex-wrap">
+              {d && (
+                <div className="rounded-2xl bg-white/[0.06] border border-white/15 backdrop-blur px-5 py-3.5 text-center min-w-[88px]">
+                  <p className="text-[30px] font-black italic leading-none text-[#f6c744]">{String(d.getDate()).padStart(2, "0")}</p>
+                  <p className="mt-1 text-[8px] font-black text-white/60 uppercase tracking-widest">{MONTHS[d.getMonth()]} {d.getFullYear()}</p>
+                </div>
+              )}
+              <div>
+                <span className="inline-block px-2.5 py-1 rounded-md bg-[#E30613]/40 border border-[#ff5f72]/50 text-[#ffd0d7] text-[7px] font-black uppercase tracking-widest">{CATS.find(c => c.value === stage.teamCategory)?.label || stage.teamCategory}</span>
+                <h2 className="mt-3 text-3xl sm:text-4xl font-black italic uppercase tracking-tighter leading-none">{stage.name}</h2>
+                <div className="mt-3 flex items-center gap-3 text-[9px] font-bold text-white/60 flex-wrap">
+                  <span className="flex items-center gap-1.5"><MapPin size={11}/>{stage.location || "Lieu —"}</span>
+                  <span className="flex items-center gap-1.5"><Calendar size={11}/>{fmtDate(stage.startDate)} → {fmtDate(stage.endDate)}</span>
+                  {dur !== null && <span className="px-2 py-0.5 rounded-md bg-white/[0.08] border border-white/15">{dur} jours</span>}
+                  {stage.createdByUsername && <span className="flex items-center gap-1.5 opacity-70">Créé par {stage.createdByUsername}</span>}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="mt-6 flex gap-1 flex-wrap">
         {([["program","Programme"],["players",`Joueurs (${(stage.players||[]).length})`],["staff",`Staff (${(stage.staff||[]).length})`],["report","Rapport"],["photos",`Photos (${(stage.images||[]).length})`]] as [TabKey,string][]).map(([k,label]) => (
           <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${tab===k?'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25':'bg-[var(--c-panel3)] text-[var(--c-textMid)] border border-[rgba(var(--line-rgb),.16)] hover:text-[var(--c-text)]'}`}>{label}</button>
         ))}
       </div>
-      <div className="flex-1 overflow-y-auto p-6">
+
+      <div className="mt-5">
         {tab === "program" && (
-          <div className="space-y-2">
-            {(stage.program || []).length === 0 && <p className="text-[10px] font-bold text-[var(--c-textDim)]">Aucun programme enregistré.</p>}
-            {(stage.program || []).map((p, i) => (
-              <div key={i} className="flex items-start gap-3 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 p-3">
-                <div className="min-w-[46px] text-center">
-                  <p className="text-[10px] font-black text-[#f6c744]">{p.day || "—"}</p>
-                  <p className="text-[8px] font-bold text-[var(--c-textDim)]">{p.time || ""}</p>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-[11px] font-black uppercase tracking-wide text-[var(--c-text)]">{p.activity || ""}</p>
-                  {p.details && <p className="text-[9px] text-[var(--c-textDim)] mt-0.5">{p.details}</p>}
+          <div>
+            {(stage.program || []).length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+                <Calendar size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucun programme enregistré.</p>
+              </div>
+            )}
+            {(stage.program || []).length > 0 && (
+              <div className="relative pl-7">
+                <div className="absolute left-[13px] top-2 bottom-2 w-px bg-gradient-to-b from-[#f6c744]/50 via-[rgba(var(--line-rgb),.3)] to-transparent"/>
+                <div className="space-y-4">
+                  {(stage.program || []).map((p, i) => (
+                    <div key={i} className="relative">
+                      <span className="absolute -left-7 top-3.5 w-[9px] h-[9px] rounded-full bg-[#f6c744] border-2 border-[var(--c-surface)] shadow-[0_0_0_3px_rgba(246,199,68,.15)]"/>
+                      <div className="rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 p-4 sm:p-5">
+                        <div className="flex items-center gap-3 flex-wrap text-[9px] font-bold text-[var(--c-textDim)]">
+                          <span className="flex items-center gap-1.5"><Calendar size={11}/>{p.day || "Jour"}</span>
+                          {p.time && <span className="flex items-center gap-1.5"><Clock size={11}/>{p.time}</span>}
+                        </div>
+                        <p className="mt-2 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)]">{p.activity || ""}</p>
+                        {p.details && <p className="mt-1 text-[10px] font-bold text-[var(--c-textDim)]">{p.details}</p>}
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
           </div>
         )}
         {tab === "players" && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {(stage.players || []).length === 0 && <p className="text-[10px] font-bold text-[var(--c-textDim)] col-span-2">Aucune convocation.</p>}
-            {(stage.players || []).map(id => {
-              const m = memberById(id)
-              return (
-                <div key={id} className="flex items-center gap-2.5 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 p-2.5">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[#f6c744] uppercase shrink-0">{(m?.name||"?")[0]}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
-                    <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase">{m?.position || "—"}</p>
+          <div>
+            {(stage.players || []).length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+                <Users size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucune convocation.</p>
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+              {(stage.players || []).map(id => {
+                const m = memberById(id)
+                return (
+                  <div key={id} className="flex items-center gap-3 rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 p-3">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[11px] font-black text-[#f6c744] uppercase shrink-0">{(m?.name||"?")[0]}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
+                      <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase">{m?.position || "—"}</p>
+                    </div>
+                    <span className="px-2 py-1 rounded-md bg-[var(--c-panel2)] border border-[#E30613]/25 text-[#ff5f72] text-[7px] font-black uppercase tracking-wider shrink-0">CONVOQUÉ</span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.16)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">CONVOQUÉ</span>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         )}
         {tab === "staff" && (
-          <div className="space-y-2">
-            {(stage.staff || []).length === 0 && <p className="text-[10px] font-bold text-[var(--c-textDim)]">Aucun staff enregistré.</p>}
-            {(stage.staff || []).map((id, idx) => {
-              const m = memberById(id)
-              const role = (stage.staffRoles || []).find(r => r.memberId === id)?.role
-              return (
-                <div key={`${id}-${idx}`} className="flex items-center gap-3 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 p-3">
-                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[#7ec3ff] uppercase shrink-0">{(m?.name||"?")[0]}</div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
-                    {role && <p className="text-[8px] font-bold text-[#7ec3ff] uppercase tracking-wider">{role}</p>}
+          <div>
+            {(stage.staff || []).length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+                <Briefcase size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucun staff enregistré.</p>
+              </div>
+            )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {(stage.staff || []).map((id, idx) => {
+                const m = memberById(id)
+                const role = (stage.staffRoles || []).find(r => r.memberId === id)?.role
+                return (
+                  <div key={`${id}-${idx}`} className="flex items-center gap-3 rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 p-3">
+                    <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[11px] font-black text-[#7ec3ff] uppercase shrink-0">{(m?.name||"?")[0]}</div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
+                      {role && <p className="text-[8px] font-bold text-[#7ec3ff] uppercase tracking-wider">{role}</p>}
+                    </div>
+                    <Briefcase size={14} className="text-[var(--c-textDim)] shrink-0"/>
                   </div>
-                  <Briefcase size={13} className="text-[var(--c-textDim)]"/>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
           </div>
         )}
         {tab === "report" && (
           <div>
             {stage.reportUrl ? (
-              <div className="flex flex-col items-center justify-center gap-3 rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-8 text-center">
-                <FileText size={32} className="text-emerald-500"/>
-                <p className="text-[11px] font-black uppercase tracking-wider text-[var(--c-text)]">{stage.reportName || "Rapport de stage"}</p>
-                <a href={stage.reportUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/15 transition-all">
-                  <Download size={13}/> Ouvrir le rapport PDF
+              <div className="flex flex-col items-center justify-center gap-4 rounded-3xl border border-emerald-500/30 bg-emerald-500/5 p-12 text-center">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
+                  <FileText size={26} className="text-emerald-500"/>
+                </div>
+                <p className="text-[12px] font-black uppercase tracking-wider text-[var(--c-text)]">{stage.reportName || "Rapport de stage"}</p>
+                <a href={stage.reportUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/15 transition-all">
+                  <Download size={14}/> Ouvrir le rapport PDF
                 </a>
               </div>
             ) : (
-              <p className="text-[10px] font-bold text-[var(--c-textDim)] text-center py-10">Aucun rapport de fin de stage déposé.</p>
+              <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+                <FileText size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucun rapport de fin de stage déposé.</p>
+              </div>
             )}
           </div>
         )}
         {tab === "photos" && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-            {(stage.images || []).length === 0 && <p className="text-[10px] font-bold text-[var(--c-textDim)] col-span-4 text-center py-10">Aucune photo du stage.</p>}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+            {(stage.images || []).length === 0 && (
+              <div className="col-span-full flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+                <ImageIcon size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucune photo du stage.</p>
+              </div>
+            )}
             {(stage.images || []).map((img, i) => (
               <a key={img + i} href={img} target="_blank" rel="noreferrer" className="group relative rounded-xl overflow-hidden border border-[rgba(var(--line-rgb),.16)]">
                 <img src={img} alt={`photo ${i+1}`} className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-300"/>
@@ -521,17 +698,17 @@ function ProgramTab({ draft, setDraft }: { draft: Stage; setDraft: React.Dispatc
         <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Programme d'entraînement</p>
         <button onClick={add} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--c-panel3)] border border-[#f6c744]/30 text-[#f6c744] text-[8px] font-black uppercase tracking-wider hover:border-[#f6c744]/60 transition-all"><Plus size={11}/> Ajouter</button>
       </div>
-      {items.length === 0 && <p className="text-[10px] font-bold text-[var(--c-textDim)] py-6 text-center border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">Aucune séance — ajoutez la première.</p>}
-      <div className="space-y-2">
+      {items.length === 0 && <p className="text-[10px] font-bold text-[var(--c-textDim)] py-8 text-center border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">Aucune séance — ajoutez la première.</p>}
+      <div className="space-y-2.5">
         {items.map((p, i) => (
-          <div key={i} className="grid grid-cols-[70px_90px_1fr_36px] gap-2 items-start rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-2">
-            <input value={p.day} onChange={e => upd(i, 'day', e.target.value)} placeholder="Jour" className="px-2.5 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
-            <input value={p.time} onChange={e => upd(i, 'time', e.target.value)} placeholder="9h00" className="px-2.5 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
-            <div className="space-y-1.5">
-              <input value={p.activity} onChange={e => upd(i, 'activity', e.target.value)} placeholder="Activité (ex: Séance physique AM / Match amical)" className="w-full px-2.5 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
-              <input value={p.details || ''} onChange={e => upd(i, 'details', e.target.value)} placeholder="Détails (optionnel)" className="w-full px-2.5 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+          <div key={i} className="grid grid-cols-[80px_100px_1fr_40px] gap-2.5 items-start rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-3">
+            <input value={p.day} onChange={e => upd(i, 'day', e.target.value)} placeholder="Jour" className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+            <input value={p.time} onChange={e => upd(i, 'time', e.target.value)} placeholder="9h00" className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+            <div className="space-y-2">
+              <input value={p.activity} onChange={e => upd(i, 'activity', e.target.value)} placeholder="Activité (ex: Séance physique AM / Match amical)" className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+              <input value={p.details || ''} onChange={e => upd(i, 'details', e.target.value)} placeholder="Détails (optionnel)" className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
             </div>
-            <button onClick={() => del(i)} className="p-2 rounded-lg text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><Trash2 size={13}/></button>
+            <button onClick={() => del(i)} className="p-2 rounded-lg text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><Trash2 size={14}/></button>
           </div>
         ))}
       </div>
@@ -551,26 +728,26 @@ function PlayersTab({ draft, setDraft, members }: { draft: Stage; setDraft: Reac
   const toggle = (id: number) => setDraft(d => ({ ...d, players: (d.players || []).includes(id) ? (d.players || []).filter(x => x !== id) : [...(d.players || []), id] }))
   return (
     <div>
-      <div className="flex items-center justify-between mb-3 gap-3">
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} joueur(s) convoqué(s)</p>
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Rechercher…" className="w-56 px-3.5 py-2 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Rechercher…" className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {pool.map(m => (
-          <button key={m.id} onClick={() => toggle(m.id)} className="flex items-center gap-2.5 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-2 text-left hover:border-[#f6c744]/40 hover:bg-[var(--c-panel3)]/70 transition-all">
+          <button key={m.id} onClick={() => toggle(m.id)} className="flex items-center gap-2.5 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-2.5 text-left hover:border-[#f6c744]/40 hover:bg-[var(--c-panel3)]/70 transition-all">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[#f6c744] uppercase shrink-0">{(m.name||"?")[0]}</div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m.name}</p>
               <p className="text-[7px] font-bold text-[var(--c-textDim)] uppercase">{m.position || "—"}</p>
             </div>
-            <span className="w-5 h-5 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[#f6c744]"><Plus size={10}/></span>
+            <span className="w-6 h-6 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[#f6c744]"><Plus size={11}/></span>
           </button>
         ))}
-        {pool.length === 0 && <p className="col-span-full text-[10px] font-bold text-[var(--c-textDim)] text-center py-6 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">Aucun joueur disponible.</p>}
+        {pool.length === 0 && <p className="col-span-full text-[10px] font-bold text-[var(--c-textDim)] text-center py-8 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">Aucun joueur disponible.</p>}
       </div>
       {list.length > 0 && (
-        <div className="mt-4">
-          <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-2">Convoqués</p>
+        <div className="mt-5">
+          <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-2.5">Convoqués ({list.length})</p>
           <div className="flex flex-wrap gap-2">
             {list.map(id => {
               const m = members.find(x => x.id === id)
@@ -604,35 +781,35 @@ function StaffTab({ draft, setDraft, members }: { draft: Stage; setDraft: React.
   }))
   return (
     <div>
-      <div className="flex items-center justify-between mb-3 gap-3">
+      <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} membre(s) du staff</p>
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Rechercher…" className="w-56 px-3.5 py-2 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Rechercher…" className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {pool.map(m => (
-          <button key={m.id} onClick={() => toggle(m.id)} className="flex items-center gap-2.5 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-2 text-left hover:border-[#7ec3ff]/40 hover:bg-[var(--c-panel3)]/70 transition-all">
+          <button key={m.id} onClick={() => toggle(m.id)} className="flex items-center gap-2.5 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-2.5 text-left hover:border-[#7ec3ff]/40 hover:bg-[var(--c-panel3)]/70 transition-all">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[#7ec3ff] uppercase shrink-0">{(m.name||"?")[0]}</div>
             <div className="flex-1 min-w-0">
               <p className="text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m.name}</p>
               <p className="text-[7px] font-bold text-[var(--c-textDim)] uppercase">{m.role || "STAFF"}</p>
             </div>
-            <span className="w-5 h-5 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[#7ec3ff]"><Plus size={10}/></span>
+            <span className="w-6 h-6 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[#7ec3ff]"><Plus size={11}/></span>
           </button>
         ))}
-        {pool.length === 0 && <p className="col-span-full text-[10px] font-bold text-[var(--c-textDim)] text-center py-6 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">Aucun staff disponible.</p>}
+        {pool.length === 0 && <p className="col-span-full text-[10px] font-bold text-[var(--c-textDim)] text-center py-8 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">Aucun staff disponible.</p>}
       </div>
       {list.length > 0 && (
-        <div className="mt-4 space-y-2">
+        <div className="mt-5 space-y-2.5">
           <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Staff affecté</p>
           {list.map(id => {
             const m = members.find(x => x.id === id)
             const roleVal = (draft.staffRoles || []).find(r => r.memberId === id)?.role || ""
             return (
-              <div key={id} className="flex items-center gap-2.5 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-2.5">
+              <div key={id} className="flex items-center gap-3 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-3 flex-wrap">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[#7ec3ff] uppercase shrink-0">{(m?.name||"?")[0]}</div>
-                <p className="flex-1 text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
-                <input value={roleVal} onChange={e => setRole(id, e.target.value)} placeholder="Rôle (ex: Sélectionneur, Kiné…)" className="w-44 px-2.5 py-1.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[9px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
-                <button onClick={() => toggle(id)} className="p-1.5 rounded-lg text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><X size={12}/></button>
+                <p className="flex-1 min-w-32 text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
+                <input value={roleVal} onChange={e => setRole(id, e.target.value)} placeholder="Rôle (ex: Sélectionneur, Kiné…)" className="w-52 px-3 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[9px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
+                <button onClick={() => toggle(id)} className="p-1.5 rounded-lg text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><X size={13}/></button>
               </div>
             )
           })}

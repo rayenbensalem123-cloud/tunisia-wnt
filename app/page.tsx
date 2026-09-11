@@ -818,6 +818,10 @@ export default function EliteSquadApp() {
         </div>
       </div>
 
+      {stagesOpen ? (
+        <StagesManager open onClose={()=>setStagesOpen(false)} stages={camps} members={members} teamCat={teamCat} canManage={!!(canManageUsers||p.addCamps)} onSave={async(stage)=>{const next=[...(camps||[])];const idx=(camps||[]).findIndex((c:any)=>(c.id||0)===stage.id);if(idx>=0){const copy=[...next];copy[idx]={...copy[idx],...stage};setCamps(copy)}else{setCamps([...next,{...stage,id:typeof stage.id==='number'&&stage.id<2147483647?stage.id:Date.now(),createdByUsername:user?.username}])}return true}} onDelete={async(id)=>{setCamps((c:any[])=>c.filter((x:any)=>x.id!==id));return true}} onRefresh={reloadCamps} user={user}/>
+      ) : (
+      <>
       {/* ─── HEADER ─── */}
       <header className="sticky top-0 z-[100] bg-white/95 backdrop-blur-md border-b border-zinc-200 relative">
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E30613]/40 to-transparent animate-[pulse_3s_ease-in-out_infinite]"/>
@@ -1900,28 +1904,6 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
       {/* ═══════════════════════════════════════════
           WOMEN'S FOOTBALL NEWS — automated feed
       ═══════════════════════════════════════════ */}
-
-      {/* ═══════════════════════════════════════════
-          STAGES (CAMPS) MANAGER
-      ═══════════════════════════════════════════ */}
-      <StagesManager
-        open={stagesOpen}
-        onClose={()=>setStagesOpen(false)}
-        stages={camps}
-        members={members}
-        teamCat={teamCat}
-        canManage={!!(canManageUsers||p.addCamps)}
-        onSave={async(stage)=>{ 
-          const next=[...(camps||[])];
-          const idx=(camps||[]).findIndex((c:any)=>(c.id||0)===stage.id)
-          if(idx>=0){const copy=[...next];copy[idx]={...copy[idx],...stage};setCamps(copy)}
-          else{setCamps([...next,{...stage,id:typeof stage.id==='number'&&stage.id<2147483647?stage.id:Date.now(),createdByUsername:user?.username}])}
-          return true
-        }}
-        onDelete={async(id)=>{setCamps((c:any[])=>c.filter((x:any)=>x.id!==id));return true}}
-        onRefresh={reloadCamps}
-      />
-
       {newsOpen&&(
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
           <div className="w-full max-w-lg rounded-2xl bg-[var(--c-cream2)] text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
@@ -2811,6 +2793,9 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
           </div>
         </div>
       )})()}
+
+      </>
+      )}
 
       {/* Keyframes for alive UI */}
       <style>{`@keyframes fadeUp{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}@keyframes shine{0%{transform:translateX(-100%) skewX(-20deg)}100%{transform:translateX(200%) skewX(-20deg)}}@keyframes lineupReveal{0%{opacity:0;transform:translateY(45px) scale(1.28);filter:blur(9px)}55%{opacity:1;filter:blur(0px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0px)}}`}</style>
