@@ -877,7 +877,7 @@ export default function EliteSquadApp() {
                 <Users size={14}/>Squad Lab
               </button>}
               <button onClick={()=>setStagesOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                <CalendarRange size={14}/>Stages (Camps)
+                <CalendarRange size={14}/>Rassemblements (Camps)
               </button>
               <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <Newspaper size={14}/>Women's Football News

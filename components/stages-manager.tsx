@@ -113,7 +113,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
     const ok = await onSave(draft)
     setBusy(false)
     if (ok) {
-      show("Stage enregistré ✓")
+      show("Rassemblement enregistré ✓")
       onRefresh?.()
       setView("list")
     }
@@ -165,7 +165,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
   return (
     <div className="min-h-screen flex flex-col">
       {/* ═══ TOP BAR ═══ */}
-      <div className="sticky top-0 z-[100] border-b border-[rgba(var(--line-rgb),.12)] bg-[rgba(var(--c-bg),.82)] backdrop-blur-md">
+      <div className="sticky top-0 z-[100] border-b border-[rgba(var(--line-rgb),.12)] bg-[var(--c-bg)]">
         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3 min-w-0">
             <button onClick={onClose} title="Retour au tableau de bord" className="p-2 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]/60 transition-all shrink-0">
@@ -173,8 +173,8 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             </button>
             <img src="/ftf-logo.png" className="h-9" alt="FTF"/>
             <div className="leading-tight min-w-0">
-              <h1 className="text-sm font-black italic uppercase tracking-wider text-[var(--c-text)] truncate">Stages de Préparation</h1>
-              <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em]">Rassemblements & Camps</p>
+              <h1 className="text-sm font-black italic uppercase tracking-wider text-[var(--c-text)] truncate">Rassemblements Nationaux</h1>
+              <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em]">Camps & Stages</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -201,13 +201,13 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
 
             {/* ─── HERO ─── */}
             <div className="relative overflow-hidden rounded-[28px] mt-6 px-7 sm:px-10 py-10 sm:py-12 bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white">
-              <div className="absolute -right-4 -top-8 text-[110px] sm:text-[150px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">Stages</div>
+              <div className="absolute -right-4 -top-8 text-[110px] sm:text-[150px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">Rassemblements</div>
               <div className="relative">
                 <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f6c744]/15 border border-[#f6c744]/40 text-[#f6c744] text-[8px] font-black uppercase tracking-[0.25em]">
                   <CalendarRange size={12}/> Portail Camps
                 </span>
                 <h2 className="mt-5 text-4xl sm:text-5xl font-black italic uppercase tracking-tighter leading-[0.95]">
-                  Stages de <span className="text-[#f6c744]">Préparation</span>
+                  Rassemblements <span className="text-[#f6c744]">Nationaux</span>
                 </h2>
                 <p className="mt-4 text-[10px] font-black text-white/60 uppercase tracking-[0.22em]">Programme · Convocations · Encadrement · Rapport · Photos</p>
               </div>
@@ -221,7 +221,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                   <button key={c.value} onClick={() => setFiltCat(c.value)} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filtCat === c.value ? 'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25' : 'text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{c.label}</button>
                 ))}
               </div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{filtered.length} stage(s)</p>
+              <p className="text-[9px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{filtered.length} rassemblement{filtered.length > 1 ? "s" : ""}</p>
             </div>
 
             {/* ─── CREATE CTA ─── */}
@@ -230,7 +230,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                 <span className="w-8 h-8 rounded-full bg-[#f6c744] text-[#7a4b00] flex items-center justify-center shadow-md shadow-black/25 group-hover:rotate-90 transition-transform duration-300">
                   <Plus size={16} strokeWidth={3}/>
                 </span>
-                <span className="leading-none">Créer un nouveau stage</span>
+                <span className="leading-none">Créer un nouveau rassemblement</span>
                 <span className="hidden md:inline text-[8px] font-semibold tracking-[0.18em] text-white/60 uppercase ml-1">Programme · Convocations · Staff · Rapport · Photos</span>
               </button>
             )}
@@ -242,12 +242,12 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                   <CalendarRange size={26} className="text-[#f6c744]"/>
                 </div>
                 <div>
-                  <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">Aucun stage enregistré</p>
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">Créez votre premier stage de préparation</p>
+                  <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">Aucun rassemblement enregistré</p>
+                  <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">Créez votre premier rassemblement de préparation</p>
                 </div>
                 {canManage && (
                   <button onClick={startCreate} className="mt-1 px-6 py-3 rounded-full bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-[#E30613]/25 hover:bg-red-700 transition-all">
-                    <Plus size={15}/> Créer un stage
+                    <Plus size={15}/> Créer un rassemblement
                   </button>
                 )}
               </div>
@@ -328,14 +328,14 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             {/* ─── EDIT HEADER ─── */}
             <div className="mt-6 flex items-end justify-between gap-4 flex-wrap">
               <div>
-                <p className="text-[8px] font-black uppercase tracking-[0.25em] text-[var(--c-textDim)]">Stages / {editing ? "Modifier" : "Nouveau"}</p>
-                <h2 className="mt-1 text-2xl font-black italic uppercase tracking-tight text-[var(--c-text)]">{editing ? "Modifier le Stage" : "Nouveau Stage"}</h2>
+                <p className="text-[8px] font-black uppercase tracking-[0.25em] text-[var(--c-textDim)]">Rassemblements / {editing ? "Modifier" : "Nouveau"}</p>
+                <h2 className="mt-1 text-2xl font-black italic uppercase tracking-tight text-[var(--c-text)]">{editing ? "Modifier le Rassemblement" : "Nouveau Rassemblement"}</h2>
                 <p className="mt-1 text-[9px] font-bold text-[var(--c-textDim)] uppercase tracking-wider">Programme · Convocations · Staff · Rapport · Photos</p>
               </div>
               <div className="flex gap-2">
                 <button onClick={() => setView("list")} className="px-5 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]/40 text-[9px] font-black uppercase tracking-wider transition-all">Annuler</button>
                 <button onClick={save} disabled={!canSubmit || busy} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-40 shadow-lg shadow-[#E30613]/25">
-                  <Save size={14}/> {busy ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Créer le stage'}
+                  <Save size={14}/> {busy ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Créer le rassemblement'}
                 </button>
               </div>
             </div>
@@ -343,11 +343,11 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             {/* ─── BASIC INFO ─── */}
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div className="sm:col-span-2">
-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Nom du stage *</label>
+                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Nom du rassemblement *</label>
                 <input
                   value={draft.name}
                   onChange={e => setDraft({ ...draft, name: e.target.value })}
-                  placeholder="ex: Stage de préparation — Mars"
+                  placeholder="ex: Rassemblement National — Mars"
                   className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
               </div>
               <div>
@@ -400,7 +400,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
 
               {tab === "report" && (
                 <div>
-                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">Rapport de fin de stage (PDF)</p>
+                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">Rapport de fin de rassemblement (PDF)</p>
                   <label className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-9 cursor-pointer transition-all ${draft.reportUrl ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#E30613]/50'}`}>
                     <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={onReportFile}/>
                     <FileText size={30} className={draft.reportUrl ? 'text-emerald-500' : 'text-[var(--c-textDim)]'}/>
@@ -422,7 +422,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
 
               {tab === "photos" && (
                 <div>
-                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">Photos du stage</p>
+                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">Photos du rassemblement</p>
                   <label className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-7 cursor-pointer transition-all mb-4 ${'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#f6c744]/50'}`}>
                     <input type="file" accept="image/*" multiple className="hidden" onChange={onPhotos}/>
                     <ImageIcon size={26} className="text-[var(--c-textDim)]"/>
@@ -448,9 +448,9 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
 
       {/* ─── DELETE CONFIRM ─── */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-[450] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[450] flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-sm rounded-2xl bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.18)] shadow-2xl p-6">
-            <h3 className="text-sm font-black uppercase tracking-tight text-[var(--c-text)] mb-2">Supprimer ce stage ?</h3>
+            <h3 className="text-sm font-black uppercase tracking-tight text-[var(--c-text)] mb-2">Supprimer ce rassemblement ?</h3>
             <p className="text-[10px] font-bold text-[var(--c-textDim)] mb-5">« {deleteTarget.name} » sera définitivement supprimé, ainsi que son programme, ses convocations et ses documents.</p>
             <div className="flex gap-2">
               <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] text-[9px] font-black uppercase tracking-wider transition-all">Annuler</button>
@@ -485,7 +485,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
       {/* Breadcrumb */}
       <div className="mt-6 flex items-center justify-between gap-3 flex-wrap">
         <button onClick={onBack} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-panel3)]/70 text-[var(--c-textMid)] hover:text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider transition-all">
-          <ArrowLeft size={13}/> Tous les stages
+          <ArrowLeft size={13}/> Tous les rassemblements
         </button>
         <div className="flex gap-2">
           {canManage && (
@@ -625,7 +625,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
                 <div className="w-14 h-14 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center">
                   <FileText size={26} className="text-emerald-500"/>
                 </div>
-                <p className="text-[12px] font-black uppercase tracking-wider text-[var(--c-text)]">{stage.reportName || "Rapport de stage"}</p>
+                <p className="text-[12px] font-black uppercase tracking-wider text-[var(--c-text)]">{stage.reportName || "Rapport de fin de rassemblement"}</p>
                 <a href={stage.reportUrl} target="_blank" rel="noreferrer" className="flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/15 transition-all">
                   <Download size={14}/> Ouvrir le rapport PDF
                 </a>
@@ -633,7 +633,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
                 <FileText size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucun rapport de fin de stage déposé.</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucun rapport de fin de rassemblement déposé.</p>
               </div>
             )}
           </div>
@@ -643,7 +643,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
             {(stage.images || []).length === 0 && (
               <div className="col-span-full flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
                 <ImageIcon size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucune photo du stage.</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucune photo du rassemblement.</p>
               </div>
             )}
             {(stage.images || []).map((img, i) => (
