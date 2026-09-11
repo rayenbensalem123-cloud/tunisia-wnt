@@ -178,8 +178,12 @@ const openDetail = (s: Stage) => {
         {view === "list" && (
           <div className="flex-1 overflow-y-auto p-6 space-y-3">
             {canManage && (
-              <button onClick={startCreate} className="w-full flex items-center justify-center gap-2 py-4 rounded-2xl border-2 border-dashed border-[#E30613]/35 text-[#ff5f72] text-[11px] font-black uppercase tracking-widest hover:bg-[#E30613]/8 hover:border-[#E30613]/60 transition-all">
-                <Plus size={16}/> Créer un nouveau stage
+              <button onClick={startCreate} className="group w-full flex items-center justify-center gap-3 py-4 px-6 rounded-2xl bg-gradient-to-r from-[#b30510] via-[#E30613] to-[#ff2b3a] text-white text-[11px] font-black uppercase tracking-widest shadow-xl shadow-[#E30613]/30 hover:shadow-[#E30613]/55 hover:scale-[1.005] active:scale-[0.99] transition-all">
+                <span className="w-7 h-7 rounded-full bg-[#f6c744] text-[#7a4b00] flex items-center justify-center shadow-md shadow-black/25 group-hover:rotate-90 transition-transform duration-300 relative z-10">
+                  <Plus size={15} strokeWidth={3}/>
+                </span>
+                <span className="leading-none">Créer un nouveau stage</span>
+                <span className="hidden sm:inline text-[8px] font-semibold tracking-[0.18em] text-white/60 uppercase ml-1">Programme · Convocations · Staff · Rapport · Photos</span>
               </button>
             )}
 
