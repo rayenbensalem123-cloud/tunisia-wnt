@@ -120,7 +120,7 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
       {open && (
         <>
           <div className="fixed inset-0 z-[180]" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-12 z-[190] w-56 rounded-2xl border border-zinc-200 bg-white shadow-2xl overflow-hidden text-zinc-900">
+          <div className="absolute right-0 top-12 z-[190] w-56 rounded-2xl border border-zinc-200 bg-white shadow-2xl max-h-[calc(100dvh-6rem)] overflow-y-auto text-zinc-900">
             <div className="divide-y divide-zinc-200">
               <button onClick={() => { exportCSV(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
                 <FileSpreadsheet size={13} className="text-green-500" /> CSV Roster

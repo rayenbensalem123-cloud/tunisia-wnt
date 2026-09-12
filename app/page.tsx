@@ -261,7 +261,7 @@ const Dropdown = ({trigger,children,align="right"}:{trigger:React.ReactNode;chil
     <div ref={ref} className="relative">
       <div onClick={()=>setOpen(o=>!o)}>{trigger}</div>
       {open&&(
-        <div onClick={()=>setOpen(false)} className={`absolute top-full mt-1.5 ${align==="right"?"right-0":"left-0"} z-[150] min-w-[180px] rounded-xl bg-white border border-zinc-200 shadow-xl py-1.5 flex flex-col`}>
+        <div onClick={()=>setOpen(false)} className={`absolute top-full mt-1.5 ${align==="right"?"right-0":"left-0"} z-[150] min-w-[180px] rounded-xl bg-white border border-zinc-200 shadow-xl py-1.5 flex flex-col max-h-[calc(100dvh-6rem)] overflow-y-auto`}>
           {children}
         </div>
       )}
