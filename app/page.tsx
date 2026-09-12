@@ -776,10 +776,10 @@ export default function EliteSquadApp() {
   const busy=buffering||!authChecked||!loaded
   const renderTeamSelect=()=>(
     <div className="relative">
-      <div className="fixed top-6 right-6 z-[999] flex items-center gap-2.5">
+      <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[999] flex items-center gap-2 sm:gap-2.5 safe-top">
         <ThemeToggle/>
         <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} title="Change language" className="px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><Globe size={15}/><span>{lang.toUpperCase()}</span></button>
-        <span className="px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.16)] bg-[#0d1f3c]/55 backdrop-blur-md text-[#f6c744]/90 text-[9px] font-black uppercase tracking-wider">{user?.username}</span>
+        <span className="hidden lg:inline px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.16)] bg-[#0d1f3c]/55 backdrop-blur-md text-[#f6c744]/90 text-[9px] font-black uppercase tracking-wider">{user?.username}</span>
         <button onClick={handleChangePassword} title="Change your password" className="p-2.5 rounded-lg border border-[rgba(148,170,210,.25)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#7ec3ff] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all"><Key size={15}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-2.5 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_16px_rgba(227,6,44,.35)] transition-all"><LogOut size={15}/></button>
       </div>
       <TeamSelector onSelect={selectCat}/>
@@ -794,7 +794,7 @@ export default function EliteSquadApp() {
       )}
       <div data-x="loader-overlay" className={`fed-screen min-h-screen flex flex-col items-center justify-center relative overflow-hidden${leaving?" loader-ghost pointer-events-none":""}`}>
         <FedBg/>
-        <ThemeToggle className="absolute top-6 right-6 z-20"/>
+        <ThemeToggle className="absolute top-6 right-6 z-20 safe-top"/>
         <div className="relative z-10 flex flex-col items-center gap-8">
           {/* Logo with floating effect */}
           <div className="relative animate-[float_3s_ease-in-out_infinite]">
@@ -849,16 +849,16 @@ export default function EliteSquadApp() {
       {/* ─── HEADER ─── */}
       <header className="sticky top-0 z-[100] border-b relative">
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E30613]/40 to-transparent animate-[pulse_3s_ease-in-out_infinite]"/>
-        <div className="max-w-7xl mx-auto px-6 pt-3 pb-2 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <button onClick={()=>{setTeamCat(null);setSearch("")}} title="Back to team categories" className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all"><ChevronLeft size={16}/></button>
-            <img src="/ftf-logo.png" className="h-10" alt=""/>
-            <div className="leading-tight">
-              <h1 className="text-xs sm:text-xl font-black italic uppercase tracking-wider leading-none">{tr.header.eliteSquad}</h1>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-x-4 gap-y-2 flex-wrap xl:flex-nowrap">
+          <div className="flex items-center gap-3 min-w-0">
+            <button onClick={()=>{setTeamCat(null);setSearch("")}} title="Back to team categories" className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all shrink-0"><ChevronLeft size={16}/></button>
+            <img src="/ftf-logo.png" className="h-10 shrink-0" alt=""/>
+            <div className="leading-tight min-w-0">
+              <h1 className="text-xs sm:text-xl font-black italic uppercase tracking-wider leading-none truncate">{tr.header.eliteSquad}</h1>
               <p className="text-[9px] font-black text-[#E30613] uppercase tracking-[0.3em]">{catLabel(teamCat)}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap justify-end w-full lg:w-auto lg:grow lg:flex-nowrap">
             <div className="portal-search hidden sm:flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border w-44 transition-all focus-within:border-[#E30613]/50 focus-within:shadow-[0_0_0_3px_rgba(227,6,44,.1)]">
               <Search size={13} className="text-[var(--c-textDim)] shrink-0"/>
               <input placeholder={tr.header.search} value={search} onChange={e=>setSearch(e.target.value)} className="bg-transparent text-[10px] font-bold outline-none w-full uppercase text-[var(--c-text)] placeholder-[var(--c-textMid)]"/>
@@ -878,7 +878,7 @@ export default function EliteSquadApp() {
             <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} />
             <ThemeToggle className="hidden sm:flex p-2"/>
 
-            <div className="w-px h-6 bg-zinc-200 mx-0.5"/>
+            <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
 
             <Dropdown trigger={
               <button title="Menu" className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(246,199,68,.35)] bg-[#0d1f3c]/75 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0d1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.22)]">
@@ -919,6 +919,12 @@ export default function EliteSquadApp() {
               <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <Newspaper size={14}/>Women's Football News
               </button>
+              {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                <ListChecks size={14}/>Select Players (Passports)
+              </button>}
+              {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                <Plus size={14}/>Add Player / Staff
+              </button>}
             </Dropdown>
 
             <Dropdown trigger={
@@ -936,8 +942,8 @@ export default function EliteSquadApp() {
               </button>
             </Dropdown>
 
-            {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} title={selectMode?"Exit selection":"Select players to export passports"} className={`p-2 rounded-lg border backdrop-blur-md transition-all fc-keep ${selectMode?'bg-[#f6c744] border-[#f6c744] text-[#0c1f3d] shadow-[0_0_14px_rgba(246,199,68,.3)]':'border-[rgba(246,199,68,.35)] bg-[#0d1f3c]/70 text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0d1f3d]'}`}><ListChecks size={16}/></button>}
-            {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="p-2 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_14px_rgba(227,6,44,.35)] transition-all fc-keep"><Plus size={16}/></button>}
+            {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} title={selectMode?"Exit selection":"Select players to export passports"} className={`hidden md:flex p-2 rounded-lg border backdrop-blur-md transition-all fc-keep ${selectMode?'bg-[#f6c744] border-[#f6c744] text-[#0c1f3d] shadow-[0_0_14px_rgba(246,199,68,.3)]':'border-[rgba(246,199,68,.35)] bg-[#0d1f3c]/70 text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0d1f3d]'}`}><ListChecks size={16}/></button>}
+            {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="hidden md:flex p-2 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_14px_rgba(227,6,44,.35)] transition-all fc-keep"><Plus size={16}/></button>}
           </div>
         </div>
         <div className="max-w-7xl mx-auto px-6 pb-3 flex items-center gap-3 flex-wrap">
@@ -2059,7 +2065,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               <div className="flex items-center">
                 {["Info","Squad","Opponent","Actions"].map((label,i)=>(
                   <div key={i} className={`flex items-center ${i<=matchStep?"":"opacity-40"}`}>
-                    <div className="flex items-center gap-1.5">
+<div className="flex items-center gap-1.5">
                       <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black border transition-all ${i<matchStep?'bg-[#E30613] border-[#E30613] text-white':i===matchStep?'bg-[#E30613] border-[#E30613] text-white shadow-lg shadow-[#E30613]/30':'bg-[var(--c-surface)] border-[rgba(var(--line-rgb),.25)] text-[var(--c-textFaint)]'}`}>{i<matchStep?<Check size={10}/>:i+1}</div>
                       <span className={`text-[8px] font-bold uppercase tracking-wider hidden sm:inline ${i<=matchStep?'text-[var(--c-text)]':'text-[var(--c-textDim)]'}`}>{label}</span>
                     </div>

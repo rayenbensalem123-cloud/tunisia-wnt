@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
 import Script from "next/script"
 import "./globals.css";
@@ -7,6 +7,14 @@ import { PlayersProvider } from "@/lib/players-context";
 import { ThemeProvider } from "@/lib/theme-context";
 
 const inter = Inter({ subsets: ["latin"] });
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+  viewportFit: "cover",
+  themeColor: "#E30613",
+};
 
 export const metadata: Metadata = {
   title: "Tunisia WNT - Elite Squad Manager",
