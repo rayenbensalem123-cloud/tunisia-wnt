@@ -934,11 +934,21 @@ button[class*="w-full"][class*="bg-[#E30613]"]:focus-visible {
 /* ── Mobile / tablet support ──
    These rules only apply on small viewports and never alter desktop sizing. */
 html { -webkit-text-size-adjust: 100%; }
-.ftf-portal { overflow-x: clip; }
+/* The player-card grid overhangs its cells by a few px on tablets; clip only that
+   (never the whole .ftf-portal — a global overflow-x: clip breaks Safari's touch
+   scrolling and sticky/fixed positioning) */
+@media (min-width: 768px) and (max-width: 1279px) {
+  .ftf-portal .grid.justify-items-center { overflow-x: clip; }
+}
 .safe-top { margin-top: env(safe-area-inset-top); }
 .font-tight { letter-spacing: -0.01em; }
 @media (max-width: 767px) {
   table { -webkit-overflow-scrolling: touch; }
+  .ftf-portal [class*="overflow-y-auto"],
+  .ftf-portal [class*="overflow-y-scroll"] {
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+  }
 }
 
 /* Reduced motion: respect accessibility preferences */
