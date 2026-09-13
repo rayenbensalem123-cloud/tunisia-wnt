@@ -104,8 +104,12 @@ const profileToAppUser = (p: any): AppUser => ({
   perms: p.permissions,
 })
 
-const LOGIN_AND_REGISTER_STYLE = "fed-screen min-h-screen flex items-center justify-center relative overflow-hidden text-[var(--c-text)]"
-const LOGIN_CARD_STYLE = "fed-card p-8 text-center space-y-6 max-w-md w-full mx-4 relative z-10"
+const LOGIN_AND_REGISTER_STYLE = "fed-screen min-h-screen relative overflow-hidden"
+const LOGIN_CARD_STYLE = "backdrop-blur-xl bg-white/[0.07] border border-white/15 rounded-3xl shadow-2xl p-7"
+const B_ADORN = "absolute inset-0 bg-[radial-gradient(1100px_480px_at_50%_-180px,rgba(23,60,120,.18),transparent_70%)] pointer-events-none"
+const B_FIELD = "w-full rounded-xl border border-white/15 bg-black/25 pl-11 pr-4 py-3.5 text-sm font-semibold text-white outline-none transition-all placeholder:text-white/30 focus:border-[#f6c744]/70 focus:ring-4 focus:ring-[#f6c744]/10"
+const B_FIELD_KEY = "w-full rounded-xl border border-white/15 bg-black/25 pl-11 pr-4 py-3.5 text-sm font-semibold text-white outline-none transition-all placeholder:text-white/30 focus:border-[#e3062c]/80 focus:ring-4 focus:ring-[#e3062c]/15"
+const B_BTN = "mt-5 w-full rounded-xl bg-gradient-to-r from-[#e3062c] to-[#8f0319] py-3.5 text-[10px] font-black uppercase tracking-[.2em] text-white shadow-lg shadow-[#e3062c]/30 hover:shadow-[#e3062c]/50 transition-all disabled:opacity-45"
 
 const FedBg=()=>(
   <>
@@ -135,27 +139,43 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
   return(
     <div className={LOGIN_AND_REGISTER_STYLE}>
       <FedBg/>
-      <div className={`${LOGIN_CARD_STYLE} relative`}>
-        <ThemeToggle className="absolute top-4 right-16 p-2 bg-[var(--c-input2)] text-[var(--c-textMid)] hover:text-white"/>
-        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")}
-          className="absolute top-4 right-4 p-2 rounded-lg border border-[rgba(var(--line-rgb),.22)] bg-[var(--c-input2)] text-[var(--c-textMid)] hover:text-white transition-all text-[9px] font-black uppercase tracking-widest">
-          <Globe size={13} className="inline"/><span className="ml-1">{lang.toUpperCase()}</span>
-        </button>
-        <div>
-          <img src="/ftf-logo.png" className="h-16 mx-auto" alt=""/>
-          <p className="mt-3 text-[8px] font-bold uppercase tracking-[.4em] text-[#f6c744]">Fédération Tunisienne de Football</p>
+      <div className={B_ADORN}/>
+      <ThemeToggle className="absolute top-6 right-16 z-20 p-2 rounded-lg border border-white/15 bg-black/30 text-white/70 hover:text-white"/>
+      <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")}
+        className="absolute top-6 right-4 z-20 p-2 rounded-lg border border-white/15 bg-black/30 text-white/70 hover:text-white transition-all text-[9px] font-black uppercase tracking-widest">
+        <Globe size={13} className="inline"/><span className="ml-1">{lang.toUpperCase()}</span>
+      </button>
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] w-full px-6 py-10">
+        <div className="flex flex-col items-center text-center">
+          <img src="/ftf-logo.png" className="h-20 drop-shadow-[0_12px_30px_rgba(0,0,0,.55)]" alt=""/>
+          <h2 className="mt-8 text-3xl font-black uppercase tracking-tight text-white leading-none">Register</h2>
+          <p className="mt-3 text-[9px] font-bold uppercase tracking-[.4em] text-[#f6c744]">Fédération Tunisienne de Football</p>
         </div>
-        <div><h2 className="text-2xl font-black uppercase tracking-tight text-[var(--c-text)]">Register</h2><p className="text-[9px] font-bold text-[var(--c-textMid)] uppercase tracking-widest mt-1">Create an account</p></div>
-        <form onSubmit={submit} className="space-y-3">
-          <input type="text" placeholder={tr.login.firstName} value={fn} onChange={e=>setFn(e.target.value)} className="fed-input"/>
-          <input type="text" placeholder={tr.login.lastName} value={ln} onChange={e=>setLn(e.target.value)} className="fed-input"/>
-          <input type="text" placeholder={tr.login.username} value={u} onChange={e=>setU(e.target.value)} className="fed-input"/>
-          <input type="password" placeholder={tr.login.password} value={p} onChange={e=>setP(e.target.value)} className="fed-input tracking-[.25em]"/>
-          {msg&&<p className="text-[9px] font-black text-[#ff4f66] uppercase">{msg}</p>}
-          <button disabled={busy} className="fed-btn">{busy?"...":"Register"}</button>
-        </form>
-        <p className="text-[8px] text-[var(--c-textMid)]">After registering, wait for admin approval.</p>
-        <button onClick={onBack} className="text-[9px] font-black uppercase tracking-widest text-[var(--c-textMid)] hover:text-[#e3062c] transition-all">← Back to Login</button>
+        <div className={`${LOGIN_CARD_STYLE} mt-8 w-full max-w-md`}>
+          <div className="h-[3px] w-14 mx-auto rounded-full bg-gradient-to-r from-[#e3062c] to-[#f6c744]"/>
+          <form onSubmit={submit} className="mt-6 space-y-3.5">
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><User size={15}/></span>
+              <input type="text" placeholder={tr.login.firstName} value={fn} onChange={e=>setFn(e.target.value)} className={B_FIELD}/>
+            </div>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><User size={15}/></span>
+              <input type="text" placeholder={tr.login.lastName} value={ln} onChange={e=>setLn(e.target.value)} className={B_FIELD}/>
+            </div>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><User size={15}/></span>
+              <input type="text" placeholder={tr.login.username} value={u} onChange={e=>setU(e.target.value)} className={B_FIELD}/>
+            </div>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><Key size={15}/></span>
+              <input type="password" placeholder={tr.login.password} value={p} onChange={e=>setP(e.target.value)} className={`${B_FIELD_KEY} tracking-[.25em]`}/>
+            </div>
+            {msg&&<p className="text-center text-[9px] font-black uppercase tracking-widest text-[#ff4f66]">{msg}</p>}
+            <button disabled={busy} className={B_BTN}>{busy?"...":"Register"}</button>
+          </form>
+          <p className="mt-5 text-center text-[8px] font-bold uppercase tracking-widest text-white/45">After registering, wait for admin approval.</p>
+          <button onClick={onBack} className="mt-4 w-full text-[9px] font-black uppercase tracking-widest text-white/50 hover:text-white transition-all">← Back to Login</button>
+        </div>
       </div>
     </div>
   )
@@ -292,23 +312,31 @@ const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
   return(
     <div className={LOGIN_AND_REGISTER_STYLE}>
       <FedBg/>
-      <ThemeToggle className="absolute top-6 right-6"/>
-      <div className={LOGIN_CARD_STYLE}>
-        <div>
-          <img src="/ftf-logo.png" className="h-16 mx-auto" alt=""/>
-          <p className="mt-3 text-[8px] font-bold uppercase tracking-[.4em] text-[#f6c744]">Fédération Tunisienne de Football</p>
+      <div className={B_ADORN}/>
+      <ThemeToggle className="absolute top-6 right-6 z-20"/>
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] w-full px-6 py-10">
+        <div className="flex flex-col items-center text-center">
+          <img src="/ftf-logo.png" className="h-20 drop-shadow-[0_12px_30px_rgba(0,0,0,.55)]" alt=""/>
+          <h2 className="mt-8 text-3xl font-black uppercase tracking-tight text-white leading-none">{tr.login.systemLocked}</h2>
+          <p className="mt-3 text-[9px] font-bold uppercase tracking-[.4em] text-[#f6c744]">{tr.login.authRequired}</p>
         </div>
-        <div>
-          <h2 className="text-2xl font-black uppercase tracking-tight text-[var(--c-text)]">{tr.login.systemLocked}</h2>
-          <p className="text-[9px] font-bold text-[var(--c-textMid)] uppercase tracking-widest mt-1">{tr.login.authRequired}</p>
+        <div className={`${LOGIN_CARD_STYLE} mt-8 w-full max-w-md`}>
+          <div className="h-[3px] w-14 mx-auto rounded-full bg-gradient-to-r from-[#e3062c] to-[#f6c744]"/>
+          <div className="mt-6 space-y-3.5">
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><User size={15}/></span>
+              <input type="text" placeholder="Username" value={uname} onChange={e=>setUname(e.target.value)} className={B_FIELD}/>
+            </div>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><Key size={15}/></span>
+              <input type="password" placeholder={tr.login.accessKey} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doLogin()} className={`${B_FIELD_KEY} tracking-[.25em] ${err?'border-[#ff4f66] ring-4 ring-[#ff4f66]/15':''}`}/>
+            </div>
+            {err&&<p className="text-center text-[9px] font-black uppercase tracking-widest text-[#ff4f66]">{err}</p>}
+            <button disabled={busy} onClick={doLogin} className={B_BTN}>{busy?"...":tr.login.authorize}</button>
+            <button onClick={()=>setReg(true)} className="mt-1 w-full text-[9px] font-black uppercase tracking-widest text-white/50 hover:text-[#f6c744] transition-all">Register ↗</button>
+          </div>
         </div>
-        <div className="space-y-3">
-          <input type="text" placeholder="Username" value={uname} onChange={e=>setUname(e.target.value)} className="fed-input"/>
-          <input type="password" placeholder={tr.login.accessKey} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doLogin()} className={`fed-input tracking-[.25em] ${err?'border-[#ff4f66] ring-4 ring-[#ff4f66]/15':''}`}/>
-          {err&&<p className="text-[9px] font-black text-[#ff4f66] uppercase tracking-widest">{err}</p>}
-          <button disabled={busy} onClick={doLogin} className="fed-btn">{busy?"...":tr.login.authorize}</button>
-          <button onClick={()=>setReg(true)} className="w-full text-center text-[9px] font-black uppercase tracking-widest text-[var(--c-textMid)] hover:text-[#e3062c] transition-all">Register ↗</button>
-        </div>
+        <p className="mt-7 text-center text-[8px] font-bold uppercase tracking-[.3em] text-white/45">Authorized federation members only</p>
       </div>
     </div>
   )
