@@ -8,7 +8,6 @@ import {
   Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
-import tLang from "@/lib/translations"
 import { NotificationBell } from "@/components/notification-system"
 import { ExportTools } from "@/components/export-tools"
 import { PlayerCard } from "@/components/player-card"
@@ -806,7 +805,7 @@ export default function EliteSquadApp() {
     <div className="relative">
       <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[999] flex items-center gap-2 sm:gap-2.5 safe-top">
         <ThemeToggle/>
-        <LanguageToggle className="relative"/>
+        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} title="Change language" className="px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><Globe size={15}/><span>{lang.toUpperCase()}</span></button>
         <span className="hidden lg:inline px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.16)] bg-[#0d1f3c]/55 backdrop-blur-md text-[#f6c744]/90 text-[9px] font-black uppercase tracking-wider">{user?.username}</span>
         <button onClick={handleChangePassword} title="Change your password" className="p-2.5 rounded-lg border border-[rgba(148,170,210,.25)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#7ec3ff] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all"><Key size={15}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-2.5 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_16px_rgba(227,6,44,.35)] transition-all"><LogOut size={15}/></button>
       </div>
@@ -932,15 +931,9 @@ export default function EliteSquadApp() {
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 Print
               </button>
-              <div className="px-1">
-                <div className="flex items-center gap-2 px-3.5 py-1.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider"><Globe size={14}/>Language</div>
-                {(["en","fr","ar"] as const).map(l=>(
-                  <button key={l} onClick={()=>setLang(l)} className={`w-full flex items-center justify-between gap-3 px-3.5 py-2 pl-10 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left ${lang===l?"text-[#E30613] font-black":""}`}>
-                    <span>{tLang[l].lang.flag} {tLang[l].lang.name}</span>
-                    {lang===l&&<Check size={13} className="text-[#E30613]"/>}
-                  </button>
-                ))}
-              </div>
+              <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+                <Globe size={14}/>Language ({lang.toUpperCase()})
+              </button>
               <button onClick={()=>setUpcomingOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <Calendar size={14}/>Upcoming Matches
               </button>
