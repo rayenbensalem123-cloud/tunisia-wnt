@@ -112,6 +112,10 @@ const B_FIELD = "w-full rounded-xl border border-white/15 bg-black/25 pl-11 pr-4
 const B_FIELD_KEY = "w-full rounded-xl border border-white/15 bg-black/25 pl-11 pr-4 py-3.5 text-sm font-semibold text-white outline-none transition-all placeholder:text-white/30 focus:border-[#e3062c]/80 focus:ring-4 focus:ring-[#e3062c]/15"
 const B_BTN = "mt-5 w-full rounded-xl bg-gradient-to-r from-[#e3062c] to-[#8f0319] py-3.5 text-[10px] font-black uppercase tracking-[.2em] text-white shadow-lg shadow-[#e3062c]/30 hover:shadow-[#e3062c]/50 transition-all disabled:opacity-45"
 
+// ── Header & menu button styles (unified navy/gold) ──
+const HEADER_BTN = "flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] whitespace-nowrap"
+const HEADER_ICON_BTN = "p-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)]"
+
 const FedBg=()=>(
   <>
     <img src="/cats/home-bg.webp" alt="" className="absolute inset-0 w-full h-full object-cover object-center opacity-[0.45] scale-110 pointer-events-none" aria-hidden="true"/>
@@ -878,7 +882,7 @@ export default function EliteSquadApp() {
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E30613]/40 to-transparent animate-[pulse_3s_ease-in-out_infinite]"/>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-x-4 gap-y-2 flex-wrap xl:flex-nowrap">
           <div className="flex items-center gap-3 min-w-0">
-            <button onClick={()=>{setTeamCat(null);setSearch("")}} title="Back to team categories" className="p-2 rounded-xl border border-zinc-200 text-zinc-500 hover:bg-zinc-100 transition-all shrink-0"><ChevronLeft size={16}/></button>
+            <button onClick={()=>{setTeamCat(null);setSearch("")}} title="Back to team categories" className={`${HEADER_ICON_BTN} shrink-0`}><ChevronLeft size={16}/></button>
             <img src="/ftf-logo.png" className="h-10 shrink-0" alt=""/>
             <div className="leading-tight min-w-0">
               <h1 className="text-xs sm:text-xl font-black italic uppercase tracking-wider leading-none truncate">{tr.header.eliteSquad}</h1>
@@ -890,20 +894,20 @@ export default function EliteSquadApp() {
               <Search size={13} className="text-[var(--c-textDim)] shrink-0"/>
               <input placeholder={tr.header.search} value={search} onChange={e=>setSearch(e.target.value)} className="bg-transparent text-[10px] font-bold outline-none w-full uppercase text-[var(--c-text)] placeholder-[var(--c-textMid)]"/>
             </div>
-            <button onClick={()=>{if(canManageUsers&&pendingMatches.length>0)setPendingMatchesOpen(true);else setIsHistoryOpen(true)}} title="Match history" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.5)]">
-              <BookOpen size={14}/>
+            <button onClick={()=>{if(canManageUsers&&pendingMatches.length>0)setPendingMatchesOpen(true);else setIsHistoryOpen(true)}} title="Match history" className={HEADER_BTN}>
+              <BookOpen size={14} className="text-[#f6c744]"/>
               <span className="hidden sm:inline">{tr.header.matches}</span>
               {canManageUsers&&pendingMatches.length>0&&<span className="bg-amber-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingMatches.length}</span>}
               {catMatches.length>0&&<span className="bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{catMatches.length}</span>}
             </button>
-            {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#ff5f72] hover:border-[rgba(227,6,44,.5)]">
-              <Users size={14}/><span className="hidden sm:inline">Add Match</span>
+            {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className={HEADER_BTN}>
+              <Users size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">Add Match</span>
             </button>}
-            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.5)]">
-              <Calendar size={14}/><span className="hidden sm:inline">Schedule Match</span>
+            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className={HEADER_BTN}>
+              <Calendar size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">Schedule Match</span>
             </button>}
+            <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
             <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} />
-            <ThemeToggle className="hidden sm:flex p-2"/>
 
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
 
@@ -915,54 +919,54 @@ export default function EliteSquadApp() {
               </button>
             }>
               {canManageUsers&&(<>
-                <button onClick={()=>setPendingReviewOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                  <Bell size={14}/>Pending Approvals{pendingCount>0&&<span className="ml-auto bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingCount}</span>}
+                <button onClick={()=>setPendingReviewOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                  <Bell size={14} className="text-[#a9822e]"/>Pending Approvals{pendingCount>0&&<span className="ml-auto bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingCount}</span>}
                 </button>
-                <button onClick={()=>setUsersOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                  <Users size={14}/>Manage Users
+                <button onClick={()=>setUsersOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                  <Users size={14} className="text-[#a9822e]"/>Manage Users
                 </button>
-                <button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                  <Activity size={14}/>Activity Log
+                <button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                  <Activity size={14} className="text-[#a9822e]"/>Activity Log
                 </button>
                 <div className="h-px bg-zinc-200 my-1 mx-2"/>
               </>)}
               {p.exportData&&<div className="px-1"><ExportTools members={members} matches={matches} teamCat={teamCat} onImport={handleImport} onImportPlayers={handleImportPlayers} /></div>}
-              <button onClick={()=>window.print()} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+              <button onClick={()=>window.print()} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#a9822e]"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 Print
               </button>
-              <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                <Globe size={14}/>Language ({lang.toUpperCase()})
+              <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <Globe size={14} className="text-[#a9822e]"/>Language ({lang.toUpperCase()})
               </button>
-              <button onClick={()=>setUpcomingOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                <Calendar size={14}/>Upcoming Matches
+              <button onClick={()=>setUpcomingOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <Calendar size={14} className="text-[#a9822e]"/>Upcoming Matches
               </button>
-              {p.addMatch&&<button onClick={async()=>{setLabSlots({});setLabTemplateName("");setSquadLabOpen(true);setLabTemplates(await fetchSquadTemplates(teamCat))}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                <Users size={14}/>Squad Lab
+              {p.addMatch&&<button onClick={async()=>{setLabSlots({});setLabTemplateName("");setSquadLabOpen(true);setLabTemplates(await fetchSquadTemplates(teamCat))}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <Users size={14} className="text-[#a9822e]"/>Squad Lab
               </button>}
-              <button onClick={()=>setStagesOpen(true)} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                <CalendarRange size={14}/>Rassemblements (Camps)
+              <button onClick={()=>setStagesOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <CalendarRange size={14} className="text-[#a9822e]"/>Rassemblements (Camps)
               </button>
-              <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                <Newspaper size={14}/>Women's Football News
+              <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <Newspaper size={14} className="text-[#a9822e]"/>Women's Football News
               </button>
               {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                <ListChecks size={14}/>Select Players (Passports)
+                <ListChecks size={14} className="text-[#a9822e]"/>Select Players (Passports)
               </button>}
               {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                <Plus size={14}/>Add Player / Staff
+                <Plus size={14} className="text-[#a9822e]"/>Add Player / Staff
               </button>}
             </Dropdown>
 
             <Dropdown trigger={
-              <button title="Account" className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md hover:border-[rgba(246,199,68,.5)] transition-all fc-keep">
+              <button title="Account" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] transition-all fc-keep">
                 <div className="w-6 h-6 rounded-full border border-[#f6c744]/60 bg-gradient-to-br from-[#12305a] to-[#0c1f3d] text-[#f6c744] flex items-center justify-center text-[9px] font-black uppercase shrink-0">{(user?.username||"?")[0]}</div>
-                <span className="hidden sm:inline text-[8px] font-black uppercase tracking-wider text-[#cdc2b0]">{user?.username}</span>
+                <span className="hidden sm:inline text-[8px] font-black uppercase tracking-wider">{user?.username}</span>
                 <ChevronDown size={11} className="text-[#a89c89]"/>
               </button>
             }>
-              <button onClick={handleChangePassword} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
-                <Key size={14}/>Change Password
+              <button onClick={handleChangePassword} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <Key size={14} className="text-[#a9822e]"/>Change Password
               </button>
               <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all text-left">
                 <LogOut size={14}/>Log Out
@@ -1018,7 +1022,7 @@ export default function EliteSquadApp() {
       {activeTab==="STATS"&&<StatsView/>}
 
       {/* ─── PLAYER GRID ─── */}
-      <div className="max-w-[1400px] mx-auto px-6 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 justify-items-center">
+      <div className="max-w-[1400px] mx-auto px-6 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
         {filtered.length===0&&(
           <div className="col-span-6 flex flex-col items-center justify-center py-24 gap-6 text-zinc-300"><User size={64}/><p className="text-[11px] font-black uppercase tracking-[0.4em]">{tr.empty.noRecords}</p></div>
         )}

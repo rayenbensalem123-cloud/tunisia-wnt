@@ -64,7 +64,7 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember }: 
     <div className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="relative p-2 rounded-xl border border-zinc-300 bg-white text-zinc-500 hover:text-zinc-900 transition-all"
+        className="relative p-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] transition-all"
       >
         <Bell size={16} />
         {visibleNotifications.length > 0 && (

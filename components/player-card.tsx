@@ -77,7 +77,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   };
   const frozen = isGif && !gifMoving;
   return (
-    <article className="player-squad-card w-72 h-[25rem] bg-[var(--c-panel)] text-[var(--c-cream)] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
+    <article className="player-squad-card w-full h-[25rem] bg-[var(--c-panel)] text-[var(--c-cream)] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
       <div className="player-card-photo relative w-28 shrink-0 border-r border-[var(--c-hover)]" style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}>
         {noPhoto ? (
           <div
