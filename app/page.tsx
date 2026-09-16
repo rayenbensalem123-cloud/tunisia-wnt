@@ -130,15 +130,17 @@ const FedBg=()=>(
 const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
   const { tr } = useTranslate()
   const [fn,setFn]=useState(""), [ln,setLn]=useState(""), [u,setU]=useState(""), [p,setP]=useState(""), [msg,setMsg]=useState(""), [busy,setBusy]=useState(false)
+  const [memberType,setMemberType]=useState<"player"|"staff"|"">("")
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault()
     if(!fn.trim()||!ln.trim()||!u.trim()||!p.trim()){setMsg("Fill all fields");return}
+    if(!memberType){setMsg("Select whether you're a player or staff");return}
     if(p.length<6){setMsg("Password min 6 chars");return}
     setBusy(true)
-    const res = await registerUser({ firstName: fn.trim(), lastName: ln.trim(), username: u.trim().toLowerCase(), password: p })
+    const res = await registerUser({ firstName: fn.trim(), lastName: ln.trim(), username: u.trim().toLowerCase(), password: p, memberType })
     setBusy(false)
     if(res.error){setMsg(res.error);return}
-    setMsg(""); setFn(""); setLn(""); setU(""); setP("")
+    setMsg(""); setFn(""); setLn(""); setU(""); setP(""); setMemberType("")
     onBack()
   }
   return(
@@ -171,6 +173,13 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
             <div className="relative">
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><Key size={15}/></span>
               <input type="password" placeholder={tr.login.password} value={p} onChange={e=>setP(e.target.value)} className={`${B_FIELD_KEY} tracking-[.25em]`}/>
+            </div>
+            <div>
+              <p className="text-[8px] font-black uppercase tracking-widest text-white/50 mb-2 text-center">I am registering as</p>
+              <div className="flex gap-2">
+                <button type="button" onClick={()=>setMemberType("player")} className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${memberType==="player"?'bg-[#e3062c] border-[#e3062c] text-white':'border-white/20 text-white/60 hover:border-white/40'}`}>Player</button>
+                <button type="button" onClick={()=>setMemberType("staff")} className={`flex-1 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all border ${memberType==="staff"?'bg-[#e3062c] border-[#e3062c] text-white':'border-white/20 text-white/60 hover:border-white/40'}`}>Staff</button>
+              </div>
             </div>
             {msg&&<p className="text-center text-[9px] font-black uppercase tracking-widest text-[#ff4f66]">{msg}</p>}
             <button disabled={busy} className={B_BTN}>{busy?"...":"Register"}</button>
