@@ -1,6 +1,6 @@
 "use client"
 import React, { useState } from "react"
-import { UserPlus, Globe2, ShieldCheck, Edit2, Trash2, Activity, Briefcase } from "lucide-react"
+import { UserPlus, Globe2, ShieldCheck, Edit2, Trash2, Activity, Briefcase, Trophy } from "lucide-react"
 import { usePlayers } from "@/lib/players-context"
 import { NavSwitcher } from "@/components/nav-switcher"
 import { CoachDialog } from "@/components/coach-dialog"
@@ -102,6 +102,10 @@ export default function CoachesPage() {
 
                 {/* SECONDARY ACTION TAGS */}
                 <div className="flex gap-2 mb-8">
+                  <div className="flex items-center gap-1 px-2 py-0.5 bg-[#f6c744]/25 border border-[#f6c744]/45 rounded-full">
+                    <Trophy className="w-2 h-2 text-[#d9a40a]" />
+                    <span className="text-[7px] font-black text-[#b8860b] uppercase tracking-tight">{coach.formation || "4-3-3"}</span>
+                  </div>
                   <div className="flex items-center gap-1 px-2 py-0.5 bg-zinc-100 border border-zinc-200 rounded-full">
                     <Globe2 className="w-2 h-2 text-zinc-400" />
                     <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-tight">Technical</span>

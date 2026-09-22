@@ -11,12 +11,13 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
     role: "HEAD COACH", 
     license: "UEFA PRO", 
     nationality: "TUNISIA",
+    formation: "",
     image: ""
   })
 
   useEffect(() => {
-    if (coach) setFormData(coach)
-    else setFormData({ name: "", role: "HEAD COACH", license: "UEFA PRO", nationality: "TUNISIA", image: "" })
+    if (coach) setFormData({...coach})
+    else setFormData({ name: "", role: "HEAD COACH", license: "UEFA PRO", nationality: "TUNISIA", formation: "", image: "" })
   }, [coach, open])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -129,6 +130,52 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
               className="w-full bg-zinc-50 border border-zinc-100 p-4 rounded-2xl font-bold text-xs uppercase outline-none focus:border-black transition-all" 
               onChange={e => setFormData({...formData, license: e.target.value})} 
             />
+          </div>
+
+          <div>
+            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">Preferred Tactics / Formation</label>
+            <div className="flex flex-wrap gap-1.5">
+              {["4-3-3","3-4-3","4-2-3-1","3-5-2","4-4-2","4-3-2-1","4-1-4-1"].map(f => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFormData({...formData, formation: formData.formation === f ? "" : f})}
+                  className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-tight border transition-all ${
+                    formData.formation === f 
+                      ? "bg-[#E30613] border-[#E30613] text-white" 
+                      : "bg-zinc-50 border-zinc-100 text-zinc-500 hover:border-black hover:text-black"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            {formData.formation && (
+              <p className="text-[8px] font-black text-[#E30613] uppercase mt-1 ml-2">✓ {formData.formation} — Preferred Setup</p>
+            )}
+          </div>
+
+          <div>
+            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">Preferred Tactics / Formation</label>
+            <div className="flex flex-wrap gap-1.5">
+              {["4-3-3","4-4-2","4-2-3-1","3-5-2","3-4-3","4-1-4-1","4-3-2-1","5-3-2"].map(f => (
+                <button
+                  type="button"
+                  key={f}
+                  onClick={() => setFormData({...formData, formation: formData.formation === f ? "" : f})}
+                  className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-tight border transition-all ${
+                    formData.formation === f
+                      ? "bg-[#E30613] border-[#E30613] text-white"
+                      : "bg-zinc-50 border-zinc-100 text-zinc-500 hover:border-black hover:text-black"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
+            {formData.formation && (
+              <p className="text-[8px] font-black text-[#E30613] uppercase ml-2 mt-1.5">✓ Prefers {formData.formation}</p>
+            )}
           </div>
 
           <button type="submit" className="w-full bg-[#E30613] text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-tighter hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-xl">

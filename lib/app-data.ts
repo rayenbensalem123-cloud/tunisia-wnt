@@ -150,7 +150,7 @@ export async function fetchMyProfile() {
   return data
 }
 
-export async function registerUser(payload: { firstName: string; lastName: string; username: string; password: string }) {
+export async function registerUser(payload: { firstName: string; lastName: string; username: string; password: string; role: "staff" | "player" }) {
   const res = await fetch('/api/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },

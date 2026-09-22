@@ -3,8 +3,9 @@ import { supabaseAdmin } from '@/lib/supabase-admin'
 
 export async function POST(req: Request) {
   try {
-    const { firstName, lastName, username, password } = await req.json()
-
+    const { firstName, lastName, username, password, role } = await req.json()
+    const r = role === "player" ? "player" : role === "staff" ? "staff" : null
+    if (!r) return NextResponse.json({ error: 'Choose a role (Staff or Player)' }, { status: 400 })
     if (!firstName?.trim() || !lastName?.trim() || !username?.trim() || !password) {
       return NextResponse.json({ error: 'Fill all fields' }, { status: 400 })
     }
@@ -40,8 +41,7 @@ export async function POST(req: Request) {
       username: uname,
       first_name: firstName.trim(),
       last_name: lastName.trim(),
-      role: 'staff',
-      status: 'pending',
+      role: r,
       permissions: {
         addMatch: false, addPlayer: false,
         editPlayer: false, exportData: false, deleteMatch: false, deletePlayer: false,

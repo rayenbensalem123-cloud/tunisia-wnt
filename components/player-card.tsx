@@ -179,20 +179,25 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
 
         <div className="mt-auto relative z-10">
           <div className="h-px bg-[var(--c-hover)]" />
-          {fullPosition ? (
-            <div className="grid grid-cols-3 pt-3">
-              <div><span className="block text-[6px] text-[var(--c-textWarm)] font-black uppercase tracking-widest">Age</span><strong className="text-lg leading-none text-[var(--c-cream)]">{age || "—"}</strong></div>
-              <div className="border-l border-[var(--c-hover)] pl-3"><span className="block text-[6px] text-[var(--c-textWarm)] font-black uppercase tracking-widest">Role</span><strong className="text-[13px] leading-none font-black uppercase text-[#e3062c]">{code}</strong></div>
-              <div className="border-l border-[var(--c-hover)] pl-3"><span className="block text-[6px] text-[var(--c-textWarm)] font-black uppercase tracking-widest">Foot</span><strong className="text-lg leading-none text-[var(--c-cream)]">{(foot || "—").slice(0, 1)}</strong></div>
-            </div>
-          ) : (
-            <div className="grid grid-cols-4 pt-3">
-              <div><span className="block text-[6px] text-[var(--c-textWarm)] font-black uppercase tracking-widest">Age</span><strong className="text-lg leading-none text-[var(--c-cream)]">{age || "—"}</strong></div>
-              <div className="border-l border-[var(--c-hover)] pl-3"><span className="block text-[6px] text-[var(--c-textWarm)] font-black uppercase tracking-widest">Caps</span><strong className="text-lg leading-none text-[var(--c-cream)]">{caps ?? "—"}</strong></div>
-              <div className="border-l border-[var(--c-hover)] pl-3"><span className="block text-[6px] text-[var(--c-textWarm)] font-black uppercase tracking-widest">Goals</span><strong className="text-lg leading-none text-[#e3062c]">{goals ?? "—"}</strong></div>
-              <div className="border-l border-[var(--c-hover)] pl-3"><span className="block text-[6px] text-[var(--c-textWarm)] font-black uppercase tracking-widest">Ast</span><strong className="text-lg leading-none text-[var(--c-cream)]">{assists ?? "—"}</strong></div>
-            </div>
-          )}
+          <div className="mt-3 flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)]">
+            {[
+              ["Age", String(age ?? "—")],
+              fullPosition
+                ? ["Role", code]
+                : ["Caps", String(caps ?? "—")],
+              fullPosition
+                ? ["Foot", (foot || "—").slice(0, 1)]
+                : ["Goals", String(goals ?? "—")],
+              fullPosition ? ["", ""] : ["Ast", String(assists ?? "—")],
+            ]
+              .filter(([, v]) => v !== "")
+              .map(([l, v], i) => (
+                <div key={String(i)} className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 min-w-0 text-center ${i ? "border-l border-[var(--c-hover)]" : ""}`}>
+                  <span className="block text-[6px] text-[var(--c-textWarm)] font-black uppercase tracking-widest">{String(l)}</span>
+                  <strong className="text-lg leading-none text-[var(--c-cream)]">{String(v)}</strong>
+                </div>
+              ))}
+          </div>
         </div>
       </div>
 

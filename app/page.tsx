@@ -3,9 +3,9 @@ import React, { useState, useMemo, useEffect, useRef } from "react"
 import {
   Plus, X, User, Search, Edit3, Camera, Check,
   LogOut, Goal, History, Trash2, Trophy,
-  Star, ClipboardCheck, Award, ShieldCheck, Briefcase,
+  Star, ClipboardCheck, Award, ShieldCheck, Briefcase, BriefcaseBusiness,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange
+  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange, Minus
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
@@ -129,16 +129,16 @@ const FedBg=()=>(
 // ─────────────────────────────────────────────
 const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
   const { tr } = useTranslate()
-  const [fn,setFn]=useState(""), [ln,setLn]=useState(""), [u,setU]=useState(""), [p,setP]=useState(""), [msg,setMsg]=useState(""), [busy,setBusy]=useState(false)
+  const [fn,setFn]=useState(""), [ln,setLn]=useState(""), [u,setU]=useState(""), [p,setP]=useState(""), [role,setRole]=useState<"staff"|"player"|"">(""), [msg,setMsg]=useState(""), [busy,setBusy]=useState(false)
   const submit=async(e:React.FormEvent)=>{
     e.preventDefault()
-    if(!fn.trim()||!ln.trim()||!u.trim()||!p.trim()){setMsg("Fill all fields");return}
+    if(!fn.trim()||!ln.trim()||!u.trim()||!p.trim()||!role){setMsg("Fill all fields & choose Staff or Player");return}
     if(p.length<6){setMsg("Password min 6 chars");return}
     setBusy(true)
-    const res = await registerUser({ firstName: fn.trim(), lastName: ln.trim(), username: u.trim().toLowerCase(), password: p })
+    const res = await registerUser({ firstName: fn.trim(), lastName: ln.trim(), username: u.trim().toLowerCase(), password: p, role })
     setBusy(false)
     if(res.error){setMsg(res.error);return}
-    setMsg(""); setFn(""); setLn(""); setU(""); setP("")
+    setMsg(""); setFn(""); setLn(""); setU(""); setP(""); setRole("")
     onBack()
   }
   return(
@@ -172,7 +172,18 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><Key size={15}/></span>
               <input type="password" placeholder={tr.login.password} value={p} onChange={e=>setP(e.target.value)} className={`${B_FIELD_KEY} tracking-[.25em]`}/>
             </div>
-            {msg&&<p className="text-center text-[9px] font-black uppercase tracking-widest text-[#ff4f66]">{msg}</p>}
+            <div>
+              <div className="text-[8px] font-black uppercase tracking-widest text-white/45">I'm joining as</div>
+              <div className="mt-1.5 grid grid-cols-2 gap-2">
+                <button type="button" onClick={()=>setRole("staff")} className={`relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all ${role==="staff"?"border-[#f6c744] bg-[#f6c744] text-[#0c1f3d] shadow-[0_0_16px_rgba(246,199,68,.25)]":"border-white/15 bg-white/5 text-white/55 hover:border-white/35 hover:text-white"}`}>
+                  <BriefcaseBusiness size={13}/>Staff
+                </button>
+                <button type="button" onClick={()=>setRole("player")} className={`relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all ${role==="player"?"border-[#e3062c] bg-[#e3062c] text-white shadow-[0_0_16px_rgba(227,6,44,.3)]":"border-white/15 bg-white/5 text-white/55 hover:border-white/35 hover:text-white"}`}>
+                  ⚽ Player
+                </button>
+              </div>
+            </div>
+            {msg&&<p className="text-center text-[9px] font-black uppercase tracking-widest text-zinc-400">{msg}</p>}
             <button disabled={busy} className={B_BTN}>{busy?"...":"Register"}</button>
           </form>
           <p className="mt-5 text-center text-[8px] font-bold uppercase tracking-widest text-white/45">After registering, wait for admin approval.</p>
@@ -263,6 +274,137 @@ const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onC
                 </button>
               )
             })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
+// AGE CALENDAR — custom well-designed calendar for picking the age (birthdate).
+// Emits DD/MM/YYYY to stay 100% compatible with calculateAge() and the seed format (05/03/1980).
+// ─────────────────────────────────────────────
+const AgeCalendar = ({value,onChange,placeholder="Select birthdate"}:{value:string;onChange:(v:string)=>void;placeholder?:string}) => {
+  const [open,setOpen]=useState(false)
+  const ref=useRef<HTMLDivElement>(null)
+  const today=new Date()
+  const parseDMY=(v:string)=>{ if(!v||!v.includes("/"))return null; const [d,m,y]=v.split("/").map(Number); return new Date(y,m-1,d) }
+  const selected=parseDMY(value)
+  const [viewMonth,setViewMonth]=useState(selected||today)
+
+  useEffect(()=>{
+    if(!open)return
+    const onClick=(e:MouseEvent)=>{ if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener("mousedown",onClick)
+    return ()=>document.removeEventListener("mousedown",onClick)
+  },[open])
+
+  const year=viewMonth.getFullYear(), month=viewMonth.getMonth()
+  const firstDay=new Date(year,month,1).getDay()
+  const daysInMonth=new Date(year,month+1,0).getDate()
+  const monthName=viewMonth.toLocaleDateString(undefined,{month:"long",year:"numeric"})
+  const fmt=(d:Date)=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
+  const isSameDay=(a:Date,b:Date)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()
+  const calculateAgeNow=(bd:string)=>{ if(!bd?.includes("/"))return 0; const [d,m,y]=bd.split("/").map(Number); const b=new Date(y,m-1,d); const n=new Date(); let age=n.getFullYear()-b.getFullYear(); if(n.getMonth()<b.getMonth()||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))age--; return age }
+
+  const cells=[]
+  for(let i=0;i<firstDay;i++)cells.push(null)
+  for(let d=1;d<=daysInMonth;d++)cells.push(d)
+
+  return(
+    <div ref={ref} className="relative">
+      <button type="button" onClick={()=>setOpen(o=>!o)} className="w-full flex items-center justify-between gap-2 px-4 py-4 bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.14)] rounded-2xl text-xs font-bold text-left transition-all hover:border-[#E30613]/40">
+        <span className="flex items-center gap-2">
+          <Calendar size={13} className="text-[#f6c744] shrink-0"/>
+          <span className={value?"text-[var(--c-text)]":"text-[var(--c-textFaint)]"}>{value?fmt(parseDMY(value)||today):placeholder}</span>
+        </span>
+        <ChevronDown size={12} className={open?"text-[#E30613] rotate-180 transition-transform":"text-[var(--c-textDim)] transition-transform"}/>
+      </button>
+      {open&&(
+        <div className="absolute z-[300] top-full mt-1.5 left-0 w-72 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
+          <div className="flex items-center justify-between mb-2 px-1">
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronLeft size={14}/></button>
+            <span className="text-[11px] font-black uppercase tracking-wider">{monthName}</span>
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronRight size={14}/></button>
+          </div>
+          <div className="grid grid-cols-7 gap-0.5 mb-1">
+            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-zinc-400 text-center py-1">{d}</div>))}
+          </div>
+          <div className="grid grid-cols-7 gap-0.5">
+            {cells.map((d,i)=>{
+              if(d===null)return <div key={i}/>
+              const cellDate=new Date(year,month,d)
+              const isToday=isSameDay(cellDate,today)
+              const isSelected=selected&&isSameDay(cellDate,selected)
+              return(
+                <button type="button" key={i} onClick={()=>{onChange(fmt(cellDate));setOpen(false)}}
+                  className={`aspect-square rounded-full text-[10px] font-bold transition-all flex items-center justify-center
+                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-zinc-700 hover:bg-zinc-200/60'}`}>
+                  {d}
+                </button>
+              )
+            })}
+          </div>
+          {selected&&(
+            <div className="mt-2 pt-2 border-t border-[rgba(var(--line-rgb),.14)] flex items-center justify-between px-1">
+              <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Born {fmt(selected)}</span>
+              <span className="px-2 py-1 rounded-lg bg-[#E30613]/10 text-[#E30613] text-[10px] font-black">{calculateAgeNow(fmt(selected))} YRS</span>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────
+// JERSEY SCALE — custom designed jersey-number scale (0-99), replaces native type="number".
+// Designed stepper + scale bar, matching the app's visual language.
+// ─────────────────────────────────────────────
+const JerseyScale = ({value,onChange,placeholder="Jersey"}:{value:string;onChange:(v:string)=>void;placeholder?:string}) => {
+  const [open,setOpen]=useState(false)
+  const ref=useRef<HTMLDivElement>(null)
+  const num=value===""?0:(parseInt(value,10)||0)
+  const idx=Math.max(0,Math.min(99,num))
+  const setNum=(n:number)=>onChange(String(Math.max(0,Math.min(99,n))))
+
+  useEffect(()=>{
+    if(!open)return
+    const onClick=(e:MouseEvent)=>{ if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener("mousedown",onClick)
+    return ()=>document.removeEventListener("mousedown",onClick)
+  },[open])
+
+  const marks=[]
+  for(let i=0;i<=99;i+=10)marks.push(i)
+
+  return(
+    <div ref={ref} className="relative">
+      <button type="button" onClick={()=>setOpen(o=>!o)} className="w-full flex items-center justify-center gap-2 px-4 py-4 bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.14)] rounded-2xl text-xs font-bold transition-all hover:border-[#E30613]/40">
+        <span className="text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)] shrink-0">Nº</span>
+        <span className={value?"text-2xl font-black italic text-[#E30613]":"text-2xl font-black italic text-[var(--c-textFaint)]"}>{value&&value!=="0"?value:(value==="0"?"0":placeholder)}</span>
+        <ChevronDown size={12} className={open?"text-[#E30613] rotate-180 transition-transform":"text-[var(--c-textDim)] transition-transform"}/>
+      </button>
+      {open&&(
+        <div className="absolute z-[300] top-full mt-1.5 left-0 w-52 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
+          {/* BIG DISPLAY */}
+          <div className="flex items-center justify-between mb-3">
+            <button type="button" onClick={()=>setNum(idx-1)} className="w-9 h-9 rounded-xl bg-zinc-100 hover:bg-[#E30613]/10 text-zinc-600 hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Minus size={14}/></button>
+            <span className="text-4xl font-black italic text-[#E30613] leading-none">{idx}</span>
+            <button type="button" onClick={()=>setNum(idx+1)} className="w-9 h-9 rounded-xl bg-zinc-100 hover:bg-[#E30613]/10 text-zinc-600 hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Plus size={14}/></button>
+          </div>
+          {/* SCALE BAR 0-99 */}
+          <div className="relative h-9 rounded-xl bg-zinc-100 overflow-hidden">
+            <div className="absolute inset-y-0 left-0 w-[var(--fill)] transition-all" style={{"--fill":`${(idx/99)*100}%`} as React.CSSProperties}></div>
+          </div>
+          <div className="flex justify-between px-0.5 mt-1 mb-2">
+            {marks.map(m=>(<span key={m} className="text-[7px] font-black text-zinc-400">{m}</span>))}
+          </div>
+          <div className="flex flex-wrap gap-1 mb-1">
+            {[1,5,7,8,9,10,13,17,23,66,99].map(n=>(
+              <button key={n} type="button" onClick={()=>setNum(n)} className={`px-1.5 py-1 rounded-md text-[8px] font-black transition-all ${idx===n?"bg-[#E30613] text-white":"bg-zinc-100 text-zinc-500 hover:bg-zinc-200"}`}>{n}</button>
+            ))}
           </div>
         </div>
       )}
@@ -808,8 +950,19 @@ export default function EliteSquadApp() {
   const renderTeamSelect=()=>(
     <div className="relative">
       <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[999] flex items-center gap-2 sm:gap-2.5 safe-top">
-        <ThemeToggle/>
-        <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} title="Change language" className="px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><Globe size={15}/><span>{lang.toUpperCase()}</span></button>
+        <ThemeToggle className="p-2.5"/>
+        <Dropdown trigger={
+          <button title="Language" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(246,199,68,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><Globe size={15}/><span className="hidden sm:inline">{lang.toUpperCase()}</span><ChevronDown size={12}/></button>
+        }>
+          <div className="px-3.5 py-1.5 text-[8px] font-black uppercase tracking-widest text-zinc-400">Language</div>
+          {(["en","fr","ar"]as const).map(l=>(
+            <button key={l} onClick={()=>setLang(l)} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-left transition-all ${lang===l?"text-[#a9822e] bg-[#fdf8ee]":"text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900"}`}>
+              <Globe size={13} className={lang===l?"text-[#a9822e]":"text-[#a9822e]/50"}/>
+              <span>{l==="en"?"English":l==="fr"?"Français":"العربية"}</span>
+              {lang===l&&<Check size={12} className="ml-auto"/>}
+            </button>
+          ))}
+        </Dropdown>
         <span className="hidden lg:inline px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.16)] bg-[#0d1f3c]/55 backdrop-blur-md text-[#f6c744]/90 text-[9px] font-black uppercase tracking-wider">{user?.username}</span>
         <button onClick={handleChangePassword} title="Change your password" className="p-2.5 rounded-lg border border-[rgba(148,170,210,.25)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#7ec3ff] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all"><Key size={15}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-2.5 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_16px_rgba(227,6,44,.35)] transition-all"><LogOut size={15}/></button>
       </div>
@@ -907,6 +1060,22 @@ export default function EliteSquadApp() {
               <Calendar size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">Schedule Match</span>
             </button>}
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
+            <ThemeToggle className="p-2.5"/>
+            <Dropdown trigger={
+              <button title={tr.header.language? (tr.header.language as string):"Language"} className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)]">
+                <Globe size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">{lang.toUpperCase()}</span><ChevronDown size={11}/>
+              </button>
+            }>
+              <div className="px-3.5 py-1.5 text-[8px] font-black uppercase tracking-widest text-zinc-400">Language</div>
+              {(["en","fr","ar"]as const).map(l=>(
+                <button key={l} onClick={()=>setLang(l)} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider transition-all text-left ${lang===l?"text-[#a9822e] bg-[#fdf8ee]":"text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900"}`}>
+                  <Globe size={13} className={lang===l?"text-[#a9822e]":"text-[#a9822e]/50"}/>
+                  <span>{l==="en"?"English":l==="fr"?"Français":"العربية"}</span>
+                  {lang===l&&<Check size={12} className="ml-auto"/>}
+                </button>
+              ))}
+            </Dropdown>
+            <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
             <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} />
 
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
@@ -934,9 +1103,6 @@ export default function EliteSquadApp() {
               <button onClick={()=>window.print()} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#a9822e]"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 Print
-              </button>
-              <button onClick={()=>setLang(lang==="en"?"fr":lang==="fr"?"ar":"en")} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
-                <Globe size={14} className="text-[#a9822e]"/>Language ({lang.toUpperCase()})
               </button>
               <button onClick={()=>setUpcomingOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Calendar size={14} className="text-[#a9822e]"/>Upcoming Matches
@@ -1513,7 +1679,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               <div className="mt-4 grid grid-cols-2 gap-3">
                 <div className="col-span-2"><input placeholder={tr.form.fullName} value={form.name} onChange={e=>setForm({...form,name:e.target.value})} className="pm-field" required/></div>
                 <input placeholder={tr.form.clubTeam} value={form.club} onChange={e=>setForm({...form,club:e.target.value})} className="pm-field"/>
-                <input placeholder={tr.form.date} value={form.birthdate} onChange={e=>setForm({...form,birthdate:e.target.value})} className="pm-field"/>
+                <AgeCalendar value={form.birthdate} onChange={v=>setForm({...form,birthdate:v})} placeholder={tr.form.date}/>
               </div>
               {activeTab==="PLAYERS"?(
                 <>
@@ -1521,7 +1687,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     <select value={form.position} onChange={e=>setForm({...form,position:e.target.value})} className="pm-field pm-select" required>
                       <option value="">{tr.form.position}</option>{PLAYER_POSITIONS.filter(p=>p!=="ALL").map(p=><option key={p} value={p}>{p}</option>)}
                     </select>
-                    <input placeholder={tr.form.jersey} value={form.jerseyNumber} onChange={e=>setForm({...form,jerseyNumber:e.target.value})} className="pm-field" type="number" min="0" max="99"/>
+                    <JerseyScale value={form.jerseyNumber} onChange={v=>setForm({...form,jerseyNumber:v})} placeholder={tr.form.jersey}/>
                     <input placeholder={tr.form.heightCm} value={form.height} onChange={e=>setForm({...form,height:e.target.value})} className="pm-field"/>
                     <input placeholder={tr.form.caps} value={form.natMatches} onChange={e=>setForm({...form,natMatches:e.target.value})} className="pm-field"/>
                     <div className="grid grid-cols-2 gap-3">
@@ -1547,6 +1713,17 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     <option value="">{tr.form.license}</option>{CAF_LICENSES.map(l=><option key={l} value={l}>{l}</option>)}
                   </select>
                   <input placeholder={tr.form.nationality} value={form.nationality} onChange={e=>setForm({...form,nationality:e.target.value})} className="pm-field"/>
+                  <div className="col-span-2 pm-tile">
+                    <p className="pm-label">Preferred Tactics / Formation</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {Object.keys(FORMATIONS).map(f=>(
+                        <button key={f} type="button" onClick={()=>setForm({...form,formation:form.formation===f?"":f})}
+                          className={`pm-chip ${form.formation===f?'pm-chip-on':''}`}>{f}</button>
+                      ))}
+                    </div>
+                    {form.formation&&<p className="text-[8px] font-black text-[var(--c-red)] uppercase ml-2 mt-1.5 tracking-tight">✓ Prefers {form.formation}</p>}
+                  </div>
+                  <input placeholder={tr.form.languages} value={form.languages} onChange={e=>setForm({...form,languages:e.target.value})} className="pm-field"/>
                   <div className="col-span-2">
                     <div className="flex flex-wrap gap-1.5">
                       {LANGUAGES.map(l=>{
