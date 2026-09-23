@@ -1047,7 +1047,7 @@ export default function EliteSquadApp() {
               <Search size={13} className="text-[var(--c-textDim)] shrink-0"/>
               <input placeholder={tr.header.search} value={search} onChange={e=>setSearch(e.target.value)} className="bg-transparent text-[10px] font-bold outline-none w-full uppercase text-[var(--c-text)] placeholder-[var(--c-textMid)]"/>
             </div>
-            <button onClick={()=>{if(canManageUsers&&pendingMatches.length>0)setPendingMatchesOpen(true);else setIsHistoryOpen(true)}} title="Match history" className={HEADER_BTN}>
+            <button onClick={()=>setIsHistoryOpen(true)} title="Match history" className={HEADER_BTN}>
               <BookOpen size={14} className="text-[#f6c744]"/>
               <span className="hidden sm:inline">{tr.header.matches}</span>
               {canManageUsers&&pendingMatches.length>0&&<span className="bg-amber-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingMatches.length}</span>}

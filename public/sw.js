@@ -1,25 +1,46 @@
-const CACHE = "tunisia-wnt-v2"
-const STATIC = ["/", "/manifest.json", "/icon.svg", "/ftf-logo.png"]
+const VERSION = 3
+const CACHE = `tunisia-wnt-v${VERSION}`
+const STATIC = ["/manifest.json", "/icon.svg", "/ftf-logo.png"]
 
-self.addEventListener("install", (e) => {
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(STATIC)))
+self.addEventListener("install", () => {
   self.skipWaiting()
 })
 
 self.addEventListener("activate", (e) => {
   e.waitUntil(
-    caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+    caches
+      .keys()
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then(() => self.clients.claim())
   )
 })
 
+// NETWORK-FIRST for every page navigation → fresh build always wins.
+// Cache-first only for immutable hashed assets (webpack chunks) + app shell.
 self.addEventListener("fetch", (e) => {
-  if (e.request.method !== "GET") return
+  const req = e.request
+  const url = new URL(req.url)
+
+  if (req.method !== "GET" || url.origin !== location.origin) return
+
+  if (req.mode === "navigate") {
+    e.respondWith(
+      fetch(req)
+        .then((res) => {
+          const copy = res.clone()
+          caches.open(CACHE).then((c) => c.put("/", copy))
+          return res
+        })
+        .catch(() => caches.match("/"))
+    )
+    return
+  }
+
   e.respondWith(
-    fetch(e.request)
-      .then((r) => {
-        const c = caches.open(CACHE).then((c) => c.put(e.request, r.clone()))
-        return r
-      })
-      .catch(() => caches.match(e.request).then((r) => r || caches.match("/")))
+    caches.match(req).then((hit) => hit || fetch(req).then((res) => {
+      const copy = res.clone()
+      caches.open(CACHE).then((c) => c.put(req, copy))
+      return res
+    }))
   )
 })
