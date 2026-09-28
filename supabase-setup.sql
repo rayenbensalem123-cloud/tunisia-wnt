@@ -17,6 +17,19 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 
+-- CREATE TABLE IF NOT EXISTS silently skips an existing table, so an older
+-- profiles table keeps its ORIGINAL role/status CHECK and rejects 'player'
+-- / 'pending'. Rebuild both constraints from the definition above.
+-- NOT VALID: existing rows are left alone, only new writes are checked.
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_status_check;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_status_check
+  CHECK (status IN ('pending','active','suspended')) NOT VALID;
+ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
+ALTER TABLE public.profiles ADD CONSTRAINT profiles_role_check
+  CHECK (role IN ('admin','staff','player')) NOT VALID;
+ALTER TABLE public.profiles ALTER COLUMN status SET DEFAULT 'pending';
+ALTER TABLE public.profiles ALTER COLUMN role   SET DEFAULT 'staff';
+
 -- username <-> email lookup used by signInUsername()
 CREATE TABLE IF NOT EXISTS public.login_emails (
   username text PRIMARY KEY,
