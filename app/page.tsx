@@ -24,7 +24,7 @@ import {
   fetchMembers, fetchMatches, syncMembers, syncMatches, fetchCamps, syncCamps,
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
   fetchInjuries, addInjury, updateInjuryStatus,
-  fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls
+  fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
 
@@ -681,12 +681,49 @@ export default function EliteSquadApp() {
   // the URL is resolved here and handed to the plain <img src>.
   useEffect(()=>{
     if(!user)return
-    const paths=[...members.map(m=>m?.imagePath),form?.imagePath,...members.map(m=>m?.passportImage),form?.passportImage].filter(Boolean).map(String)
+    const paths=[...members.map(m=>m?.imagePath),form?.imagePath,form?.passportImage].filter(Boolean).map(String)
     if(paths.length===0)return
     let alive=true
     signedImageUrls(paths).then(next=>{if(alive)setImgUrls(prev=>({...prev,...next}))})
     return ()=>{alive=false}
-  },[user,members,form?.imagePath])
+  },[user,members,form?.imagePath,form?.passportImage])
+
+  // Passports are signed on demand, for the one card actually open. Signing all
+  // 16 up front made the visible document wait behind 15 round trips it had no
+  // use for, which read as a blank card for a beat before the image arrived.
+  // signedImageUrl caches per path, so re-opening a card is instant.
+  useEffect(()=>{
+    if(!user)return
+    const p=String(selMember?.passportImage||"")
+    if(!p||p.startsWith("data:")||p.startsWith("blob:"))return
+    let alive=true
+    signedImageUrl(p).then(u=>{if(alive&&u)setImgUrls(prev=>(prev[p]?prev:{...prev,[p]:u}))})
+    return ()=>{alive=false}
+  },[user,selMember?.passportImage])
+
+  // Hover intent. Pointing at a card is the only moment we know which passport
+  // is about to be wanted, and it arrives a few hundred ms before the click --
+  // enough time to mint the signed URL and pull the bytes so the modal opens
+  // with the document already decoded. Signing on open alone (above) can only
+  // ever start once the modal is on screen, which is the visible pause.
+  //
+  // This fetches through the same private bucket with the caller's own session
+  // and populates the normal HTTP cache; the <img> that follows reuses those
+  // bytes rather than asking again. It never widens who can read a passport.
+  const warming=useRef<Set<string>>(new Set())
+  const prefetchPassport=(m:any)=>{
+    if(!user)return
+    const p=String(m?.passportImage||"")
+    if(!p||p.startsWith("data:")||p.startsWith("blob:")||warming.current.has(p))return
+    warming.current.add(p)
+    signedImageUrl(p).then(u=>{
+      if(!u)return
+      setImgUrls(prev=>(prev[p]?prev:{...prev,[p]:u}))
+      const im=new Image()
+      im.src=u                      // warms the HTTP cache for the real <img>
+      im.decoding="async"
+    }).catch(()=>{warming.current.delete(p)})
+  }
 
   const reloadMembers=async()=>{
     const data=await fetchMembers()
@@ -1234,7 +1271,7 @@ export default function EliteSquadApp() {
           const autoN = ++numCounters[counterKey]
           const n = m.jerseyNumber != null && m.jerseyNumber !== "" ? Number(m.jerseyNumber) : autoN
           return(
-            <div key={m.id} onClick={()=>selectMode?toggleSelect(m.id):setSelMember(m)} className={`group cursor-pointer relative animate-[fadeUp_0.5s_ease-out_both] ${selectMode?'select-none':''}`} style={{animationDelay:`${i*60}ms`}}>
+            <div key={m.id} onClick={()=>selectMode?toggleSelect(m.id):setSelMember(m)} onPointerEnter={()=>prefetchPassport(m)} className={`group cursor-pointer relative animate-[fadeUp_0.5s_ease-out_both] ${selectMode?'select-none':''}`} style={{animationDelay:`${i*60}ms`}}>
               {selectMode&&(
                 <div className={`absolute top-3 left-3 z-20 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedIds.includes(m.id)?'bg-[#e3062c] border-[#e3062c] text-white':'bg-[var(--c-bg)]/80 border-white/60 text-transparent'}`}>
                   <Check size={13}/>
