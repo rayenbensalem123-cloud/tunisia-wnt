@@ -153,6 +153,34 @@ VALUES ('members', 'members', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
 
 -- ------------------------------------------------------------
+-- IDEMPOTENCY: drop every policy this script creates, so re-running is safe
+-- ------------------------------------------------------------
+DO $drop_policies$
+DECLARE t text; p text;
+BEGIN
+  FOREACH p IN ARRAY ARRAY[
+    'profiles_select_auth','profiles_update_own','profiles_admin_all','profiles_insert_self',
+    'members_select_anon','members_select_active','members_dml_authenticated',
+    'members_insert','members_update','members_delete',
+    'matches_select_anon','matches_select_active','matches_dml_authenticated',
+    'matches_insert','matches_update','matches_delete',
+    'injuries_all_auth','injuries_select_active','injuries_write',
+    'squad_templates_all_auth','squad_templates_select_active','squad_templates_write',
+    'activity_log_all_auth','activity_log_select_active','activity_log_insert',
+    'members_objects_public_read','members_storage_read','members_storage_write'
+  ] LOOP
+    FOREACH t IN ARRAY ARRAY['profiles','members','matches','injuries',
+                              'squad_templates','activity_log'] LOOP
+      EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', p, t);
+    END LOOP;
+  END LOOP;
+  -- storage policies live on storage.objects
+  FOREACH p IN ARRAY ARRAY['members_objects_public_read','members_storage_read','members_storage_write'] LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON storage.objects', p);
+  END LOOP;
+END $drop_policies$;
+
+-- ------------------------------------------------------------
 -- RLS helper functions (must exist before the policies that use them)
 -- ------------------------------------------------------------
 -- helper used by admin policies (SECURITY DEFINER => no recursion in RLS)
