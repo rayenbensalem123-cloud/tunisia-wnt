@@ -26,3 +26,14 @@ launch*.log
 tsconfig.tsbuildinfo
 # Local env
 .env.local
+# Identity documents - NEVER commit these. Passport/CNI scans contain
+# passport numbers, dates of birth and MRZ data.
+passports/
+passport*/
+*passport*.jpg
+*passport*.jpeg
+*passport*.png
+*passport*.pdf
+*carte*.jpg
+*carte*.png
+*identity*.jpg
