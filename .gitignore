@@ -9,7 +9,6 @@ next.user-config.*
 
 # Environment variables
 .env*.local
-
 # Common ignores
 node_modules
 .next/
@@ -18,3 +17,12 @@ node_modules
 .env*
 *.tsbuildinfo
 Nouveau Document texte.txt
+# Build / tooling artifacts
+eng.traineddata
+*.log
+final-audit.mjs
+.od-skills/
+launch*.log
+tsconfig.tsbuildinfo
+# Local env
+.env.local

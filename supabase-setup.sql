@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   username    text UNIQUE NOT NULL,
   first_name  text NOT NULL DEFAULT '',
   last_name   text NOT NULL DEFAULT '',
-  role        text NOT NULL DEFAULT 'staff' CHECK (role IN ('admin','staff')),
+  role        text NOT NULL DEFAULT 'staff' CHECK (role IN ('admin','staff','player')),
   status      text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','active','suspended')),
   permissions jsonb NOT NULL DEFAULT '{}',
   created_at  timestamptz NOT NULL DEFAULT now()
@@ -153,6 +153,69 @@ VALUES ('members', 'members', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
 
 -- ------------------------------------------------------------
+-- SECURITY: block privilege escalation
+-- A user may edit their own profile, but never role/status/permissions.
+-- Those three columns are admin-only, enforced in the database (not just UI).
+-- ------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.guard_profile_privileges()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- An active admin may change anything.
+  IF public.current_active_admin() THEN
+    RETURN NEW;
+  END IF;
+
+  IF NEW.role IS DISTINCT FROM OLD.role
+     OR NEW.status IS DISTINCT FROM OLD.status
+     OR NEW.permissions IS DISTINCT FROM OLD.permissions
+     OR NEW.username IS DISTINCT FROM OLD.username THEN
+    RAISE EXCEPTION 'Only an active admin can change role, status, permissions or username'
+      USING ERRCODE = '42501';
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_guard_profile_privileges ON public.profiles;
+CREATE TRIGGER trg_guard_profile_privileges
+  BEFORE UPDATE ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.guard_profile_privileges();
+
+-- Helper: does the caller hold a permission flag?
+CREATE OR REPLACE FUNCTION public.has_permission(perm text)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT coalesce((
+    SELECT (role = 'admin')
+       OR coalesce(permissions ->> perm, 'false') = 'true'
+    FROM profiles
+    WHERE id = auth.uid() AND status = 'active'
+  ), false);
+$$;
+
+-- Helper: is the caller an active, authenticated, non-pending user?
+CREATE OR REPLACE FUNCTION public.current_active_user()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT coalesce((
+    SELECT status = 'active' FROM profiles WHERE id = auth.uid()
+  ), false);
+$$;
+
+-- ------------------------------------------------------------
 -- ROW LEVEL SECURITY
 -- ------------------------------------------------------------
 ALTER TABLE public.profiles        ENABLE ROW LEVEL SECURITY;
@@ -181,24 +244,66 @@ DROP POLICY IF EXISTS "profiles_select_auth" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_admin_all" ON public.profiles;
 CREATE POLICY "profiles_select_auth" ON public.profiles FOR SELECT USING (auth.role() = 'authenticated');
+-- Own-row updates are allowed, but trg_guard_profile_privileges blocks
+-- any change to role / status / permissions / username for non-admins.
 CREATE POLICY "profiles_update_own" ON public.profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
 CREATE POLICY "profiles_admin_all" ON public.profiles FOR ALL USING (public.current_active_admin());
 
+-- PUBLIC READS REMOVED. members/matches are no longer readable with the anon key.
 DROP POLICY IF EXISTS "members_select_anon" ON public.members;
-DROP POLICY IF EXISTS "members_dml_authenticated" ON public.members;
 DROP POLICY IF EXISTS "matches_select_anon" ON public.matches;
+DROP POLICY IF EXISTS "members_dml_authenticated" ON public.members;
 DROP POLICY IF EXISTS "matches_dml_authenticated" ON public.matches;
-CREATE POLICY "members_select_anon"       ON public.members FOR SELECT USING (true);
-CREATE POLICY "members_dml_authenticated" ON public.members FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "matches_select_anon"       ON public.matches FOR SELECT USING (true);
-CREATE POLICY "matches_dml_authenticated" ON public.matches FOR ALL USING (auth.role() = 'authenticated');
+
+-- Only active users may read. No anon access at all.
+CREATE POLICY "members_select_active" ON public.members
+  FOR SELECT USING (public.current_active_user());
+CREATE POLICY "matches_select_active" ON public.matches
+  FOR SELECT USING (public.current_active_user());
+
+-- Writes are gated on the permission flags, enforced by the database.
+CREATE POLICY "members_insert" ON public.members
+  FOR INSERT WITH CHECK (public.has_permission('addPlayer'));
+CREATE POLICY "members_update" ON public.members
+  FOR UPDATE USING (public.has_permission('editPlayer')) WITH CHECK (public.has_permission('editPlayer'));
+CREATE POLICY "members_delete" ON public.members
+  FOR DELETE USING (public.has_permission('deletePlayer'));
+
+CREATE POLICY "matches_insert" ON public.matches
+  FOR INSERT WITH CHECK (public.has_permission('addMatch'));
+CREATE POLICY "matches_update" ON public.matches
+  FOR UPDATE USING (public.has_permission('addMatch')) WITH CHECK (public.has_permission('addMatch'));
+CREATE POLICY "matches_delete" ON public.matches
+  FOR DELETE USING (public.has_permission('deleteMatch'));
 
 DROP POLICY IF EXISTS "injuries_all_auth" ON public.injuries;
 DROP POLICY IF EXISTS "squad_templates_all_auth" ON public.squad_templates;
 DROP POLICY IF EXISTS "activity_log_all_auth" ON public.activity_log;
-CREATE POLICY "injuries_all_auth"         ON public.injuries        FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "squad_templates_all_auth"  ON public.squad_templates FOR ALL USING (auth.role() = 'authenticated');
-CREATE POLICY "activity_log_all_auth"     ON public.activity_log    FOR ALL USING (auth.role() = 'authenticated');
+CREATE POLICY "injuries_select_active"        ON public.injuries        FOR SELECT USING (public.current_active_user());
+CREATE POLICY "injuries_write"                ON public.injuries        FOR ALL USING (public.has_permission('editPlayer')) WITH CHECK (public.has_permission('editPlayer'));
+CREATE POLICY "squad_templates_select_active" ON public.squad_templates FOR SELECT USING (public.current_active_user());
+CREATE POLICY "squad_templates_write"         ON public.squad_templates FOR ALL USING (public.has_permission('editPlayer')) WITH CHECK (public.has_permission('editPlayer'));
+CREATE POLICY "activity_log_select_active"    ON public.activity_log    FOR SELECT USING (public.current_active_user());
+CREATE POLICY "activity_log_insert"           ON public.activity_log    FOR INSERT WITH CHECK (public.current_active_user());
+
+-- ------------------------------------------------------------
+-- STORAGE: private bucket + signed URLs (passport data must not be public)
+-- ------------------------------------------------------------
+UPDATE storage.buckets SET public = false WHERE id = 'members';
+
+DROP POLICY IF EXISTS "members_objects_public_read" ON storage.objects;
+DROP POLICY IF EXISTS "members_storage_read" ON storage.objects;
+DROP POLICY IF EXISTS "members_storage_write" ON storage.objects;
+CREATE POLICY "members_storage_read" ON storage.objects
+  FOR SELECT USING (
+    bucket_id = 'members' AND public.current_active_user()
+  );
+CREATE POLICY "members_storage_write" ON storage.objects
+  FOR ALL USING (
+    bucket_id = 'members' AND public.has_permission('addPlayer')
+  ) WITH CHECK (
+    bucket_id = 'members' AND public.has_permission('addPlayer')
+  );
 
 -- ------------------------------------------------------------
 -- SEED: demo squad + matches so the portal is instantly usable.

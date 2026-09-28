@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { safeError } from '@/lib/api-auth'
 
 export async function POST(req: Request) {
   try {
@@ -21,8 +22,11 @@ export async function POST(req: Request) {
     }
 
     const { username, newPassword } = await req.json()
-    if (!username || !newPassword || newPassword.length < 6) {
-      return NextResponse.json({ error: 'Invalid input (password min 6 chars)' }, { status: 400 })
+    if (typeof username !== 'string' || !username.trim()) {
+      return NextResponse.json({ error: 'Username required' }, { status: 400 })
+    }
+    if (typeof newPassword !== 'string' || newPassword.length < 6 || newPassword.length > 200) {
+      return NextResponse.json({ error: 'Password must be 6-200 characters' }, { status: 400 })
     }
 
     const { data: targetProfile } = await supabaseAdmin
@@ -35,10 +39,11 @@ export async function POST(req: Request) {
     const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(targetProfile.id, {
       password: newPassword,
     })
-    if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 })
+    if (updateErr) return NextResponse.json({ error: safeError(updateErr, 'reset failed') }, { status: 500 })
 
     return NextResponse.json({ ok: true })
   } catch (e) {
-    return NextResponse.json({ error: String(e) }, { status: 500 })
+    console.error('admin-reset-password error:', e)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }

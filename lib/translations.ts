@@ -12,7 +12,7 @@ const t = {
       firstName: "First name",
       lastName: "Family name",
       username: "Choose username",
-      password: "Choose password (4+ chars)",
+      password: "Choose password (6+ chars)",
     },
     teamSelect: {
       eliteSquad: "WOMEN'S FOOTBALL DEPARTMENT",
@@ -177,7 +177,7 @@ const t = {
       firstName: "Prénom",
       lastName: "Nom de famille",
       username: "Choisir un nom d'utilisateur",
-      password: "Choisir mot de passe (4+ car.)",
+      password: "Choisir mot de passe (6+ car.)",
     },
     teamSelect: {
       eliteSquad: "DÉPARTEMENT FOOTBALL FÉMININ",

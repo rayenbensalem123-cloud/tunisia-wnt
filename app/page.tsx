@@ -579,15 +579,26 @@ export default function EliteSquadApp() {
   const matchesSnapshot=useRef<Map<any,any>>(new Map())
   const campsSnapshot=useRef<Map<any,any>>(new Map())
   const applyingRemote=useRef(false)
-  const handleChangePassword=async()=>{
-    const pw1=window.prompt("New password (min 6 characters):")
-    if(!pw1)return
-    if(pw1.length<6){alert("Password must be at least 6 characters");return}
-    const pw2=window.prompt("Confirm new password:")
-    if(pw1!==pw2){alert("Passwords don't match");return}
-    const {error}=await changeMyPassword(pw1)
-    if(error){alert("Failed: "+error)}else{alert("Password updated!")}
+  const [pwTarget,setPwTarget]=useState<{mode:'self'|'admin';username?:string}|null>(null)
+  const [pwVal,setPwVal]=useState("")
+  const [pwVal2,setPwVal2]=useState("")
+  const [pwErr,setPwErr]=useState("")
+  const [pwBusy,setPwBusy]=useState(false)
+  const openPw=(mode:'self'|'admin',username?:string)=>{setPwTarget({mode,username});setPwVal("");setPwVal2("");setPwErr("");setPwBusy(false)}
+  const closePw=()=>{setPwTarget(null);setPwErr("")}
+  const submitPw=async()=>{
+    if(!pwTarget)return
+    if(pwVal.length<6){setPwErr("Password must be at least 6 characters");return}
+    if(pwVal.length>200){setPwErr("Password is too long");return}
+    if(pwVal!==pwVal2){setPwErr("Passwords don't match");return}
+    setPwBusy(true)
+    const {error}=pwTarget.mode==="self"?await changeMyPassword(pwVal):await adminResetPassword(pwTarget.username!,pwVal)
+    setPwBusy(false)
+    if(error){setPwErr(error);return}
+    setPwTarget(null)
+    setPwVal("");setPwVal2("")
   }
+  const handleChangePassword=()=>openPw('self')
   const loadMyUser=async()=>{
     const profile=await fetchMyProfile()
     if(!profile||profile.status!=="active"){ setUser(null); return null }
@@ -1934,13 +1945,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                       <div className="flex gap-1.5">
                         {u.status==="pending"&&canManageUsers&&<button onClick={approveUser} className="px-3 py-1.5 rounded-lg border border-[#7fd6a8]/30 text-[#7fd6a8] text-[7px] font-black uppercase tracking-wider hover:bg-[#7fd6a8]/10 transition-all">Approve</button>}
                         {canManageUsers&&!currentUser&&(<>
-                          <button onClick={async()=>{
-                            const pw1=window.prompt(`New password for ${u.username} (min 6 chars):`)
-                            if(!pw1)return
-                            if(pw1.length<6){alert("Password must be at least 6 characters");return}
-                            const {error}=await adminResetPassword(u.username,pw1)
-                            if(error){alert("Failed: "+error)}else{alert("Password reset for "+u.username)}
-                          }} className="px-3 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">Reset PW</button>
+                          <button onClick={()=>openPw('admin',u.username)} className="px-3 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">Reset PW</button>
                           <button onClick={()=>{deleteProfile(u.username).then(reloadProfiles)}} className="px-3 py-1.5 rounded-lg border border-[#e3062c]/40 text-[#ff4f66] text-[7px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all">Remove</button>
                         </>)}
                       </div>
@@ -2630,6 +2635,33 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
       {/* ═══════════════════════════════════════════
           MATCH HISTORY MODAL
       ═══════════════════════════════════════════ */}
+      {pwTarget&&(
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80" onClick={closePw}>
+          <div className="w-full max-w-sm rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-cream2)] text-[var(--c-text)] shadow-2xl" onClick={e=>e.stopPropagation()}>
+            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(var(--line-rgb),.12)]">
+              <h2 className="text-sm font-black uppercase tracking-tight">{pwTarget.mode==="self"?"Change password":`Reset password — ${pwTarget.username}`}</h2>
+              <button onClick={closePw} title="Close" className="pm-close"><X size={15}/></button>
+            </div>
+            <form onSubmit={e=>{e.preventDefault();submitPw()}} className="p-5 space-y-3">
+              <div>
+                <label className="block text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] mb-1.5">New password (min 6 chars)</label>
+                <input type="password" autoComplete="new-password" value={pwVal} onChange={e=>setPwVal(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.18)] bg-[var(--c-surface)] text-[var(--c-text)] text-xs font-bold outline-none focus:border-[#E30613]/50" autoFocus/>
+              </div>
+              <div>
+                <label className="block text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] mb-1.5">Confirm password</label>
+                <input type="password" autoComplete="new-password" value={pwVal2} onChange={e=>setPwVal2(e.target.value)}
+                  className="w-full px-3 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.18)] bg-[var(--c-surface)] text-[var(--c-text)] text-xs font-bold outline-none focus:border-[#E30613]/50"/>
+              </div>
+              {pwErr&&<p className="text-[8px] font-black uppercase tracking-wider text-[#ff4f66]">{pwErr}</p>}
+              <div className="flex gap-2 pt-1">
+                <button type="submit" disabled={pwBusy} className="flex-1 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider disabled:opacity-50">{pwBusy?"Saving...":"Save"}</button>
+                <button type="button" onClick={closePw} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.18)] text-[9px] font-black uppercase tracking-wider text-[var(--c-textDim)]">Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       {isHistoryOpen&&(()=>{
         const uniqueOpponents=[...new Set(catMatches.map((m:any)=>m.opponent).filter(Boolean))].sort()
         const filteredMatches=opponentFilter?catMatches.filter((m:any)=>m.opponent===opponentFilter):catMatches
