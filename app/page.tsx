@@ -60,6 +60,12 @@ const authHeaders=async():Promise<Record<string,string>>=>{
 // signed URLs minted with the signed-in user's own session (see signedImageUrls).
 // Never build a public storage URL here.
 const getImageSrc=(m:any,imgUrls?:Record<string,string>)=>{if(m?.imagePath)return imgUrls?.[String(m.imagePath)]||"";const i=String(m?.image||m?.image_url||"").trim();if(!i)return "";if(i.startsWith("data:image/svg+xml"))return "";return i}
+// A passport is stored as a STORAGE PATH and resolved through the same signed
+// -url map as a portrait. It used to hold an /api/image?path= URL instead, but
+// an <img> tag cannot send an Authorization header, so that request went out
+// unauthenticated, got a 401, and onError hid the image. Resolving the path
+// here means the browser gets a URL it can actually fetch.
+const getPassportSrc=(m:any,imgUrls?:Record<string,string>)=>{const p=String(m?.passportImage||"");if(!p)return "";if(p.startsWith("data:")||p.startsWith("blob:"))return p;return imgUrls?.[p]||""}
 const compressImage=async(file:File,maxDim=1200,quality=0.82):Promise<Blob>=>{
   const img=await new Promise<HTMLImageElement>((res,rej)=>{const o=new Image();o.onload=()=>res(o);o.onerror=rej;o.src=URL.createObjectURL(file)})
   let w=img.width,h=img.height
@@ -675,7 +681,7 @@ export default function EliteSquadApp() {
   // the URL is resolved here and handed to the plain <img src>.
   useEffect(()=>{
     if(!user)return
-    const paths=[...members.map(m=>m?.imagePath),form?.imagePath].filter(Boolean).map(String)
+    const paths=[...members.map(m=>m?.imagePath),form?.imagePath,...members.map(m=>m?.passportImage),form?.passportImage].filter(Boolean).map(String)
     if(paths.length===0)return
     let alive=true
     signedImageUrls(paths).then(next=>{if(alive)setImgUrls(prev=>({...prev,...next}))})
@@ -852,9 +858,11 @@ export default function EliteSquadApp() {
     await Promise.all(targets.map(async(m)=>{
       try{
         let blob:Blob
-        if(m.passportImage.startsWith("data:")){const b=await fetch(m.passportImage);blob=await b.blob()}
-        else if(m.passportImage.startsWith("blob:")){const b=await fetch(m.passportImage);blob=await b.blob()}
-        else{const b=await fetch(m.passportImage);if(b.ok)blob=await b.blob();else return}
+        const src=getPassportSrc(m,imgUrls)
+        if(src){const b=await fetch(src);if(b.ok)blob=await b.blob();else return}
+        else return
+        // The stored value is a storage path, so the extension comes off the
+        // path itself rather than off a query string.
         const ext=(m.passportImage.split('?')[0].match(/\.(\w{3,4})$/)||[])[1]||"jpg"
         const safeName=m.name.replace(/[^\p{L}\p{N}]+/gu,"_")
         zip.file(`${safeName}_passport.${ext}`,blob)
@@ -1483,7 +1491,7 @@ export default function EliteSquadApp() {
                 <div className="flex items-center justify-center py-4">
                   {selMember.passportImage?(
                     <button type="button" onClick={()=>setPassportZoom(true)} className="group relative rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-deep)] overflow-hidden max-w-full cursor-zoom-in" title="Click to zoom">
-                      <img src={selMember.passportImage} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} alt={`${selMember.name} passport`} className="max-h-[46vh] max-w-full object-contain" style={{imageRendering:"auto"}}/>
+                      <img src={getPassportSrc(selMember,imgUrls)} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} alt={`${selMember.name} passport`} className="max-h-[46vh] max-w-full object-contain" style={{imageRendering:"auto"}}/>
                       <span className="absolute inset-x-0 bottom-0 py-1.5 text-[9px] font-black uppercase tracking-[.25em] text-center text-[#fff] bg-gradient-to-t from-black/80 to-transparent">{tr.profile.passport} · {titleCase(selMember.name)}</span>
                     </button>
                   ):(
@@ -1695,9 +1703,9 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               {activeTab==="PLAYERS"&&(
                 <div className="relative mt-3">
                   <div onClick={()=>passRef.current?.click()} className="flex flex-col items-center gap-2 py-4 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.25)] hover:border-[#f6c744]/60 cursor-pointer bg-[var(--c-deep)] transition-all">
-                    <input type="file" ref={passRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f,1800,0.85);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);fd.append('folder','passports');const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,passportImage:d.url});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,passportImage:r2.result as string});r2.readAsDataURL(f)}}}
+                    <input type="file" ref={passRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f,1800,0.85);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);fd.append('folder','passports');const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.path){setForm({...form,passportImage:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,passportImage:r2.result as string});r2.readAsDataURL(f)}}}
  className="hidden" accept="image/jpeg,image/png"/>
-                    {form.passportImage?<img src={form.passportImage} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="max-h-24 rounded-lg object-contain" alt=""/>:<IdCard size={20} className="text-[var(--c-textDim)]"/>}
+                    {form.passportImage?<img src={getPassportSrc(form,imgUrls)} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="max-h-24 rounded-lg object-contain" alt=""/>:<IdCard size={20} className="text-[var(--c-textDim)]"/>}
                     <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.passportUpload}</span>
                   </div>
                   {form.passportImage&&<button type="button" onClick={e=>{e.stopPropagation();setForm({...form,passportImage:""})}} className="absolute -top-1 -right-1 p-1.5 bg-[#e3062c] text-white rounded-full"><Trash2 size={11}/></button>}
@@ -1800,7 +1808,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
       {passportZoom&&selMember?.passportImage&&(
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90" onClick={()=>setPassportZoom(false)}>
           <button onClick={()=>setPassportZoom(false)} title="Close" className="absolute top-4 right-4 p-2.5 rounded-full bg-white/10 text-white hover:bg-[#e3062c] transition-all"><X size={18}/></button>
-          <img src={selMember.passportImage} alt={`${selMember.name} passport`} className="max-h-[92vh] max-w-[92vw] object-contain rounded-lg shadow-2xl" onClick={e=>e.stopPropagation()}/>
+          <img src={getPassportSrc(selMember,imgUrls)} alt={`${selMember.name} passport`} className="max-h-[92vh] max-w-[92vw] object-contain rounded-lg shadow-2xl" onClick={e=>e.stopPropagation()}/>
           <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[.3em] text-white/70">{tr.profile.passport} · {titleCase(selMember.name)}</p>
         </div>
       )}

@@ -250,7 +250,12 @@ async function main() {
   for (const row of rows) {
     const r = await uploadPassport({ file: row.file, upload_file: row.uploadFile })
     if (r.ok) {
-      row.passport_image = `/api/image?path=${encodeURIComponent(r.target)}`
+      // Store the BARE STORAGE PATH, not an /api/image?path= URL. That route
+      // authenticates with an Authorization header, which an <img> tag cannot
+      // send -- the browser would get a 401 and the passport would never show.
+      // The app resolves a plain path to a signed URL client-side, exactly as
+      // it does for portraits.
+      row.passport_image = r.target
       uploaded++
       console.log(`  ok    ${row.file}  ->  ${r.target}  (${Math.round(r.bytes / 1024)} KB)`)
     } else {
