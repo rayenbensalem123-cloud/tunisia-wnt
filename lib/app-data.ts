@@ -368,8 +368,26 @@ export async function deleteProfile(username: string) {
 // (Each row is inserted/updated/deleted individually so
 //  Postgres RLS enforces per-user permissions on every write.)
 // ─────────────────────────────────────────────
+/**
+ * The roster.
+ *
+ * RLS refuses any anon read of the members table, which is deliberate: the
+ * table holds passport_image. The public squad page therefore reads
+ * squad_public, a view carrying every column a card renders except the
+ * passport. Signed-in staff read the table itself, because they need
+ * passport_image and because a row read from the view has no passport path -
+ * saving that back would blank the document on disk.
+ */
 export async function fetchMembers() {
-  const { data, error } = await supabase.from('members').select('*')
+  const { data: sessionData } = await supabase.auth.getSession()
+  if (sessionData.session) {
+    const { data, error } = await supabase.from('members').select('*')
+    if (!error && (data?.length ?? 0) > 0) return (data ?? []).map(memberFromDb)
+    // Zero rows for a signed-in caller means the account is not approved yet
+    // (status <> 'active'). RLS is doing its job; fall through so the public
+    // roster still renders read-only.
+  }
+  const { data, error } = await supabase.from('squad_public').select('*')
   if (error) { console.error('fetchMembers', error); return [] }
   return (data ?? []).map(memberFromDb)
 }
