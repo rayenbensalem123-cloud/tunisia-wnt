@@ -150,13 +150,59 @@ export async function fetchMyProfile() {
   return data
 }
 
+// Self-registration runs entirely on the signed-in user's own session, so it
+// needs no service-role key. The DB (guard_profile_insert) forces the account
+// to status='pending' with empty permissions regardless of what we send.
 export async function registerUser(payload: { firstName: string; lastName: string; username: string; password: string; role: "staff" | "player" }) {
-  const res = await fetch('/api/register', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+  const username = payload.username.trim().toLowerCase()
+  if (!/^[a-z0-9._-]{3,32}$/.test(username)) {
+    return { error: 'Username: 3-32 chars, letters/digits/._-' }
+  }
+  if (typeof payload.password !== 'string' || payload.password.length < 6) {
+    return { error: 'Password min 6 chars' }
+  }
+
+  const email = `${username}@placeholder.tunisia-wnt.local`
+  const { data, error: signUpErr } = await supabase.auth.signUp({
+    email,
+    password: payload.password,
+    options: { data: { username } },
   })
-  return res.json()
+  if (signUpErr) {
+    if (/already registered|already been registered/i.test(signUpErr.message)) {
+      return { error: 'Username taken' }
+    }
+    return { error: signUpErr.message }
+  }
+
+  // No session means email confirmation is required for signUp.
+  const session = data?.session
+  if (!session) {
+    return { error: 'Account created, but sign-in is blocked until email confirmation is disabled in Supabase → Authentication → Settings. Ask an admin to approve.' }
+  }
+
+  const { error: insertErr } = await supabase.from('profiles').insert({
+    id: session.user.id,
+    username,
+    first_name: payload.firstName.trim(),
+    last_name: payload.lastName.trim(),
+    role: payload.role,
+    status: 'pending',
+    permissions: {
+      addMatch: false, addPlayer: false,
+      editPlayer: false, exportData: false, deleteMatch: false, deletePlayer: false,
+    },
+  })
+  if (insertErr) {
+    if (/duplicate key|already exists/i.test(insertErr.message)) {
+      return { error: 'Username taken' }
+    }
+    return { error: insertErr.message }
+  }
+
+  // Sign out: the account is pending and must not look logged in.
+  await supabase.auth.signOut()
+  return { ok: true, status: 'pending' }
 }
 
 // User changes their own password (works from any device, applies immediately)

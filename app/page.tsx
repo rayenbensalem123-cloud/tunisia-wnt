@@ -142,8 +142,9 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
     const res = await registerUser({ firstName: fn.trim(), lastName: ln.trim(), username: u.trim().toLowerCase(), password: p, role })
     setBusy(false)
     if(res.error){setMsg(res.error);return}
-    setMsg(""); setFn(""); setLn(""); setU(""); setP(""); setRole("")
-    onBack()
+    setFn(""); setLn(""); setU(""); setP(""); setRole("")
+    setMsg("Registered — your account is PENDING until an admin approves it.")
+    setTimeout(()=>{setMsg("");onBack()},2600)
   }
   return(
     <div className={LOGIN_AND_REGISTER_STYLE}>

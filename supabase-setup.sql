@@ -246,11 +246,41 @@ CREATE TRIGGER trg_guard_profile_privileges
 DROP POLICY IF EXISTS "profiles_select_auth" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_admin_all" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_insert_self" ON public.profiles;
 CREATE POLICY "profiles_select_auth" ON public.profiles FOR SELECT USING (auth.role() = 'authenticated');
 -- Own-row updates are allowed, but trg_guard_profile_privileges blocks
 -- any change to role / status / permissions / username for non-admins.
 CREATE POLICY "profiles_update_own" ON public.profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
+-- Self-registration: a signed-in new user may insert ONLY their own row.
+-- trg_guard_profile_insert then forces status='pending' and empty permissions.
+CREATE POLICY "profiles_insert_self" ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 CREATE POLICY "profiles_admin_all" ON public.profiles FOR ALL USING (public.current_active_admin());
+
+-- Self-registration guard: whatever the client sends, a new account is always
+-- pending with no permissions and a non-privileged role.
+CREATE OR REPLACE FUNCTION public.guard_profile_insert()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF public.current_active_admin() THEN
+    RETURN NEW;  -- admins may create accounts in any state
+  END IF;
+  NEW.status      := 'pending';
+  NEW.permissions := '{}'::jsonb;
+  IF NEW.role NOT IN ('staff','player') THEN
+    NEW.role := 'player';
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_guard_profile_insert ON public.profiles;
+CREATE TRIGGER trg_guard_profile_insert
+  BEFORE INSERT ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.guard_profile_insert();
 
 -- PUBLIC READS REMOVED. members/matches are no longer readable with the anon key.
 DROP POLICY IF EXISTS "members_select_anon" ON public.members;
