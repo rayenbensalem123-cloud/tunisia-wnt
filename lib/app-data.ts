@@ -95,6 +95,9 @@ export const memberToDb = (m: any) => ({
   jersey_number: m.jerseyNumber != null ? Number(m.jerseyNumber) : null,
   camps: Array.isArray(m.camps) ? m.camps : [],
   passport_image: m.passportImage || null,
+  // passport_number is deliberately absent. Nothing on a squad page needs the
+  // document number, and sending a column the table may not have turns every
+  // save into a PGRST204.
   bio_quote: m.bioQuote || null,
   league_region: m.leagueRegion || null,
   dual_nationality: !!m.dualNationality,

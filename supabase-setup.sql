@@ -20,8 +20,7 @@ CREATE TABLE IF NOT EXISTS public.profiles (
 -- CREATE TABLE IF NOT EXISTS silently skips an existing table, so an older
 -- profiles table keeps its ORIGINAL role/status CHECK and rejects 'player'
 -- / 'pending'. Rebuild both constraints from the definition above.
--- NOT VALID: existing rows are left alone, only new writes are checked.
-ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_status_check;
+-- NOT VALID: existing rows are left alone, only new writes are checked.ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_status_check;
 ALTER TABLE public.profiles ADD CONSTRAINT profiles_status_check
   CHECK (status IN ('pending','active','suspended')) NOT VALID;
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
@@ -97,11 +96,25 @@ CREATE TABLE IF NOT EXISTS public.members (
   league_region     text,
   dual_nationality  boolean NOT NULL DEFAULT false,
   second_nationality text,
+  jersey_number     integer,
+  camps             jsonb NOT NULL DEFAULT '[]',
+  passport_image    text,
   updated_at        timestamptz NOT NULL DEFAULT now()
 );
 
--- Make sure every column exists even if the table was created earlier with a different shape
+-- Make sure every column exists even if the table was created earlier with a
+-- different shape. CREATE TABLE IF NOT EXISTS skips an existing table entirely,
+-- so this block is what brings an old install up to date. jersey_number,
+-- camps and passport_image were all added out-of-band and were missing here,
+-- which meant a fresh install of this script could not save them.
 ALTER TABLE public.members ADD COLUMN IF NOT EXISTS image_path text;
+ALTER TABLE public.members ADD COLUMN IF NOT EXISTS jersey_number integer;
+ALTER TABLE public.members ADD COLUMN IF NOT EXISTS camps jsonb NOT NULL DEFAULT '[]';
+ALTER TABLE public.members ADD COLUMN IF NOT EXISTS passport_image text;
+-- No passport_number column on purpose. The document number is read off the
+-- scan for validation but never stored: nothing on a squad page needs it, and
+-- an identity document number in a table the whole staff can query is a
+-- liability with no upside.
 ALTER TABLE public.members ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 
 -- ------------------------------------------------------------

@@ -37,3 +37,10 @@ passport*/
 *carte*.jpg
 *carte*.png
 *identity*.jpg
+# OCR tooling cache and the output of an extraction run. Both are derived
+# from identity documents, so neither belongs in the repository.
+__pycache__/
+*.pyc
+extracted.json
+inserted.json
+squad_token.txt
