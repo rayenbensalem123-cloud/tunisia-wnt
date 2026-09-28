@@ -288,7 +288,10 @@ DROP POLICY IF EXISTS "profiles_select_auth" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_admin_all" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_insert_self" ON public.profiles;
-CREATE POLICY "profiles_select_auth" ON public.profiles FOR SELECT USING (auth.role() = 'authenticated');
+-- Only an active admin sees the whole user list. Everyone else sees just
+-- their own row, so a pending account cannot enumerate usernames/roles.
+CREATE POLICY "profiles_select_auth" ON public.profiles
+  FOR SELECT USING (auth.uid() = id OR public.current_active_admin());
 -- Own-row updates are allowed, but trg_guard_profile_privileges blocks
 -- any change to role / status / permissions / username for non-admins.
 CREATE POLICY "profiles_update_own" ON public.profiles FOR UPDATE USING (auth.uid() = id) WITH CHECK (auth.uid() = id);
