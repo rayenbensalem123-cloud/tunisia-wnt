@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase-admin'
+import { userClient, bearerToken } from '@/lib/api-auth'
 
 export const dynamic = 'force-dynamic'
 
@@ -9,8 +9,8 @@ export const dynamic = 'force-dynamic'
 const BLOB_HOSTS = ['blob.vercel-storage.com', '.public.blob.vercel-storage.com']
 const BLOB_PATH_RE = /^\/store\/[\w-]+\/[^/]+/
 
-// Short-lived in-memory cache so a squad of 20 players doesn't trigger
-// 20 signing round-trips on every render.
+// Signed URLs are minted for a specific caller, so the cache is keyed by
+// user id as well - never hand one user's signed URL to another.
 const CACHE_TTL_MS = 10 * 60 * 1000
 const signedCache = new Map<string, { url: string; at: number }>()
 
@@ -56,17 +56,27 @@ export async function GET(req: Request) {
   // ── Supabase storage objects: the bucket is private, so sign a short-lived URL ──
   if (!safeKey(path)) return NextResponse.json({ error: 'Bad path' }, { status: 400 })
 
-  const hit = signedCache.get(path)
+  // Signing happens as the caller, so the storage RLS policy
+  // (current_active_user) is what authorises reading this object.
+  const token = bearerToken(req)
+  if (!token) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+  const asCaller = userClient(token)
+  const { data: userData, error: userErr } = await asCaller.auth.getUser(token)
+  if (userErr || !userData?.user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+  const cacheKey = `${userData.user.id}:${path}`
+
+  const hit = signedCache.get(cacheKey)
   if (hit && Date.now() - hit.at < CACHE_TTL_MS) {
     return NextResponse.redirect(hit.url)
   }
 
   const EXPIRES = 60 * 60 // 1 hour
-  const { data, error } = await supabaseAdmin.storage.from('members').createSignedUrl(path, EXPIRES)
+  const { data, error } = await asCaller.storage.from('members').createSignedUrl(path, EXPIRES)
   if (error || !data?.signedUrl) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 })
   }
 
-  signedCache.set(path, { url: data.signedUrl, at: Date.now() })
+  signedCache.set(cacheKey, { url: data.signedUrl, at: Date.now() })
   return NextResponse.redirect(data.signedUrl)
 }

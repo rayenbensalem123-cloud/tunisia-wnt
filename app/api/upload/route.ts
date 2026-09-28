@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabaseAdmin } from '@/lib/supabase-admin'
-import { requireActiveUser, safeError } from '@/lib/api-auth'
+import { requireActiveUser, safeError, userClient } from '@/lib/api-auth'
 
 const MAX_BYTES = 5 * 1024 * 1024 // 5 MB
 const ALLOWED_FOLDERS = ['passports', 'images', 'camps', 'camps-reports', 'camps-photos']
@@ -57,7 +56,9 @@ export async function POST(req: Request) {
     const safeName = (file.name || 'upload').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-60)
     const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`
 
-    const { error } = await supabaseAdmin.storage.from('members').upload(path, file, {
+    // Uploaded as the CALLER, so the storage RLS policy
+    // (has_permission('addPlayer')) is what actually authorises this write.
+    const { error } = await userClient(auth.token).storage.from('members').upload(path, file, {
       contentType: type,
       upsert: false,
     })
@@ -66,8 +67,8 @@ export async function POST(req: Request) {
     }
 
     // The bucket is private (passport data must never be public). Store a
-    // stable path in the database and let /api/image mint short-lived signed
-    // URLs on demand — never persist an expiring signed URL.
+    // stable path in the database and mint short-lived signed URLs on demand
+    // - never persist an expiring signed URL.
     return NextResponse.json({ url: `/api/image?path=${encodeURIComponent(path)}`, path })
   } catch (e) {
     return NextResponse.json({ error: safeError(e) }, { status: 500 })

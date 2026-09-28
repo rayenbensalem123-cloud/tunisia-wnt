@@ -180,7 +180,8 @@ BEGIN
     'injuries_all_auth','injuries_select_active','injuries_write',
     'squad_templates_all_auth','squad_templates_select_active','squad_templates_write',
     'activity_log_all_auth','activity_log_select_active','activity_log_insert',
-    'members_objects_public_read','members_storage_read','members_storage_write'
+    'members_objects_public_read','members_storage_read','members_storage_write',
+    'members_storage_insert','members_storage_update','members_storage_delete'
   ] LOOP
     FOREACH t IN ARRAY ARRAY['profiles','members','matches','injuries',
                               'squad_templates','activity_log'] LOOP
@@ -188,7 +189,8 @@ BEGIN
     END LOOP;
   END LOOP;
   -- storage policies live on storage.objects
-  FOREACH p IN ARRAY ARRAY['members_objects_public_read','members_storage_read','members_storage_write'] LOOP
+  FOREACH p IN ARRAY ARRAY['members_objects_public_read','members_storage_read','members_storage_write',
+                            'members_storage_insert','members_storage_update','members_storage_delete'] LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON storage.objects', p);
   END LOOP;
 END $drop_policies$;
@@ -373,15 +375,30 @@ UPDATE storage.buckets SET public = false WHERE id = 'members';
 DROP POLICY IF EXISTS "members_objects_public_read" ON storage.objects;
 DROP POLICY IF EXISTS "members_storage_read" ON storage.objects;
 DROP POLICY IF EXISTS "members_storage_write" ON storage.objects;
+DROP POLICY IF EXISTS "members_storage_insert" ON storage.objects;
+DROP POLICY IF EXISTS "members_storage_update" ON storage.objects;
+DROP POLICY IF EXISTS "members_storage_delete" ON storage.objects;
+-- Read: any active user (the portal has to display the squad).
 CREATE POLICY "members_storage_read" ON storage.objects
   FOR SELECT USING (
     bucket_id = 'members' AND public.current_active_user()
   );
-CREATE POLICY "members_storage_write" ON storage.objects
-  FOR ALL USING (
+-- Write operations are split per flag. A single FOR ALL policy would let a
+-- user holding only "Add Player" overwrite or delete other people's photos
+-- and passports.
+CREATE POLICY "members_storage_insert" ON storage.objects
+  FOR INSERT WITH CHECK (
     bucket_id = 'members' AND public.has_permission('addPlayer')
+  );
+CREATE POLICY "members_storage_update" ON storage.objects
+  FOR UPDATE USING (
+    bucket_id = 'members' AND public.has_permission('editPlayer')
   ) WITH CHECK (
-    bucket_id = 'members' AND public.has_permission('addPlayer')
+    bucket_id = 'members' AND public.has_permission('editPlayer')
+  );
+CREATE POLICY "members_storage_delete" ON storage.objects
+  FOR DELETE USING (
+    bucket_id = 'members' AND public.has_permission('deletePlayer')
   );
 
 -- ------------------------------------------------------------

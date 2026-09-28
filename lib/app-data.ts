@@ -1,6 +1,39 @@
 import { supabase } from './supabase'
 
 // ─────────────────────────────────────────────
+// PRIVATE STORAGE
+// The 'members' bucket is private, so an <img src> can never point straight
+// at it. Instead we mint a short-lived signed URL with the signed-in user's
+// own session: the storage RLS policy (current_active_user) decides whether
+// they may read the object at all, and no service-role key is involved.
+// ─────────────────────────────────────────────
+const SIGN_TTL_MS = 50 * 60 * 1000 // refresh well before the 1h expiry
+const signedCache = new Map<string, { url: string; at: number }>()
+
+export async function signedImageUrl(path: string): Promise<string> {
+  if (!path) return ''
+  const hit = signedCache.get(path)
+  if (hit && Date.now() - hit.at < SIGN_TTL_MS) return hit.url
+  const { data, error } = await supabase.storage.from('members').createSignedUrl(path, 3600)
+  if (error || !data?.signedUrl) return ''
+  signedCache.set(path, { url: data.signedUrl, at: Date.now() })
+  return data.signedUrl
+}
+
+/** Resolve many storage paths at once, skipping ones already cached. */
+export async function signedImageUrls(paths: string[]): Promise<Record<string, string>> {
+  const wanted = Array.from(new Set(paths.filter(Boolean)))
+  const out: Record<string, string> = {}
+  await Promise.all(
+    wanted.map(async (p) => {
+      const u = await signedImageUrl(p)
+      if (u) out[p] = u
+    }),
+  )
+  return out
+}
+
+// ─────────────────────────────────────────────
 // FIELD MAPPING: DB (snake_case) <-> App (camelCase)
 // ─────────────────────────────────────────────
 export const memberFromDb = (r: any) => ({

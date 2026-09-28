@@ -24,7 +24,7 @@ import {
   fetchMembers, fetchMatches, syncMembers, syncMatches, fetchCamps, syncCamps,
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
   fetchInjuries, addInjury, updateInjuryStatus,
-  fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate
+  fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
 
@@ -49,10 +49,17 @@ const YELLOW_SUSPENSION = 2
 const REAL_TUNISIA_SENIORS: any[] = []
 
 const titleCase=(s:string)=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())
-// Storage objects are served through /api/image, which signs a short-lived URL
-// server-side (the bucket is private). Never build a public storage URL here.
-const storageSrc=(p:string)=>`/api/image?path=${encodeURIComponent(p)}`
-const getImageSrc=(m:any)=>{if(m?.imagePath)return storageSrc(String(m.imagePath));const i=String(m?.image||m?.image_url||"").trim();if(!i)return "";if(i.startsWith("data:image/svg+xml"))return "";return i}
+// API routes run under the caller's own session, so every call carries the JWT.
+// The database then decides what this user may actually do.
+const authHeaders=async():Promise<Record<string,string>>=>{
+  const {data}=await supabase.auth.getSession()
+  const t=data.session?.access_token
+  return t?{Authorization:`Bearer ${t}`}:{}
+}
+// Storage objects live in a private bucket, so `imgUrls` holds short-lived
+// signed URLs minted with the signed-in user's own session (see signedImageUrls).
+// Never build a public storage URL here.
+const getImageSrc=(m:any,imgUrls?:Record<string,string>)=>{if(m?.imagePath)return imgUrls?.[String(m.imagePath)]||"";const i=String(m?.image||m?.image_url||"").trim();if(!i)return "";if(i.startsWith("data:image/svg+xml"))return "";return i}
 const compressImage=async(file:File,maxDim=1200,quality=0.82):Promise<Blob>=>{
   const img=await new Promise<HTMLImageElement>((res,rej)=>{const o=new Image();o.onload=()=>res(o);o.onerror=rej;o.src=URL.createObjectURL(file)})
   let w=img.width,h=img.height
@@ -578,6 +585,8 @@ export default function EliteSquadApp() {
   const [leaving,setLeaving]=useState(false)
   const beginFadeIn=()=>{setLeaving(true);setTimeout(()=>setLeaving(false),800)}
   const [members,setMembers]=useState<any[]>([])
+  // Short-lived signed URLs for the private storage bucket, keyed by path.
+  const [imgUrls,setImgUrls]=useState<Record<string,string>>({})
   const [matches,setMatches]=useState<any[]>([])
   const [camps,setCamps]=useState<any[]>([])
   const membersSnapshot=useRef<Map<any,any>>(new Map())
@@ -660,6 +669,18 @@ export default function EliteSquadApp() {
   const [matchForm,setMatchForm]=useState<any>(initMatch)
 
   const [loaded,setLoaded]=useState(false)
+
+  // Private-bucket images: mint short-lived signed URLs with the signed-in
+  // user's own session. An <img> tag cannot send an Authorization header, so
+  // the URL is resolved here and handed to the plain <img src>.
+  useEffect(()=>{
+    if(!user)return
+    const paths=[...members.map(m=>m?.imagePath),form?.imagePath].filter(Boolean).map(String)
+    if(paths.length===0)return
+    let alive=true
+    signedImageUrls(paths).then(next=>{if(alive)setImgUrls(prev=>({...prev,...next}))})
+    return ()=>{alive=false}
+  },[user,members,form?.imagePath])
 
   const reloadMembers=async()=>{
     const data=await fetchMembers()
@@ -1226,7 +1247,7 @@ export default function EliteSquadApp() {
                 age={calculateAge(m.birthdate)}
                 caps={m.role==="PLAYERS"?Number(m.natMatches)||0:undefined}
                 goals={m.role==="PLAYERS"?Number(m.goals)||0:undefined}
-                imageSrc={getImageSrc(m)}
+                imageSrc={getImageSrc(m,imgUrls)}
                 fullPosition={m.role!=="PLAYERS"}
                 n={n}
                 nationality={m.nationality}
@@ -1272,7 +1293,7 @@ export default function EliteSquadApp() {
               <div className="pm-head">
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className="relative w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-deep)]">
-                    {getImageSrc(selMember)?<img src={getImageSrc(selMember)} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} className="w-full h-full object-cover object-top" alt=""/>:<div className="w-full h-full flex items-center justify-center text-lg font-black text-[#e3062c]/40">{mcode}</div>}
+                    {getImageSrc(selMember,imgUrls)?<img src={getImageSrc(selMember,imgUrls)} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} className="w-full h-full object-cover object-top" alt=""/>:<div className="w-full h-full flex items-center justify-center text-lg font-black text-[#e3062c]/40">{mcode}</div>}
                     <div className="absolute inset-x-0 bottom-0 h-[3px] bg-[#e3062c]" />
                   </div>
                   <div className="min-w-0">
@@ -1664,9 +1685,9 @@ export default function EliteSquadApp() {
             <form onSubmit={saveForm} className="pm-body">
               <div className="relative">
                 <div onClick={()=>fileRef.current?.click()} className="flex flex-col items-center gap-2 py-5 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.25)] hover:border-[#e3062c]/60 cursor-pointer bg-[var(--c-deep)] transition-all">
-                  <input type="file" ref={fileRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);const r=await fetch('/api/upload',{method:'POST',body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,image:d.url,imagePath:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,image:r2.result as string});r2.readAsDataURL(f)}}}
+                  <input type="file" ref={fileRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,image:d.url,imagePath:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,image:r2.result as string});r2.readAsDataURL(f)}}}
 className="hidden" accept="image/jpeg,image/png,image/gif"/>
-                  {form.image?<img src={form.imagePath?storageSrc(String(form.imagePath)):form.image} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="w-14 h-14 rounded-lg object-cover" alt=""/>:<Camera size={20} className="text-[var(--c-textDim)]"/>}
+                  {form.image?<img src={form.imagePath?(imgUrls[String(form.imagePath)]||form.image):form.image} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="w-14 h-14 rounded-lg object-cover" alt=""/>:<Camera size={20} className="text-[var(--c-textDim)]"/>}
                   <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.portraitUpload}</span>
                 </div>
                 {form.image&&<button type="button" onClick={e=>{e.stopPropagation();setForm({...form,image:""})}} className="absolute -top-1 -right-1 p-1.5 bg-[#e3062c] text-white rounded-full"><Trash2 size={11}/></button>}
@@ -1674,7 +1695,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               {activeTab==="PLAYERS"&&(
                 <div className="relative mt-3">
                   <div onClick={()=>passRef.current?.click()} className="flex flex-col items-center gap-2 py-4 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.25)] hover:border-[#f6c744]/60 cursor-pointer bg-[var(--c-deep)] transition-all">
-                    <input type="file" ref={passRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f,1800,0.85);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);fd.append('folder','passports');const r=await fetch('/api/upload',{method:'POST',body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,passportImage:d.url});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,passportImage:r2.result as string});r2.readAsDataURL(f)}}}
+                    <input type="file" ref={passRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f,1800,0.85);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);fd.append('folder','passports');const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,passportImage:d.url});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,passportImage:r2.result as string});r2.readAsDataURL(f)}}}
  className="hidden" accept="image/jpeg,image/png"/>
                     {form.passportImage?<img src={form.passportImage} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="max-h-24 rounded-lg object-contain" alt=""/>:<IdCard size={20} className="text-[var(--c-textDim)]"/>}
                     <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.passportUpload}</span>
