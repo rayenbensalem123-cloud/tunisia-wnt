@@ -329,6 +329,20 @@ async function diffSync(
     if (!nextMap.has(id)) deletes.push(id)
   }
 
+  // SAFETY: never let a failed/empty read wipe the table.
+  // An empty (or suspiciously huge) diff means the read didn't return real
+  // data — deleting on that basis destroyed the whole squad once already.
+  if (deletes.length > 0 && prevMap.size > 0) {
+    const wipeAll = nextList.length === 0
+    const wipeMost = deletes.length / prevMap.size > 0.5
+    if (wipeAll || wipeMost) {
+      console.warn(
+        `[sync] ${table}: refusing to delete ${deletes.length}/${prevMap.size} rows — read looks incomplete`
+      )
+      deletes.length = 0
+    }
+  }
+
   const results: any[] = []
   if (inserts.length) {
     const rows = inserts.map((r) => { const { id, ...rest } = r; return rest })
