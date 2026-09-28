@@ -153,9 +153,66 @@ VALUES ('members', 'members', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
 
 -- ------------------------------------------------------------
+-- RLS helper functions (must exist before the policies that use them)
+-- ------------------------------------------------------------
+-- helper used by admin policies (SECURITY DEFINER => no recursion in RLS)
+CREATE OR REPLACE FUNCTION public.current_active_admin()
+RETURNS boolean
+LANGUAGE sql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT coalesce((SELECT role FROM profiles WHERE id = auth.uid()),'') = 'admin'
+     AND coalesce((SELECT status FROM profiles WHERE id = auth.uid()),'') = 'active';
+$$;
+
+-- Helper: does the caller hold a permission flag?
+CREATE OR REPLACE FUNCTION public.has_permission(perm text)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT coalesce((
+    SELECT (role = 'admin')
+       OR coalesce(permissions ->> perm, 'false') = 'true'
+    FROM profiles
+    WHERE id = auth.uid() AND status = 'active'
+  ), false);
+$$;
+
+-- Helper: is the caller an active user (not pending/suspended)?
+CREATE OR REPLACE FUNCTION public.current_active_user()
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT coalesce((
+    SELECT status = 'active' FROM profiles WHERE id = auth.uid()
+  ), false);
+$$;
+
+-- ------------------------------------------------------------
+-- ROW LEVEL SECURITY
+-- ------------------------------------------------------------
+ALTER TABLE public.profiles        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.login_emails    ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.members         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.matches         ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.injuries        ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.squad_templates ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.activity_log    ENABLE ROW LEVEL SECURITY;
+
+-- Helper: am I an active admin?
+-- login_emails: NO policies (reached only via the definer RPC)
+
+-- ------------------------------------------------------------
 -- SECURITY: block privilege escalation
 -- A user may edit their own profile, but never role/status/permissions.
--- Those three columns are admin-only, enforced in the database (not just UI).
+-- Those columns are admin-only, enforced in the database (not just the UI).
 -- ------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.guard_profile_privileges()
 RETURNS trigger
@@ -185,60 +242,6 @@ DROP TRIGGER IF EXISTS trg_guard_profile_privileges ON public.profiles;
 CREATE TRIGGER trg_guard_profile_privileges
   BEFORE UPDATE ON public.profiles
   FOR EACH ROW EXECUTE FUNCTION public.guard_profile_privileges();
-
--- Helper: does the caller hold a permission flag?
-CREATE OR REPLACE FUNCTION public.has_permission(perm text)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT coalesce((
-    SELECT (role = 'admin')
-       OR coalesce(permissions ->> perm, 'false') = 'true'
-    FROM profiles
-    WHERE id = auth.uid() AND status = 'active'
-  ), false);
-$$;
-
--- Helper: is the caller an active, authenticated, non-pending user?
-CREATE OR REPLACE FUNCTION public.current_active_user()
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT coalesce((
-    SELECT status = 'active' FROM profiles WHERE id = auth.uid()
-  ), false);
-$$;
-
--- ------------------------------------------------------------
--- ROW LEVEL SECURITY
--- ------------------------------------------------------------
-ALTER TABLE public.profiles        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.login_emails    ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.members         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.matches         ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.injuries        ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.squad_templates ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.activity_log    ENABLE ROW LEVEL SECURITY;
-
--- Helper: am I an active admin?
--- login_emails: NO policies (reached only via the definer RPC)
-
--- helper used by admin policies (SECURITY DEFINER => no recursion in RLS)
-CREATE OR REPLACE FUNCTION public.current_active_admin()
-RETURNS boolean
-LANGUAGE sql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-  SELECT coalesce((SELECT role FROM profiles WHERE id = auth.uid()),'') = 'admin'
-     AND coalesce((SELECT status FROM profiles WHERE id = auth.uid()),'') = 'active';
-$$;
 
 DROP POLICY IF EXISTS "profiles_select_auth" ON public.profiles;
 DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
@@ -307,45 +310,53 @@ CREATE POLICY "members_storage_write" ON storage.objects
 
 -- ------------------------------------------------------------
 -- SEED: demo squad + matches so the portal is instantly usable.
--- Delete or edit these rows from the app once you add real data.
+-- Idempotent: only seeds when the table is empty, so re-running this script
+-- (e.g. after applying security fixes) never duplicates real data.
 -- ------------------------------------------------------------
-INSERT INTO public.members (role,name,position,team_category,club,foot,nationality,languages,birthdate,height,goals,assists,clean_sheets,yellow_cards,red_cards,suspended,contract,nat_matches,history)
-SELECT
-  'PLAYERS',
-  (ARRAY['Sabrine Elloumi','Amani Jlassi','Salima Trabelsi','Nadia Hamdi','Imen Ben Salem','Yasmine Mami','Wissem Bellagha','Fatma Laaroussi','Chaima Boukraa','Mariem Khlifi','Asma Ben Yahia','Sana Cherif','Rim Ben Ayed','Houda Barhoumi','Nour Hachicha','Marwa Dridi','Syrine Bouteraa','Salma Mabrouk'])[i+1],
-  (ARRAY['FORWARD','FORWARD','MIDFIELDER','MIDFIELDER','DEFENDER','DEFENDER','GOALKEEPER'])[i%7+1],
-  (ARRAY['SENIORS','U20','U17'])[i%3+1],
-  (ARRAY['FC Nabeul','ASF Sousse','Club Africain','Cotif Sfax'])[i%4+1],
-  (ARRAY['R','L','R'])[i%3+1],
-  'Tunisia',
-  '["ARABIC","FRENCH"]'::jsonb,
-  (15 + i%10)::text || '/0' || (1 + i%3)::text || '/1998',
-  163 + (i*2)%8,
-  (10 - i%8)::text,
-  (5 - i%4)::text,
-  0,
-  CASE WHEN i%3=0 THEN 1 ELSE 0 END,
-  0,
-  false,
-  '2027',
-  (30 - i%10)::text,
-  '[]'::jsonb
-FROM generate_series(0,17) AS i;
+DO $seed$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM public.members) THEN
+    INSERT INTO public.members (role,name,position,team_category,club,foot,nationality,languages,birthdate,height,goals,assists,clean_sheets,yellow_cards,red_cards,suspended,contract,nat_matches,history)
+    SELECT
+      'PLAYERS',
+      (ARRAY['Sabrine Elloumi','Amani Jlassi','Salima Trabelsi','Nadia Hamdi','Imen Ben Salem','Yasmine Mami','Wissem Bellagha','Fatma Laaroussi','Chaima Boukraa','Mariem Khlifi','Asma Ben Yahia','Sana Cherif','Rim Ben Ayed','Houda Barhoumi','Nour Hachicha','Marwa Dridi','Syrine Bouteraa','Salma Mabrouk'])[i+1],
+      (ARRAY['FORWARD','FORWARD','MIDFIELDER','MIDFIELDER','DEFENDER','DEFENDER','GOALKEEPER'])[i%7+1],
+      (ARRAY['SENIORS','U20','U17'])[i%3+1],
+      (ARRAY['FC Nabeul','ASF Sousse','Club Africain','Cotif Sfax'])[i%4+1],
+      (ARRAY['R','L','R'])[i%3+1],
+      'Tunisia',
+      '["ARABIC","FRENCH"]'::jsonb,
+      (15 + i%10)::text || '/0' || (1 + i%3)::text || '/1998',
+      163 + (i*2)%8,
+      (10 - i%8)::text,
+      (5 - i%4)::text,
+      0,
+      CASE WHEN i%3=0 THEN 1 ELSE 0 END,
+      0,
+      false,
+      '2027',
+      (30 - i%10)::text,
+      '[]'::jsonb
+    FROM generate_series(0,17) AS i;
 
-INSERT INTO public.members (role,name,position,team_category,club,foot,nationality,languages,birthdate,height,goals,assists,clean_sheets,yellow_cards,red_cards,suspended,contract,nat_matches,history)
-VALUES
-  ('COACHES','Hedi Baccar','HEAD COACH','SENIORS','','R','Tunisia','[]'::jsonb,'05/03/1980',0,'0','0',0,0,0,false,'2027','0','[]'::jsonb),
-  ('COACHES','Karim Zouaghi','ASSISTANT COACH','SENIORS','','R','Tunisia','[]'::jsonb,'05/03/1980',0,'0','0',0,0,0,false,'2027','0','[]'::jsonb),
-  ('COACHES','Leila Mejri','GOALKEEPER COACH','SENIORS','','R','Tunisia','[]'::jsonb,'05/03/1980',0,'0','0',0,0,0,false,'2027','0','[]'::jsonb),
-  ('COACHES','Sofien Grira','FITNESS COACH','SENIORS','','R','Tunisia','[]'::jsonb,'05/03/1980',0,'0','0',0,0,0,false,'2027','0','[]'::jsonb),
-  ('COACHES','Ines Ayari','MEDICAL STAFF','SENIORS','','R','Tunisia','[]'::jsonb,'05/03/1980',0,'0','0',0,0,0,false,'2027','0','[]'::jsonb);
+    INSERT INTO public.members (role,name,position,team_category,club,foot,nationality,languages,birthdate,height,goals,assists,clean_sheets,yellow_cards,red_cards,suspended,contract,nat_matches,history)
+    VALUES
+      ('COACHES','Hedi Baccar','HEAD COACH','SENIORS','','R','Tunisia','[]'::jsonb,'05/03/1980',0,'0','0',0,0,0,false,'2027','0','[]'::jsonb),
+      ('COACHES','Karim Zouaghi','ASSISTANT COACH','SENIORS','','R','Tunisia','[]'::jsonb,'05/03/1980',0,'0','0',0,0,0,false,'2027','0','[]'::jsonb),
+      ('COACHES','Leila Mejri','GOALKEEPER COACH','SENIORS','','R','Tunisia','[]'::jsonb,'05/03/1980',0,'0','0',0,0,0,false,'2027','0','[]'::jsonb),
+      ('COACHES','Sofien Grira','FITNESS COACH','SENIORS','','R','Tunisia','[]'::jsonb,'05/03/1980',0,'0','0',0,0,0,false,'2027','0','[]'::jsonb),
+      ('COACHES','Ines Ayari','MEDICAL STAFF','SENIORS','','R','Tunisia','[]'::jsonb,'05/03/1980',0,'0','0',0,0,0,false,'2027','0','[]'::jsonb);
+  END IF;
 
-INSERT INTO public.matches (opponent,match_date,competition,category,details)
-VALUES
-  ('ALGERIA','2026-03-04','WAFCON Qualifier','SENIORS','{"result":"2-1","venue":"Stade de Rades"}'::jsonb),
-  ('MOROCCO','2026-05-22','WAFCON Qualifier','SENIORS','{"result":"0-0","venue":"Stade de Rades"}'::jsonb),
-  ('EGYPT','2026-01-18','Friendly','U20','{"result":"3-2","venue":"Stade Olympique"}'::jsonb),
-  ('SENEGAL','2026-08-10','Friendly','SENIORS','{"result":"1-0","venue":"Abeche"}'::jsonb);
+  IF NOT EXISTS (SELECT 1 FROM public.matches) THEN
+    INSERT INTO public.matches (opponent,match_date,competition,category,details)
+    VALUES
+      ('ALGERIA','2026-03-04','WAFCON Qualifier','SENIORS','{"result":"2-1","venue":"Stade de Rades"}'::jsonb),
+      ('MOROCCO','2026-05-22','WAFCON Qualifier','SENIORS','{"result":"0-0","venue":"Stade de Rades"}'::jsonb),
+      ('EGYPT','2026-01-18','Friendly','U20','{"result":"3-2","venue":"Stade Olympique"}'::jsonb),
+      ('SENEGAL','2026-08-10','Friendly','SENIORS','{"result":"1-0","venue":"Abeche"}'::jsonb);
+  END IF;
+END $seed$;
 
 -- ------------------------------------------------------------
 -- AFTER THIS:  register one account in the portal (REGISTER button),
