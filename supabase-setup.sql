@@ -312,10 +312,12 @@ CREATE POLICY "matches_delete" ON public.matches
 DROP POLICY IF EXISTS "injuries_all_auth" ON public.injuries;
 DROP POLICY IF EXISTS "squad_templates_all_auth" ON public.squad_templates;
 DROP POLICY IF EXISTS "activity_log_all_auth" ON public.activity_log;
-CREATE POLICY "injuries_select_active"        ON public.injuries        FOR SELECT USING (public.current_active_user());
-CREATE POLICY "injuries_write"                ON public.injuries        FOR ALL USING (public.has_permission('editPlayer')) WITH CHECK (public.has_permission('editPlayer'));
-CREATE POLICY "squad_templates_select_active" ON public.squad_templates FOR SELECT USING (public.current_active_user());
-CREATE POLICY "squad_templates_write"         ON public.squad_templates FOR ALL USING (public.has_permission('editPlayer')) WITH CHECK (public.has_permission('editPlayer'));
+-- Each flag below maps 1:1 to a chip in the app's User Management panel.
+-- Admins pass every has_permission() check automatically.
+CREATE POLICY "injuries_select_active"        ON public.injuries        FOR SELECT USING (public.has_permission('viewMedical'));
+CREATE POLICY "injuries_write"                ON public.injuries        FOR ALL USING (public.has_permission('editMedical')) WITH CHECK (public.has_permission('editMedical'));
+CREATE POLICY "squad_templates_select_active" ON public.squad_templates FOR SELECT USING (public.has_permission('addCamps'));
+CREATE POLICY "squad_templates_write"         ON public.squad_templates FOR ALL USING (public.has_permission('addCamps')) WITH CHECK (public.has_permission('addCamps'));
 CREATE POLICY "activity_log_select_active"    ON public.activity_log    FOR SELECT USING (public.current_active_user());
 CREATE POLICY "activity_log_insert"           ON public.activity_log    FOR INSERT WITH CHECK (public.current_active_user());
 
