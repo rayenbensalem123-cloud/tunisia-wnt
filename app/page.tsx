@@ -9,6 +9,7 @@ import {
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
+import { PasswordModal, type PasswordTarget } from "@/components/password-modal"
 import { ExportTools } from "@/components/export-tools"
 import { PlayerCard } from "@/components/player-card"
 import { CountryFlag } from "@/components/country-flag"
@@ -48,7 +49,10 @@ const YELLOW_SUSPENSION = 2
 const REAL_TUNISIA_SENIORS: any[] = []
 
 const titleCase=(s:string)=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())
-const getImageSrc=(m:any)=>{if(m?.imagePath)return `https://vtjdmuzeohtqxwknfmhw.supabase.co/storage/v1/object/public/members/${m.imagePath}`;const i=String(m?.image||m?.image_url||"").trim();if(!i)return "";if(i.startsWith("data:image/svg+xml"))return "";return i}
+// Storage objects are served through /api/image, which signs a short-lived URL
+// server-side (the bucket is private). Never build a public storage URL here.
+const storageSrc=(p:string)=>`/api/image?path=${encodeURIComponent(p)}`
+const getImageSrc=(m:any)=>{if(m?.imagePath)return storageSrc(String(m.imagePath));const i=String(m?.image||m?.image_url||"").trim();if(!i)return "";if(i.startsWith("data:image/svg+xml"))return "";return i}
 const compressImage=async(file:File,maxDim=1200,quality=0.82):Promise<Blob>=>{
   const img=await new Promise<HTMLImageElement>((res,rej)=>{const o=new Image();o.onload=()=>res(o);o.onerror=rej;o.src=URL.createObjectURL(file)})
   let w=img.width,h=img.height
@@ -579,24 +583,14 @@ export default function EliteSquadApp() {
   const matchesSnapshot=useRef<Map<any,any>>(new Map())
   const campsSnapshot=useRef<Map<any,any>>(new Map())
   const applyingRemote=useRef(false)
-  const [pwTarget,setPwTarget]=useState<{mode:'self'|'admin';username?:string}|null>(null)
-  const [pwVal,setPwVal]=useState("")
-  const [pwVal2,setPwVal2]=useState("")
-  const [pwErr,setPwErr]=useState("")
-  const [pwBusy,setPwBusy]=useState(false)
-  const openPw=(mode:'self'|'admin',username?:string)=>{setPwTarget({mode,username});setPwVal("");setPwVal2("");setPwErr("");setPwBusy(false)}
-  const closePw=()=>{setPwTarget(null);setPwErr("")}
-  const submitPw=async()=>{
-    if(!pwTarget)return
-    if(pwVal.length<6){setPwErr("Password must be at least 6 characters");return}
-    if(pwVal.length>200){setPwErr("Password is too long");return}
-    if(pwVal!==pwVal2){setPwErr("Passwords don't match");return}
-    setPwBusy(true)
-    const {error}=pwTarget.mode==="self"?await changeMyPassword(pwVal):await adminResetPassword(pwTarget.username!,pwVal)
-    setPwBusy(false)
-    if(error){setPwErr(error);return}
-    setPwTarget(null)
-    setPwVal("");setPwVal2("")
+  const [pwTarget,setPwTarget]=useState<PasswordTarget>(null)
+  const openPw=(mode:'self'|'admin',username?:string)=>setPwTarget({mode,username})
+  const closePw=()=>setPwTarget(null)
+  const submitPw=async(pw:string)=>{
+    const mode=pwTarget?.mode
+    const uname=pwTarget?.username
+    const {error}=mode==="self"?await changeMyPassword(pw):await adminResetPassword(uname!,pw)
+    return error?String(error):null
   }
   const handleChangePassword=()=>openPw('self')
   const loadMyUser=async()=>{
@@ -1671,7 +1665,7 @@ export default function EliteSquadApp() {
                 <div onClick={()=>fileRef.current?.click()} className="flex flex-col items-center gap-2 py-5 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.25)] hover:border-[#e3062c]/60 cursor-pointer bg-[var(--c-deep)] transition-all">
                   <input type="file" ref={fileRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);const r=await fetch('/api/upload',{method:'POST',body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,image:d.url,imagePath:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,image:r2.result as string});r2.readAsDataURL(f)}}}
 className="hidden" accept="image/jpeg,image/png,image/gif"/>
-                  {form.image?<img src={form.imagePath?`https://vtjdmuzeohtqxwknfmhw.supabase.co/storage/v1/object/public/members/${form.imagePath}`:form.image} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="w-14 h-14 rounded-lg object-cover" alt=""/>:<Camera size={20} className="text-[var(--c-textDim)]"/>}
+                  {form.image?<img src={form.imagePath?storageSrc(String(form.imagePath)):form.image} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="w-14 h-14 rounded-lg object-cover" alt=""/>:<Camera size={20} className="text-[var(--c-textDim)]"/>}
                   <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.portraitUpload}</span>
                 </div>
                 {form.image&&<button type="button" onClick={e=>{e.stopPropagation();setForm({...form,image:""})}} className="absolute -top-1 -right-1 p-1.5 bg-[#e3062c] text-white rounded-full"><Trash2 size={11}/></button>}
@@ -2635,33 +2629,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
       {/* ═══════════════════════════════════════════
           MATCH HISTORY MODAL
       ═══════════════════════════════════════════ */}
-      {pwTarget&&(
-        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80" onClick={closePw}>
-          <div className="w-full max-w-sm rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-cream2)] text-[var(--c-text)] shadow-2xl" onClick={e=>e.stopPropagation()}>
-            <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(var(--line-rgb),.12)]">
-              <h2 className="text-sm font-black uppercase tracking-tight">{pwTarget.mode==="self"?"Change password":`Reset password — ${pwTarget.username}`}</h2>
-              <button onClick={closePw} title="Close" className="pm-close"><X size={15}/></button>
-            </div>
-            <form onSubmit={e=>{e.preventDefault();submitPw()}} className="p-5 space-y-3">
-              <div>
-                <label className="block text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] mb-1.5">New password (min 6 chars)</label>
-                <input type="password" autoComplete="new-password" value={pwVal} onChange={e=>setPwVal(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.18)] bg-[var(--c-surface)] text-[var(--c-text)] text-xs font-bold outline-none focus:border-[#E30613]/50" autoFocus/>
-              </div>
-              <div>
-                <label className="block text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] mb-1.5">Confirm password</label>
-                <input type="password" autoComplete="new-password" value={pwVal2} onChange={e=>setPwVal2(e.target.value)}
-                  className="w-full px-3 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.18)] bg-[var(--c-surface)] text-[var(--c-text)] text-xs font-bold outline-none focus:border-[#E30613]/50"/>
-              </div>
-              {pwErr&&<p className="text-[8px] font-black uppercase tracking-wider text-[#ff4f66]">{pwErr}</p>}
-              <div className="flex gap-2 pt-1">
-                <button type="submit" disabled={pwBusy} className="flex-1 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider disabled:opacity-50">{pwBusy?"Saving...":"Save"}</button>
-                <button type="button" onClick={closePw} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.18)] text-[9px] font-black uppercase tracking-wider text-[var(--c-textDim)]">Cancel</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+      <PasswordModal target={pwTarget} onClose={closePw} onSubmit={submitPw}/>
       {isHistoryOpen&&(()=>{
         const uniqueOpponents=[...new Set(catMatches.map((m:any)=>m.opponent).filter(Boolean))].sort()
         const filteredMatches=opponentFilter?catMatches.filter((m:any)=>m.opponent===opponentFilter):catMatches

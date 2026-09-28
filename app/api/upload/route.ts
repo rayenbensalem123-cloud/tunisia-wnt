@@ -65,16 +65,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: safeError(error, 'upload failed') }, { status: 400 })
     }
 
-    // The bucket is private (passport data must never be public). Return a
-    // signed URL that works for a year instead of a public object URL.
-    const { data: signed, error: signErr } = await supabaseAdmin.storage
-      .from('members')
-      .createSignedUrl(path, 60 * 60 * 24 * 365)
-    if (signErr) {
-      return NextResponse.json({ error: safeError(signErr, 'upload failed') }, { status: 400 })
-    }
-
-    return NextResponse.json({ url: signed.signedUrl, path })
+    // The bucket is private (passport data must never be public). Store a
+    // stable path in the database and let /api/image mint short-lived signed
+    // URLs on demand — never persist an expiring signed URL.
+    return NextResponse.json({ url: `/api/image?path=${encodeURIComponent(path)}`, path })
   } catch (e) {
     return NextResponse.json({ error: safeError(e) }, { status: 500 })
   }
