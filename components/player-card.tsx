@@ -28,6 +28,20 @@ const posAbbr: Record<string, string> = {
   FORWARD: "FWD",
 }
 
+// Short codes for staff roles, so the card badge/stat shows *which* role
+// (Head Coach, Analyst, ...) instead of the generic word "STAFF" for everyone.
+const staffAbbr: Record<string, string> = {
+  "HEAD COACH": "HC",
+  "ASSISTANT COACH": "AC",
+  "GOALKEEPER COACH": "GKC",
+  "FITNESS COACH": "FIT",
+  "MEDICAL STAFF": "MED",
+  "TECHNICAL DIRECTOR": "TD",
+  "ANALYST": "ANL",
+  "MENTAL PREPARATION COACH": "MENT",
+  "GK COACH": "GKC",
+}
+
 const titleCase=(s:string)=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({
@@ -49,7 +63,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   entranceDelay = 0,
 }) => {
   const { tr } = useTranslate();
-  const code = fullPosition ? "STAFF" : (posAbbr[position] || position.slice(0, 4));
+  // For staff this used to always be the literal word "STAFF" no matter the
+  // person's actual role — now it reflects their real position (e.g. "HC" for
+  // Head Coach) so different staff cards are distinguishable at a glance.
+  const code = fullPosition
+    ? (staffAbbr[(position || "").toUpperCase()] || (position || "STAFF").slice(0, 4).toUpperCase())
+    : (posAbbr[position] || position.slice(0, 4));
   const num = String(n ?? "—").padStart(2, "0");
   const [popped, setPopped] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
@@ -183,14 +202,17 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           <div className="h-px bg-[var(--c-hover)]" />
           <div className="mt-3 flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)]">
             {[
-              ["Age", String(age ?? "—")],
+              [tr.coach.ageStat, String(age ?? "—")],
               fullPosition
-                ? ["Role", code]
-                : ["Caps", String(caps ?? "—")],
+                ? [tr.coach.roleStat, code]
+                : [tr.coach.capsStat, String(caps ?? "—")],
+              // "Foot" (preferred foot) is a player-only attribute; showing it
+              // on staff cards never made sense, so staff get a blank cell
+              // here instead (filtered out below) rather than a meaningless stat.
               fullPosition
-                ? ["Foot", (foot || "—").slice(0, 1)]
-                : ["Goals", String(goals ?? "—")],
-              fullPosition ? ["", ""] : ["Ast", String(assists ?? "—")],
+                ? ["", ""]
+                : [tr.coach.goalsStat, String(goals ?? "—")],
+              fullPosition ? ["", ""] : [tr.coach.astStat, String(assists ?? "—")],
             ]
               .filter(([, v]) => v !== "")
               .map(([l, v], i) => (
