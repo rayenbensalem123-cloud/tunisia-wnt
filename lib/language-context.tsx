@@ -1,11 +1,11 @@
 "use client"
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
-import t, { type Lang } from "./translations"
+import t, { type Lang, type Translations } from "./translations"
 
 type LanguageContextType = {
   lang: Lang
   setLang: (l: Lang) => void
-  tr: typeof t.en
+  tr: Translations
   dir: "ltr" | "rtl"
 }
 
@@ -18,7 +18,7 @@ const LanguageContext = createContext<LanguageContextType>({
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLangState] = useState<Lang>("en")
-  const [tr, setTr] = useState(t.en)
+  const [tr, setTr] = useState<Translations>(t.en)
 
   useEffect(() => {
     const saved = localStorage.getItem("esq-lang") as Lang | null
@@ -42,7 +42,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, [lang, tr])
 
   return (
-    <LanguageContext.Provider value={{ lang, setLang, tr, dir: tr.lang.dir }}>
+    <LanguageContext.Provider value={{ lang, setLang, tr, dir: tr.lang.dir as "ltr" | "rtl" }}>
       {children}
     </LanguageContext.Provider>
   )

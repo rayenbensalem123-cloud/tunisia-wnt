@@ -2,6 +2,7 @@
 import React, { useState } from "react"
 import { createPortal } from "react-dom"
 import { Download, Upload, Printer, FileSpreadsheet, FileJson, X, FileText, Check } from "lucide-react"
+import { useTranslate } from "@/lib/language-context"
 
 type Props = {
   members: any[]
@@ -12,6 +13,7 @@ type Props = {
 }
 
 export function ExportTools({ members, matches, teamCat, onImport, onImportPlayers }: Props) {
+  const { tr } = useTranslate()
   const [open, setOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
   const [importData, setImportData] = useState("")
@@ -87,11 +89,11 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
       else {
         setRows(d.rows || [])
         if (d.scannedPages > 0 && (d.rows || []).length === 0) {
-          setPdfError(`This PDF has ${d.scannedPages} scanned page(s) with no text. Scanned files can't be auto-read — please type the names manually or use a text PDF.`)
+          setPdfError(`${d.scannedPages} ${tr.importPlayers.scannedNoText}`)
         }
       }
     } catch (e: any) {
-      setPdfError('Could not process PDF: ' + (e?.message || 'unknown'))
+      setPdfError(tr.importPlayers.couldNotProcess + (e?.message || 'unknown'))
     }
     setBusy(false)
   }
@@ -114,7 +116,7 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
         className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-300 bg-white text-zinc-500 hover:text-zinc-900 text-[9px] font-black uppercase tracking-widest transition-all"
       >
         <Download size={14} />
-        <span className="hidden sm:inline">Export</span>
+        <span className="hidden sm:inline">{tr.exportTools.export}</span>
       </button>
 
       {open && (
@@ -123,25 +125,25 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
           <div className="absolute right-0 top-12 z-[190] w-56 rounded-2xl border border-zinc-200 bg-white shadow-2xl max-h-[calc(100dvh-6rem)] overflow-y-auto text-zinc-900">
             <div className="divide-y divide-zinc-200">
               <button onClick={() => { exportCSV(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
-                <FileSpreadsheet size={13} className="text-green-500" /> CSV Roster
+                <FileSpreadsheet size={13} className="text-green-500" /> {tr.exportTools.csvRoster}
               </button>
               <button onClick={() => { exportJSON(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
-                <FileJson size={13} className="text-blue-500" /> JSON (Category)
+                <FileJson size={13} className="text-blue-500" /> {tr.exportTools.jsonCategory}
               </button>
               <button onClick={() => { exportFullJSON(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
-                <FileJson size={13} className="text-[#E30613]" /> JSON (Full Backup)
+                <FileJson size={13} className="text-[#E30613]" /> {tr.exportTools.jsonFullBackup}
               </button>
               <button onClick={() => { setOpen(false); setImportOpen(true) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
-                <Upload size={13} className="text-orange-500" /> Import JSON
+                <Upload size={13} className="text-orange-500" /> {tr.exportTools.importJson}
               </button>
               {onImportPlayers && (
                 <button onClick={() => { setOpen(false); openPdf() }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
-                  <FileText size={13} className="text-red-500" /> Import Players (PDF)
+                  <FileText size={13} className="text-red-500" /> {tr.exportTools.importPlayersPdf}
                 </button>
               )}
               <div className="h-px bg-zinc-200" />
               <button onClick={() => { handlePrint(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
-                <Printer size={13} /> Print Roster
+                <Printer size={13} /> {tr.exportTools.printRoster}
               </button>
             </div>
           </div>
@@ -153,19 +155,19 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80" onMouseDownCapture={(e) => e.stopPropagation()}>
           <div className="w-full max-w-lg p-6 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-black italic uppercase tracking-tighter">Import JSON</h2>
+              <h2 className="text-xl font-black italic uppercase tracking-tighter">{tr.exportTools.importJson}</h2>
               <button onClick={() => setImportOpen(false)} className="p-2 hover:bg-red-500/10 rounded-xl"><X size={20} /></button>
             </div>
             <textarea
               value={importData}
               onChange={e => setImportData(e.target.value)}
-              placeholder="Paste JSON data here..."
+              placeholder={tr.exportTools.pasteJsonHere}
               rows={8}
               className="w-full p-3 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-bold outline-none resize-none"
             />
             <div className="flex gap-3 mt-4">
-              <button onClick={() => setImportOpen(false)} className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
-              <button onClick={handleImport} className="flex-[2] py-3 bg-[#E30613] text-white rounded-xl text-[10px] font-black uppercase tracking-wider">Import</button>
+              <button onClick={() => setImportOpen(false)} className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">{tr.common.cancel}</button>
+              <button onClick={handleImport} className="flex-[2] py-3 bg-[#E30613] text-white rounded-xl text-[10px] font-black uppercase tracking-wider">{tr.exportTools.import}</button>
             </div>
           </div>
         </div>
@@ -178,8 +180,8 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
           <div className="w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden p-6 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900">
             <div className="flex items-center justify-between mb-4 shrink-0">
               <div>
-                <h2 className="text-xl font-black italic uppercase tracking-tighter">Import Players (PDF)</h2>
-                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400 mt-1">New names create cards · existing names update team · camps recorded</p>
+                <h2 className="text-xl font-black italic uppercase tracking-tighter">{tr.exportTools.importPlayersPdf}</h2>
+                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400 mt-1">{tr.exportTools.newNamesNote}</p>
               </div>
               <button onClick={() => setPdfOpen(false)} className="p-2 hover:bg-red-500/10 rounded-xl"><X size={20} /></button>
             </div>
@@ -187,8 +189,8 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
             <label className={`shrink-0 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 cursor-pointer transition-all ${fileName ? 'border-green-400 bg-green-50' : 'border-zinc-300 bg-zinc-50 hover:border-red-400'}`}>
               <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={onFile} />
               <FileText size={24} className={fileName ? 'text-green-500' : 'text-zinc-400'} />
-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{busy ? 'Reading PDF…' : fileName ? fileName : 'Click to choose a PDF'}</span>
-              <span className="text-[8px] text-zinc-400">Columns: Name, Team, Camp (one player per row)</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{busy ? tr.importPlayers.readingPdf : fileName ? fileName : tr.importPlayers.clickToChoosePdf}</span>
+              <span className="text-[8px] text-zinc-400">{tr.importPlayers.columnsNote}</span>
             </label>
 
             {pdfError && <p className="shrink-0 mt-3 text-[10px] font-bold text-red-500 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{pdfError}</p>}
@@ -197,7 +199,7 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
               <>
                 <div className="flex-1 min-h-0 mt-4 overflow-y-auto rounded-2xl border border-zinc-200">
                   <div className="sticky top-0 bg-zinc-100 grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-2 text-[8px] font-black uppercase tracking-wider text-zinc-500">
-                    <span>Name</span><span>Team</span><span>Camp</span>
+                    <span>{tr.importPlayers.nameHeader}</span><span>{tr.importPlayers.teamHeader}</span><span>{tr.importPlayers.campHeader}</span>
                   </div>
                   {rows.map((r, i) => (
                     <div key={i} className={`grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-1.5 ${i>0?'border-t border-zinc-100':''}`}>
@@ -207,11 +209,11 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
                     </div>
                   ))}
                 </div>
-                <p className="shrink-0 mt-2 text-[8px] font-black uppercase tracking-wider text-zinc-400">{rows.length} player(s) detected — review/edit then confirm</p>
+                <p className="shrink-0 mt-2 text-[8px] font-black uppercase tracking-wider text-zinc-400">{rows.length} {tr.importPlayers.playersDetectedNote}</p>
                 <div className="shrink-0 flex gap-3 mt-3">
-                  <button onClick={() => setPdfOpen(false)} className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
+                  <button onClick={() => setPdfOpen(false)} className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">{tr.common.cancel}</button>
                   <button onClick={confirmImport} className="flex items-center justify-center gap-1.5 flex-[2] py-3 bg-[#E30613] text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-red-700">
-                    <Check size={13}/> Import {rows.filter(r => r.name && r.name.trim()).length}
+                    <Check size={13}/> {tr.importPlayers.importCount} {rows.filter(r => r.name && r.name.trim()).length}
                   </button>
                 </div>
               </>

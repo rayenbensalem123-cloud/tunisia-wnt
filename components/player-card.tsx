@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { useTranslate } from '@/lib/language-context';
 
 interface PlayerCardProps {
   name: string;
@@ -47,6 +48,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   reds,
   entranceDelay = 0,
 }) => {
+  const { tr } = useTranslate();
   const code = fullPosition ? "STAFF" : (posAbbr[position] || position.slice(0, 4));
   const num = String(n ?? "—").padStart(2, "0");
   const [popped, setPopped] = useState(false);
@@ -159,7 +161,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           </div>
           {fullPosition ? (
             <div className="pt-1">
-              <span className="px-1.5 py-0.5 rounded-sm border border-[var(--c-hover)] bg-[var(--c-panel4)] text-[6px] font-black uppercase tracking-widest text-[var(--c-cream)]/60">Fédération Tunisienne — Team Staff</span>
+              <span className="px-1.5 py-0.5 rounded-sm border border-[var(--c-hover)] bg-[var(--c-panel4)] text-[6px] font-black uppercase tracking-widest text-[var(--c-cream)]/60">Fédération Tunisienne — {tr.coach.teamStaffBadge}</span>
             </div>
           ) : (
             <div className="pt-1 flex items-center gap-2">
