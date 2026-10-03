@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useMemo, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import {
   Plus, X, User, Search, Edit3, Camera, Check,
   LogOut, Goal, History, Trash2, Trophy,
@@ -233,6 +234,61 @@ const COMPETITIONS = [
   {value:"African Cup",label:"AFCON"},
 ]
 
+// Shared popover shell for the custom date/age/jersey pickers below.
+// These pickers can open inside scrollable panels (.pm-body / .pm-scroll),
+// and a plain `position:absolute` popup gets clipped by the nearest
+// `overflow:auto` ancestor no matter its z-index — that's what caused the
+// calendar to render cut off / overlapping other fields. Portaling into
+// document.body with `position:fixed` coordinates (computed from the
+// trigger's own getBoundingClientRect) escapes that clipping entirely.
+const PopoverPortal = ({anchorRef,open,onClose,width,children}:{anchorRef:React.RefObject<HTMLElement|null>;open:boolean;onClose:()=>void;width:number;children:React.ReactNode}) => {
+  const popRef=useRef<HTMLDivElement>(null)
+  const [pos,setPos]=useState<{top:number;left:number}|null>(null)
+
+  useEffect(()=>{
+    if(!open){setPos(null);return}
+    const reposition=()=>{
+      const el=anchorRef.current
+      if(!el)return
+      const r=el.getBoundingClientRect()
+      const estHeight=popRef.current?.offsetHeight||360
+      let left=r.left
+      const maxLeft=window.innerWidth-width-8
+      if(left>maxLeft)left=Math.max(8,maxLeft)
+      let top=r.bottom+6
+      if(top+estHeight>window.innerHeight&&r.top-estHeight>0)top=r.top-estHeight-6
+      setPos({top,left})
+    }
+    reposition()
+    const onDown=(e:MouseEvent)=>{
+      const t=e.target as Node
+      if(anchorRef.current&&anchorRef.current.contains(t))return
+      if(popRef.current&&popRef.current.contains(t))return
+      onClose()
+    }
+    document.addEventListener("mousedown",onDown)
+    window.addEventListener("scroll",reposition,true)
+    window.addEventListener("resize",reposition)
+    return ()=>{
+      document.removeEventListener("mousedown",onDown)
+      window.removeEventListener("scroll",reposition,true)
+      window.removeEventListener("resize",reposition)
+    }
+  },[open])
+
+  if(!open||!pos||typeof document==="undefined")return null
+  return createPortal(
+    // Portaling to document.body escapes the .ftf-portal wrapper that carries the
+    // app's font (Oswald) and letter-spacing via a scoped CSS rule, so without
+    // restating them inline here the popup would silently fall back to the
+    // browser default font — same colors, wrong typography, looking off-theme.
+    <div ref={popRef} style={{position:"fixed",top:pos.top,left:pos.left,width,fontFamily:"'Oswald','Arial Narrow',Arial,sans-serif",letterSpacing:".02em"}} className="z-[300] rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
+      {children}
+    </div>,
+    document.body
+  )
+}
+
 // Custom-styled date picker — replaces the plain native browser calendar
 const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onChange:(v:string)=>void;placeholder?:string}) => {
   const [open,setOpen]=useState(false)
@@ -240,13 +296,6 @@ const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onC
   const today=new Date()
   const selected=value?new Date(value+"T00:00:00"):null
   const [viewMonth,setViewMonth]=useState(selected||today)
-
-  useEffect(()=>{
-    if(!open)return
-    const onClick=(e:MouseEvent)=>{ if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener("mousedown",onClick)
-    return ()=>document.removeEventListener("mousedown",onClick)
-  },[open])
 
   const year=viewMonth.getFullYear(), month=viewMonth.getMonth()
   const firstDay=new Date(year,month,1).getDay()
@@ -268,15 +317,14 @@ const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onC
         </span>
         <ChevronDown size={12} className={open?"text-[#E30613] rotate-180 transition-transform":"text-[var(--c-textDim)] transition-transform"}/>
       </button>
-      {open&&(
-        <div className="absolute z-[300] top-full mt-1.5 left-0 w-64 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
+      <PopoverPortal anchorRef={ref} open={open} onClose={()=>setOpen(false)} width={256}>
           <div className="flex items-center justify-between mb-2 px-1">
-            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronLeft size={14}/></button>
-            <span className="text-[11px] font-black uppercase tracking-wider">{monthName}</span>
-            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronRight size={14}/></button>
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronLeft size={14}/></button>
+            <span className="text-[11px] font-black uppercase tracking-wider text-[var(--c-text)]">{monthName}</span>
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronRight size={14}/></button>
           </div>
           <div className="grid grid-cols-7 gap-0.5 mb-1">
-            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-zinc-400 text-center py-1">{d}</div>))}
+            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-[var(--c-textDim)] text-center py-1">{d}</div>))}
           </div>
           <div className="grid grid-cols-7 gap-0.5">
             {cells.map((d,i)=>{
@@ -287,14 +335,13 @@ const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onC
               return(
                 <button type="button" key={i} onClick={()=>{onChange(fmt(cellDate));setOpen(false)}}
                   className={`aspect-square rounded-full text-[10px] font-bold transition-all flex items-center justify-center
-                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-zinc-700 hover:bg-zinc-200/60'}`}>
+                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-[var(--c-text)] hover:bg-[var(--c-panel4)]'}`}>
                   {d}
                 </button>
               )
             })}
           </div>
-        </div>
-      )}
+      </PopoverPortal>
     </div>
   )
 }
@@ -310,13 +357,6 @@ const AgeCalendar = ({value,onChange,placeholder="Select birthdate"}:{value:stri
   const parseDMY=(v:string)=>{ if(!v||!v.includes("/"))return null; const [d,m,y]=v.split("/").map(Number); return new Date(y,m-1,d) }
   const selected=parseDMY(value)
   const [viewMonth,setViewMonth]=useState(selected||today)
-
-  useEffect(()=>{
-    if(!open)return
-    const onClick=(e:MouseEvent)=>{ if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener("mousedown",onClick)
-    return ()=>document.removeEventListener("mousedown",onClick)
-  },[open])
 
   const year=viewMonth.getFullYear(), month=viewMonth.getMonth()
   const firstDay=new Date(year,month,1).getDay()
@@ -339,15 +379,14 @@ const AgeCalendar = ({value,onChange,placeholder="Select birthdate"}:{value:stri
         </span>
         <ChevronDown size={12} className={open?"text-[#E30613] rotate-180 transition-transform":"text-[var(--c-textDim)] transition-transform"}/>
       </button>
-      {open&&(
-        <div className="absolute z-[300] top-full mt-1.5 left-0 w-72 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
+      <PopoverPortal anchorRef={ref} open={open} onClose={()=>setOpen(false)} width={288}>
           <div className="flex items-center justify-between mb-2 px-1">
-            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronLeft size={14}/></button>
-            <span className="text-[11px] font-black uppercase tracking-wider">{monthName}</span>
-            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronRight size={14}/></button>
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronLeft size={14}/></button>
+            <span className="text-[11px] font-black uppercase tracking-wider text-[var(--c-text)]">{monthName}</span>
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronRight size={14}/></button>
           </div>
           <div className="grid grid-cols-7 gap-0.5 mb-1">
-            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-zinc-400 text-center py-1">{d}</div>))}
+            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-[var(--c-textDim)] text-center py-1">{d}</div>))}
           </div>
           <div className="grid grid-cols-7 gap-0.5">
             {cells.map((d,i)=>{
@@ -358,7 +397,7 @@ const AgeCalendar = ({value,onChange,placeholder="Select birthdate"}:{value:stri
               return(
                 <button type="button" key={i} onClick={()=>{onChange(fmt(cellDate));setOpen(false)}}
                   className={`aspect-square rounded-full text-[10px] font-bold transition-all flex items-center justify-center
-                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-zinc-700 hover:bg-zinc-200/60'}`}>
+                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-[var(--c-text)] hover:bg-[var(--c-panel4)]'}`}>
                   {d}
                 </button>
               )
@@ -370,8 +409,7 @@ const AgeCalendar = ({value,onChange,placeholder="Select birthdate"}:{value:stri
               <span className="px-2 py-1 rounded-lg bg-[#E30613]/10 text-[#E30613] text-[10px] font-black">{calculateAgeNow(fmt(selected))} YRS</span>
             </div>
           )}
-        </div>
-      )}
+      </PopoverPortal>
     </div>
   )
 }
@@ -387,13 +425,6 @@ const JerseyScale = ({value,onChange,placeholder="Jersey"}:{value:string;onChang
   const idx=Math.max(0,Math.min(99,num))
   const setNum=(n:number)=>onChange(String(Math.max(0,Math.min(99,n))))
 
-  useEffect(()=>{
-    if(!open)return
-    const onClick=(e:MouseEvent)=>{ if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener("mousedown",onClick)
-    return ()=>document.removeEventListener("mousedown",onClick)
-  },[open])
-
   const marks=[]
   for(let i=0;i<=99;i+=10)marks.push(i)
 
@@ -404,28 +435,27 @@ const JerseyScale = ({value,onChange,placeholder="Jersey"}:{value:string;onChang
         <span className={value?"text-2xl font-black italic text-[#E30613]":"text-2xl font-black italic text-[var(--c-textFaint)]"}>{value&&value!=="0"?value:(value==="0"?"0":placeholder)}</span>
         <ChevronDown size={12} className={open?"text-[#E30613] rotate-180 transition-transform":"text-[var(--c-textDim)] transition-transform"}/>
       </button>
-      {open&&(
-        <div className="absolute z-[300] top-full mt-1.5 left-0 w-52 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
+      <PopoverPortal anchorRef={ref} open={open} onClose={()=>setOpen(false)} width={208}>
           {/* BIG DISPLAY */}
           <div className="flex items-center justify-between mb-3">
-            <button type="button" onClick={()=>setNum(idx-1)} className="w-9 h-9 rounded-xl bg-zinc-100 hover:bg-[#E30613]/10 text-zinc-600 hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Minus size={14}/></button>
+            <button type="button" onClick={()=>setNum(idx-1)} className="w-9 h-9 rounded-xl bg-[var(--c-panel4)] hover:bg-[#E30613]/10 text-[var(--c-textDim)] hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Minus size={14}/></button>
             <span className="text-4xl font-black italic text-[#E30613] leading-none">{idx}</span>
-            <button type="button" onClick={()=>setNum(idx+1)} className="w-9 h-9 rounded-xl bg-zinc-100 hover:bg-[#E30613]/10 text-zinc-600 hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Plus size={14}/></button>
+            <button type="button" onClick={()=>setNum(idx+1)} className="w-9 h-9 rounded-xl bg-[var(--c-panel4)] hover:bg-[#E30613]/10 text-[var(--c-textDim)] hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Plus size={14}/></button>
           </div>
-          {/* SCALE BAR 0-99 */}
-          <div className="relative h-9 rounded-xl bg-zinc-100 overflow-hidden">
-            <div className="absolute inset-y-0 left-0 w-[var(--fill)] transition-all" style={{"--fill":`${(idx/99)*100}%`} as React.CSSProperties}></div>
+          {/* SCALE BAR 0-99 — the fill bar previously had no background color set, so it
+              was fully invisible; it now actually renders progress like it was meant to. */}
+          <div className="relative h-9 rounded-xl bg-[var(--c-panel4)] overflow-hidden">
+            <div className="absolute inset-y-0 left-0 w-[var(--fill)] bg-[#E30613]/35 transition-all" style={{"--fill":`${(idx/99)*100}%`} as React.CSSProperties}></div>
           </div>
           <div className="flex justify-between px-0.5 mt-1 mb-2">
-            {marks.map(m=>(<span key={m} className="text-[7px] font-black text-zinc-400">{m}</span>))}
+            {marks.map(m=>(<span key={m} className="text-[7px] font-black text-[var(--c-textDim)]">{m}</span>))}
           </div>
           <div className="flex flex-wrap gap-1 mb-1">
             {[1,5,7,8,9,10,13,17,23,66,99].map(n=>(
-              <button key={n} type="button" onClick={()=>setNum(n)} className={`px-1.5 py-1 rounded-md text-[8px] font-black transition-all ${idx===n?"bg-[#E30613] text-white":"bg-zinc-100 text-zinc-500 hover:bg-zinc-200"}`}>{n}</button>
+              <button key={n} type="button" onClick={()=>setNum(n)} className={`px-1.5 py-1 rounded-md text-[8px] font-black transition-all ${idx===n?"bg-[#E30613] text-white":"bg-[var(--c-panel4)] text-[var(--c-textDim)] hover:bg-[var(--c-hover)]"}`}>{n}</button>
             ))}
           </div>
-        </div>
-      )}
+      </PopoverPortal>
     </div>
   )
 }
@@ -572,12 +602,10 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
 // ─────────────────────────────────────────────
 // PERMISSION LABELS
 // ─────────────────────────────────────────────
-const PERM_LABELS: {key:keyof UserPerms;label:string}[] = [
-  {key:"addPlayer",label:"Add Player"},{key:"editPlayer",label:"Edit Player"},{key:"deletePlayer",label:"Delete Player"},
-  {key:"addMatch",label:"Add Match"},{key:"deleteMatch",label:"Delete Match"},
-  {key:"exportData",label:"Export Data"},
-  {key:"viewMedical",label:"View Medical"},{key:"editMedical",label:"Edit Medical"},
-  {key:"addCamps",label:"Manage Camps (Stages)"},
+// Just the keys — the display label is looked up from tr.perms at render time
+// (this array lives outside the component, so it can't call useTranslate()).
+const PERM_KEYS: (keyof UserPerms)[] = [
+  "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps",
 ]
 
 // ═════════════════════════════════════════════
@@ -1004,7 +1032,7 @@ export default function EliteSquadApp() {
                 {section.data.map((p,i)=>(
                   <div key={p.id} className="flex items-center gap-2 text-[10px]">
                     <span className="w-4 text-right font-black text-zinc-300">{i+1}</span>
-                    <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#E30613]/10 text-[#E30613]">{p.position.slice(0,3)}</span>
+                    <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#E30613]/10 text-[#E30613]">{(p.position||"").slice(0,3)}</span>
                     <span className="font-bold truncate text-zinc-800">{p.name}</span>
                     <span className="ml-auto font-black text-zinc-500">{p[section.key as keyof typeof p]||0}</span>
                   </div>
@@ -1134,11 +1162,11 @@ export default function EliteSquadApp() {
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
             <ThemeToggle className="p-2.5"/>
             <Dropdown trigger={
-              <button title={tr.header.language? (tr.header.language as string):"Language"} className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)]">
+              <button title={tr.common.language} className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)]">
                 <Globe size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">{lang.toUpperCase()}</span><ChevronDown size={11}/>
               </button>
             }>
-              <div className="px-3.5 py-1.5 text-[8px] font-black uppercase tracking-widest text-zinc-400">Language</div>
+              <div className="px-3.5 py-1.5 text-[8px] font-black uppercase tracking-widest text-zinc-400">{tr.common.language}</div>
               {(["en","fr","ar"]as const).map(l=>(
                 <button key={l} onClick={()=>setLang(l)} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider transition-all text-left ${lang===l?"text-[#a9822e] bg-[#fdf8ee]":"text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900"}`}>
                   <Globe size={13} className={lang===l?"text-[#a9822e]":"text-[#a9822e]/50"}/>
@@ -1148,33 +1176,33 @@ export default function EliteSquadApp() {
               ))}
             </Dropdown>
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
-            <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} />
+            <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} pendingUsers={pendingUsers} canManageUsers={canManageUsers} onOpenApprovals={()=>setPendingReviewOpen(true)} />
 
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
 
             <Dropdown trigger={
               <button title="Menu" className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(246,199,68,.35)] bg-[#0d1f3c]/75 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0d1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.22)]">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                <span className="hidden sm:inline">Menu</span><ChevronDown size={11}/>
+                <span className="hidden sm:inline">{tr.common.menu}</span><ChevronDown size={11}/>
                 {canManageUsers&&pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}
               </button>
             }>
               {canManageUsers&&(<>
                 <button onClick={()=>setPendingReviewOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
-                  <Bell size={14} className="text-[#a9822e]"/>Pending Approvals{pendingCount>0&&<span className="ml-auto bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingCount}</span>}
+                  <Bell size={14} className="text-[#a9822e]"/>{tr.common.pendingApprovals}{pendingCount>0&&<span className="ml-auto bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingCount}</span>}
                 </button>
                 <button onClick={()=>setUsersOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
-                  <Users size={14} className="text-[#a9822e]"/>Manage Users
+                  <Users size={14} className="text-[#a9822e]"/>{tr.common.manageUsers}
                 </button>
                 <button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
-                  <Activity size={14} className="text-[#a9822e]"/>Activity Log
+                  <Activity size={14} className="text-[#a9822e]"/>{tr.common.activityLog}
                 </button>
                 <div className="h-px bg-zinc-200 my-1 mx-2"/>
               </>)}
               {p.exportData&&<div className="px-1"><ExportTools members={members} matches={matches} teamCat={teamCat} onImport={handleImport} onImportPlayers={handleImportPlayers} /></div>}
               <button onClick={()=>window.print()} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#a9822e]"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
-                Print
+                {tr.common.print}
               </button>
               <button onClick={()=>setUpcomingOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Calendar size={14} className="text-[#a9822e]"/>Upcoming Matches
@@ -1294,6 +1322,7 @@ export default function EliteSquadApp() {
                 goals={m.role==="PLAYERS"?Number(m.goals)||0:undefined}
                 imageSrc={getImageSrc(m,imgUrls)}
                 fullPosition={m.role!=="PLAYERS"}
+                license={m.role!=="PLAYERS"?m.natMatches:undefined}
                 n={n}
                 nationality={m.nationality}
                 height={m.height}
@@ -1358,7 +1387,7 @@ export default function EliteSquadApp() {
               </div>
 
               {/* Stat band */}
-              <div className={`grid ${isPlayer?'grid-cols-5':'grid-cols-3'} border-b border-[rgba(var(--line-rgb),.12)] bg-[var(--c-deep)] divide-x divide-[rgba(var(--line-rgb),.1)]`}>
+              <div className={`grid ${isPlayer?'grid-cols-5':'grid-cols-4'} border-b border-[rgba(var(--line-rgb),.12)] bg-[var(--c-deep)] divide-x divide-[rgba(var(--line-rgb),.1)]`}>
                 <div className="py-3 px-1 text-center">
                   <p className="text-lg font-black text-[var(--c-text)]">{calculateAge(selMember.birthdate)}</p>
                   <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.age}</p>
@@ -1386,6 +1415,12 @@ export default function EliteSquadApp() {
                 {!isPlayer&&<div className="py-3 px-1 text-center">
                   <p className="text-lg font-black text-[#f6c744]">{selMember.natMatches||"—"}</p>
                   <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.license}</p>
+                </div>}
+                {/* Was captured by the "Preferred Tactics / Formation" picker in the
+                    edit form but never saved or shown anywhere — now it is. */}
+                {!isPlayer&&<div className="py-3 px-1 text-center">
+                  <p className="text-lg font-black text-[var(--c-text)]">{selMember.formation||"—"}</p>
+                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.coach.formationShort}</p>
                 </div>}
               </div>
 
@@ -1640,10 +1675,10 @@ export default function EliteSquadApp() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-lg border border-[rgba(227,6,44,.35)] bg-[#e3062c]/5 p-3 text-[var(--c-text)]">
                       <p className="text-[9px] font-black uppercase tracking-wider text-[#ff4f66]">Biggest Win</p>
-                      {biggestWin?(<>
-                        <p className="text-lg font-black mt-0.5 text-[#ff4f66]">{biggestWin.result}</p>
-                        <p className="text-[10px] font-bold text-[var(--c-textBlue)] truncate flex items-center gap-1.5"><span className="italic shrink-0">vs</span><CountryFlag name={biggestWin.opponent} className="w-4 h-2.5 rounded-[2px]"/><span className="truncate">{biggestWin.opponent}</span></p>
-                      </>):(
+                      {biggestWin?(()=>{const bw=biggestWin as {opponent:string,result:string,diff:number};return(<>
+                        <p className="text-lg font-black mt-0.5 text-[#ff4f66]">{bw.result}</p>
+                        <p className="text-[10px] font-bold text-[var(--c-textBlue)] truncate flex items-center gap-1.5"><span className="italic shrink-0">vs</span><CountryFlag name={bw.opponent} className="w-4 h-2.5 rounded-[2px]"/><span className="truncate">{bw.opponent}</span></p>
+                      </>)})():(
                         <p className="text-[10px] font-bold text-[var(--c-textDim)] mt-1.5">No wins recorded yet</p>
                       )}
                     </div>
@@ -1730,7 +1765,7 @@ export default function EliteSquadApp() {
             <form onSubmit={saveForm} className="pm-body">
               <div className="relative">
                 <div onClick={()=>fileRef.current?.click()} className="flex flex-col items-center gap-2 py-5 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.25)] hover:border-[#e3062c]/60 cursor-pointer bg-[var(--c-deep)] transition-all">
-                  <input type="file" ref={fileRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,image:d.url,imagePath:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,image:r2.result as string});r2.readAsDataURL(f)}}}
+                  <input type="file" ref={fileRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob:File|Blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,image:d.url,imagePath:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,image:r2.result as string});r2.readAsDataURL(f)}}}
 className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   {form.image?<img src={form.imagePath?(imgUrls[String(form.imagePath)]||form.image):form.image} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="w-14 h-14 rounded-lg object-cover" alt=""/>:<Camera size={20} className="text-[var(--c-textDim)]"/>}
                   <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.portraitUpload}</span>
@@ -1740,7 +1775,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               {activeTab==="PLAYERS"&&(
                 <div className="relative mt-3">
                   <div onClick={()=>passRef.current?.click()} className="flex flex-col items-center gap-2 py-4 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.25)] hover:border-[#f6c744]/60 cursor-pointer bg-[var(--c-deep)] transition-all">
-                    <input type="file" ref={passRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f,1800,0.85);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);fd.append('folder','passports');const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.path){setForm({...form,passportImage:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,passportImage:r2.result as string});r2.readAsDataURL(f)}}}
+                    <input type="file" ref={passRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob:File|Blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f,1800,0.85);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);fd.append('folder','passports');const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.path){setForm({...form,passportImage:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,passportImage:r2.result as string});r2.readAsDataURL(f)}}}
  className="hidden" accept="image/jpeg,image/png"/>
                     {form.passportImage?<img src={getPassportSrc(form,imgUrls)} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="max-h-24 rounded-lg object-contain" alt=""/>:<IdCard size={20} className="text-[var(--c-textDim)]"/>}
                     <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.passportUpload}</span>
@@ -1858,10 +1893,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
           <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-[var(--c-cream2)] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 shrink-0">
               <div>
-                <h2 className="text-2xl font-black uppercase tracking-tight">Pending Users</h2>
-                <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{pendingCount} awaiting approval</p>
+                <h2 className="text-2xl font-black uppercase tracking-tight">{tr.users.pendingTitle}</h2>
+                <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{pendingCount} {tr.users.awaitingReview}</p>
               </div>
-              <button onClick={()=>setPendingReviewOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
+              <button onClick={()=>setPendingReviewOpen(false)} title={tr.common.close} className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
             </div>
             <div className="p-6 space-y-5 overflow-y-auto">
               {pendingUsers.map((u)=>{
@@ -1885,27 +1920,27 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                         <div>
                           <p className="text-lg font-black uppercase leading-tight">{u.firstName} {u.lastName}</p>
                           <p className="text-[9px] font-medium tracking-wide text-zinc-500">@{u.username}</p>
-                          <p className="text-[8px] font-black uppercase tracking-wider text-amber-600">PENDING · Awaiting your review</p>
+                          <p className="text-[8px] font-black uppercase tracking-wider text-amber-600">{tr.users.awaitingYourReview}</p>
                         </div>
                       </div>
                     </div>
                     <div className="p-5 space-y-4">
-                      <p className="text-[7px] font-black uppercase text-zinc-500 tracking-wider">Assign Permissions</p>
+                      <p className="text-[7px] font-black uppercase text-zinc-500 tracking-wider">{tr.users.assignPermissions}</p>
                       <div className="flex flex-wrap gap-2">
-                        {PERM_LABELS.map(({key,label})=>{
+                        {PERM_KEYS.map((key)=>{
                           const on=allUsers[realIdx]?.perms[key]
                           return(
                             <button key={key} onClick={()=>togglePerm(key)}
                               className={`px-3.5 py-2 rounded-xl text-[7px] font-black uppercase tracking-wider border transition-all ${on?'bg-[#E30613] border-[#E30613] text-white shadow-md shadow-[#E30613]/30':'bg-white border-zinc-200 text-zinc-500 hover:border-[#E30613]/30'}`}>
-                              {on&&<Check size={10} className="inline mr-1"/>}{label}
+                              {on&&<Check size={10} className="inline mr-1"/>}{tr.perms[key]}
                             </button>
                           )
                         })}
                       </div>
                     </div>
                     <div className="flex gap-3 px-5 pb-5">
-                      <button onClick={doApprove} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Save & Approve</button>
-                      <button onClick={doHold} className="flex-1 py-3 rounded-xl border border-zinc-300 bg-white text-zinc-500 text-[8px] font-black uppercase tracking-wider hover:bg-zinc-100 transition-all">Hold</button>
+                      <button onClick={doApprove} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>{tr.users.saveAndApprove}</button>
+                      <button onClick={doHold} className="flex-1 py-3 rounded-xl border border-zinc-300 bg-white text-zinc-500 text-[8px] font-black uppercase tracking-wider hover:bg-zinc-100 transition-all">{tr.common.hold}</button>
                       <button onClick={doDelete} className="py-3 px-4 rounded-xl border border-[#e3062c]/40 text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all"><Trash2 size={12}/></button>
                     </div>
                   </div>
@@ -1914,7 +1949,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               {pendingCount===0&&(
                 <div className="flex flex-col items-center justify-center py-16 gap-4 text-zinc-300">
                   <Bell size={48}/>
-                  <p className="text-[11px] font-black uppercase tracking-[0.3em]">No pending users</p>
+                  <p className="text-[11px] font-black uppercase tracking-[0.3em]">{tr.common.noPendingUsers}</p>
                 </div>
               )}
             </div>
@@ -1930,10 +1965,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
           <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-[var(--c-cream2)] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 shrink-0">
               <div>
-                <h2 className="text-2xl font-black uppercase tracking-tight">Pending Matches</h2>
-                <p className="text-[8px] font-black text-[#e3062c] uppercase tracking-[0.3em] mt-0.5">{pendingMatches.length} awaiting approval</p>
+                <h2 className="text-2xl font-black uppercase tracking-tight">{tr.match.pendingTitle}</h2>
+                <p className="text-[8px] font-black text-[#e3062c] uppercase tracking-[0.3em] mt-0.5">{pendingMatches.length} {tr.match.awaitingApproval}</p>
               </div>
-              <button onClick={()=>setPendingMatchesOpen(false)} title="Close" className="pm-close shrink-0"><X size={18}/></button>
+              <button onClick={()=>setPendingMatchesOpen(false)} title={tr.common.close} className="pm-close shrink-0"><X size={18}/></button>
             </div>
             <div className="p-6 space-y-4 overflow-y-auto">
               {pendingMatches.map(m=>(
@@ -1944,27 +1979,27 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                         <div className="w-12 h-12 rounded-2xl bg-[#f6c744]/10 border border-[#f6c744]/30 flex items-center justify-center"><BookOpen size={18} className="text-[#f6c744]"/></div>
                         <div>
                           <div className="flex items-center gap-2"><CountryFlag name={m.opponent} className="w-6 h-4 rounded-sm"/><p className="font-black uppercase text-sm leading-tight">{m.opponent}</p></div>
-                          <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">{fmtDateWords(m.date)} · {m.competition||"Friendly"} · by @{m.submittedBy}</p>
+                          <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">{fmtDateWords(m.date)} · {m.competition||tr.match.friendly} · {tr.match.by} @{m.submittedBy}</p>
                         </div>
                       </div>
-                      <span className="text-[9px] font-black text-[#f6c744] bg-[#f6c744]/15 border border-[#f6c744]/30 px-2.5 py-1 rounded-lg uppercase">Pending</span>
+                      <span className="text-[9px] font-black text-[#f6c744] bg-[#f6c744]/15 border border-[#f6c744]/30 px-2.5 py-1 rounded-lg uppercase">{tr.users.pending}</span>
                     </div>
                   </div>
                   <div className="p-5 space-y-2 text-[9px] font-bold text-zinc-600">
-                    {m.venue&&<p>Venue: {m.venue}</p>}
-                    {m.result&&<p>Result: {m.result}</p>}
-                    <p>Squad: {m.squad?.length||0} players · Scorers: {m.scorers?.length||0}</p>
+                    {m.venue&&<p>{tr.match.venue2}: {m.venue}</p>}
+                    {m.result&&<p>{tr.match.result}: {m.result}</p>}
+                    <p>{tr.match.squad}: {m.squad?.length||0} · {tr.match.scorers2}: {m.scorers?.length||0}</p>
                   </div>
                   <div className="flex gap-3 px-5 pb-5">
-                    <button onClick={()=>approveMatch(m)} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Approve Match</button>
-                    <button onClick={()=>{setMatches(p=>p.filter((x:any)=>x.id!==m.id));setPendingMatchesOpen(false)}} className="py-3 px-5 rounded-xl border border-[rgba(255,79,102,.35)] text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c]/10 transition-all"><Trash2 size={12} className="inline mr-1"/>Reject</button>
+                    <button onClick={()=>approveMatch(m)} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>{tr.match.approveMatch}</button>
+                    <button onClick={()=>{setMatches(p=>p.filter((x:any)=>x.id!==m.id));setPendingMatchesOpen(false)}} className="py-3 px-5 rounded-xl border border-[rgba(255,79,102,.35)] text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c]/10 transition-all"><Trash2 size={12} className="inline mr-1"/>{tr.match.reject}</button>
                   </div>
                 </div>
               ))}
               {pendingMatches.length===0&&(
                 <div className="flex flex-col items-center justify-center py-16 gap-4 text-zinc-300">
                   <BookOpen size={48}/>
-                  <p className="text-[11px] font-black uppercase tracking-[0.3em]">No pending matches</p>
+                  <p className="text-[11px] font-black uppercase tracking-[0.3em]">{tr.match.noPendingMatches}</p>
                 </div>
               )}
             </div>
@@ -1979,10 +2014,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-[var(--c-cream2)] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 shrink-0">
-              <h2 className="text-lg font-black uppercase tracking-tight">User Management</h2>
+              <h2 className="text-lg font-black uppercase tracking-tight">{tr.common.userManagement}</h2>
               <div className="flex items-center gap-2">
-                <button onClick={()=>{syncUsers()}} className="p-2 rounded-xl border border-zinc-200 hover:bg-zinc-100 transition-all" title="Refresh"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
-                <button onClick={()=>setUsersOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={16}/></button>
+                <button onClick={()=>{syncUsers()}} className="p-2 rounded-xl border border-zinc-200 hover:bg-zinc-100 transition-all" title={tr.common.refresh}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+                <button onClick={()=>setUsersOpen(false)} title={tr.common.close} className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={16}/></button>
               </div>
             </div>
             <div className="p-5 space-y-3 overflow-y-auto">
@@ -2000,25 +2035,25 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   <div key={i} className="p-3 rounded-xl border border-zinc-200 bg-zinc-50">
                     <div className="flex items-center justify-between mb-2">
                       <div>
-                        <p className="text-[11px] font-black uppercase leading-tight">{u.username}{currentUser&&<span className="text-[#E30613] ml-2 text-[8px]">(you)</span>}</p>
-                        <p className="text-[7px] font-black uppercase tracking-wider" style={{color:u.status==="active"?"#16a34a":"#E30613"}}>{u.status==="active"?"ACTIVE":"PENDING"}</p>
+                        <p className="text-[11px] font-black uppercase leading-tight">{u.username}{currentUser&&<span className="text-[#E30613] ml-2 text-[8px]">{tr.users.you}</span>}</p>
+                        <p className="text-[7px] font-black uppercase tracking-wider" style={{color:u.status==="active"?"#16a34a":"#E30613"}}>{u.status==="active"?tr.users.active:tr.users.pending}</p>
                       </div>
                       <div className="flex gap-1.5">
-                        {u.status==="pending"&&canManageUsers&&<button onClick={approveUser} className="px-3 py-1.5 rounded-lg border border-[#7fd6a8]/30 text-[#7fd6a8] text-[7px] font-black uppercase tracking-wider hover:bg-[#7fd6a8]/10 transition-all">Approve</button>}
+                        {u.status==="pending"&&canManageUsers&&<button onClick={approveUser} className="px-3 py-1.5 rounded-lg border border-[#7fd6a8]/30 text-[#7fd6a8] text-[7px] font-black uppercase tracking-wider hover:bg-[#7fd6a8]/10 transition-all">{tr.common.approve}</button>}
                         {canManageUsers&&!currentUser&&(<>
-                          <button onClick={()=>openPw('admin',u.username)} className="px-3 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">Reset PW</button>
-                          <button onClick={()=>{deleteProfile(u.username).then(reloadProfiles)}} className="px-3 py-1.5 rounded-lg border border-[#e3062c]/40 text-[#ff4f66] text-[7px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all">Remove</button>
+                          <button onClick={()=>openPw('admin',u.username)} className="px-3 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">{tr.common.resetPw}</button>
+                          <button onClick={()=>{deleteProfile(u.username).then(reloadProfiles)}} className="px-3 py-1.5 rounded-lg border border-[#e3062c]/40 text-[#ff4f66] text-[7px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all">{tr.common.remove}</button>
                         </>)}
                       </div>
                     </div>
                     {canManageUsers&&(
                       <div className="flex flex-wrap gap-1.5 mt-1">
-                        {PERM_LABELS.map(({key,label})=>{
+                        {PERM_KEYS.map((key)=>{
                           const on=u.perms[key]
                           return(
                             <button key={key} onClick={()=>togglePerm(key)}
                               className={`px-2.5 py-1 rounded-lg text-[6px] font-black uppercase tracking-wider border transition-all ${on?'bg-[#E30613]/15 border-[#E30613]/40 text-[#E30613]':'bg-zinc-100 border-zinc-200 text-zinc-400 hover:bg-zinc-200'}`}>
-                              {label}
+                              {tr.perms[key]}
                             </button>
                           )
                         })}
@@ -2440,7 +2475,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           return(
                             <div key={pl.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white border border-zinc-200/60 text-xs">
                               <span className="text-[8px] font-black text-zinc-300 w-4 shrink-0">{i+1}</span>
-                              <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#E30613]/10 text-[#E30613] shrink-0">{pl.position.slice(0,3)}</span>
+                              <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#E30613]/10 text-[#E30613] shrink-0">{(pl.position||"").slice(0,3)}</span>
                               <span className="font-bold truncate text-zinc-800">{pl.name}</span>
                               <button onClick={()=>moveDown(pl.id,i)} className="ml-auto text-zinc-300 hover:text-red-500 text-[9px] leading-none">✕</button>
                             </div>
@@ -2478,7 +2513,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                       <div className="flex flex-wrap gap-1.5">
                         {catPlayers.filter((p:any)=>!matchForm.squad.includes(p.id)).map((pl:any)=>(
                           <div key={pl.id} onClick={()=>toggleSquad(pl.id)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-white text-xs text-zinc-500 cursor-pointer hover:border-[#E30613]/30 hover:bg-[#E30613]/5 hover:text-[#E30613] transition-all">
-                            <span className="text-[6px] font-black px-1 py-0.5 rounded bg-zinc-100 text-zinc-400">{pl.position.slice(0,3)}</span>
+                            <span className="text-[6px] font-black px-1 py-0.5 rounded bg-zinc-100 text-zinc-400">{(pl.position||"").slice(0,3)}</span>
                             <span className="font-semibold">{pl.name}</span>
                             <span className="text-zinc-300 text-[10px]">+</span>
                           </div>
@@ -2788,7 +2823,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               return(
                                 <div key={pid} className="flex items-center gap-2 text-[10px]">
                                   <span className="text-zinc-300 font-black w-4 shrink-0 text-right">{i+1}</span>
-                                  <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#e3062c]/15 text-[#ff4f66]">{pl.position.slice(0,3)}</span>
+                                  <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#e3062c]/15 text-[#ff4f66]">{(pl.position||"").slice(0,3)}</span>
                                   <span className={`font-bold truncate ${isOut?'line-through text-[var(--c-textDim)]':''}`}>{pl.name}</span>
                                   {isOut&&<span className="text-[7px] font-black text-[#ff4f66] ml-auto">OUT</span>}
                                 </div>
