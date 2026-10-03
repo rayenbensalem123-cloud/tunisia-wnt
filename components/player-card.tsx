@@ -70,11 +70,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   // Head Coach) so different staff cards are distinguishable at a glance.
   const code = fullPosition
     ? (staffAbbr[(position || "").toUpperCase()] || (position || "STAFF").slice(0, 4).toUpperCase())
-<<<<<<< HEAD
     : (posAbbr[position] || (position || "").slice(0, 4));
-=======
-    : (posAbbr[position] || position.slice(0, 4));
->>>>>>> 84dea573fb473de12e97d5221e50f31da9e1dcba
   const num = String(n ?? "—").padStart(2, "0");
   const [popped, setPopped] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
