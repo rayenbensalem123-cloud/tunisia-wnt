@@ -271,12 +271,12 @@ const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onC
       {open&&(
         <div className="absolute z-[300] top-full mt-1.5 left-0 w-64 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
           <div className="flex items-center justify-between mb-2 px-1">
-            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronLeft size={14}/></button>
-            <span className="text-[11px] font-black uppercase tracking-wider">{monthName}</span>
-            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronRight size={14}/></button>
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronLeft size={14}/></button>
+            <span className="text-[11px] font-black uppercase tracking-wider text-[var(--c-text)]">{monthName}</span>
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronRight size={14}/></button>
           </div>
           <div className="grid grid-cols-7 gap-0.5 mb-1">
-            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-zinc-400 text-center py-1">{d}</div>))}
+            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-[var(--c-textDim)] text-center py-1">{d}</div>))}
           </div>
           <div className="grid grid-cols-7 gap-0.5">
             {cells.map((d,i)=>{
@@ -287,7 +287,7 @@ const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onC
               return(
                 <button type="button" key={i} onClick={()=>{onChange(fmt(cellDate));setOpen(false)}}
                   className={`aspect-square rounded-full text-[10px] font-bold transition-all flex items-center justify-center
-                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-zinc-700 hover:bg-zinc-200/60'}`}>
+                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-[var(--c-text)] hover:bg-[var(--c-panel4)]'}`}>
                   {d}
                 </button>
               )
@@ -342,12 +342,12 @@ const AgeCalendar = ({value,onChange,placeholder="Select birthdate"}:{value:stri
       {open&&(
         <div className="absolute z-[300] top-full mt-1.5 left-0 w-72 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
           <div className="flex items-center justify-between mb-2 px-1">
-            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronLeft size={14}/></button>
-            <span className="text-[11px] font-black uppercase tracking-wider">{monthName}</span>
-            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-zinc-200/60 transition-all"><ChevronRight size={14}/></button>
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronLeft size={14}/></button>
+            <span className="text-[11px] font-black uppercase tracking-wider text-[var(--c-text)]">{monthName}</span>
+            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronRight size={14}/></button>
           </div>
           <div className="grid grid-cols-7 gap-0.5 mb-1">
-            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-zinc-400 text-center py-1">{d}</div>))}
+            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-[var(--c-textDim)] text-center py-1">{d}</div>))}
           </div>
           <div className="grid grid-cols-7 gap-0.5">
             {cells.map((d,i)=>{
@@ -358,7 +358,7 @@ const AgeCalendar = ({value,onChange,placeholder="Select birthdate"}:{value:stri
               return(
                 <button type="button" key={i} onClick={()=>{onChange(fmt(cellDate));setOpen(false)}}
                   className={`aspect-square rounded-full text-[10px] font-bold transition-all flex items-center justify-center
-                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-zinc-700 hover:bg-zinc-200/60'}`}>
+                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-[var(--c-text)] hover:bg-[var(--c-panel4)]'}`}>
                   {d}
                 </button>
               )
@@ -408,20 +408,21 @@ const JerseyScale = ({value,onChange,placeholder="Jersey"}:{value:string;onChang
         <div className="absolute z-[300] top-full mt-1.5 left-0 w-52 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
           {/* BIG DISPLAY */}
           <div className="flex items-center justify-between mb-3">
-            <button type="button" onClick={()=>setNum(idx-1)} className="w-9 h-9 rounded-xl bg-zinc-100 hover:bg-[#E30613]/10 text-zinc-600 hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Minus size={14}/></button>
+            <button type="button" onClick={()=>setNum(idx-1)} className="w-9 h-9 rounded-xl bg-[var(--c-panel4)] hover:bg-[#E30613]/10 text-[var(--c-textDim)] hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Minus size={14}/></button>
             <span className="text-4xl font-black italic text-[#E30613] leading-none">{idx}</span>
-            <button type="button" onClick={()=>setNum(idx+1)} className="w-9 h-9 rounded-xl bg-zinc-100 hover:bg-[#E30613]/10 text-zinc-600 hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Plus size={14}/></button>
+            <button type="button" onClick={()=>setNum(idx+1)} className="w-9 h-9 rounded-xl bg-[var(--c-panel4)] hover:bg-[#E30613]/10 text-[var(--c-textDim)] hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Plus size={14}/></button>
           </div>
-          {/* SCALE BAR 0-99 */}
-          <div className="relative h-9 rounded-xl bg-zinc-100 overflow-hidden">
-            <div className="absolute inset-y-0 left-0 w-[var(--fill)] transition-all" style={{"--fill":`${(idx/99)*100}%`} as React.CSSProperties}></div>
+          {/* SCALE BAR 0-99 — the fill bar previously had no background color set, so it
+              was fully invisible; it now actually renders progress like it was meant to. */}
+          <div className="relative h-9 rounded-xl bg-[var(--c-panel4)] overflow-hidden">
+            <div className="absolute inset-y-0 left-0 w-[var(--fill)] bg-[#E30613]/35 transition-all" style={{"--fill":`${(idx/99)*100}%`} as React.CSSProperties}></div>
           </div>
           <div className="flex justify-between px-0.5 mt-1 mb-2">
-            {marks.map(m=>(<span key={m} className="text-[7px] font-black text-zinc-400">{m}</span>))}
+            {marks.map(m=>(<span key={m} className="text-[7px] font-black text-[var(--c-textDim)]">{m}</span>))}
           </div>
           <div className="flex flex-wrap gap-1 mb-1">
             {[1,5,7,8,9,10,13,17,23,66,99].map(n=>(
-              <button key={n} type="button" onClick={()=>setNum(n)} className={`px-1.5 py-1 rounded-md text-[8px] font-black transition-all ${idx===n?"bg-[#E30613] text-white":"bg-zinc-100 text-zinc-500 hover:bg-zinc-200"}`}>{n}</button>
+              <button key={n} type="button" onClick={()=>setNum(n)} className={`px-1.5 py-1 rounded-md text-[8px] font-black transition-all ${idx===n?"bg-[#E30613] text-white":"bg-[var(--c-panel4)] text-[var(--c-textDim)] hover:bg-[var(--c-hover)]"}`}>{n}</button>
             ))}
           </div>
         </div>
@@ -1292,6 +1293,7 @@ export default function EliteSquadApp() {
                 goals={m.role==="PLAYERS"?Number(m.goals)||0:undefined}
                 imageSrc={getImageSrc(m,imgUrls)}
                 fullPosition={m.role!=="PLAYERS"}
+                license={m.role!=="PLAYERS"?m.natMatches:undefined}
                 n={n}
                 nationality={m.nationality}
                 height={m.height}
@@ -1356,7 +1358,7 @@ export default function EliteSquadApp() {
               </div>
 
               {/* Stat band */}
-              <div className={`grid ${isPlayer?'grid-cols-5':'grid-cols-3'} border-b border-[rgba(var(--line-rgb),.12)] bg-[var(--c-deep)] divide-x divide-[rgba(var(--line-rgb),.1)]`}>
+              <div className={`grid ${isPlayer?'grid-cols-5':'grid-cols-4'} border-b border-[rgba(var(--line-rgb),.12)] bg-[var(--c-deep)] divide-x divide-[rgba(var(--line-rgb),.1)]`}>
                 <div className="py-3 px-1 text-center">
                   <p className="text-lg font-black text-[var(--c-text)]">{calculateAge(selMember.birthdate)}</p>
                   <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.age}</p>
@@ -1384,6 +1386,12 @@ export default function EliteSquadApp() {
                 {!isPlayer&&<div className="py-3 px-1 text-center">
                   <p className="text-lg font-black text-[#f6c744]">{selMember.natMatches||"—"}</p>
                   <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.license}</p>
+                </div>}
+                {/* Was captured by the "Preferred Tactics / Formation" picker in the
+                    edit form but never saved or shown anywhere — now it is. */}
+                {!isPlayer&&<div className="py-3 px-1 text-center">
+                  <p className="text-lg font-black text-[var(--c-text)]">{selMember.formation||"—"}</p>
+                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.coach.formationShort}</p>
                 </div>}
               </div>
 

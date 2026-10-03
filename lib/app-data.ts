@@ -66,6 +66,7 @@ export const memberFromDb = (r: any) => ({
   leagueRegion: r.league_region,
   dualNationality: r.dual_nationality,
   secondNationality: r.second_nationality,
+  formation: r.formation,
   updatedAt: r.updated_at ? new Date(r.updated_at).getTime() : Date.now(),
 })
 
@@ -102,6 +103,10 @@ export const memberToDb = (m: any) => ({
   league_region: m.leagueRegion || null,
   dual_nationality: !!m.dualNationality,
   second_nationality: m.secondNationality || null,
+  // Staff's "Preferred Tactics / Formation" picker had nowhere to save to —
+  // the column didn't exist and this mapper never listed it, so every
+  // selection was silently discarded. Both are now in place.
+  formation: m.formation || null,
 })
 
 export const matchFromDb = (r: any) => ({
