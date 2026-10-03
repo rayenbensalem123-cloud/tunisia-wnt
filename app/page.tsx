@@ -1,5 +1,6 @@
 "use client"
 import React, { useState, useMemo, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import {
   Plus, X, User, Search, Edit3, Camera, Check,
   LogOut, Goal, History, Trash2, Trophy,
@@ -233,6 +234,57 @@ const COMPETITIONS = [
   {value:"African Cup",label:"AFCON"},
 ]
 
+// Shared popover shell for the custom date/age/jersey pickers below.
+// These pickers can open inside scrollable panels (.pm-body / .pm-scroll),
+// and a plain `position:absolute` popup gets clipped by the nearest
+// `overflow:auto` ancestor no matter its z-index — that's what caused the
+// calendar to render cut off / overlapping other fields. Portaling into
+// document.body with `position:fixed` coordinates (computed from the
+// trigger's own getBoundingClientRect) escapes that clipping entirely.
+const PopoverPortal = ({anchorRef,open,onClose,width,children}:{anchorRef:React.RefObject<HTMLElement|null>;open:boolean;onClose:()=>void;width:number;children:React.ReactNode}) => {
+  const popRef=useRef<HTMLDivElement>(null)
+  const [pos,setPos]=useState<{top:number;left:number}|null>(null)
+
+  useEffect(()=>{
+    if(!open){setPos(null);return}
+    const reposition=()=>{
+      const el=anchorRef.current
+      if(!el)return
+      const r=el.getBoundingClientRect()
+      const estHeight=popRef.current?.offsetHeight||360
+      let left=r.left
+      const maxLeft=window.innerWidth-width-8
+      if(left>maxLeft)left=Math.max(8,maxLeft)
+      let top=r.bottom+6
+      if(top+estHeight>window.innerHeight&&r.top-estHeight>0)top=r.top-estHeight-6
+      setPos({top,left})
+    }
+    reposition()
+    const onDown=(e:MouseEvent)=>{
+      const t=e.target as Node
+      if(anchorRef.current&&anchorRef.current.contains(t))return
+      if(popRef.current&&popRef.current.contains(t))return
+      onClose()
+    }
+    document.addEventListener("mousedown",onDown)
+    window.addEventListener("scroll",reposition,true)
+    window.addEventListener("resize",reposition)
+    return ()=>{
+      document.removeEventListener("mousedown",onDown)
+      window.removeEventListener("scroll",reposition,true)
+      window.removeEventListener("resize",reposition)
+    }
+  },[open])
+
+  if(!open||!pos||typeof document==="undefined")return null
+  return createPortal(
+    <div ref={popRef} style={{position:"fixed",top:pos.top,left:pos.left,width}} className="z-[300] rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
+      {children}
+    </div>,
+    document.body
+  )
+}
+
 // Custom-styled date picker — replaces the plain native browser calendar
 const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onChange:(v:string)=>void;placeholder?:string}) => {
   const [open,setOpen]=useState(false)
@@ -240,13 +292,6 @@ const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onC
   const today=new Date()
   const selected=value?new Date(value+"T00:00:00"):null
   const [viewMonth,setViewMonth]=useState(selected||today)
-
-  useEffect(()=>{
-    if(!open)return
-    const onClick=(e:MouseEvent)=>{ if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener("mousedown",onClick)
-    return ()=>document.removeEventListener("mousedown",onClick)
-  },[open])
 
   const year=viewMonth.getFullYear(), month=viewMonth.getMonth()
   const firstDay=new Date(year,month,1).getDay()
@@ -268,8 +313,7 @@ const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onC
         </span>
         <ChevronDown size={12} className={open?"text-[#E30613] rotate-180 transition-transform":"text-[var(--c-textDim)] transition-transform"}/>
       </button>
-      {open&&(
-        <div className="absolute z-[300] top-full mt-1.5 left-0 w-64 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
+      <PopoverPortal anchorRef={ref} open={open} onClose={()=>setOpen(false)} width={256}>
           <div className="flex items-center justify-between mb-2 px-1">
             <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronLeft size={14}/></button>
             <span className="text-[11px] font-black uppercase tracking-wider text-[var(--c-text)]">{monthName}</span>
@@ -293,8 +337,7 @@ const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onC
               )
             })}
           </div>
-        </div>
-      )}
+      </PopoverPortal>
     </div>
   )
 }
@@ -310,13 +353,6 @@ const AgeCalendar = ({value,onChange,placeholder="Select birthdate"}:{value:stri
   const parseDMY=(v:string)=>{ if(!v||!v.includes("/"))return null; const [d,m,y]=v.split("/").map(Number); return new Date(y,m-1,d) }
   const selected=parseDMY(value)
   const [viewMonth,setViewMonth]=useState(selected||today)
-
-  useEffect(()=>{
-    if(!open)return
-    const onClick=(e:MouseEvent)=>{ if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener("mousedown",onClick)
-    return ()=>document.removeEventListener("mousedown",onClick)
-  },[open])
 
   const year=viewMonth.getFullYear(), month=viewMonth.getMonth()
   const firstDay=new Date(year,month,1).getDay()
@@ -339,8 +375,7 @@ const AgeCalendar = ({value,onChange,placeholder="Select birthdate"}:{value:stri
         </span>
         <ChevronDown size={12} className={open?"text-[#E30613] rotate-180 transition-transform":"text-[var(--c-textDim)] transition-transform"}/>
       </button>
-      {open&&(
-        <div className="absolute z-[300] top-full mt-1.5 left-0 w-72 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
+      <PopoverPortal anchorRef={ref} open={open} onClose={()=>setOpen(false)} width={288}>
           <div className="flex items-center justify-between mb-2 px-1">
             <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronLeft size={14}/></button>
             <span className="text-[11px] font-black uppercase tracking-wider text-[var(--c-text)]">{monthName}</span>
@@ -370,8 +405,7 @@ const AgeCalendar = ({value,onChange,placeholder="Select birthdate"}:{value:stri
               <span className="px-2 py-1 rounded-lg bg-[#E30613]/10 text-[#E30613] text-[10px] font-black">{calculateAgeNow(fmt(selected))} YRS</span>
             </div>
           )}
-        </div>
-      )}
+      </PopoverPortal>
     </div>
   )
 }
@@ -387,13 +421,6 @@ const JerseyScale = ({value,onChange,placeholder="Jersey"}:{value:string;onChang
   const idx=Math.max(0,Math.min(99,num))
   const setNum=(n:number)=>onChange(String(Math.max(0,Math.min(99,n))))
 
-  useEffect(()=>{
-    if(!open)return
-    const onClick=(e:MouseEvent)=>{ if(ref.current&&!ref.current.contains(e.target as Node)) setOpen(false) }
-    document.addEventListener("mousedown",onClick)
-    return ()=>document.removeEventListener("mousedown",onClick)
-  },[open])
-
   const marks=[]
   for(let i=0;i<=99;i+=10)marks.push(i)
 
@@ -404,8 +431,7 @@ const JerseyScale = ({value,onChange,placeholder="Jersey"}:{value:string;onChang
         <span className={value?"text-2xl font-black italic text-[#E30613]":"text-2xl font-black italic text-[var(--c-textFaint)]"}>{value&&value!=="0"?value:(value==="0"?"0":placeholder)}</span>
         <ChevronDown size={12} className={open?"text-[#E30613] rotate-180 transition-transform":"text-[var(--c-textDim)] transition-transform"}/>
       </button>
-      {open&&(
-        <div className="absolute z-[300] top-full mt-1.5 left-0 w-52 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
+      <PopoverPortal anchorRef={ref} open={open} onClose={()=>setOpen(false)} width={208}>
           {/* BIG DISPLAY */}
           <div className="flex items-center justify-between mb-3">
             <button type="button" onClick={()=>setNum(idx-1)} className="w-9 h-9 rounded-xl bg-[var(--c-panel4)] hover:bg-[#E30613]/10 text-[var(--c-textDim)] hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Minus size={14}/></button>
@@ -425,8 +451,7 @@ const JerseyScale = ({value,onChange,placeholder="Jersey"}:{value:string;onChang
               <button key={n} type="button" onClick={()=>setNum(n)} className={`px-1.5 py-1 rounded-md text-[8px] font-black transition-all ${idx===n?"bg-[#E30613] text-white":"bg-[var(--c-panel4)] text-[var(--c-textDim)] hover:bg-[var(--c-hover)]"}`}>{n}</button>
             ))}
           </div>
-        </div>
-      )}
+      </PopoverPortal>
     </div>
   )
 }
