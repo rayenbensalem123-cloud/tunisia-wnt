@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react"
 import { usePlayers } from "@/lib/players-context"
 import { useTranslate } from "@/lib/language-context"
 import { X, ShieldCheck, Camera, Upload } from "lucide-react"
+import { Select } from "@/components/pickers"
 
 export function CoachDialog({ open, onOpenChange, coach }: any) {
   const { tr } = useTranslate()
@@ -100,20 +101,21 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.role}</label>
-              <select 
+              {/* value stays a fixed English constant (matches how roles are
+                  stored/filtered elsewhere); only the visible label is translated */}
+              <Select
+                variant="soft" allowEmpty={false}
                 value={formData.role}
-                className="w-full bg-zinc-50 border border-zinc-100 p-4 rounded-2xl font-bold text-xs uppercase outline-none focus:border-black appearance-none"
-                onChange={e => setFormData({...formData, role: e.target.value})}
-              >
-                {/* value stays a fixed English constant (matches how roles are
-                    stored/filtered elsewhere); only the visible label is translated */}
-                <option value="HEAD COACH">{tr.coach.headCoach}</option>
-                <option value="ASSISTANT COACH">{tr.coach.assistantCoach}</option>
-                <option value="ANALYST">{tr.coach.analyst}</option>
-                <option value="MENTAL PREPARATION COACH">{tr.coach.mentalCoach}</option>
-                <option value="GK COACH">{tr.coach.gkCoach}</option>
-                <option value="FITNESS COACH">{tr.coach.fitnessCoach}</option>
-              </select>
+                onChange={v => setFormData({...formData, role: v})}
+                options={[
+                  { value: "HEAD COACH", label: tr.coach.headCoach },
+                  { value: "ASSISTANT COACH", label: tr.coach.assistantCoach },
+                  { value: "ANALYST", label: tr.coach.analyst },
+                  { value: "MENTAL PREPARATION COACH", label: tr.coach.mentalCoach },
+                  { value: "GK COACH", label: tr.coach.gkCoach },
+                  { value: "FITNESS COACH", label: tr.coach.fitnessCoach },
+                ]}
+              />
             </div>
             <div>
               <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.nationality}</label>

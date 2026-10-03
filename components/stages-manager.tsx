@@ -4,6 +4,7 @@ import { ChevronLeft, X, Plus, ArrowLeft, Calendar, CalendarDays, MapPin, Users,
 import ThemeToggle from "@/components/theme-toggle"
 import { useTheme } from "@/lib/theme-context"
 import { useTranslate } from "@/lib/language-context"
+import { DatePicker, Select } from "@/components/pickers"
 
 type Stage = {
   id?: number
@@ -367,20 +368,16 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
               </div>
               <div>
                 <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.categoryLabel}</label>
-                <select value={draft.teamCategory} onChange={e => setDraft({ ...draft, teamCategory: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all">
-                  {CATS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-                </select>
+                <Select variant="stage" allowEmpty={false} value={draft.teamCategory} onChange={v => setDraft({ ...draft, teamCategory: v })}
+                  options={CATS.map(c => ({ value: c.value, label: c.label }))}/>
               </div>
               <div>
                 <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.startLabel}</label>
-                <input type="date" value={draft.startDate} onChange={e => setDraft({ ...draft, startDate: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+                <DatePicker variant="stage" value={draft.startDate} onChange={v => setDraft({ ...draft, startDate: v })} placeholder={tr.stages.startLabel}/>
               </div>
               <div>
                 <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.endLabel}</label>
-                <input type="date" value={draft.endDate} onChange={e => setDraft({ ...draft, endDate: e.target.value })}
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+                <DatePicker variant="stage" value={draft.endDate} onChange={v => setDraft({ ...draft, endDate: v })} placeholder={tr.stages.endLabel}/>
               </div>
             </div>
 

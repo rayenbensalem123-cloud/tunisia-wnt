@@ -1,6 +1,5 @@
 "use client"
 import React, { useState, useMemo, useEffect, useRef } from "react"
-import { createPortal } from "react-dom"
 import {
   Plus, X, User, Search, Edit3, Camera, Check,
   LogOut, Goal, History, Trash2, Trophy,
@@ -28,6 +27,7 @@ import {
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
+import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper } from "@/components/pickers"
 
 // ─────────────────────────────────────────────
 // CONSTANTS
@@ -233,232 +233,6 @@ const COMPETITIONS = [
   {value:"World Cup",label:"World Cup"},
   {value:"African Cup",label:"AFCON"},
 ]
-
-// Shared popover shell for the custom date/age/jersey pickers below.
-// These pickers can open inside scrollable panels (.pm-body / .pm-scroll),
-// and a plain `position:absolute` popup gets clipped by the nearest
-// `overflow:auto` ancestor no matter its z-index — that's what caused the
-// calendar to render cut off / overlapping other fields. Portaling into
-// document.body with `position:fixed` coordinates (computed from the
-// trigger's own getBoundingClientRect) escapes that clipping entirely.
-const PopoverPortal = ({anchorRef,open,onClose,width,children}:{anchorRef:React.RefObject<HTMLElement|null>;open:boolean;onClose:()=>void;width:number;children:React.ReactNode}) => {
-  const popRef=useRef<HTMLDivElement>(null)
-  const [pos,setPos]=useState<{top:number;left:number}|null>(null)
-
-  useEffect(()=>{
-    if(!open){setPos(null);return}
-    const reposition=()=>{
-      const el=anchorRef.current
-      if(!el)return
-      const r=el.getBoundingClientRect()
-      const estHeight=popRef.current?.offsetHeight||360
-      let left=r.left
-      const maxLeft=window.innerWidth-width-8
-      if(left>maxLeft)left=Math.max(8,maxLeft)
-      let top=r.bottom+6
-      if(top+estHeight>window.innerHeight&&r.top-estHeight>0)top=r.top-estHeight-6
-      setPos({top,left})
-    }
-    reposition()
-    const onDown=(e:MouseEvent)=>{
-      const t=e.target as Node
-      if(anchorRef.current&&anchorRef.current.contains(t))return
-      if(popRef.current&&popRef.current.contains(t))return
-      onClose()
-    }
-    document.addEventListener("mousedown",onDown)
-    window.addEventListener("scroll",reposition,true)
-    window.addEventListener("resize",reposition)
-    return ()=>{
-      document.removeEventListener("mousedown",onDown)
-      window.removeEventListener("scroll",reposition,true)
-      window.removeEventListener("resize",reposition)
-    }
-  },[open])
-
-  if(!open||!pos||typeof document==="undefined")return null
-  return createPortal(
-    // Portaling to document.body escapes the .ftf-portal wrapper that carries the
-    // app's font (Oswald) and letter-spacing via a scoped CSS rule, so without
-    // restating them inline here the popup would silently fall back to the
-    // browser default font — same colors, wrong typography, looking off-theme.
-    <div ref={popRef} style={{position:"fixed",top:pos.top,left:pos.left,width,fontFamily:"'Oswald','Arial Narrow',Arial,sans-serif",letterSpacing:".02em"}} className="z-[300] rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
-      {children}
-    </div>,
-    document.body
-  )
-}
-
-// Custom-styled date picker — replaces the plain native browser calendar
-const DatePicker = ({value,onChange,placeholder="Select date"}:{value:string;onChange:(v:string)=>void;placeholder?:string}) => {
-  const [open,setOpen]=useState(false)
-  const ref=useRef<HTMLDivElement>(null)
-  const today=new Date()
-  const selected=value?new Date(value+"T00:00:00"):null
-  const [viewMonth,setViewMonth]=useState(selected||today)
-
-  const year=viewMonth.getFullYear(), month=viewMonth.getMonth()
-  const firstDay=new Date(year,month,1).getDay()
-  const daysInMonth=new Date(year,month+1,0).getDate()
-  const monthName=viewMonth.toLocaleDateString(undefined,{month:"long",year:"numeric"})
-  const fmt=(d:Date)=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-  const isSameDay=(a:Date,b:Date)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()
-
-  const cells=[]
-  for(let i=0;i<firstDay;i++)cells.push(null)
-  for(let d=1;d<=daysInMonth;d++)cells.push(d)
-
-  return(
-    <div ref={ref} className="relative">
-      <button type="button" onClick={()=>setOpen(o=>!o)} className="w-full flex items-center justify-between gap-2 px-4 py-4 bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.14)] rounded-2xl text-xs font-bold text-left transition-all hover:border-[#E30613]/40">
-        <span className="flex items-center gap-2">
-          <Calendar size={13} className="text-[#f6c744] shrink-0"/>
-          <span className={value?"text-[var(--c-text)]":"text-[var(--c-textFaint)]"}>{value?new Date(value+"T00:00:00").toLocaleDateString(undefined,{day:"2-digit",month:"short",year:"numeric"}):placeholder}</span>
-        </span>
-        <ChevronDown size={12} className={open?"text-[#E30613] rotate-180 transition-transform":"text-[var(--c-textDim)] transition-transform"}/>
-      </button>
-      <PopoverPortal anchorRef={ref} open={open} onClose={()=>setOpen(false)} width={256}>
-          <div className="flex items-center justify-between mb-2 px-1">
-            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronLeft size={14}/></button>
-            <span className="text-[11px] font-black uppercase tracking-wider text-[var(--c-text)]">{monthName}</span>
-            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronRight size={14}/></button>
-          </div>
-          <div className="grid grid-cols-7 gap-0.5 mb-1">
-            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-[var(--c-textDim)] text-center py-1">{d}</div>))}
-          </div>
-          <div className="grid grid-cols-7 gap-0.5">
-            {cells.map((d,i)=>{
-              if(d===null)return <div key={i}/>
-              const cellDate=new Date(year,month,d)
-              const isToday=isSameDay(cellDate,today)
-              const isSelected=selected&&isSameDay(cellDate,selected)
-              return(
-                <button type="button" key={i} onClick={()=>{onChange(fmt(cellDate));setOpen(false)}}
-                  className={`aspect-square rounded-full text-[10px] font-bold transition-all flex items-center justify-center
-                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-[var(--c-text)] hover:bg-[var(--c-panel4)]'}`}>
-                  {d}
-                </button>
-              )
-            })}
-          </div>
-      </PopoverPortal>
-    </div>
-  )
-}
-
-// ─────────────────────────────────────────────
-// AGE CALENDAR — custom well-designed calendar for picking the age (birthdate).
-// Emits DD/MM/YYYY to stay 100% compatible with calculateAge() and the seed format (05/03/1980).
-// ─────────────────────────────────────────────
-const AgeCalendar = ({value,onChange,placeholder="Select birthdate"}:{value:string;onChange:(v:string)=>void;placeholder?:string}) => {
-  const [open,setOpen]=useState(false)
-  const ref=useRef<HTMLDivElement>(null)
-  const today=new Date()
-  const parseDMY=(v:string)=>{ if(!v||!v.includes("/"))return null; const [d,m,y]=v.split("/").map(Number); return new Date(y,m-1,d) }
-  const selected=parseDMY(value)
-  const [viewMonth,setViewMonth]=useState(selected||today)
-
-  const year=viewMonth.getFullYear(), month=viewMonth.getMonth()
-  const firstDay=new Date(year,month,1).getDay()
-  const daysInMonth=new Date(year,month+1,0).getDate()
-  const monthName=viewMonth.toLocaleDateString(undefined,{month:"long",year:"numeric"})
-  const fmt=(d:Date)=>`${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
-  const isSameDay=(a:Date,b:Date)=>a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate()
-  const calculateAgeNow=(bd:string)=>{ if(!bd?.includes("/"))return 0; const [d,m,y]=bd.split("/").map(Number); const b=new Date(y,m-1,d); const n=new Date(); let age=n.getFullYear()-b.getFullYear(); if(n.getMonth()<b.getMonth()||(n.getMonth()===b.getMonth()&&n.getDate()<b.getDate()))age--; return age }
-
-  const cells=[]
-  for(let i=0;i<firstDay;i++)cells.push(null)
-  for(let d=1;d<=daysInMonth;d++)cells.push(d)
-
-  return(
-    <div ref={ref} className="relative">
-      <button type="button" onClick={()=>setOpen(o=>!o)} className="w-full flex items-center justify-between gap-2 px-4 py-4 bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.14)] rounded-2xl text-xs font-bold text-left transition-all hover:border-[#E30613]/40">
-        <span className="flex items-center gap-2">
-          <Calendar size={13} className="text-[#f6c744] shrink-0"/>
-          <span className={value?"text-[var(--c-text)]":"text-[var(--c-textFaint)]"}>{value?fmt(parseDMY(value)||today):placeholder}</span>
-        </span>
-        <ChevronDown size={12} className={open?"text-[#E30613] rotate-180 transition-transform":"text-[var(--c-textDim)] transition-transform"}/>
-      </button>
-      <PopoverPortal anchorRef={ref} open={open} onClose={()=>setOpen(false)} width={288}>
-          <div className="flex items-center justify-between mb-2 px-1">
-            <button type="button" onClick={()=>setViewMonth(new Date(year,month-1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronLeft size={14}/></button>
-            <span className="text-[11px] font-black uppercase tracking-wider text-[var(--c-text)]">{monthName}</span>
-            <button type="button" onClick={()=>setViewMonth(new Date(year,month+1,1))} className="p-1.5 rounded-full hover:bg-[var(--c-panel4)] text-[var(--c-text)] transition-all"><ChevronRight size={14}/></button>
-          </div>
-          <div className="grid grid-cols-7 gap-0.5 mb-1">
-            {["S","M","T","W","T","F","S"].map((d,i)=>(<div key={i} className="text-[8px] font-black text-[var(--c-textDim)] text-center py-1">{d}</div>))}
-          </div>
-          <div className="grid grid-cols-7 gap-0.5">
-            {cells.map((d,i)=>{
-              if(d===null)return <div key={i}/>
-              const cellDate=new Date(year,month,d)
-              const isToday=isSameDay(cellDate,today)
-              const isSelected=selected&&isSameDay(cellDate,selected)
-              return(
-                <button type="button" key={i} onClick={()=>{onChange(fmt(cellDate));setOpen(false)}}
-                  className={`aspect-square rounded-full text-[10px] font-bold transition-all flex items-center justify-center
-                    ${isSelected?'bg-[#E30613] text-white':isToday?'border border-[#E30613] text-[#E30613]':'text-[var(--c-text)] hover:bg-[var(--c-panel4)]'}`}>
-                  {d}
-                </button>
-              )
-            })}
-          </div>
-          {selected&&(
-            <div className="mt-2 pt-2 border-t border-[rgba(var(--line-rgb),.14)] flex items-center justify-between px-1">
-              <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Born {fmt(selected)}</span>
-              <span className="px-2 py-1 rounded-lg bg-[#E30613]/10 text-[#E30613] text-[10px] font-black">{calculateAgeNow(fmt(selected))} YRS</span>
-            </div>
-          )}
-      </PopoverPortal>
-    </div>
-  )
-}
-
-// ─────────────────────────────────────────────
-// JERSEY SCALE — custom designed jersey-number scale (0-99), replaces native type="number".
-// Designed stepper + scale bar, matching the app's visual language.
-// ─────────────────────────────────────────────
-const JerseyScale = ({value,onChange,placeholder="Jersey"}:{value:string;onChange:(v:string)=>void;placeholder?:string}) => {
-  const [open,setOpen]=useState(false)
-  const ref=useRef<HTMLDivElement>(null)
-  const num=value===""?0:(parseInt(value,10)||0)
-  const idx=Math.max(0,Math.min(99,num))
-  const setNum=(n:number)=>onChange(String(Math.max(0,Math.min(99,n))))
-
-  const marks=[]
-  for(let i=0;i<=99;i+=10)marks.push(i)
-
-  return(
-    <div ref={ref} className="relative">
-      <button type="button" onClick={()=>setOpen(o=>!o)} className="w-full flex items-center justify-center gap-2 px-4 py-4 bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.14)] rounded-2xl text-xs font-bold transition-all hover:border-[#E30613]/40">
-        <span className="text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)] shrink-0">Nº</span>
-        <span className={value?"text-2xl font-black italic text-[#E30613]":"text-2xl font-black italic text-[var(--c-textFaint)]"}>{value&&value!=="0"?value:(value==="0"?"0":placeholder)}</span>
-        <ChevronDown size={12} className={open?"text-[#E30613] rotate-180 transition-transform":"text-[var(--c-textDim)] transition-transform"}/>
-      </button>
-      <PopoverPortal anchorRef={ref} open={open} onClose={()=>setOpen(false)} width={208}>
-          {/* BIG DISPLAY */}
-          <div className="flex items-center justify-between mb-3">
-            <button type="button" onClick={()=>setNum(idx-1)} className="w-9 h-9 rounded-xl bg-[var(--c-panel4)] hover:bg-[#E30613]/10 text-[var(--c-textDim)] hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Minus size={14}/></button>
-            <span className="text-4xl font-black italic text-[#E30613] leading-none">{idx}</span>
-            <button type="button" onClick={()=>setNum(idx+1)} className="w-9 h-9 rounded-xl bg-[var(--c-panel4)] hover:bg-[#E30613]/10 text-[var(--c-textDim)] hover:text-[#E30613] flex items-center justify-center font-black transition-all"><Plus size={14}/></button>
-          </div>
-          {/* SCALE BAR 0-99 — the fill bar previously had no background color set, so it
-              was fully invisible; it now actually renders progress like it was meant to. */}
-          <div className="relative h-9 rounded-xl bg-[var(--c-panel4)] overflow-hidden">
-            <div className="absolute inset-y-0 left-0 w-[var(--fill)] bg-[#E30613]/35 transition-all" style={{"--fill":`${(idx/99)*100}%`} as React.CSSProperties}></div>
-          </div>
-          <div className="flex justify-between px-0.5 mt-1 mb-2">
-            {marks.map(m=>(<span key={m} className="text-[7px] font-black text-[var(--c-textDim)]">{m}</span>))}
-          </div>
-          <div className="flex flex-wrap gap-1 mb-1">
-            {[1,5,7,8,9,10,13,17,23,66,99].map(n=>(
-              <button key={n} type="button" onClick={()=>setNum(n)} className={`px-1.5 py-1 rounded-md text-[8px] font-black transition-all ${idx===n?"bg-[#E30613] text-white":"bg-[var(--c-panel4)] text-[var(--c-textDim)] hover:bg-[var(--c-hover)]"}`}>{n}</button>
-            ))}
-          </div>
-      </PopoverPortal>
-    </div>
-  )
-}
 
 const Dropdown = ({trigger,children,align="right"}:{trigger:React.ReactNode;children:React.ReactNode;align?:"left"|"right"}) => {
   const [open,setOpen]=useState(false)
@@ -667,6 +441,13 @@ export default function EliteSquadApp() {
   const [isFormOpen,setIsFormOpen]=useState(false)
   const [editingId,setEditingId]=useState<number|null>(null)
   const [confirmState,setConfirmState]=useState<{message:string;resolve:(v:boolean)=>void}|null>(null)
+  // themed replacement for the old native window.prompt() "Load which lineup?"
+  const [lineupPicker,setLineupPicker]=useState<{templates:any[]}|null>(null)
+  const applyLineupTemplate=(t:any)=>{
+    const orderedIds=(FORMATIONS[t.formation]||[]).map((s:any)=>t.slots[s.slotKey]).filter(Boolean)
+    setMatchForm({...matchForm,squad:[...orderedIds,...matchForm.squad.slice(11)],formation:t.formation,formationSlots:t.slots})
+    setLineupPicker(null)
+  }
   const askConfirm=(message:string):Promise<boolean>=>new Promise(resolve=>setConfirmState({message,resolve}))
   const [isMatchOpen,setIsMatchOpen]=useState(false)
   const [scheduleOpen,setScheduleOpen]=useState(false)
@@ -1727,8 +1508,8 @@ export default function EliteSquadApp() {
               </div>
             </div>
             <div className="flex gap-2">
-              <div className="flex-1"><DatePicker value={injForm.occurred_on} onChange={(v)=>setInjForm({...injForm,occurred_on:v})} placeholder="Date occurred"/></div>
-              <div className="flex-1"><DatePicker value={injForm.expected_return} onChange={(v)=>setInjForm({...injForm,expected_return:v})} placeholder="Expected return"/></div>
+              <div className="flex-1"><DatePicker variant="zinc" value={injForm.occurred_on} onChange={(v)=>setInjForm({...injForm,occurred_on:v})} placeholder="Date occurred"/></div>
+              <div className="flex-1"><DatePicker variant="zinc" value={injForm.expected_return} onChange={(v)=>setInjForm({...injForm,expected_return:v})} placeholder="Expected return"/></div>
             </div>
             <textarea placeholder="Notes (optional)" value={injForm.notes} onChange={e=>setInjForm({...injForm,notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none resize-none"/>
             <div className="flex gap-2 pt-1">
@@ -1791,9 +1572,8 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               {activeTab==="PLAYERS"?(
                 <>
                   <div className="mt-3 grid grid-cols-2 gap-3">
-                    <select value={form.position} onChange={e=>setForm({...form,position:e.target.value})} className="pm-field pm-select" required>
-                      <option value="">{tr.form.position}</option>{PLAYER_POSITIONS.filter(p=>p!=="ALL").map(p=><option key={p} value={p}>{p}</option>)}
-                    </select>
+                    <Select value={form.position} onChange={v=>setForm({...form,position:v})} placeholder={tr.form.position} required
+                      options={PLAYER_POSITIONS.filter(p=>p!=="ALL").map(p=>({value:p,label:p}))}/>
                     <JerseyScale value={form.jerseyNumber} onChange={v=>setForm({...form,jerseyNumber:v})} placeholder={tr.form.jersey}/>
                     <input placeholder={tr.form.heightCm} value={form.height} onChange={e=>setForm({...form,height:e.target.value})} className="pm-field"/>
                     <input placeholder={tr.form.caps} value={form.natMatches} onChange={e=>setForm({...form,natMatches:e.target.value})} className="pm-field"/>
@@ -1805,20 +1585,18 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   <div className="mt-3 pm-tile">
                     <p className="pm-label flex items-center gap-1.5"><AlertTriangle size={10} className="text-[#f6c744]"/> {tr.form.discipline}</p>
                     <div className="grid grid-cols-3 gap-2">
-                      <div><label className="pm-label">{tr.form.yellowCards}</label><input type="number" min="0" max="10" value={form.yellowCards} onChange={e=>setForm({...form,yellowCards:e.target.value})} className="pm-field"/></div>
-                      <div><label className="pm-label">{tr.form.redCards}</label><input type="number" min="0" max="5" value={form.redCards} onChange={e=>setForm({...form,redCards:e.target.value})} className="pm-field"/></div>
+                      <div><label className="pm-label">{tr.form.yellowCards}</label><NumberStepper min={0} max={10} accent="text-[#f6c744]" value={form.yellowCards} onChange={v=>setForm({...form,yellowCards:v})}/></div>
+                      <div><label className="pm-label">{tr.form.redCards}</label><NumberStepper min={0} max={5} accent="text-[#e3062c]" value={form.redCards} onChange={v=>setForm({...form,redCards:v})}/></div>
                       <div><label className="pm-label">{tr.form.suspended}</label><button type="button" onClick={()=>setForm({...form,suspended:!form.suspended})} className={`pm-chip pm-field justify-start ${form.suspended?'pm-chip-on':''}`}>{form.suspended?tr.profile.yes:tr.profile.no}</button></div>
                     </div>
                   </div>
                 </>
               ):(
                 <div className="mt-3 grid grid-cols-2 gap-3">
-                  <select value={form.position} onChange={e=>setForm({...form,position:e.target.value})} className="pm-field pm-select col-span-2" required>
-                    <option value="">{tr.form.coachingRole}</option>{COACH_POSITIONS.map(p=><option key={p} value={p}>{p}</option>)}
-                  </select>
-                  <select value={form.natMatches} onChange={e=>setForm({...form,natMatches:e.target.value})} className="pm-field pm-select">
-                    <option value="">{tr.form.license}</option>{CAF_LICENSES.map(l=><option key={l} value={l}>{l}</option>)}
-                  </select>
+                  <Select className="col-span-2" value={form.position} onChange={v=>setForm({...form,position:v})} placeholder={tr.form.coachingRole} required
+                    options={COACH_POSITIONS.map(p=>({value:p,label:p}))}/>
+                  <Select value={form.natMatches} onChange={v=>setForm({...form,natMatches:v})} placeholder={tr.form.license}
+                    options={CAF_LICENSES.map(l=>({value:l,label:l}))}/>
                   <input placeholder={tr.form.nationality} value={form.nationality} onChange={e=>setForm({...form,nationality:e.target.value})} className="pm-field"/>
                   <div className="col-span-2 pm-tile">
                     <p className="pm-label">Preferred Tactics / Formation</p>
@@ -2399,7 +2177,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     </div>
                     <div>
                       <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Match Date</label>
-                      <DatePicker value={matchForm.date} onChange={(v)=>setMatchForm({...matchForm,date:v})} placeholder="Match date"/>
+                      <DatePicker variant="big" value={matchForm.date} onChange={(v)=>setMatchForm({...matchForm,date:v})} placeholder="Match date"/>
                     </div>
                   </div>
 
@@ -2450,14 +2228,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 <div className="space-y-5">
                   <button type="button" onClick={async()=>{
                     const templates=await fetchSquadTemplates(teamCat!)
-                    if(templates.length===0){alert("No saved lineups yet — build one in Squad Lab first");return}
-                    const names=templates.map((t:any,i:number)=>`${i+1}. ${t.name} (${t.formation})`).join("\n")
-                    const pick=window.prompt(`Load which lineup?\n\n${names}\n\nEnter the number:`)
-                    const idx=parseInt(pick||"")-1
-                    if(isNaN(idx)||!templates[idx])return
-                    const t=templates[idx]
-                    const orderedIds=(FORMATIONS[t.formation]||[]).map((s:any)=>t.slots[s.slotKey]).filter(Boolean)
-                    setMatchForm({...matchForm,squad:[...orderedIds,...matchForm.squad.slice(11)],formation:t.formation,formationSlots:t.slots})
+                    setLineupPicker({templates})
                   }} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-[#f6c744]/40 bg-[#f6c744]/5 text-[#f6c744] text-[9px] font-black uppercase tracking-wider hover:bg-[#f6c744]/10 transition-all">
                     <Users size={12}/>Load from Squad Lab
                   </button>
@@ -2659,6 +2430,40 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
       {/* ═══════════════════════════════════════════
           CUSTOM CONFIRM DIALOG — replaces native browser confirm()
       ═══════════════════════════════════════════ */}
+      {lineupPicker&&(
+        <div className="pm-backdrop" style={{zIndex:400}} onClick={()=>setLineupPicker(null)}>
+          <div className="pm-panel pm-panel-sm" onClick={e=>e.stopPropagation()}>
+            <div className="pm-head">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#f6c744]/12 border border-[#f6c744]/35 flex items-center justify-center">
+                  <Users size={14} className="text-[#f6c744]"/>
+                </div>
+                <span className="pm-title">Load lineup</span>
+              </div>
+              <button onClick={()=>setLineupPicker(null)} className="pm-close"><X size={14}/></button>
+            </div>
+            <div className="pm-body">
+              {lineupPicker.templates.length===0?(
+                <p className="text-[12px] font-semibold text-[var(--c-textMid)] leading-relaxed">No saved lineups yet — build one in Squad Lab first.</p>
+              ):(
+                <div className="flex flex-col gap-1.5 max-h-[50dvh] overflow-y-auto pk-scroll">
+                  {lineupPicker.templates.map((t:any,i:number)=>(
+                    <button key={t.id??i} type="button" onClick={()=>applyLineupTemplate(t)}
+                      className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-[var(--c-panel4)] border border-[rgba(var(--line-rgb),.14)] hover:border-[#E30613]/50 hover:bg-[#E30613]/8 text-left transition-all">
+                      <span className="text-[12px] font-black uppercase tracking-wide text-[var(--c-text)] truncate">{t.name}</span>
+                      <span className="shrink-0 px-2 py-1 rounded-lg bg-[#f6c744]/12 text-[#f6c744] text-[10px] font-black">{t.formation}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="pm-foot">
+              <button onClick={()=>setLineupPicker(null)} className="pm-btn pm-btn-ghost">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {confirmState&&(
         <div className="pm-backdrop" style={{zIndex:400}}>
           <div className="pm-panel pm-panel-sm">
@@ -2696,7 +2501,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
 
             <input placeholder="Opponent" value={scheduleForm.opponent} onChange={e=>setScheduleForm({...scheduleForm,opponent:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[12px] font-bold outline-none"/>
 
-            <DatePicker value={scheduleForm.date} onChange={(v)=>setScheduleForm({...scheduleForm,date:v})} placeholder="Match date"/>
+            <DatePicker variant="zinc" value={scheduleForm.date} onChange={(v)=>setScheduleForm({...scheduleForm,date:v})} placeholder="Match date"/>
 
             <div>
               <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">Competition</p>
@@ -2753,10 +2558,8 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     <span className="w-9 h-7 rounded-lg bg-[rgba(var(--line-rgb),.1)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textBlue)] text-[10px] font-black flex items-center justify-center">{h2h.d}D</span>
                     <span className="w-9 h-7 rounded-lg bg-[#e3062c] text-white text-[10px] font-black flex items-center justify-center">{h2h.l}L</span>
                   </div>}
-                  {uniqueOpponents.length>0&&<select value={opponentFilter} onChange={e=>setOpponentFilter(e.target.value)} className="px-2.5 py-1.5 rounded-lg bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.2)] outline-none text-[8px] font-bold text-[var(--c-textBlue)]">
-                    <option value="" className="bg-[var(--c-surface)]">All opponents</option>
-                    {uniqueOpponents.map((o:any)=><option key={o} value={o} className="bg-[var(--c-surface)]">{o}</option>)}
-                  </select>}
+                  {uniqueOpponents.length>0&&<Select variant="mini" value={opponentFilter} onChange={setOpponentFilter} placeholder="All opponents"
+                    options={uniqueOpponents.map((o:any)=>({value:String(o),label:String(o)}))}/>}
                 </div>
                 <button onClick={()=>{setIsHistoryOpen(false);setSelMatch(null);setOpponentFilter("")}} className="pm-close shrink-0"><X size={15}/></button>
               </div>
