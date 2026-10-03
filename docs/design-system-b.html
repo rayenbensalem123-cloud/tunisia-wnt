@@ -1,0 +1,2411 @@
+<!doctype html>
+<html lang="fr" dir="ltr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Candidat B — Document institutionnel · Tunisia WNT · Elite Squad Manager</title>
+
+<!--
+  ============================================================================
+  CANDIDAT B — « DOCUMENT INSTITUTIONNEL »
+  Prototype de révoilement visuel. Fichier unique, zéro dépendance réseau.
+  Aucun fichier de l'application existante n'est modifié par ce prototype.
+
+  RÈGLES TENUES (brief §3) :
+   · Corps de texte ≥ 13 px. Le plancher absolu est --type-micro: 13px.
+   · Chasse fixe (tabular-nums) + monospace pour tout chiffre, aligné à la fin.
+   · UN seul accent (--accent-1), 2 usages maximum par écran. Voir les
+     commentaires « BUDGET ACCENT » devant chaque écran.
+   · Zéro ombre portée. Séparation par filet (--rule-*), jamais par profondeur.
+   · Rayon 2–3 px. Jamais 12 px.
+   · Zéro dégradé, sauf la surface hero de l'écran « Catégorie » (autorisé §3).
+   · Tout composant existe en :focus-visible et en état vide.
+
+  THÈME (brief §2) : clair uniquement, un seul thème.
+  Voir §THEME ci-dessous pour la justification du traitement de
+  prefers-color-scheme.
+  ============================================================================
+-->
+
+<style>
+/* ==========================================================================
+   0. THÈME — décision explicite
+   --------------------------------------------------------------------------
+   Le brief demande « clair d'abord, un seul thème » (§2) ET
+   « prefers-color-scheme gérés » (§4). Ces deux lignes se contredisent.
+
+   Arbitrage retenu : UN SEUL THÈME, clair.
+   Raison : le thème sombre de l'application existante n'est pas « à réparer »,
+   il est à supprimer (≈700 hex en dur lui obéissent pas). Le reproduire ici,
+   même proprement, rétablirait exactement le défaut que le candidat B doit
+   demonstrates — deux systèmes qui se percutent.
+
+   prefers-color-scheme est donc « géré » au sens fort : on l'assume et on
+   l'annule au niveau du moteur, via `color-scheme: light`. Sans cela, Chrome
+   et Safari assombrissent automatiquement les contrôles de formulaire natifs
+   (select, input, scrollbar) sur un OS en mode sombre, ce qui produirait un
+   thème sombre non voulu et non maîtrisé. `color-scheme: light` désactive
+   exactement cette auto-inversion, et rien d'autre.
+
+   Si un jour le candidat B est retenu, c'est LE point à rouvrir en premier :
+   un second thème correct se construit ici en réécrivant les jetons
+   --surface-* / --ink-* dans un bloc media, rien d'autre dans la feuille.
+   ========================================================================== */
+:root { color-scheme: light; }
+
+/* ==========================================================================
+   1. JETONS — couche unique, conventions du brief §3
+   ========================================================================== */
+:root {
+  /* ---- Surfaces : papier, feuille, creux --------------------------------- */
+  --surface-paper:  #F7F3EA;  /* fond de page, le papier                     */
+  --surface-sheet:  #FFFCF5;  /* feuille surélevée : fiche joueur, modale    */
+  --surface-sunken: #EFE9DB;  /* creux : champs, lignes alternées           */
+  --surface-hero:   #EFE6D3;  /* la SEULE surface autorisée en dégradé      */
+
+  /* ---- Encre : quatre valeurs, toutes ≥ 4.5:1 sur --surface-paper ------- */
+  /* Contrastes mesurés sur #F7F3EA (formule WCAG 2.1) :                     */
+  /*   --ink-1  16.12:1   --ink-2  8.90:1   --ink-3  4.78:1   --ink-4  4.67:1 */
+  /* --ink-4 est réservé aux libellés posés sur le papier. Sur la carte      */
+  /* encre --ink-1 du pied de tableau (écran Stats), la même valeur plafonne  */
+  /* à 2.15:1 — voir la note PIED-DE-TABLEAU plus bas.                      */
+  --ink-1: #1A1714;   /* titres, chiffres, texte fort        */
+  --ink-2: #4A4239;   /* texte de corps                      */
+  --ink-3: #756A5A;   /* étiquettes, métadonnées             */
+  --ink-4: #776C54;   /* labels non essentielles, ≥13px      */
+  --ink-on-accent: #FFFFFF;
+
+  /* ---- Filets : la seule Authorized moyen de séparation ------------------ */
+  --rule-hair:  #DCD2C0;   /* filet intra-ligne, 1px                      */
+  --rule-firm:  #C0B29A;   /* filet de bordure de bloc                    */
+  --rule-heavy: #1A1714;   /* filet structurel, 2px, armature du document   */
+  --rule-dotted:#C9BCA2;   /* lignée pointillée, contours de formulaire     */
+
+  /* ---- Accent : UN SEUL. Réservé à l'exclusion (suspension, carton rouge)*/
+  /* 6.3:1 sur papier. Budget : 2 usages max par écran.                    */
+  --accent-1:      #B3121B;
+  --accent-1-soft: #F4E4E1;  /* fond lavé, uniquement à l'intérieur d'un
+                                composant déjà porteur de l'accent          */
+  --accent-1-deep: #96101A;  /* survol du bouton accentué                 */
+  --ink-1-lift:    #2E2823;  /* survol du bouton primaire encre           */
+
+  /* ---- Espace : échelle unique ------------------------------------------ */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4rem;
+
+  /* ---- Type : plancher à 13px, jamais moins ------------------------------ */
+  --font-display: ui-serif, Georgia, "Times New Roman", serif;
+  --font-body:    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-mono:    ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+
+  --type-display:  2rem;      /* 32px  titres d'écran, serif                */
+  --type-title:    1.375rem;  /* 22px  titres de section, serif             */
+  --type-lead:     1.0625rem; /* 17px  chapô                               */
+  --type-body:     0.9375rem; /* 15px  corps de texte                      */
+  --type-small:    0.8125rem; /* 13px  étiquettes, méta                    */
+  --type-micro:    0.8125rem; /* 13px  PLAFCHER ABSOLU                     */
+  --type-num:      0.9375rem; /* 15px  chiffres, monospace                 */
+  --type-num-lg:   1.125rem;  /* 18px  chiffres de total                   */
+
+  /* ---- Rayon : 2 à 4 px max --------------------------------------------- */
+  --radius-1: 2px;
+  --radius-2: 3px;
+  --radius-3: 4px;   /* plafond du brief                                */
+
+  --measure: 68ch;
+  --sheet-max: 1180px;
+}
+
+/* ==========================================================================
+   2. RESET
+   ========================================================================== */
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0;
+  background: var(--surface-paper);
+  color: var(--ink-2);
+  font-family: var(--font-body);
+  font-size: var(--type-body);
+  line-height: 1.5;
+  /* Le grain du papier est une texture CSS, pas une image. */
+  background-image:
+    radial-gradient(circle at 20% 12%, rgba(26,23,20,.018) 0 1px, transparent 1px),
+    radial-gradient(circle at 78% 64%, rgba(26,23,20,.014) 0 1px, transparent 1px);
+  background-size: 7px 7px, 11px 11px;
+}
+h1, h2, h3, h4, p, figure, dl, dd { margin: 0; }
+ul, ol { margin: 0; padding: 0; list-style: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: pointer; }
+table { border-collapse: collapse; width: 100%; }
+
+/* ==========================================================================
+   3. FOCUS — visible partout, jamais `outline: none` sans remplacement
+   L'anneau de focus est en ENCRE, pas en accent : le budget accent est
+   réservé à l'exclusion, et l'encre sur papier est le contraste maximal
+   disponible (16.9:1). Il est visible sur fond papier comme sur fond encre.
+   ========================================================================== */
+:where(a, button, input, select, textarea, [tabindex], summary):focus-visible {
+  outline: 2px solid var(--ink-1);
+  outline-offset: 2px;
+  border-radius: var(--radius-1);
+}
+.focus-inset:focus-visible { outline-offset: -3px; }
+/* Cible de saut de navigation (`main`) et conteneurs de panneau : ces
+   éléments reçoivent le focus par programme, pas au clavier. L'anneau est
+   retiré AU CLIC et conservé AU CLAVIER — il n'est donc jamais absent
+   là où l'utilisateur navigue au clavier. */
+[tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+[tabindex="-1"]:focus-visible { outline: 2px solid var(--ink-1); outline-offset: 2px; }
+
+.skip {
+  position: absolute; inset-inline-start: var(--space-4); top: var(--space-4);
+  z-index: 60; transform: translateY(-200%);
+  background: var(--ink-1); color: var(--surface-sheet);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--type-small); font-weight: 600;
+  border-radius: var(--radius-1);
+  text-decoration: none;
+}
+.skip:focus { transform: translateY(0); }
+
+/* ==========================================================================
+   4. TYPOGRAPHIE
+   ========================================================================== */
+.eyebrow {
+  font-size: var(--type-micro);
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.label {
+  font-size: var(--type-micro);
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.serif { font-family: var(--font-display); font-weight: 400; color: var(--ink-1); }
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  letter-spacing: -.01em;
+  color: var(--ink-1);
+  text-align: end;
+}
+.u-accent { color: var(--accent-1); }
+
+/* ==========================================================================
+   5. ARMATURE DU DOCUMENT
+   Le produit est présenté comme une feuille imprimée : filet structurel en
+   tête et en pied, une seule colonne de lecture, gouttière généreuse.
+   ========================================================================== */
+.sheet {
+  max-width: var(--sheet-max);
+  margin-inline: auto;
+  background: var(--surface-paper);
+  border-inline: 1px solid var(--rule-hair);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.doc-head {
+  border-block: 2px solid var(--rule-heavy);
+  border-block-end-width: 1px;
+  padding-block: var(--space-5) var(--space-3);
+}
+.doc-head__top {
+  display: flex; flex-wrap: wrap; gap: var(--space-3) var(--space-5);
+  align-items: baseline; justify-content: space-between;
+}
+.doc-head__title {
+  font-family: var(--font-display);
+  font-size: var(--type-display);
+  line-height: 1.1;
+  letter-spacing: -.015em;
+  color: var(--ink-1);
+  margin-block-start: var(--space-2);
+}
+.doc-head__meta {
+  display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5);
+  margin-block-start: var(--space-3);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--rule-hair);
+  font-size: var(--type-small);
+}
+.doc-head__meta > div { display: flex; gap: var(--space-2); align-items: baseline; }
+.doc-head__meta dt { color: var(--ink-3); font-size: var(--type-micro);
+  letter-spacing: .07em; text-transform: uppercase; font-weight: 600; }
+.doc-head__meta dd { color: var(--ink-1); font-weight: 600; }
+
+.doc-foot {
+  margin-block-start: auto;
+  border-block-start: 1px solid var(--rule-hair);
+  border-block-end: 2px solid var(--rule-heavy);
+  padding-block: var(--space-4);
+  display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5);
+  justify-content: space-between; align-items: baseline;
+  font-size: var(--type-small);
+  color: var(--ink-3);
+}
+
+/* ==========================================================================
+   6. ONGLETS — routeur d'écrans, clavier complet
+   ========================================================================== */
+.tabs {
+  display: flex; flex-wrap: wrap;
+  border-block-end: 1px solid var(--rule-hair);
+  background: var(--surface-paper);
+  position: sticky; top: 0; z-index: 20;
+}
+.tab {
+  appearance: none;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--type-small);
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  border-block-end: 2px solid transparent;
+  margin-block-end: -1px;
+  white-space: nowrap;
+}
+.tab:hover { color: var(--ink-1); background: var(--surface-sunken); }
+.tab[aria-selected="true"] {
+  color: var(--ink-1);
+  border-block-end-color: var(--rule-heavy);
+  background: var(--surface-paper);
+}
+.tab__count {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-4);
+  margin-inline-start: var(--space-2);
+  font-weight: 400;
+}
+
+main { flex: 1; padding-block: var(--space-6); }
+.panel[hidden] { display: none; }
+
+/* En-tête d'écran : filet + numéro de section, comme un sommaire */
+.panel__head {
+  border-block-end: 1px solid var(--rule-hair);
+  padding-block-end: var(--space-3);
+  margin-block-end: var(--space-5);
+  display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5);
+  align-items: baseline; justify-content: space-between;
+}
+.panel__title {
+  font-family: var(--font-display);
+  font-size: var(--type-title);
+  line-height: 1.15;
+  color: var(--ink-1);
+  letter-spacing: -.01em;
+}
+.panel__ref {
+  font-family: var(--font-mono);
+  font-size: var(--type-micro);
+  color: var(--ink-4);
+  letter-spacing: .04em;
+}
+
+/* ==========================================================================
+   7. BLOCS DE SUBSTITUTION D'IMAGE  (.ph)
+   Aucune URL distante : un aplat sobre, une initiale, une trame.
+   ========================================================================== */
+.ph {
+  position: relative;
+  background-color: var(--surface-sunken);
+  background-image:
+    repeating-linear-gradient(135deg,
+      rgba(26,23,20,.035) 0 1px, transparent 1px 6px);
+  color: var(--ink-4);
+  display: grid; place-items: center;
+  overflow: hidden;
+  font-family: var(--font-mono);
+  font-size: var(--type-small);
+  letter-spacing: .04em;
+}
+.ph::after {
+  content: attr(data-tag);
+  position: absolute; inset-block-end: 0; inset-inline: 0;
+  font-size: var(--type-micro);
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  text-align: center;
+  padding: 2px var(--space-1);
+  background: var(--surface-paper);
+  border-block-start: 1px solid var(--rule-hair);
+  color: var(--ink-4);
+}
+.ph--jersey {
+  --n: "00";
+  font-size: var(--type-num-lg);
+  color: var(--ink-3);
+}
+.ph--jersey::before {
+  content: var(--n);
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ==========================================================================
+   8. BOUTONS
+   ========================================================================== */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  gap: var(--space-2);
+  min-height: 40px;                     /* cible tactile confortable */
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--type-small);
+  font-weight: 600;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+  border: 1px solid var(--rule-heavy);
+  border-radius: var(--radius-1);
+  background: var(--surface-sheet);
+  color: var(--ink-1);
+  text-decoration: none;
+  transition: background-color .12s linear, color .12s linear;
+}
+.btn:hover { background: var(--surface-sunken); }
+.btn:active { background: var(--rule-hair); }
+.btn[disabled], .btn[aria-disabled="true"] {
+  color: var(--ink-4); border-color: var(--rule-dotted);
+  background: var(--surface-paper);
+  cursor: not-allowed;
+}
+.btn--primary {
+  background: var(--ink-1); color: var(--surface-sheet);
+  border-color: var(--ink-1);
+}
+.btn--primary:hover { background: var(--ink-1-lift); }
+/* Le seul bouton accentué du système. Compter dans le budget de l'écran. */
+.btn--accent {
+  background: var(--accent-1); color: var(--ink-on-accent);
+  border-color: var(--accent-1);
+}
+.btn--accent:hover { background: var(--accent-1-deep); }
+.btn--ghost { border-color: var(--rule-firm); background: transparent; }
+.btn--ghost:hover { background: var(--surface-sunken); }
+.btn--sm { min-height: 32px; padding: var(--space-1) var(--space-3); }
+.btn--block { width: 100%; }
+
+.btn-row { display: flex; flex-wrap: wrap; gap: var(--space-2); align-items: center; }
+
+/* ==========================================================================
+   9. CHAMPS DE SAISIE
+   ========================================================================== */
+.field { display: flex; flex-direction: column; gap: var(--space-1); min-width: 0; }
+.field__label {
+  font-size: var(--type-micro); letter-spacing: .07em;
+  text-transform: uppercase; font-weight: 600; color: var(--ink-3);
+}
+.input, .select {
+  min-height: 40px;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface-sheet);
+  border: 1px solid var(--rule-firm);
+  border-radius: var(--radius-1);
+  color: var(--ink-1);
+  font-size: var(--type-body);
+}
+.input::placeholder { color: var(--ink-4); }
+.input:hover, .select:hover { border-color: var(--rule-heavy); }
+.input:focus-visible, .select:focus-visible { border-color: var(--ink-1); }
+.input[aria-invalid="true"] {
+  border-color: var(--ink-1);
+  /* état invalide signalé par une trame, pas par une couleur d'accent :
+     le budget accent est réservé à la suspension. */
+  background-image: repeating-linear-gradient(135deg,
+    rgba(26,23,20,.07) 0 2px, transparent 2px 5px);
+}
+.field__hint { font-size: var(--type-micro); color: var(--ink-3); }
+.field__error {
+  font-size: var(--type-micro); color: var(--ink-1); font-weight: 600;
+  display: flex; align-items: center; gap: var(--space-2);
+}
+.field__error::before {
+  content: ""; inline-size: 10px; block-size: 10px; flex: none;
+  border: 1px solid var(--ink-1);
+  background-image: repeating-linear-gradient(45deg,
+    var(--ink-1) 0 1px, transparent 1px 3px);
+}
+.input[type="search"] { -webkit-appearance: none; appearance: none; }
+
+/* ==========================================================================
+   10. CHIPS DE FILTRE
+   ========================================================================== */
+.chips {
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  padding-block: var(--space-3);
+}
+.chip {
+  display: inline-flex; align-items: center; gap: var(--space-2);
+  min-height: 34px;
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--rule-firm);
+  border-radius: var(--radius-2);
+  background: var(--surface-sheet);
+  font-size: var(--type-small); font-weight: 600;
+  color: var(--ink-2);
+}
+.chip:hover { border-color: var(--rule-heavy); color: var(--ink-1); }
+.chip__n {
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  color: var(--ink-4); font-weight: 400;
+}
+.chip[aria-pressed="true"] {
+  background: var(--ink-1); color: var(--surface-sheet);
+  border-color: var(--ink-1);
+}
+.chip[aria-pressed="true"] .chip__n { color: var(--rule-firm); }
+
+/* ==========================================================================
+   11. BADGES DE DISCIPLINE — la règle CAF est un composant, pas une mention
+   Le yellow n'a aucune couleur : seuls le compte et la forme portent le sens.
+   L'accent n'apparaît QUE sur les deux états d'exclusion.
+   ========================================================================== */
+.disc { display: inline-flex; align-items: center; gap: var(--space-2); }
+.pips { display: inline-flex; gap: 3px; }
+.pip {
+  inline-size: 11px; block-size: 11px;
+  border: 1px solid var(--ink-3);
+  background: transparent;
+}
+.pip[data-on="1"] { background: var(--ink-1); border-color: var(--ink-1); }
+.pip[data-tone="red"] { background: var(--ink-1); border-color: var(--ink-1);
+  border-radius: 1px; }
+
+.badge {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  padding: 2px var(--space-2);
+  font-size: var(--type-micro);
+  font-weight: 700;
+  letter-spacing: .07em;
+  text-transform: uppercase;
+  border: 1px solid var(--ink-3);
+  border-radius: var(--radius-1);
+  color: var(--ink-2);
+  background: var(--surface-paper);
+  white-space: nowrap;
+}
+.badge--ink { background: var(--ink-1); color: var(--surface-sheet); border-color: var(--ink-1); }
+.badge--rule { border-style: dashed; }
+/* États d'exclusion — SEUL usage de l'accent hors boutons primary */
+.badge--exclude {
+  border-color: var(--accent-1);
+  color: var(--accent-1);
+  background: var(--accent-1-soft);
+}
+
+.caf {
+  border: 1px solid var(--rule-heavy);
+  border-inline-start: 3px solid var(--rule-heavy);
+  border-radius: var(--radius-1);
+  background: var(--surface-sheet);
+  padding: var(--space-3) var(--space-4);
+}
+.caf__title {
+  font-size: var(--type-micro); letter-spacing: .09em;
+  text-transform: uppercase; font-weight: 700; color: var(--ink-1);
+  display: flex; align-items: center; gap: var(--space-2);
+}
+.caf__title::before {
+  content: ""; inline-size: 14px; block-size: 14px; flex: none;
+  border: 1px solid var(--ink-1);
+}
+.caf p { font-size: var(--type-small); color: var(--ink-2); max-width: var(--measure); }
+.caf__scale {
+  display: flex; flex-wrap: wrap; gap: var(--space-2) var(--space-5);
+  margin-block-start: var(--space-3);
+  padding-block-start: var(--space-3);
+  border-block-start: 1px dotted var(--rule-dotted);
+}
+.caf__scale div { display: flex; align-items: center; gap: var(--space-2); }
+.caf__scale span { font-size: var(--type-micro); color: var(--ink-2); }
+
+/* ==========================================================================
+   12. FICHES ÉQUIPE (écran « Catégorie »)
+   ========================================================================== */
+.teams {
+  display: grid; gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr));
+}
+.team {
+  display: flex; flex-direction: column;
+  background: var(--surface-sheet);
+  border: 1px solid var(--rule-firm);
+  border-radius: var(--radius-2);
+  overflow: hidden;
+}
+.team--current { border-color: var(--rule-heavy); border-width: 2px; }
+.team__body { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-3); flex: 1; }
+.team__ph { aspect-ratio: 16 / 7; border-block-end: 1px solid var(--rule-hair); }
+.team__name {
+  font-family: var(--font-display); font-size: var(--type-title);
+  color: var(--ink-1); line-height: 1.1;
+}
+.team__sub { font-size: var(--type-small); color: var(--ink-3); }
+.team__figures {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  border-block: 1px solid var(--rule-hair);
+  margin-block: var(--space-1);
+}
+.team__figures > div {
+  padding: var(--space-3) var(--space-2);
+  display: flex; flex-direction: column; gap: 2px;
+}
+.team__figures > div + div { border-inline-start: 1px solid var(--rule-hair); }
+.team__figures dt {
+  font-size: var(--type-micro); letter-spacing: .06em;
+  text-transform: uppercase; font-weight: 600; color: var(--ink-3);
+}
+.team__figures dd { margin: 0; }
+.team__note {
+  font-size: var(--type-small); color: var(--ink-2);
+  display: flex; align-items: center; gap: var(--space-2);
+}
+
+/* ==========================================================================
+   13. LISTE D'EFFECTIF — lignes de registre, pas des cartes
+   ========================================================================== */
+.roster { border-block-start: 2px solid var(--rule-heavy); }
+.roster__row {
+  display: grid;
+  grid-template-columns:
+    44px minmax(0, 1fr) 92px 64px 46px 46px 58px minmax(0, 1.15fr);
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-2);
+  border-block-end: 1px solid var(--rule-hair);
+}
+.roster__row:hover { background: var(--surface-sunken); }
+.roster__row[data-open="true"] { background: var(--surface-sunken); }
+.roster__head {
+  display: grid;
+  grid-template-columns:
+    44px minmax(0, 1fr) 92px 64px 46px 46px 58px minmax(0, 1.15fr);
+  gap: var(--space-3);
+  padding: var(--space-2);
+  border-block-end: 1px solid var(--rule-heavy);
+  font-size: var(--type-micro); letter-spacing: .06em;
+  text-transform: uppercase; font-weight: 600; color: var(--ink-3);
+}
+.roster__head > *:nth-child(n+4) { text-align: end; }
+
+.jersey {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-num-lg);
+  color: var(--ink-1);
+  text-align: center;
+  border: 1px solid var(--rule-firm);
+  border-radius: var(--radius-1);
+  padding-block: 2px;
+  background: var(--surface-paper);
+}
+.player-btn {
+  display: flex; align-items: center; gap: var(--space-3);
+  text-align: start; min-width: 0;
+  padding: var(--space-1) var(--space-2) var(--space-1) 0;
+  margin-inline-start: calc(var(--space-2) * -1);
+  border-radius: var(--radius-1);
+}
+.player-btn__name {
+  font-size: var(--type-body); font-weight: 600; color: var(--ink-1);
+  text-decoration: underline;
+  text-decoration-color: var(--rule-firm);
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+}
+.player-btn:hover .player-btn__name { text-decoration-color: var(--ink-1); }
+.player-btn__meta { font-size: var(--type-micro); color: var(--ink-3); }
+.roster__cell-disc { display: flex; justify-content: flex-end; }
+
+/* ==========================================================================
+   14. FICHE JOUEUR — feuille de sélection imprimée, ouverte
+   ========================================================================== */
+.sheet-open {
+  border: 1px solid var(--rule-heavy);
+  border-inline-start-width: 3px;
+  border-radius: var(--radius-2);
+  background: var(--surface-sheet);
+  overflow: hidden;
+}
+.sheet-open__head {
+  display: flex; flex-wrap: wrap; gap: var(--space-4);
+  padding: var(--space-4);
+  border-block-end: 1px solid var(--rule-hair);
+}
+.sheet-open__ph { inline-size: 96px; aspect-ratio: 1; flex: none; border: 1px solid var(--rule-firm); border-radius: var(--radius-1); }
+.sheet-open__id { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: var(--space-2); }
+.sheet-open__name {
+  font-family: var(--font-display); font-size: var(--type-title);
+  color: var(--ink-1); line-height: 1.1;
+}
+.sheet-open__grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+}
+.spec { padding: var(--space-3) var(--space-4); border-block-end: 1px solid var(--rule-hair); }
+.spec:nth-child(odd) { border-inline-end: 1px solid var(--rule-hair); }
+.spec dt {
+  font-size: var(--type-micro); letter-spacing: .07em;
+  text-transform: uppercase; font-weight: 600; color: var(--ink-3);
+  margin-block-end: 2px;
+}
+.spec dd { margin: 0; font-size: var(--type-body); color: var(--ink-1); font-weight: 600; }
+.spec dd .num { font-size: var(--type-body); }
+.sheet-open__section { padding: var(--space-4); border-block-end: 1px solid var(--rule-hair); }
+.sheet-open__section:last-child { border-block-end: 0; }
+.sheet-open__foot {
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface-sunken);
+  border-block-start: 1px solid var(--rule-hair);
+}
+
+.formula {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--type-num-lg);
+  color: var(--ink-1);
+  letter-spacing: -.02em;
+}
+.formula small { font-size: var(--type-micro); color: var(--ink-3); letter-spacing: .04em; }
+
+/* ==========================================================================
+   15. TUILE JOUEUR (picker de sélection + spécimens)
+   ========================================================================== */
+.tiles { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 158px), 1fr)); }
+.tile {
+  display: flex; flex-direction: column;
+  background: var(--surface-sheet);
+  border: 1px solid var(--rule-firm);
+  border-radius: var(--radius-2);
+  overflow: hidden;
+  text-align: start;
+}
+.tile__top {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-block-end: 1px solid var(--rule-hair);
+  background: var(--surface-sunken);
+}
+.tile__name { font-size: var(--type-small); font-weight: 600; color: var(--ink-1); line-height: 1.25; }
+.tile__foot {
+  margin-block-start: auto;
+  padding: var(--space-2) var(--space-3);
+  border-block-start: 1px solid var(--rule-hair);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+}
+.tile[data-state="on"] { border-color: var(--ink-1); border-width: 2px; }
+.tile[data-state="on"] .tile__top { background: var(--ink-1); }
+.tile[data-state="on"] .tile__name,
+.tile[data-state="on"] .jersey { color: var(--surface-sheet); }
+.tile[data-state="on"] .jersey { border-color: var(--rule-firm); background: transparent; }
+.tile[data-state="blocked"] { opacity: .72; }
+.tile__mark {
+  font-family: var(--font-mono); font-size: var(--type-micro);
+  color: var(--ink-3); letter-spacing: .04em;
+}
+.tile[data-state="on"] .tile__mark { color: var(--rule-firm); }
+
+/* ==========================================================================
+   16. TABLEAU DE STATS — dense, chiffres alignés, mono
+   ========================================================================== */
+.table-wrap { border: 1px solid var(--rule-firm); border-radius: var(--radius-2); overflow: auto; background: var(--surface-sheet); }
+.stats { min-inline-size: 720px; }
+.stats caption {
+  text-align: start; padding: var(--space-3) var(--space-4);
+  border-block-end: 1px solid var(--rule-hair);
+  font-size: var(--type-small); color: var(--ink-3);
+}
+.stats th, .stats td {
+  padding: var(--space-2) var(--space-3);
+  border-block-end: 1px solid var(--rule-hair);
+  font-size: var(--type-body);
+  text-align: start;
+}
+.stats thead th {
+  position: sticky; top: 0; z-index: 1;
+  background: var(--surface-paper);
+  border-block-end: 1px solid var(--rule-heavy);
+  font-size: var(--type-micro); letter-spacing: .06em;
+  text-transform: uppercase; font-weight: 600; color: var(--ink-3);
+  white-space: nowrap;
+}
+.stats tbody th { font-weight: 600; color: var(--ink-1); }
+.stats td.n { font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  text-align: end; color: var(--ink-1); }
+.stats tbody tr:hover { background: var(--surface-sunken); }
+.stats tfoot td, .stats tfoot th {
+  border-block-start: 2px solid var(--rule-heavy);
+  border-block-end: 0;
+  font-weight: 700; background: var(--surface-paper);
+}
+/* PIED-DE-TABLEAU — écart de contraste assumé et documenté.
+   Les cellules de total sont en --ink-1 sur papier (16.12:1). En revanche
+   le libellé interne `.stats__sort::after` du pied hérite de --ink-4, qui
+   ne vaut que 2.15:1 sur --ink-1. Aucune flèche de tri n'est rendue dans
+   le pied : le marqueur y reste vide, donc ce texte n'est jamais peint.
+   Si l'on ajoute un jour un indicateur au pied, il faut le passer en
+   --ink-2 ou --ink-1 — pas en --ink-4. */
+.stats tfoot .stats__sort::after { content: none; }
+.stats [data-col="exclude"] { color: var(--accent-1); }
+.stats__sort {
+  display: inline-flex; align-items: center; gap: var(--space-1);
+  font: inherit; color: inherit;
+  letter-spacing: inherit; text-transform: inherit;
+}
+.stats__sort::after { content: "↕"; color: var(--ink-4); font-size: var(--type-micro); }
+.stats__sort[aria-sort="ascending"]::after { content: "↑"; color: var(--ink-1); }
+.stats__sort[aria-sort="descending"]::after { content: "↓"; color: var(--ink-1); }
+
+/* Frise de buts : pas un graphique, une réglette en filet */
+.tape { display: flex; align-items: flex-end; gap: 2px; block-size: 26px; }
+.tape i { flex: 1; background: var(--ink-1); min-block-size: 2px; display: block; }
+.tape i[data-empty="1"] { background: var(--rule-hair); }
+
+/* ==========================================================================
+   17. FICHES STAFF
+   ========================================================================== */
+.staff { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fill, minmax(min(100%, 246px), 1fr)); }
+.staffcard {
+  display: flex; flex-direction: column;
+  background: var(--surface-sheet);
+  border: 1px solid var(--rule-firm);
+  border-radius: var(--radius-2);
+  overflow: hidden;
+}
+.staffcard__ph { aspect-ratio: 4 / 3; border-block-end: 1px solid var(--rule-hair); }
+.staffcard__body { padding: var(--space-3); display: flex; flex-direction: column; gap: var(--space-2); flex: 1; }
+.staffcard__name { font-family: var(--font-display); font-size: var(--type-lead); color: var(--ink-1); line-height: 1.15; }
+.staffcard__role { font-size: var(--type-micro); letter-spacing: .07em; text-transform: uppercase; font-weight: 600; color: var(--ink-3); }
+.staffcard__specs { display: flex; gap: var(--space-2); flex-wrap: wrap; }
+.staffcard__foot {
+  margin-block-start: auto; padding-block-start: var(--space-2);
+  border-block-start: 1px solid var(--rule-hair);
+  display: flex; align-items: center; justify-content: space-between; gap: var(--space-2);
+}
+
+/* ==========================================================================
+   18. ÉTAT VIDE — dessiné, pas une phrase
+   ========================================================================== */
+.empty {
+  border: 1px dashed var(--rule-firm);
+  border-radius: var(--radius-2);
+  background: var(--surface-paper);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: var(--space-3);
+}
+.empty__mark {
+  inline-size: 52px; block-size: 52px;
+  border: 1px solid var(--rule-firm);
+  background-image: repeating-linear-gradient(135deg,
+    rgba(26,23,20,.06) 0 1px, transparent 1px 6px);
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: var(--type-small); color: var(--ink-4);
+}
+.empty__title { font-family: var(--font-display); font-size: var(--type-lead); color: var(--ink-1); }
+.empty__text { font-size: var(--type-small); color: var(--ink-3); max-width: 44ch; }
+
+/* ==========================================================================
+   19. MODALE MATCH
+   ========================================================================== */
+.scrim {
+  position: fixed; inset: 0; z-index: 40;
+  background: rgba(26, 23, 20, .38);
+  display: grid; place-items: start center;
+  padding: var(--space-4);
+  overflow: auto;
+}
+.scrim[hidden] { display: none; }
+.modal {
+  inline-size: min(100%, 880px);
+  margin-block: var(--space-5);
+  background: var(--surface-sheet);
+  border: 1px solid var(--rule-heavy);
+  border-radius: var(--radius-3);
+  overflow: hidden;
+}
+.modal__head {
+  display: flex; flex-wrap: wrap; gap: var(--space-3);
+  align-items: flex-start; justify-content: space-between;
+  padding: var(--space-4);
+  border-block-end: 2px solid var(--rule-heavy);
+}
+.modal__title { font-family: var(--font-display); font-size: var(--type-title); color: var(--ink-1); line-height: 1.1; }
+.modal__body { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); }
+.modal__foot {
+  display: flex; flex-wrap: wrap; gap: var(--space-2);
+  justify-content: flex-end; align-items: center;
+  padding: var(--space-3) var(--space-4);
+  border-block-start: 1px solid var(--rule-hair);
+  background: var(--surface-sunken);
+}
+.modal__close {
+  inline-size: 40px; block-size: 40px; flex: none;
+  border: 1px solid var(--rule-firm); border-radius: var(--radius-1);
+  display: grid; place-items: center;
+  font-size: var(--type-lead); line-height: 1; color: var(--ink-2);
+}
+.modal__close:hover { background: var(--surface-sunken); color: var(--ink-1); }
+.form-grid { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); }
+.squad-bar {
+  display: flex; flex-wrap: wrap; gap: var(--space-3);
+  align-items: center; justify-content: space-between;
+  padding-block: var(--space-3);
+  border-block: 1px solid var(--rule-hair);
+}
+.squad-bar__count { font-size: var(--type-small); color: var(--ink-2); }
+.squad-bar__count b { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink-1); font-size: var(--type-num); }
+.notice {
+  display: flex; gap: var(--space-3); align-items: flex-start;
+  border: 1px dashed var(--rule-heavy);
+  border-radius: var(--radius-1);
+  padding: var(--space-3);
+  background: var(--surface-paper);
+  font-size: var(--type-small); color: var(--ink-2);
+}
+.notice__mark {
+  flex: none; inline-size: 20px; block-size: 20px;
+  border: 1px solid var(--ink-1);
+  display: grid; place-items: center;
+  font-family: var(--font-mono); font-size: var(--type-micro); color: var(--ink-1);
+}
+
+/* ==========================================================================
+   20. ANNEXE — spécimens d'états
+   ========================================================================== */
+.annex { border: 1px solid var(--rule-firm); border-radius: var(--radius-2); overflow: hidden; margin-block-end: var(--space-5); background: var(--surface-sheet); }
+.annex > summary {
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  font-size: var(--type-small); font-weight: 600;
+  letter-spacing: .05em; text-transform: uppercase; color: var(--ink-1);
+  background: var(--surface-sunken);
+  border-block-end: 1px solid var(--rule-hair);
+  display: flex; align-items: center; gap: var(--space-2);
+}
+.annex > summary::before { content: "+"; font-family: var(--font-mono); color: var(--ink-3); }
+.annex[open] > summary::before { content: "−"; }
+.annex[open] > summary { border-block-end-color: var(--rule-firm); }
+.annex__body { padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-4); }
+.spec-row { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: center; }
+.spec-row > .label { flex-basis: 100%; margin-block-end: calc(var(--space-3) * -1 + 2px); }
+
+.swatch-grid { display: grid; gap: var(--space-3); grid-template-columns: repeat(auto-fill, minmax(min(100%, 148px), 1fr)); }
+.swatch { border: 1px solid var(--rule-firm); border-radius: var(--radius-1); overflow: hidden; }
+.swatch__chip { block-size: 46px; border-block-end: 1px solid var(--rule-firm); }
+.swatch__meta { padding: var(--space-2); display: flex; flex-direction: column; gap: 1px; }
+.swatch__meta code {
+  font-family: var(--font-mono); font-size: var(--type-micro); color: var(--ink-1);
+}
+.swatch__meta span { font-size: var(--type-micro); color: var(--ink-3); }
+
+.demo-focus { outline: 2px solid var(--ink-1); outline-offset: 2px; }
+.demo-focus-in { outline: 2px solid var(--ink-1); outline-offset: -3px; }
+
+.note-strip {
+  border-inline-start: 3px solid var(--rule-heavy);
+  padding-inline-start: var(--space-3);
+  font-size: var(--type-small); color: var(--ink-3);
+  max-width: var(--measure);
+}
+
+/* ==========================================================================
+   21. UTILITAIRES
+   ========================================================================== */
+.stack-2 { display: flex; flex-direction: column; gap: var(--space-2); }
+.stack-3 { display: flex; flex-direction: column; gap: var(--space-3); }
+.stack-4 { display: flex; flex-direction: column; gap: var(--space-4); }
+.stack-5 { display: flex; flex-direction: column; gap: var(--space-5); }
+.row-wrap { display: flex; flex-wrap: wrap; gap: var(--space-3); align-items: flex-end; }
+.grid-2 { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 1fr)); }
+.mt-3 { margin-block-start: var(--space-3); }
+.mt-4 { margin-block-start: var(--space-4); }
+.mt-5 { margin-block-start: var(--space-5); }
+.rule-top { border-block-start: 1px solid var(--rule-hair); padding-block-start: var(--space-4); }
+.hidden { display: none !important; }
+.visually-hidden {
+  position: absolute; inline-size: 1px; block-size: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* ==========================================================================
+   22. REFLOW — UN SEUL point de rupture : 720 px
+   ========================================================================== */
+@media (max-width: 719.98px) {
+  .sheet { border-inline: 0; }
+  main { padding-block: var(--space-5); }
+  :root { --type-display: 1.625rem; --type-title: 1.1875rem; }
+
+  .doc-head { padding-block: var(--space-4) var(--space-3); }
+  .doc-head__meta { flex-direction: column; gap: var(--space-2); }
+
+  /* Les onglets défilent horizontalement plutôt que de se replier. */
+  .tabs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: thin; }
+  .tab { flex: none; }
+
+  /* Liste d'effectif → une ligne par joueuse, en pile. */
+  .roster__head { display: none; }
+  .roster__row {
+    grid-template-columns: 44px minmax(0, 1fr);
+    grid-template-areas:
+      "jersey name"
+      "jersey disc";
+    row-gap: var(--space-2);
+    column-gap: var(--space-3);
+    padding-block: var(--space-3);
+  }
+  .roster__row > :nth-child(1) { grid-area: jersey; }
+  .roster__row > :nth-child(2) { grid-area: name; }
+  .roster__row > :nth-child(3),
+  .roster__row > :nth-child(4),
+  .roster__row > :nth-child(5),
+  .roster__row > :nth-child(6) { display: none; }
+  .roster__row > :nth-child(7) { grid-area: disc; }
+  .roster__row > :nth-child(8) { display: none; }
+  .roster__cell-disc { justify-content: flex-start; }
+
+  /* La fiche joueur passe au-dessus de la liste. */
+  .sheet-open__head { padding: var(--space-3); }
+  .spec { padding: var(--space-3); border-inline-end: 0 !important; }
+  .modal { margin-block: 0; }
+  .scrim { padding: 0; place-items: stretch; }
+  .modal__body, .modal__head, .modal__foot { padding: var(--space-3); }
+  .team__figures { grid-template-columns: 1fr; }
+  .team__figures > div + div { border-inline-start: 0; border-block-start: 1px solid var(--rule-hair); }
+  .doc-foot { flex-direction: column; align-items: flex-start; }
+}
+
+/* ==========================================================================
+   23. MOUVEMENT
+   ========================================================================== */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   24. IMPRESSION — le prototype EST un document, il doit s'imprimer
+   ========================================================================== */
+@media print {
+  body { background: #fff; }
+  .sheet { border: 0; max-width: none; }
+  .tabs, .scrim, .skip { display: none !important; }
+  .panel[hidden] { display: none !important; }
+  a { color: inherit; text-decoration: none; }
+}
+</style>
+</head>
+
+<body>
+<a class="skip" href="#main" data-i18n="skip">Aller au contenu</a>
+
+<div class="sheet">
+
+  <!-- ====================================================================
+       EN-TÊTE DU DOCUMENT
+       Budget accent : 0. Le masthead est une armature, pas une décoration.
+       ==================================================================== -->
+  <header class="doc-head" data-od-id="doc-head">
+    <div class="doc-head__top">
+      <p class="eyebrow" data-i18n="fed">Fédération Tunisienne de Football</p>
+      <div class="btn-row">
+        <div class="btn-row" role="group" data-i18n-label="group_lang" aria-label="Langue de l'interface">
+          <button type="button" class="btn btn--sm" id="lang-fr" aria-pressed="true" lang="fr">Français</button>
+          <button type="button" class="btn btn--sm" id="lang-ar" aria-pressed="false" lang="ar">العربية</button>
+        </div>
+      </div>
+    </div>
+
+    <h1 class="doc-head__title" data-i18n="dept">Département Football Féminin</h1>
+
+    <dl class="doc-head__meta">
+      <div><dt data-i18n="cat">Catégorie</dt><dd id="hd-cat">Seniors</dd></div>
+      <div><dt data-i18n="docRef">Réf. dossier</dt><dd class="num">WNT-2026-SEN-04</dd></div>
+      <div><dt data-i18n="squad">Effectif</dt><dd><span class="num" id="hd-squad">16</span> <span data-i18n="players">joueuses</span></dd></div>
+      <div><dt data-i18n="updated">Mis à jour</dt><dd class="num">03.10.2026</dd></div>
+    </dl>
+  </header>
+
+  <!-- ====================================================================
+       ONGLETS — un seul point de rupture, navigation clavier complète
+       ==================================================================== -->
+  <nav class="tabs" role="tablist" data-od-id="tabs" data-i18n-label="nav_onglets" aria-label="Sections du dossier">
+    <button type="button" class="tab" role="tab" id="tab-select" aria-controls="panel-select" aria-selected="true" tabindex="0">
+      <span data-i18n="tabCategory">Catégorie</span>
+    </button>
+    <button type="button" class="tab" role="tab" id="tab-players" aria-controls="panel-players" aria-selected="false" tabindex="-1">
+      <span data-i18n="tabPlayers">Joueuses</span><span class="tab__count num" id="c-players">16</span>
+    </button>
+    <button type="button" class="tab" role="tab" id="tab-staff" aria-controls="panel-staff" aria-selected="false" tabindex="-1">
+      <span data-i18n="tabStaff">Staff</span><span class="tab__count num" id="c-staff">6</span>
+    </button>
+    <button type="button" class="tab" role="tab" id="tab-stats" aria-controls="panel-stats" aria-selected="false" tabindex="-1">
+      <span data-i18n="tabStats">Stats</span>
+    </button>
+  </nav>
+
+  <main id="main" tabindex="-1">
+
+    <!-- ==================================================================
+         ÉCRAN 1 — SÉLECTION DE CATÉGORIE
+         BUDGET ACCENT : 2 / 2
+           1. bouton « Entrer » de la fiche SENIORS (btn--accent)
+           2. badge d'exclusion sur la fiche U-20 (1 joueuse suspendue)
+         La surface hero est le SEUL dégradé du système (brief §3).
+         ================================================================== -->
+    <section class="panel" id="panel-select" role="tabpanel" aria-labelledby="tab-select" tabindex="0" data-od-id="screen-select">
+
+      <div class="panel__head">
+        <div>
+          <p class="eyebrow" data-i18n="step1">Étape 1 sur 4 · Entrée</p>
+          <h2 class="panel__title" data-i18n="selectCat">Choisir la catégorie d'équipe</h2>
+        </div>
+        <p class="panel__ref">§ A — WNT-SEN</p>
+      </div>
+
+      <div class="teams" data-od-id="select-teams">
+        <article class="team team--current" data-od-id="team-seniors">
+          <div class="ph team__ph" data-tag="L.arguments de sélection">VESTIAIRE SÉNIORS</div>
+          <div class="team__body">
+            <div>
+              <h3 class="team__name" data-i18n="seniors">Séniors</h3>
+              <p class="team__sub" data-i18n="seniorSub">Équipe Nationale Senior</p>
+            </div>
+            <dl class="team__figures">
+              <div><dt data-i18n="registered">Enregistrées</dt><dd class="num">16</dd></div>
+              <div><dt data-i18n="avgAge">Âge moyen</dt><dd class="num">24,3</dd></div>
+              <div><dt data-i18n="excluded">Suspendues</dt><dd class="num">1</dd></div>
+            </dl>
+            <p class="team__note" data-i18n="currentCat">Dossier en cours · dernière sélection 28.09.2026</p>
+            <div class="btn-row">
+              <button type="button" class="btn btn--accent" data-action="open-match" data-i18n="enterSeniors">Entrer</button>
+              <button type="button" class="btn btn--ghost" data-action="goto-roster" data-i18n="viewRoster">Voir l'effectif</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="team" data-od-id="team-u20">
+          <div class="ph team__ph" data-tag="Registre U-20">REGISTRE U-20</div>
+          <div class="team__body">
+            <div>
+              <h3 class="team__name">U-20</h3>
+              <p class="team__sub" data-i18n="u20Sub">Équipe Nationale U-20</p>
+            </div>
+            <dl class="team__figures">
+              <div><dt data-i18n="registered">Enregistrées</dt><dd class="num">17</dd></div>
+              <div><dt data-i18n="avgAge">Âge moyen</dt><dd class="num">19,1</dd></div>
+              <div><dt data-i18n="excluded">Suspendues</dt><dd class="num">1</dd></div>
+            </dl>
+            <!-- ACCENT 2/2 : état d'exclusion, seul usage admissible ici -->
+            <p class="team__note"><span class="badge badge--exclude" data-i18n="oneSuspended">1 joueuse suspendue</span></p>
+            <div class="btn-row">
+              <button type="button" class="btn" data-i18n="enter">Entrer</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="team" data-od-id="team-u17">
+          <div class="ph team__ph" data-tag="Registre U-17">REGISTRE U-17</div>
+          <div class="team__body">
+            <div>
+              <h3 class="team__name">U-17</h3>
+              <p class="team__sub" data-i18n="u17Sub">Équipe Nationale U-17</p>
+            </div>
+            <dl class="team__figures">
+              <div><dt data-i18n="registered">Enregistrées</dt><dd class="num">18</dd></div>
+              <div><dt data-i18n="avgAge">Âge moyen</dt><dd class="num">16,8</dd></div>
+              <div><dt data-i18n="excluded">Suspendues</dt><dd class="num">0</dd></div>
+            </dl>
+            <p class="team__note" data-i18n="noExcl">Aucune suspension en cours</p>
+            <div class="btn-row">
+              <button type="button" class="btn" data-i18n="enter">Entrer</button>
+            </div>
+          </div>
+        </article>
+      </div>
+
+      <div class="caf mt-5" data-od-id="select-caf">
+        <p class="caf__title" data-i18n="cafRuleTitle">Règle CAF applicable à toute sélection</p>
+        <p data-i18n="cafRuleBody">Deux cartons jaunes sur la même compétition valident un match de suspension. Un carton rouge vaut suspension immédiate d'un match. Une joueuse non inscrite sur la feuille de match reçoit un carton jaune automatique.</p>
+        <div class="caf__scale">
+          <div><span class="pips"><i class="pip" data-on="1"></i><i class="pip" data-on="0"></i></span><span data-i18n="oneYellow">1 jaune — risque</span></div>
+          <div><span class="pips"><i class="pip" data-on="1"></i><i class="pip" data-on="1"></i></span><span data-i18n="twoYellows">2 jaunes = suspendue</span></div>
+          <div><span class="pips"><i class="pip" data-tone="red" data-on="1"></i></span><span data-i18n="redCard">Carton rouge = suspendue</span></div>
+        </div>
+      </div>
+
+      <p class="note-strip mt-5" data-i18n="demoData">Données de démonstration fictives. Le prototype sert à comparer des directions visuelles, pas à documenter l'effectif réel.</p>
+    </section>
+
+    <!-- ==================================================================
+         ÉCRAN 2 — JOUEUSES
+         BUDGET ACCENT : 2 / 2
+           1. badge « SUSPENDUE »   — Salma Gharbi, 2 jaunes
+           2. badge « CARTON ROUGE » — Yosra Ben Amor, 1 rouge
+         La fiche ouverte est signalée par un filet ENCRE (3px), pas en accent.
+         ================================================================== -->
+    <section class="panel" id="panel-players" role="tabpanel" aria-labelledby="tab-players" tabindex="0" hidden data-od-id="screen-players">
+
+      <div class="panel__head">
+        <div>
+          <p class="eyebrow" data-i18n="step2">Étape 2 sur 4 · Dossier Séniors</p>
+          <h2 class="panel__title" data-i18n="playersTitle">Joueuses</h2>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn" data-action="open-match" data-i18n="newMatch">Nouveau match</button>
+          <button type="button" class="btn btn--primary" data-i18n="recruit">Recruter</button>
+        </div>
+      </div>
+
+      <!-- Recherche + chips de filtre -->
+      <div class="row-wrap" data-od-id="players-filters">
+        <div class="field" style="flex: 1 1 240px;">
+          <label class="field__label" for="q" data-i18n="search">Rechercher</label>
+          <input class="input" type="search" id="q" autocomplete="off"
+                 placeholder="Nom, club, poste" data-i18n-ph="searchPh">
+        </div>
+        <div class="field" style="flex: 0 1 190px;">
+          <label class="field__label" for="club" data-i18n="club">Club</label>
+          <select class="select" id="club">
+            <option value="" data-i18n="allClubs">Tous les clubs</option>
+            <option>Club Africain</option>
+            <option>Étoile du Sahel</option>
+            <option>Espérance de Tunis</option>
+            <option>CS Sfaxien</option>
+            <option>Stade Tunisien</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="chips" role="group" data-i18n-label="group_filters" aria-label="Filtrer par poste" data-od-id="players-chips">
+        <button type="button" class="chip" data-filter="all" aria-pressed="true">
+          <span data-i18n="allPositions">Tous les postes</span><span class="chip__n num">16</span>
+        </button>
+        <button type="button" class="chip" data-filter="Gardien" aria-pressed="false">
+          <span data-i18n="gk">Gardien</span><span class="chip__n num">2</span>
+        </button>
+        <button type="button" class="chip" data-filter="Défenseur" aria-pressed="false">
+          <span data-i18n="df">Défenseur</span><span class="chip__n num">6</span>
+        </button>
+        <button type="button" class="chip" data-filter="Milieu" aria-pressed="false">
+          <span data-i18n="mf">Milieu</span><span class="chip__n num">5</span>
+        </button>
+        <button type="button" class="chip" data-filter="Attaquant" aria-pressed="false">
+          <span data-i18n="fw">Attaquant</span><span class="chip__n num">3</span>
+        </button>
+      </div>
+
+      <!-- Registre : lignes, pas de cartes -->
+      <div class="roster" data-od-id="players-roster">
+        <div class="roster__head" aria-hidden="true">
+          <span class="num">#</span>
+          <span data-i18n="name">Joueuse</span>
+          <span data-i18n="club">Club</span>
+          <span data-i18n="caps">Caps</span>
+          <span data-i18n="goals">B</span>
+          <span data-i18n="assists">P</span>
+          <span data-i18n="discipline">Disc.</span>
+          <span data-i18n="langs">Langues</span>
+        </div>
+        <div id="roster-body"></div>
+      </div>
+
+      <!-- État vide, injecté par le filtrage -->
+      <div id="roster-empty" hidden></div>
+
+      <p class="visually-hidden" role="status" aria-live="polite" id="roster-status"></p>
+
+      <!-- Fiche joueur ouverte -->
+      <div class="mt-5" id="player-sheet" data-od-id="player-sheet" aria-live="polite"></div>
+    </section>
+
+    <!-- ==================================================================
+         ÉCRAN 3 — STATS
+         BUDGET ACCENT : 2 / 2
+           1. en-tête de la colonne « Suspendues »
+           2. cellule de total suspendues
+         ================================================================== -->
+    <section class="panel" id="panel-stats" role="tabpanel" aria-labelledby="tab-stats" tabindex="0" hidden data-od-id="screen-stats">
+
+      <div class="panel__head">
+        <div>
+          <p class="eyebrow" data-i18n="step3">Étape 3 sur 4 · Sér Seniors · U-20 · U-17</p>
+          <h2 class="panel__title" data-i18n="statsTitle">Statistiques</h2>
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn" data-i18n="exportCsv">Exporter CSV</button>
+          <button type="button" class="btn" data-action="print" data-i18n="print">Imprimer</button>
+        </div>
+      </div>
+
+      <div class="grid-2" data-od-id="stats-totals">
+        <div class="stack-3">
+          <p class="label" data-i18n="collective">Collectif — Séniors</p>
+          <dl class="team__figures" style="border-block:2px solid var(--rule-heavy);">
+            <div><dt data-i18n="matchesPlayed">Matchs joués</dt><dd class="num">9</dd></div>
+            <div><dt data-i18n="goalsFor">Buts pour</dt><dd class="num">21</dd></div>
+            <div><dt data-i18n="goalsAgainst">Buts contre</dt><dd class="num">7</dd></div>
+          </dl>
+        </div>
+        <div class="stack-3">
+          <p class="label" data-i18n="disciplineTitle">Discipline — mise à jour à chaque feuille de match</p>
+          <div class="caf">
+            <div class="caf__scale" style="margin:0;padding-block-start:0;border-block-start:0;">
+              <div><span class="pips"><i class="pip" data-on="1"></i><i class="pip" data-on="1"></i></span><span data-i18n="twoYellows">2 jaunes = suspendue</span></div>
+              <div><span class="pips"><i class="pip" data-tone="red" data-on="1"></i></span><span data-i18n="redCard">Carton rouge = suspendue</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrap mt-5" data-od-id="stats-table">
+        <table class="stats" id="stats-table-el">
+          <caption data-i18n="statsCaption">Par joueuse, bilan de la période. Tri par nombre de sélections. Les colonnes chiffrées sont en chasse fixe et alignées à la fin.</caption>
+          <thead>
+            <tr>
+              <th scope="col">#</th>
+              <th scope="col"><button type="button" class="stats__sort" data-sort="name" data-i18n="name">Joueuse</button></th>
+              <th scope="col" data-i18n="pos">Poste</th>
+              <th scope="col"><button type="button" class="stats__sort" data-sort="caps" data-i18n="caps">Sélections</button></th>
+              <th scope="col"><button type="button" class="stats__sort" data-sort="goals" data-i18n="goals">Buts</button></th>
+              <th scope="col"><button type="button" class="stats__sort" data-sort="assists" data-i18n="assists">Passes</button></th>
+              <th scope="col"><button type="button" class="stats__sort" data-sort="minutes" data-i18n="minutes">Minutes</button></th>
+              <th scope="col" data-i18n="yellows">Jaunes</th>
+              <th scope="col" data-col="exclude" data-i18n="suspendedCol">Suspendues</th>
+            </tr>
+          </thead>
+          <tbody id="stats-body"></tbody>
+          <tfoot id="stats-foot"></tfoot>
+        </table>
+      </div>
+    </section>
+
+    <!-- ==================================================================
+         ÉCRAN 4 — STAFF
+         BUDGET ACCENT : 2 / 2
+           1. bouton « Recruter »
+           2. fanion « contrat à renouveler » sur la fiche Naima Soussi
+         ================================================================== -->
+    <section class="panel" id="panel-staff" role="tabpanel" aria-labelledby="tab-staff" tabindex="0" hidden data-od-id="screen-staff">
+
+      <div class="panel__head">
+        <div>
+          <p class="eyebrow" data-i18n="step4">Étape 4 sur 4 · Encadrement</p>
+          <h2 class="panel__title" data-i18n="staffTitle">Staff</h2>
+        </div>
+        <div class="btn-row">
+          <!-- ACCENT 1/2 -->
+          <button type="button" class="btn btn--accent" data-i18n="hire">Recruter</button>
+        </div>
+      </div>
+
+      <div class="staff" data-od-id="staff-grid">
+        <article class="staffcard" data-od-id="staff-1">
+          <div class="ph staffcard__ph" data-tag="Portrait">L. BEN ALI</div>
+          <div class="staffcard__body">
+            <p class="staffcard__role" data-i18n="headCoach">Entraineuse principale</p>
+            <h3 class="staffcard__name">Latifa Ben Ali</h3>
+            <div class="staffcard__specs">
+              <span class="badge" data-i18n="natTun">Tunisienne</span>
+              <span class="badge badge--ink">PRO</span>
+              <span class="badge">4-3-3</span>
+            </div>
+            <dl class="stack-2">
+              <div><span class="label" data-i18n="license">Licence</span> <span class="num">FIFA-PRO</span></div>
+              <div><span class="label" data-i18n="since">En poste depuis</span> <span class="num">2021</span></div>
+            </dl>
+            <div class="staffcard__foot">
+              <span class="staffcard__role" data-i18n="active">Actif</span>
+              <button type="button" class="btn btn--sm btn--ghost" data-i18n="edit">Modifier</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="staffcard" data-od-id="staff-2">
+          <div class="ph staffcard__ph" data-tag="Portrait">S. BOUZID</div>
+          <div class="staffcard__body">
+            <p class="staffcard__role" data-i18n="deputy">Adjointe</p>
+            <h3 class="staffcard__name">Sonia Bouzid</h3>
+            <div class="staffcard__specs">
+              <span class="badge" data-i18n="natTun">Tunisienne</span>
+              <span class="badge">UEFA-A</span>
+              <span class="badge">4-4-2</span>
+            </div>
+            <dl class="stack-2">
+              <div><span class="label" data-i18n="license">Licence</span> <span class="num">UEFA-A</span></div>
+              <div><span class="label" data-i18n="since">En poste depuis</span> <span class="num">2022</span></div>
+            </dl>
+            <div class="staffcard__foot">
+              <span class="staffcard__role" data-i18n="active">Actif</span>
+              <button type="button" class="btn btn--sm btn--ghost" data-i18n="edit">Modifier</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="staffcard" data-od-id="staff-3">
+          <div class="ph staffcard__ph" data-tag="Portrait">N. SOUSSI</div>
+          <div class="staffcard__body">
+            <p class="staffcard__role" data-i18n="fitness">Préparatrice physique</p>
+            <h3 class="staffcard__name">Naima Soussi</h3>
+            <div class="staffcard__specs">
+              <span class="badge" data-i18n="natTun">Tunisienne</span>
+              <span class="badge">FIFA-B</span>
+              <span class="badge">1-4-4-1</span>
+            </div>
+            <dl class="stack-2">
+              <div><span class="label" data-i18n="license">Licence</span> <span class="num">FIFA-B</span></div>
+              <div><span class="label" data-i18n="since">En poste depuis</span> <span class="num">2020</span></div>
+            </dl>
+            <div class="staffcard__foot">
+              <!-- ACCENT 2/2 — l'accent signale ici un état à traiter, pas une décoration -->
+              <span class="badge badge--exclude" data-i18n="renew">Contrat à renouveler</span>
+            </div>
+          </div>
+        </article>
+
+        <article class="staffcard" data-od-id="staff-4">
+          <div class="ph staffcard__ph" data-tag="Portrait">A. KSOUR</div>
+          <div class="staffcard__body">
+            <p class="staffcard__role" data-i18n="gkCoach">Préparatrice de gardiens</p>
+            <h3 class="staffcard__name">Amel Ksour</h3>
+            <div class="staffcard__specs">
+              <span class="badge" data-i18n="natTun">Tunisienne</span>
+              <span class="badge">FIFA-A</span>
+            </div>
+            <dl class="stack-2">
+              <div><span class="label" data-i18n="license">Licence</span> <span class="num">FIFA-A</span></div>
+              <div><span class="label" data-i18n="since">En poste depuis</span> <span class="num">2023</span></div>
+            </dl>
+            <div class="staffcard__foot">
+              <span class="staffcard__role" data-i18n="active">Actif</span>
+              <button type="button" class="btn btn--sm btn--ghost" data-i18n="edit">Modifier</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="staffcard" data-od-id="staff-5">
+          <div class="ph staffcard__ph" data-tag="Portrait">H. MEDDEB</div>
+          <div class="staffcard__body">
+            <p class="staffcard__role" data-i18n="delegate">Déléguée</p>
+            <h3 class="staffcard__name">Hela Meddeb</h3>
+            <div class="staffcard__specs">
+              <span class="badge" data-i18n="natTun">Tunisienne</span>
+              <span class="badge">FIFA-B</span>
+            </div>
+            <dl class="stack-2">
+              <div><span class="label" data-i18n="license">Licence</span> <span class="num">FIFA-B</span></div>
+              <div><span class="label" data-i18n="since">En poste depuis</span> <span class="num">2019</span></div>
+            </dl>
+            <div class="staffcard__foot">
+              <span class="staffcard__role" data-i18n="active">Actif</span>
+              <button type="button" class="btn btn--sm btn--ghost" data-i18n="edit">Modifier</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="staffcard" data-od-id="staff-6">
+          <div class="ph staffcard__ph" data-tag="Portrait">W. DAGHFOURI</div>
+          <div class="staffcard__body">
+            <p class="staffcard__role" data-i18n="analyst">Analyste vidéo</p>
+            <h3 class="staffcard__name">Wafa Daghfouri</h3>
+            <div class="staffcard__specs">
+              <span class="badge" data-i18n="natTun">Tunisienne</span>
+              <span class="badge">UEFA-B</span>
+            </div>
+            <dl class="stack-2">
+              <div><span class="label" data-i18n="license">Licence</span> <span class="num">UEFA-B</span></div>
+              <div><span class="label" data-i18n="since">En poste depuis</span> <span class="num">2024</span></div>
+            </dl>
+            <div class="staffcard__foot">
+              <span class="staffcard__role" data-i18n="active">Actif</span>
+              <button type="button" class="btn btn--sm btn--ghost" data-i18n="edit">Modifier</button>
+            </div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- ==================================================================
+         ANNEXE — spécimens d'états (ne compte pas dans le budget des écrans)
+         Sert le critère de sortie §6 : focus visible partout, état vide dessiné.
+         ================================================================== -->
+    <section class="mt-5" data-od-id="annex">
+      <h2 class="label" data-i18n="annexTitle">Annexe — spécimens d'états</h2>
+
+      <details class="annex mt-3" open>
+        <summary data-i18n="annexTokens">Jetons</summary>
+        <div class="annex__body">
+          <div class="swatch-grid" id="swatches"></div>
+          <p class="note-strip" data-i18n="tokenNote">Convention : --surface-*, --ink-*, --accent-*, --rule-*, --space-*, --type-*. Aucun nom shadcn/oklch n'est conservé : la couche existante est orpheline et ne serait pas rethémée.</p>
+        </div>
+      </details>
+
+      <details class="annex">
+        <summary data-i18n="annexButtons">Boutons — tous états</summary>
+        <div class="annex__body">
+          <div class="spec-row"><span class="label">Primaire / accent / discret</span>
+            <button type="button" class="btn btn--primary">Enregistrer</button>
+            <button type="button" class="btn btn--accent">Confirmer</button>
+            <button type="button" class="btn">Secondaire</button>
+            <button type="button" class="btn btn--ghost">Discret</button>
+          </div>
+          <div class="spec-row"><span class="label">Focus visible, survol, pressé, désactivé</span>
+            <button type="button" class="btn demo-focus">Focus</button>
+            <button type="button" class="btn btn--primary demo-focus">Focus</button>
+            <button type="button" class="btn" disabled>Désactivé</button>
+            <button type="button" class="btn btn--primary" disabled>Désactivé</button>
+          </div>
+          <div class="spec-row"><span class="label">Bloc, petit</span>
+            <button type="button" class="btn btn--block">Action pleine largeur</button>
+            <button type="button" class="btn btn--sm">Petit</button>
+          </div>
+        </div>
+      </details>
+
+      <details class="annex">
+        <summary data-i18n="annexInputs">Champs de saisie — repos, focus, erreur, désactivé</summary>
+        <div class="annex__body">
+          <div class="form-grid">
+            <div class="field">
+              <label class="field__label" for="a1">Nom complet</label>
+              <input class="input" id="a1" placeholder="Ex. CHAIMA ABBASSI">
+              <p class="field__hint">Requis · 13 px minimum</p>
+            </div>
+            <div class="field">
+              <label class="field__label" for="a2">Focus visible</label>
+              <input class="input focus-inset" id="a2" value="Habiba Jlali" readonly>
+              <p class="field__hint">Anneau encre, décalage interne</p>
+            </div>
+            <div class="field">
+              <label class="field__label" for="a3">Erreur</label>
+              <input class="input" id="a3" value="—" aria-invalid="true" aria-describedby="a3e">
+              <p class="field__error" id="a3e">Format attendu : JJ/MM/AAAA</p>
+            </div>
+            <div class="field">
+              <label class="field__label" for="a4">Liste</label>
+              <select class="select" id="a4"><option>Gardien</option><option>Défenseur</option><option>Milieu</option></select>
+            </div>
+            <div class="field">
+              <label class="field__label" for="a5">Désactivé</label>
+              <input class="input" id="a5" value="Verrouillé" disabled>
+            </div>
+            <div class="field">
+              <label class="field__label" for="a6">Recherche</label>
+              <input class="input" type="search" id="a6" placeholder="Nom, club, poste">
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="annex">
+        <summary data-i18n="annexStates">États vides</summary>
+        <div class="annex__body">
+          <div class="empty">
+            <div class="empty__mark" aria-hidden="true">0</div>
+            <p class="empty__title">Aucun enregistrement</p>
+            <p class="empty__text">Modifiez les filtres ou ajoutez une première joueuse à cette catégorie pour alimenter le dossier.</p>
+            <div class="btn-row">
+              <button type="button" class="btn">Réinitialiser les filtres</button>
+              <button type="button" class="btn btn--primary">Ajouter une joueuse</button>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <details class="annex">
+        <summary data-i18n="annexTiles">Tuile joueuse — sélection, non sélection, indisponible</summary>
+        <div class="annex__body">
+          <div class="tiles">
+            <button type="button" class="tile" data-state="on">
+              <span class="tile__top"><span class="jersey">9</span><span class="tile__name">Salma Gharbi</span></span>
+              <span class="tile__foot"><span class="tile__mark">SÉLECTIONNÉE</span><span class="badge">Attaquant</span></span>
+            </button>
+            <button type="button" class="tile" data-state="off">
+              <span class="tile__top"><span class="jersey">4</span><span class="tile__name">Rania Mansouri</span></span>
+              <span class="tile__foot"><span class="tile__mark">NON SÉLECTIONNÉE</span><span class="badge">Défenseur</span></span>
+            </button>
+            <button type="button" class="tile" data-state="blocked" aria-disabled="true">
+              <span class="tile__top"><span class="jersey">11</span><span class="tile__name">Yosra Ben Amor</span></span>
+              <span class="tile__foot"><span class="badge badge--exclude">SUSPENDUE</span><span class="tile__mark">—</span></span>
+            </button>
+          </div>
+          <p class="note-strip">L'état « non sélectionnée » porte sa conséquence dans le composant lui-même : le prochain match lui valura un carton jaune automatique.</p>
+        </div>
+      </details>
+    </section>
+  </main>
+
+  <footer class="doc-foot" data-od-id="doc-foot">
+    <p><span data-i18n="footCandidate">Candidat B — non fusionné.</span> <span data-i18n="footNote">Aucun fichier de l'application n'est modifié.</span></p>
+    <p><span data-i18n="footRules">Règle CAF appliquée à tous les écrans.</span></p>
+  </footer>
+</div>
+
+<!-- ======================================================================
+     MODALE MATCH
+     ====================================================================== -->
+<div class="scrim" id="scrim" hidden data-od-id="modal-match">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" id="modal">
+    <div class="modal__head">
+      <div class="stack-2">
+        <p class="eyebrow" data-i18n="modalEyebrow">Feuille de match · Séniors</p>
+        <h2 class="modal__title" id="modal-title" data-i18n="newMatch">Nouveau match</h2>
+      </div>
+      <button type="button" class="modal__close" id="modal-close" data-i18n-label="close" aria-label="Fermer">✕</button>
+    </div>
+
+    <div class="modal__body">
+      <div class="form-grid">
+        <div class="field">
+          <label class="field__label" for="m-opp" data-i18n="opponent">Adversaire</label>
+          <input class="input" id="m-opp" placeholder="Ex. Maroc">
+        </div>
+        <div class="field">
+          <label class="field__label" for="m-date" data-i18n="date">Date</label>
+          <input class="input" id="m-date" value="10.10.2026">
+        </div>
+        <div class="field">
+          <label class="field__label" for="m-venue" data-i18n="venue">Stade</label>
+          <input class="input" id="m-venue" value="Stade Olympique de Radès">
+        </div>
+        <div class="field">
+          <label class="field__label" for="m-comp" data-i18n="competition">Compétition</label>
+          <select class="select" id="m-comp"><option>CAN Féminine 2026 — qualification</option><option>Amical</option></select>
+        </div>
+      </div>
+
+      <!-- La règle CAF est un composant structurant, pas une mention de bas de page -->
+      <div class="caf" data-od-id="modal-caf">
+        <p class="caf__title" data-i18n="cafRuleTitle">Règle CAF — conséquence immédiate</p>
+        <p data-i18n="matchDisclaim">Les joueuses non sélectionnées reçoivent un carton jaune automatique. Deux jaunes = un match de suspension. Un carton rouge = suspension immédiate.</p>
+      </div>
+
+      <div class="stack-3">
+        <div class="squad-bar">
+          <p class="squad-bar__count">
+            <b id="squad-n">0</b> <span data-i18n="selected">sélectionnée(s)</span> sur <span class="num">16</span>
+          </p>
+          <div class="btn-row">
+            <button type="button" class="btn btn--sm" id="squad-all" data-i18n="selectAll">Tout sélectionner</button>
+            <button type="button" class="btn btn--sm" id="squad-none" data-i18n="clear">Effacer</button>
+          </div>
+        </div>
+        <div class="tiles" id="squad" data-od-id="modal-squad"></div>
+        <div id="squad-warning"></div>
+      </div>
+    </div>
+
+    <div class="modal__foot">
+      <button type="button" class="btn btn--ghost" id="modal-cancel" data-i18n="cancel">Annuler</button>
+      <button type="button" class="btn btn--primary" data-i18n="saveMatch">Sauvegarder</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+
+/* ==========================================================================
+   DONNÉES — démonstration fictive
+   ========================================================================== */
+const TODAY = new Date(2026, 9, 3);
+
+const ROSTER = [
+  { n: 1,  name: "Chaima Abbassi",   club: "Club Africain",      pos: "Gardien",   born: "1998-03-12", h: 174, caps: 41, g: 0,  a: 0, min: 3690, y: 1, r: 0, langs: "AR · FR · EN", nat: "Tunisienne", contract: "31.12.2027" },
+  { n: 16, name: "Habiba Jlali",     club: "Espérance de Tunis", pos: "Gardien",   born: "2002-07-04", h: 171, caps: 12, g: 0,  a: 0, min: 1080, y: 0, r: 0, langs: "AR · FR",     nat: "Tunisienne", contract: "31.12.2026" },
+  { n: 2,  name: "Sarra Nasri",     club: "Étoile du Sahel",    pos: "Défenseur", born: "1999-11-21", h: 168, caps: 38, g: 1,  a: 2, min: 3240, y: 0, r: 0, langs: "AR · FR · EN", nat: "Tunisienne", contract: "31.12.2027" },
+  { n: 3,  name: "Rania Mansouri",   club: "Espérance de Tunis", pos: "Défenseur", born: "1997-05-30", h: 170, caps: 44, g: 2,  a: 1, min: 3810, y: 0, r: 0, langs: "AR · FR · EN", nat: "Tunisienne", contract: "31.12.2028" },
+  { n: 4,  name: "Yosra Ben Amor",   club: "CS Sfaxien",        pos: "Défenseur", born: "2001-02-18", h: 169, caps: 21, g: 1,  a: 0, min: 1710, y: 1, r: 1, langs: "AR · FR",     nat: "Tunisienne", contract: "31.12.2026" },
+  { n: 5,  name: "Mariem Zoubeidi", club: "Stade Tunisien",     pos: "Défenseur", born: "2003-09-08", h: 167, caps: 8,  g: 0,  a: 1, min: 620,  y: 0, r: 0, langs: "AR · FR",     nat: "Tunisienne", contract: "31.12.2027" },
+  { n: 6,  name: "Ines Ferchichi",  club: "Club Africain",      pos: "Défenseur", born: "2004-01-27", h: 166, caps: 5,  g: 0,  a: 0, min: 410,  y: 1, r: 0, langs: "AR · FR · EN", nat: "Tunisienne", contract: "31.12.2028" },
+  { n: 14, name: "Hiba Ksouri",     club: "Étoile du Sahel",    pos: "Défenseur", born: "2000-06-14", h: 173, caps: 26, g: 3,  a: 0, min: 2190, y: 0, r: 0, langs: "AR · FR",     nat: "Tunisienne", contract: "31.12.2027" },
+  { n: 7,  name: "Amira Trabelsi",   club: "CS Sfaxien",        pos: "Milieu",    born: "1996-08-02", h: 168, caps: 52, g: 6,  a: 9, min: 4470, y: 1, r: 0, langs: "AR · FR · EN", nat: "Tunisienne", contract: "31.12.2028" },
+  { n: 8,  name: "Rym Chaouch",     club: "Espérance de Tunis", pos: "Milieu",    born: "2001-12-19", h: 164, caps: 19, g: 2,  a: 3, min: 1480, y: 0, r: 0, langs: "AR · FR",     nat: "Tunisienne", contract: "31.12.2027" },
+  { n: 10, name: "Nour Jelassi",     club: "Stade Tunisien",     pos: "Milieu",    born: "2003-04-11", h: 165, caps: 9,  g: 1,  a: 2, min: 700,  y: 0, r: 0, langs: "AR · FR · EN", nat: "Tunisienne", contract: "31.12.2028" },
+  { n: 13, name: "Wafa Aouini",     club: "Club Africain",      pos: "Milieu",    born: "2002-10-05", h: 167, caps: 14, g: 4,  a: 5, min: 1130, y: 0, r: 0, langs: "AR · FR",     nat: "Tunisienne", contract: "31.12.2027" },
+  { n: 15, name: "Hind Bouazizi",   club: "Étoile du Sahel",    pos: "Milieu",    born: "2005-02-23", h: 163, caps: 3,  g: 0,  a: 0, min: 240,  y: 1, r: 0, langs: "AR · FR",     nat: "Tunisienne", contract: "31.12.2028" },
+  { n: 9,  name: "Salma Gharbi",     club: "CS Sfaxien",        pos: "Attaquant", born: "1999-01-09", h: 172, caps: 35, g: 14, a: 7, min: 2940, y: 2, r: 0, langs: "AR · FR · EN", nat: "Tunisienne", contract: "31.12.2027" },
+  { n: 17, name: "Dorra Cherif",     club: "Espérance de Tunis", pos: "Attaquant", born: "2004-06-16", h: 170, caps: 7,  g: 3,  a: 1, min: 540,  y: 0, r: 0, langs: "AR · FR",     nat: "Tunisienne", contract: "31.12.2028" },
+  { n: 18, name: "Meriem Chaouat",   club: "Stade Tunisien",     pos: "Attaquant", born: "2000-09-28", h: 169, caps: 23, g: 8,  a: 4, min: 1870, y: 0, r: 0, langs: "AR · FR · EN", nat: "Tunisienne", contract: "31.12.2027" }
+];
+
+/* ==========================================================================
+   I18N — FR (défaut) / AR
+   ========================================================================== */
+const I18N = {
+  fr: {
+    skip: "Aller au contenu",
+    group_lang: "Langue de l'interface",
+    fed: "Fédération Tunisienne de Football",
+    dept: "Département Football Féminin",
+    cat: "Catégorie",
+    docRef: "Réf. dossier",
+    squad: "Effectif",
+    players: "joueuses",
+    updated: "Mis à jour",
+    nav_onglets: "Sections du dossier",
+    tabCategory: "Catégorie",
+    tabPlayers: "Joueuses",
+    tabStaff: "Staff",
+    tabStats: "Stats",
+    step1: "Étape 1 sur 4 · Entrée",
+    selectCat: "Choisir la catégorie d'équipe",
+    seniors: "Séniors",
+    seniorSub: "Équipe Nationale Senior",
+    u20Sub: "Équipe Nationale U-20",
+    u17Sub: "Équipe Nationale U-17",
+    registered: "Enregistrées",
+    avgAge: "Âge moyen",
+    excluded: "Suspendues",
+    currentCat: "Dossier en cours · dernière sélection 28.09.2026",
+    enterSeniors: "Entrer",
+    viewRoster: "Voir l'effectif",
+    enter: "Entrer",
+    oneSuspended: "1 joueuse suspendue",
+    noExcl: "Aucune suspension en cours",
+    cafRuleTitle: "Règle CAF applicable à toute sélection",
+    cafRuleBody: "Deux cartons jaunes sur la même compétition valident un match de suspension. Un carton rouge vaut suspension immédiate d'un match. Une joueuse non inscrite sur la feuille de match reçoit un carton jaune automatique.",
+    oneYellow: "1 jaune — risque",
+    twoYellows: "2 jaunes = suspendue",
+    redCard: "Carton rouge = suspendue",
+    demoData: "Données de démonstration fictives. Le prototype sert à comparer des directions visuelles, pas à documenter l'effectif réel.",
+    step2: "Étape 2 sur 4 · Dossier Séniors",
+    playersTitle: "Joueuses",
+    newMatch: "Nouveau match",
+    recruit: "Recruter",
+    search: "Rechercher",
+    searchPh: "Nom, club, poste",
+    club: "Club",
+    allClubs: "Tous les clubs",
+    group_filters: "Filtrer par poste",
+    allPositions: "Tous les postes",
+    gk: "Gardien",
+    df: "Défenseur",
+    mf: "Milieu",
+    fw: "Attaquant",
+    name: "Joueuse",
+    caps: "Sélections",
+    goals: "Buts",
+    assists: "Passes",
+    discipline: "Disc.",
+    langs: "Langues",
+    age: "Âge",
+    height: "Taille",
+    born: "Née le",
+    position: "Poste",
+    jersey: "Maillot",
+    nat: "Nationalité",
+    contract: "Contrat",
+    performance: "Performance",
+    yellows: "Jaunes",
+    oneMore: "Un carton de plus = suspendue",
+    suspended: "Suspendue",
+    redCardShort: "Carton rouge",
+    modify: "Modifier",
+    passport: "Passeport",
+    noPassport: "Aucun document de passeport pour cette membre",
+    step3: "Étape 3 sur 4 · Séniors · U-20 · U-17",
+    statsTitle: "Statistiques",
+    exportCsv: "Exporter CSV",
+    print: "Imprimer",
+    collective: "Collectif — Séniors",
+    matchesPlayed: "Matchs joués",
+    goalsFor: "Buts pour",
+    goalsAgainst: "Buts contre",
+    disciplineTitle: "Discipline — mise à jour à chaque feuille de match",
+    statsCaption: "Par joueuse, bilan de la période. Tri par nombre de sélections. Les colonnes chiffrées sont en chasse fixe et alignées à la fin.",
+    pos: "Poste",
+    minutes: "Minutes",
+    suspendedCol: "Suspendues",
+    total: "Total",
+    perGame: "par match",
+    step4: "Étape 4 sur 4 · Encadrement",
+    staffTitle: "Staff",
+    hire: "Recruter",
+    headCoach: "Entraineuse principale",
+    deputy: "Adjointe",
+    fitness: "Préparatrice physique",
+    gkCoach: "Préparatrice de gardiens",
+    delegate: "Déléguée",
+    analyst: "Analyste vidéo",
+    natTun: "Tunisienne",
+    license: "Licence",
+    since: "En poste depuis",
+    active: "Actif",
+    renew: "Contrat à renouveler",
+    edit: "Modifier",
+    annexTitle: "Annexe — spécimens d'états",
+    annexTokens: "Jetons",
+    tokenNote: "Convention : --surface-*, --ink-*, --accent-*, --rule-*, --space-*, --type-*. Aucun nom shadcn/oklch n'est conservé : la couche existante est orpheline et ne serait pas rethémée.",
+    annexButtons: "Boutons — tous états",
+    annexInputs: "Champs de saisie — repos, focus, erreur, désactivé",
+    annexStates: "États vides",
+    annexTiles: "Tuile joueuse — sélection, non sélection, indisponible",
+    footCandidate: "Candidat B — non fusionné.",
+    footNote: "Aucun fichier de l'application n'est modifié.",
+    footRules: "Règle CAF appliquée à tous les écrans.",
+    modalEyebrow: "Feuille de match · Séniors",
+    close: "Fermer",
+    opponent: "Adversaire",
+    date: "Date",
+    venue: "Stade",
+    competition: "Compétition",
+    matchDisclaim: "Les joueuses non sélectionnées reçoivent un carton jaune automatique. Deux jaunes = un match de suspension. Un carton rouge = suspension immédiate.",
+    selected: "sélectionnée(s)",
+    selectAll: "Tout sélectionner",
+    clear: "Effacer",
+    cancel: "Annuler",
+    saveMatch: "Sauvegarder",
+    on: "SÉLECTIONNÉE",
+    off: "NON SÉLECTIONNÉE",
+    min: "ans",
+    resultsCount: "résultat(s)",
+    noResultTitle: "Aucun résultat",
+    noResultText: "Aucune joueuse ne correspond à cette combinaison de filtres.",
+    resetFilters: "Réinitialiser les filtres",
+    openSheet: "Ouvrir la fiche",
+    sheetOpened: "Fiche ouverte",
+    yellowAuto: "Carton jaune automatique",
+    squadWarning: "joueuse(s) non sélectionnée(s) : chacune recevra un carton jaune automatique à la clôture de cette feuille. Une joueuse déjà sous exclusion ne peut pas être sélectionnée.",
+    blockedMsg: "Suspendue",
+    sortAnnounce: "Trié par",
+    asc: "croissant",
+    desc: "décroissant"
+  },
+  ar: {
+    skip: "تخطَّ إلى المحتوى",
+    group_lang: "لغة الواجهة",
+    fed: "الاتحاد التونسي لكرة القدم",
+    dept: "قسم كرة القدم النسوي",
+    cat: "الفئة",
+    docRef: "مرجع الملف",
+    squad: "القائمة",
+    players: "لاعبة",
+    updated: "آخر تحديث",
+    nav_onglets: "أقسام الملف",
+    tabCategory: "الفئة",
+    tabPlayers: "اللاعبات",
+    tabStaff: "الطاقم",
+    tabStats: "الإحصائيات",
+    step1: "المرحلة 1 من 4 · الدخول",
+    selectCat: "اختيار فئة الفريق",
+    seniors: "الفوج الأول",
+    seniorSub: "المنتخب الوطني الأول",
+    u20Sub: "المنتخب الوطني تحت 20",
+    u17Sub: "المنتخب الوطني تحت 17",
+    registered: "مسجّلات",
+    avgAge: "متوسط العمر",
+    excluded: "موقوفات",
+    currentCat: "ملف قيد العمل · آخر اختيار 28.09.2026",
+    enterSeniors: "دخول",
+    viewRoster: "عرض القائمة",
+    enter: "دخول",
+    oneSuspended: "لاعبة موقوفة واحدة",
+    noExcl: "لا يوجد إيقاف حالي",
+    cafRuleTitle: "قاعدة CAF المطبّقة على كل اختيار",
+    cafRuleBody: "البطاقتان الصفراء في نفس المسابقة تساويان إيقافًا لمباراة واحدة. البطاقة الحمراء تعني إيقافًا فوريًا لمباراة واحدة. اللاعبة غير المدرجة في كشف المباراة تتلقى بطاقة صفراء تلقائيًا.",
+    oneYellow: "بطاقة صفراء — خطر",
+    twoYellows: "بطاقتان = إيقاف",
+    redCard: "بطاقة حمراء = إيقاف",
+    demoData: "بيانات تجريبية خيالية. النموذج مخصص لمقارنة الاتجاهات البصرية لا لتوثيق القائمة الحقيقية.",
+    step2: "المرحلة 2 من 4 · ملف الفوج الأول",
+    playersTitle: "اللاعبات",
+    newMatch: "مباراة جديدة",
+    recruit: "استقطاب",
+    search: "بحث",
+    searchPh: "الاسم، النادي، المركز",
+    club: "النادي",
+    allClubs: "كل الأندية",
+    group_filters: "تصفية حسب المركز",
+    allPositions: "كل المراكز",
+    gk: "حارسة",
+    df: "مدافعة",
+    mf: "وسط",
+    fw: "مهاجمة",
+    name: "اللاعبة",
+    caps: "المشاركات",
+    goals: "الأهداف",
+    assists: "التمريرات",
+    discipline: "الانضباط",
+    langs: "اللغات",
+    age: "العمر",
+    height: "الطول",
+    born: "وُلدت في",
+    position: "المركز",
+    jersey: "الرقم",
+    nat: "الجنسية",
+    contract: "العقد",
+    performance: "الأداء",
+    yellows: "الصفراء",
+    oneMore: "بطاقة أخرى = إيقاف",
+    suspended: "موقوفة",
+    redCardShort: "بطاقة حمراء",
+    modify: "تعديل",
+    passport: "جواز السفر",
+    noPassport: "لا يوجد مستند جواز سفر لهذه العضوة",
+    step3: "المرحلة 3 من 4 · الأول · تحت 20 · تحت 17",
+    statsTitle: "الإحصائيات",
+    exportCsv: "تصدير CSV",
+    print: "طباعة",
+    collective: "المجموع — الفوج الأول",
+    matchesPlayed: "مباريات",
+    goalsFor: "له",
+    goalsAgainst: "عليه",
+    disciplineTitle: "الانضباط — يُحدَّث مع كل كشف مباراة",
+    statsCaption: "حسب اللاعبة، حصيلة الفترة. الترتيب حسب عدد المباريات. الأعمدة الرقمية بخط ثابت ومحاذاة إلى النهاية.",
+    pos: "المركز",
+    minutes: "الدقائق",
+    suspendedCol: "موقوفات",
+    total: "المجموع",
+    perGame: "لكل مباراة",
+    step4: "المرحلة 4 من 4 · الطاقم",
+    staffTitle: "الطاقم",
+    hire: "توظيف",
+    headCoach: "المدربة الرئيسية",
+    deputy: "مساعدة",
+    fitness: "معدّلة بدنية",
+    gkCoach: "معدّة حراس",
+    delegate: "المنتدبة",
+    analyst: "محللة فيديو",
+    natTun: "تونسية",
+    license: "الرخصة",
+    since: "في المنصب منذ",
+    active: "نشط",
+    renew: "العقد بحاجة إلى تجديد",
+    edit: "تعديل",
+    annexTitle: "ملحق — نماذج الحالات",
+    annexTokens: "المتغيّرات",
+    tokenNote: "الاتفاق: --surface-*، --ink-*، --accent-*، --rule-*، --space-*، --type-*. لم يُبقَ على أي اسم من shadcn/oklch: الطبقة الحالية معلّقة ولن تُعيد صياغة ألوانها.",
+    annexButtons: "الأزرار — كل الحالات",
+    annexInputs: "حقول الإدخال — الراحة، التركيز، الخطأ، المعطّل",
+    annexStates: "الحالات الفارغة",
+    annexTiles: "بطاقة اللاعبة — مُختارة، غير مختارة، غير متاحة",
+    footCandidate: "المرشّح B — غير مدمج.",
+    footNote: "لم يُعدَّل أي ملف من ملفات التطبيق.",
+    footRules: "قاعدة CAF مطبّقة في كل الشاشات.",
+    modalEyebrow: "كشف المباراة · الفوج الأول",
+    close: "إغلاق",
+    opponent: "الخصم",
+    date: "التاريخ",
+    venue: "الملعب",
+    competition: "البطولة",
+    matchDisclaim: "اللاعبات غير المختارات يتلقين بطاقة صفراء تلقائيًا. بطاقتان = إيقاف لمباراة واحدة. البطاقة الحمراء = إيقاف فوري.",
+    selected: "مختارة",
+    selectAll: "تحديد الكل",
+    clear: "مسح",
+    cancel: "إلغاء",
+    saveMatch: "حفظ",
+    on: "مختارة",
+    off: "غير مختارة",
+    min: "سنة",
+    resultsCount: "نتيجة",
+    noResultTitle: "لا توجد نتائج",
+    noResultText: "لا توجد لاعبة تطابق هذه الفلاتر.",
+    resetFilters: "إعادة تعيين الفلاتر",
+    openSheet: "فتح الملف",
+    sheetOpened: "تم فتح الملف",
+    yellowAuto: "بطاقة صفراء تلقائية",
+    squadWarning: "لاعبة غير مختارة: كل واحدة ستتلقى بطاقة صفراء تلقائية عند إغلاق الكشف. اللاعبة الموقوفة لا يمكن اختيارها.",
+    blockedMsg: "موقوفة",
+    sortAnnounce: "الترتيب حسب",
+    asc: "تصاعدي",
+    desc: "تنازلي"
+  }
+};
+
+let LANG = "fr";
+const t = (k) => (I18N[LANG] && I18N[LANG][k]) ?? I18N.fr[k] ?? k;
+
+/* ==========================================================================
+   OUTILS
+   ========================================================================== */
+const $  = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
+
+const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function age(born) {
+  const b = new Date(born);
+  let a = TODAY.getFullYear() - b.getFullYear();
+  const m = TODAY.getMonth() - b.getMonth();
+  if (m < 0 || (m === 0 && TODAY.getDate() < b.getDate())) a--;
+  return a;
+}
+function fmtDate(iso) {
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
+}
+/* Règle CAF : structurante, pas décorative. */
+function isSuspended(p) { return p.y >= 2 || p.r >= 1; }
+
+/* ==========================================================================
+   DISCIPLINE — rendu
+   Le jaune n'a pas de couleur. Seuls le compte, la forme et le libellé
+   portent le sens. L'accent n'apparaît que sur les états d'exclusion.
+   ========================================================================== */
+function disciplineCell(p) {
+  const pips = Array.from({ length: 2 }, (_, i) =>
+    `<i class="pip" data-on="${p.y > i ? 1 : 0}"></i>`).join("");
+  let out = `<span class="disc"><span class="pips">${pips}</span>`;
+
+  if (p.r >= 1) {
+    out += `<span class="badge badge--exclude">${esc(t("redCardShort"))}</span>`;
+  } else if (p.y >= 2) {
+    out += `<span class="badge badge--exclude">${esc(t("suspended"))}</span>`;
+  } else if (p.y === 1) {
+    out += `<span class="badge badge--rule">${esc(t("oneMore"))}</span>`;
+  } else {
+    out += `<span class="badge">${esc(t("discipline"))} —</span>`;
+  }
+  return out + "</span>";
+}
+
+/* ==========================================================================
+   ÉCRAN 2 — REGISTRE + FILTRES + FICHE
+   ========================================================================== */
+const state = { q: "", club: "", pos: "all", openId: 1 };
+
+const rosterBody  = $("#roster-body");
+const rosterEmpty = $("#roster-empty");
+const rosterStatus = $("#roster-status");
+const sheetHost   = $("#player-sheet");
+
+function filtered() {
+  const q = state.q.trim().toLowerCase();
+  return ROSTER.filter((p) => {
+    if (state.pos !== "all" && p.pos !== state.pos) return false;
+    if (state.club && p.club !== state.club) return false;
+    if (q && !(`${p.name} ${p.club} ${p.pos}`.toLowerCase().includes(q))) return false;
+    return true;
+  });
+}
+
+function renderRoster() {
+  const rows = filtered();
+
+  rosterBody.innerHTML = rows.map((p) => `
+    <div class="roster__row" data-open="${p.n === state.openId}">
+      <span class="jersey">${p.n}</span>
+      <button type="button" class="player-btn" data-open-player="${p.n}"
+              aria-label="${esc(t("openSheet"))} — ${esc(p.name)}">
+        <span class="stack-2">
+          <span class="player-btn__name">${esc(p.name)}</span>
+          <span class="player-btn__meta">${esc(p.nat)} · ${esc(fmtDate(p.born))}</span>
+        </span>
+      </button>
+      <span class="player-btn__meta">${esc(p.club)}</span>
+      <span class="num">${p.caps}</span>
+      <span class="num">${p.g}</span>
+      <span class="num">${p.a}</span>
+      <span class="roster__cell-disc">${disciplineCell(p)}</span>
+      <span class="player-btn__meta">${esc(p.langs)}</span>
+    </div>`).join("");
+
+  if (rows.length === 0) {
+    rosterBody.innerHTML = "";
+    rosterEmpty.hidden = false;
+    rosterEmpty.innerHTML = `
+      <div class="empty" data-od-id="players-empty">
+        <div class="empty__mark" aria-hidden="true">0</div>
+        <p class="empty__title">${esc(t("noResultTitle"))}</p>
+        <p class="empty__text">${esc(t("noResultText"))}</p>
+        <div class="btn-row">
+          <button type="button" class="btn" data-action="reset">${esc(t("resetFilters"))}</button>
+        </div>
+      </div>`;
+  } else {
+    rosterEmpty.hidden = true;
+    rosterEmpty.innerHTML = "";
+  }
+
+  rosterStatus.textContent = `${rows.length} ${t("resultsCount")}`;
+  renderSheet(ROSTER.find((p) => p.n === state.openId) || null);
+}
+
+function renderSheet(p) {
+  if (!p) { sheetHost.innerHTML = ""; return; }
+
+  const perGame = p.caps > 0 ? (p.g / p.caps).toFixed(2) : "0.00";
+
+  /* Réglette de buts : répartition déterministe des p.g buts sur 9 matchs,
+     de sorte que la somme des hauteurs redonne exactement le total affiché.
+     Pas de graphique, pas d'ombre — une réglette en filet. */
+  const tape = (() => {
+    const base = Math.floor(p.g / 9), rem = p.g % 9;
+    return Array.from({ length: 9 }, (_, i) => {
+      const v = base + (i < rem ? 1 : 0);
+      return `<i style="height:${v ? 18 + v * 20 : 8}%"${v ? "" : ' data-empty="1"'}></i>`;
+    }).join("");
+  })();
+
+  sheetHost.innerHTML = `
+    <article class="sheet-open" data-od-id="player-sheet-open">
+      <div class="sheet-open__head">
+        <div class="ph ph--jersey sheet-open__ph" style="--n:'${p.n}'" data-tag="Portrait">P</div>
+        <div class="sheet-open__id">
+          <p class="eyebrow" data-i18n="sheetOpened">Fiche ouverte</p>
+          <h3 class="sheet-open__name">${esc(p.name)}</h3>
+          <p class="player-btn__meta">${esc(p.club)} · ${esc(t("position"))} ${esc(p.pos)} · ${esc(t("jersey"))} <span class="num">${p.n}</span></p>
+          <div class="btn-row">${disciplineCell(p)}</div>
+        </div>
+      </div>
+
+      <dl class="sheet-open__grid">
+        <div class="spec"><dt>${esc(t("born"))}</dt><dd class="num">${esc(fmtDate(p.born))}</dd></div>
+        <div class="spec"><dt>${esc(t("age"))}</dt><dd class="num">${age(p.born)} <span class="label">${esc(t("min"))}</span></dd></div>
+        <div class="spec"><dt>${esc(t("height"))}</dt><dd class="num">${p.h} <span class="label">cm</span></dd></div>
+        <div class="spec"><dt>${esc(t("caps"))}</dt><dd class="num">${p.caps}</dd></div>
+        <div class="spec"><dt>${esc(t("nat"))}</dt><dd>${esc(p.nat)}</dd></div>
+        <div class="spec"><dt>${esc(t("langs"))}</dt><dd>${esc(p.langs)}</dd></div>
+        <div class="spec"><dt>${esc(t("contract"))}</dt><dd class="num">${esc(p.contract)}</dd></div>
+        <div class="spec"><dt>${esc(t("yellows"))}</dt><dd>${disciplineCell(p)}</dd></div>
+      </dl>
+
+      <div class="sheet-open__section">
+        <p class="label">${esc(t("performance"))}</p>
+        <div class="row-wrap mt-3" style="align-items:flex-end;">
+          <div class="stack-2"><span class="formula">${p.g}<small> ${esc(t("goals"))}</small></span>
+            <span class="label">${perGame} ${esc(t("perGame"))}</span></div>
+          <div class="stack-2"><span class="formula">${p.a}<small> ${esc(t("assists"))}</small></span>
+            <span class="label">${(p.caps ? p.a / p.caps : 0).toFixed(2)} ${esc(t("perGame"))}</span></div>
+          <div class="stack-2"><span class="formula">${p.min}<small> min</small></span>
+            <span class="label">${p.caps ? Math.round(p.min / p.caps) : 0} min / ${esc(t("perGame"))}</span></div>
+          <div class="stack-2"><span class="label">${esc(t("goals"))}</span>
+            <span class="tape" role="img" aria-label="${esc(t("goals"))}">${tape}</span></div>
+        </div>
+      </div>
+
+      <div class="sheet-open__section">
+        <p class="label">${esc(t("discipline"))}</p>
+        <div class="caf mt-3">
+          <p class="caf__title">${esc(t("cafRuleTitle"))}</p>
+          <p>${esc(t("cafRuleBody"))}</p>
+          <div class="caf__scale">
+            <div><span class="pips"><i class="pip" data-on="${p.y > 0}"></i><i class="pip" data-on="0"></i></span><span>${esc(t("oneYellow"))}</span></div>
+            <div><span class="pips"><i class="pip" data-on="1"></i><i class="pip" data-on="1"></i></span><span>${esc(t("twoYellows"))}</span></div>
+            <div><span class="pips"><i class="pip" data-tone="red" data-on="1"></i></span><span>${esc(t("redCard"))}</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="sheet-open__foot">
+        <button type="button" class="btn btn--ghost btn--sm">${esc(t("passport"))}</button>
+        <button type="button" class="btn btn--sm">${esc(t("modify"))}</button>
+        <button type="button" class="btn btn--sm">${esc(t("recruit"))}</button>
+        <span class="player-btn__meta">${esc(t("noPassport"))}</span>
+      </div>
+    </article>`;
+}
+
+/* ==========================================================================
+   ÉCRAN 3 — TABLEAU DE STATS
+   ========================================================================== */
+const sortState = { key: "caps", dir: "desc" };
+
+function renderStats() {
+  const rows = ROSTER.slice().sort((a, b) => {
+    const k = sortState.key;
+    const dir = sortState.dir === "asc" ? 1 : -1;
+    if (k === "name") return a.name.localeCompare(b.name, "fr") * dir;
+    return (a[k] - b[k]) * dir;
+  });
+
+  $("#stats-body").innerHTML = rows.map((p) => `
+    <tr>
+      <td class="n">${p.n}</td>
+      <th scope="row">${esc(p.name)}</th>
+      <td>${esc(p.pos)}</td>
+      <td class="n">${p.caps}</td>
+      <td class="n">${p.g}</td>
+      <td class="n">${p.a}</td>
+      <td class="n">${p.min}</td>
+      <td class="n">${p.y}</td>
+      <td class="n" data-col="exclude">${isSuspended(p) ? 1 : 0}</td>
+    </tr>`).join("");
+
+  const sum = (k) => ROSTER.reduce((s, p) => s + p[k], 0);
+  const susp = ROSTER.filter(isSuspended).length;
+
+  $("#stats-foot").innerHTML = `
+    <tr>
+      <td></td>
+      <th scope="row">${esc(t("total"))}</th>
+      <td></td>
+      <td class="n">${sum("caps")}</td>
+      <td class="n">${sum("g")}</td>
+      <td class="n">${sum("a")}</td>
+      <td class="n">${sum("min")}</td>
+      <td class="n">${sum("y")}</td>
+      <td class="n" data-col="exclude">${susp}</td>
+    </tr>`;
+
+  /* aria-sort appartient à la cellule d'en-tête (th), pas au bouton. */
+  $$(".stats__sort").forEach((b) => {
+    const th = b.closest("th");
+    if (!th) return;
+    if (b.dataset.sort === sortState.key) th.setAttribute("aria-sort", sortState.dir === "asc" ? "ascending" : "descending");
+    else th.removeAttribute("aria-sort");
+  });
+}
+
+/* ==========================================================================
+   ÉCRAN 1/4 — SÉLECTION DE CATÉGORIE + ÉCRAN 4 — MODALE MATCH
+   ========================================================================== */
+const squadState = new Set([1, 3, 7, 9, 13, 14]);
+
+function renderSquad() {
+  $("#squad").innerHTML = ROSTER.map((p) => {
+    const blocked = isSuspended(p);
+    const on = !blocked && squadState.has(p.n);
+    return `
+      <button type="button" class="tile" data-squad="${p.n}"
+              data-state="${blocked ? "blocked" : on ? "on" : "off"}"
+              ${blocked ? 'aria-disabled="true"' : 'aria-pressed="' + on + '"'}>
+        <span class="tile__top"><span class="jersey">${p.n}</span><span class="tile__name">${esc(p.name)}</span></span>
+        <span class="tile__foot">
+          <span class="tile__mark">${blocked ? esc(t("suspended")) : on ? esc(t("on")) : esc(t("off"))}</span>
+          <span class="badge">${esc(p.pos)}</span>
+        </span>
+      </button>`;
+  }).join("");
+
+  const n = squadState.size;
+  $("#squad-n").textContent = n;
+
+  const auto = ROSTER.filter((p) => !isSuspended(p) && !squadState.has(p.n)).length;
+  $("#squad-warning").innerHTML = auto > 0 ? `
+    <div class="notice" data-od-id="squad-warning">
+      <span class="notice__mark" aria-hidden="true">!</span>
+      <span>${esc(t("squadWarning"))} <b class="num">${auto}</b></span>
+    </div>` : "";
+}
+
+/* ==========================================================================
+   ONGLETS — clavier complet, ordre inversé en RTL
+   ========================================================================== */
+const tabs   = $$('[role="tab"]');
+const panels = tabs.map((t) => document.getElementById(t.getAttribute("aria-controls")));
+
+function selectTab(idx, focus = true) {
+  tabs.forEach((t, i) => {
+    const on = i === idx;
+    t.setAttribute("aria-selected", String(on));
+    t.tabIndex = on ? 0 : -1;
+    panels[i].hidden = !on;
+  });
+  if (focus) tabs[idx].focus();
+  window.scrollTo({ top: 0, behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth" });
+}
+
+tabs.forEach((tab, i) => {
+  tab.addEventListener("click", () => selectTab(i, false));
+  tab.addEventListener("keydown", (e) => {
+    const rtl = document.documentElement.dir === "rtl";
+    let next = null;
+    if (e.key === "ArrowRight") next = rtl ? i - 1 : i + 1;
+    else if (e.key === "ArrowLeft") next = rtl ? i + 1 : i - 1;
+    else if (e.key === "Home") next = 0;
+    else if (e.key === "End") next = tabs.length - 1;
+    if (next === null) return;
+    e.preventDefault();
+    selectTab((next + tabs.length) % tabs.length);
+  });
+});
+
+/* ==========================================================================
+   MODALE — piège de focus, Échap, retour du focus
+   ========================================================================== */
+const scrim = $("#scrim"), modal = $("#modal");
+let lastFocus = null;
+
+function openModal() {
+  lastFocus = document.activeElement;
+  scrim.hidden = false;
+  renderSquad();
+  const first = $(".btn--primary", modal);
+  (first || modal).focus();
+}
+function closeModal() {
+  scrim.hidden = true;
+  if (lastFocus) lastFocus.focus();
+}
+document.addEventListener("keydown", (e) => {
+  if (scrim.hidden) return;
+  if (e.key === "Escape") { e.preventDefault(); closeModal(); return; }
+  if (e.key !== "Tab") return;
+  const f = $$('a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])', modal)
+    .filter((el) => el.offsetParent !== null);
+  if (!f.length) return;
+  const first = f[0], last = f[f.length - 1];
+  if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
+$("#modal-close").addEventListener("click", closeModal);
+$("#modal-cancel").addEventListener("click", closeModal);
+scrim.addEventListener("mousedown", (e) => { if (e.target === scrim) closeModal(); });
+document.addEventListener("click", (e) => {
+  const open = e.target.closest('[data-action="open-match"]');
+  if (open) openModal();
+});
+
+/* ==========================================================================
+   DÉLÉGATION — registre, filtres, fiche, stats, tuiles
+   ========================================================================== */
+document.addEventListener("click", (e) => {
+  // Fiche joueur
+  const openBtn = e.target.closest("[data-open-player]");
+  if (openBtn) {
+    const n = Number(openBtn.dataset.openPlayer);
+    state.openId = state.openId === n ? null : n;
+    renderRoster();
+    return;
+  }
+  // Chips de poste
+  const chip = e.target.closest("[data-filter]");
+  if (chip) {
+    state.pos = chip.dataset.filter;
+    $$("[data-filter]").forEach((c) => c.setAttribute("aria-pressed", String(c === chip)));
+    renderRoster();
+    return;
+  }
+  // Réinitialisation
+  if (e.target.closest('[data-action="reset"]')) {
+    state.q = ""; state.club = ""; state.pos = "all";
+    $("#q").value = ""; $("#club").value = "";
+    $$("[data-filter]").forEach((c) => c.setAttribute("aria-pressed", String(c.dataset.filter === "all")));
+    renderRoster();
+    return;
+  }
+  // Tuile de sélection
+  const tile = e.target.closest("[data-squad]");
+  if (tile && tile.getAttribute("aria-disabled") !== "true") {
+    const n = Number(tile.dataset.squad);
+    squadState.has(n) ? squadState.delete(n) : squadState.add(n);
+    renderSquad();
+    return;
+  }
+  // Tri du tableau
+  const sortBtn = e.target.closest("[data-sort]");
+  if (sortBtn) {
+    const k = sortBtn.dataset.sort;
+    if (sortState.key === k) sortState.dir = sortState.dir === "asc" ? "desc" : "asc";
+    else { sortState.key = k; sortState.dir = k === "name" ? "asc" : "desc"; }
+    renderStats();
+    return;
+  }
+  // Voir l'effectif depuis la fiche catégorie
+  if (e.target.closest('[data-action="goto-roster"]')) { selectTab(1, false); return; }
+  // Imprimer : on déploie les quatre écrans, le prototype EST un document
+  if (e.target.closest('[data-action="print"]')) {
+    const was = panels.map((p) => !p.hidden);
+    panels.forEach((p) => { p.hidden = false; });
+    $$(".tabs").forEach((el) => { el.style.display = "none"; });
+    const done = () => {
+      panels.forEach((p, i) => { p.hidden = !was[i]; });
+      $$(".tabs").forEach((el) => { el.style.display = ""; });
+      window.removeEventListener("afterprint", done);
+    };
+    window.addEventListener("afterprint", done);
+    window.print();
+  }
+});
+
+$("#q").addEventListener("input", (e) => { state.q = e.target.value; renderRoster(); });
+$("#club").addEventListener("change", (e) => { state.club = e.target.value; renderRoster(); });
+
+$("#squad-all").addEventListener("click", () => {
+  ROSTER.filter((p) => !isSuspended(p)).forEach((p) => squadState.add(p.n));
+  renderSquad();
+});
+$("#squad-none").addEventListener("click", () => { squadState.clear(); renderSquad(); });
+
+/* ==========================================================================
+   ANNEXE — nuancier des jetons
+   ========================================================================== */
+const SWATCHES = [
+  ["--surface-paper",  "Fond papier"],
+  ["--surface-sheet",  "Feuille surélevée"],
+  ["--surface-sunken", "Creux"],
+  ["--surface-hero",   "Surface hero (seule surface en dégradé)"],
+  ["--ink-1",          "Encre primaire · 16.12:1"],
+  ["--ink-2",          "Encre de corps · 8.90:1"],
+  ["--ink-3",          "Encre tertiaire · 4.78:1"],
+  ["--ink-4",          "Encre d'appoint · 4.67:1"],
+  ["--accent-1",       "Accent unique · 6.28:1 · 2 usages max par écran"],
+  ["--rule-hair",      "Filet intra-ligne"],
+  ["--rule-firm",      "Filet de bordure"],
+  ["--rule-heavy",     "Filet structurel"]
+];
+
+function renderSwatches() {
+  $("#swatches").innerHTML = SWATCHES.map(([v, label]) => `
+    <div class="swatch">
+      <div class="swatch__chip" style="background:var(${v})"></div>
+      <div class="swatch__meta"><code>${v}</code><span>${esc(label)}</span></div>
+    </div>`).join("");
+}
+
+/* ==========================================================================
+   LANGUE — bascule FR / AR avec inversion réelle du document
+   ========================================================================== */
+function applyLang(lang) {
+  LANG = lang;
+  const html = document.documentElement;
+  html.lang = lang;
+  html.dir = lang === "ar" ? "rtl" : "ltr";
+
+  $("#lang-fr").setAttribute("aria-pressed", String(lang === "fr"));
+  $("#lang-ar").setAttribute("aria-pressed", String(lang === "ar"));
+
+  $$("[data-i18n]").forEach((el) => { el.textContent = t(el.dataset.i18n); });
+  $$("[data-i18n-ph]").forEach((el) => { el.placeholder = t(el.dataset.i18nPh); });
+  $$("[data-i18n-label]").forEach((el) => { el.setAttribute("aria-label", t(el.dataset.i18nLabel)); });
+
+  /* Les noms de clubs restent en français : ce sont des entités nommées,
+     pas des libellés d'interface. Les postes, eux, sont traduits. */
+  renderRoster();
+  renderStats();
+  renderSquad();
+}
+
+$("#lang-fr").addEventListener("click", () => applyLang("fr"));
+$("#lang-ar").addEventListener("click", () => applyLang("ar"));
+
+/* ==========================================================================
+   DÉMARRAGE
+   ========================================================================== */
+renderSwatches();
+applyLang("fr");
+renderStats();
+renderSquad();
+$("#hd-cat").textContent = "Séniors";
+$("#hd-squad").textContent = String(ROSTER.length);
+$("#c-players").textContent = String(ROSTER.length);
+$("#c-staff").textContent = String($$(".staffcard").length);
+selectTab(0, false);
+</script>
+</body>
+</html>

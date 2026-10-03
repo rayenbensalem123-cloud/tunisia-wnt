@@ -2,11 +2,13 @@
 import React, { useState } from "react"
 import { UserPlus, Globe2, ShieldCheck, Edit2, Trash2, Activity, Briefcase, Trophy } from "lucide-react"
 import { usePlayers } from "@/lib/players-context"
+import { useTranslate } from "@/lib/language-context"
 import { NavSwitcher } from "@/components/nav-switcher"
 import { CoachDialog } from "@/components/coach-dialog"
 import { PlayerCard } from "@/components/player-card"
 
 export default function CoachesPage() {
+  const { tr } = useTranslate()
   const { coaches, deleteCoach } = usePlayers()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedCoach, setSelectedCoach] = useState<any>(null)
@@ -26,9 +28,9 @@ export default function CoachesPage() {
       <div className="flex justify-between items-center mb-12">
         <div>
           <h1 className="text-4xl font-[1000] italic uppercase tracking-tighter">
-            SQUAD <span className="text-[#E30613]">STAFF</span>
+            {tr.coach.squadStaffTitle1} <span className="text-[#E30613]">{tr.coach.squadStaffTitle2}</span>
           </h1>
-          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Management & Technical Body</p>
+          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">{tr.coach.pageSubtitle}</p>
         </div>
 
         <NavSwitcher />
@@ -37,7 +39,7 @@ export default function CoachesPage() {
           onClick={handleHire}
           className="bg-[#E30613] text-white px-6 py-3 rounded-xl font-black uppercase text-[11px] flex items-center gap-2 hover:brightness-110 transition-all shadow-lg"
         >
-          <UserPlus size={16} /> Hire Staff
+          <UserPlus size={16} /> {tr.coach.hireStaff}
         </button>
       </div>
 
@@ -45,11 +47,11 @@ export default function CoachesPage() {
         <div className="flex flex-col items-center justify-center py-24 gap-5 rounded-2xl border-2 border-dashed border-[rgba(var(--line-rgb),.18)] text-center">
           <div className="w-16 h-16 rounded-2xl bg-[var(--c-panel2)] border border-[rgba(var(--line-rgb),.18)] flex items-center justify-center"><Briefcase size={26} className="text-[#f6c744]"/></div>
           <div>
-            <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">No staff registered</p>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">Hire your technical body to build the delegation</p>
+            <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">{tr.coach.noStaffRegistered}</p>
+            <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">{tr.coach.hireToBuildDelegation}</p>
           </div>
           <button onClick={handleHire} className="mt-2 px-6 py-3 rounded-full bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg">
-            <UserPlus size={15} /> Hire Staff
+            <UserPlus size={15} /> {tr.coach.hireStaff}
           </button>
         </div>
       ) : (
@@ -85,17 +87,17 @@ export default function CoachesPage() {
                 <div className="flex items-center gap-2 mb-4">
                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{coach.nationality || "TUNISIA"}</span>
                    <span className="w-1 h-1 bg-zinc-300 rounded-full" />
-                   <span className="text-[9px] font-black text-[#E30613] uppercase tracking-widest italic">STAFF</span>
+                   <span className="text-[9px] font-black text-[#E30613] uppercase tracking-widest italic">{tr.coach.staffWord}</span>
                 </div>
 
                 {/* METADATA GRID FOR COACHES */}
                 <div className="w-full grid grid-cols-2 gap-0.5 bg-zinc-100 border border-zinc-200 rounded-lg overflow-hidden mb-6">
                    <div className="bg-white p-2 flex flex-col items-center">
-                      <span className="text-[7px] font-black text-zinc-400 uppercase tracking-tighter mb-0.5">LICENSE</span>
+                      <span className="text-[7px] font-black text-zinc-400 uppercase tracking-tighter mb-0.5">{tr.coach.license}</span>
                       <span className="text-[10px] font-black italic text-zinc-800 uppercase">{coach.license || "PRO"}</span>
                    </div>
                    <div className="bg-white p-2 flex flex-col items-center">
-                      <span className="text-[7px] font-black text-zinc-400 uppercase tracking-tighter mb-0.5">EXP</span>
+                      <span className="text-[7px] font-black text-zinc-400 uppercase tracking-tighter mb-0.5">{tr.coach.exp}</span>
                       <span className="text-[10px] font-black italic text-zinc-800 uppercase">10+ YRS</span>
                    </div>
                 </div>
@@ -108,11 +110,11 @@ export default function CoachesPage() {
                   </div>
                   <div className="flex items-center gap-1 px-2 py-0.5 bg-zinc-100 border border-zinc-200 rounded-full">
                     <Globe2 className="w-2 h-2 text-zinc-400" />
-                    <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-tight">Technical</span>
+                    <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-tight">{tr.coach.technical}</span>
                   </div>
                   <div className="flex items-center gap-1 px-2 py-0.5 bg-[#e3062c]/15 border border-[#e3062c]/35 rounded-full">
                     <Activity className="w-2 h-2 text-[#ff5f72]" />
-                    <span className="text-[7px] font-black text-[#ff5f72] uppercase tracking-tight">Active</span>
+                    <span className="text-[7px] font-black text-[#ff5f72] uppercase tracking-tight">{tr.coach.active}</span>
                   </div>
                 </div>
               </div>

@@ -44,7 +44,9 @@ export async function POST(req: Request) {
     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
     // pdfjs-dist is external (serverExternalPackages), so the real filesystem files exist at runtime
     pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(path.join(process.cwd(), 'node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs')).href
-    const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), useWorkerFetch: false, isEvalSupported: false }).promise
+    // isEvalSupported was removed in pdfjs-dist v6 (eval is no longer used for
+    // this feature internally), so there's nothing to disable here anymore.
+    const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), useWorkerFetch: false }).promise
 
     if (doc.numPages > MAX_PAGES) {
       return NextResponse.json({ error: `PDF too long (max ${MAX_PAGES} pages)` }, { status: 413 })

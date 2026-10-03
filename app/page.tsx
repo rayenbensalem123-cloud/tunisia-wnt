@@ -28,6 +28,7 @@ import {
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
+import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper } from "@/components/pickers"
 
 // ─────────────────────────────────────────────
 // CONSTANTS
@@ -234,6 +235,7 @@ const COMPETITIONS = [
   {value:"African Cup",label:"AFCON"},
 ]
 
+<<<<<<< HEAD
 // Shared popover shell for the custom date/age/jersey pickers below.
 // These pickers can open inside scrollable panels (.pm-body / .pm-scroll),
 // and a plain `position:absolute` popup gets clipped by the nearest
@@ -460,6 +462,8 @@ const JerseyScale = ({value,onChange,placeholder="Jersey"}:{value:string;onChang
   )
 }
 
+=======
+>>>>>>> 84dea573fb473de12e97d5221e50f31da9e1dcba
 const Dropdown = ({trigger,children,align="right"}:{trigger:React.ReactNode;children:React.ReactNode;align?:"left"|"right"}) => {
   const [open,setOpen]=useState(false)
   const ref=useRef<HTMLDivElement>(null)
@@ -667,6 +671,13 @@ export default function EliteSquadApp() {
   const [isFormOpen,setIsFormOpen]=useState(false)
   const [editingId,setEditingId]=useState<number|null>(null)
   const [confirmState,setConfirmState]=useState<{message:string;resolve:(v:boolean)=>void}|null>(null)
+  // themed replacement for the old native window.prompt() "Load which lineup?"
+  const [lineupPicker,setLineupPicker]=useState<{templates:any[]}|null>(null)
+  const applyLineupTemplate=(t:any)=>{
+    const orderedIds=(FORMATIONS[t.formation]||[]).map((s:any)=>t.slots[s.slotKey]).filter(Boolean)
+    setMatchForm({...matchForm,squad:[...orderedIds,...matchForm.squad.slice(11)],formation:t.formation,formationSlots:t.slots})
+    setLineupPicker(null)
+  }
   const askConfirm=(message:string):Promise<boolean>=>new Promise(resolve=>setConfirmState({message,resolve}))
   const [isMatchOpen,setIsMatchOpen]=useState(false)
   const [scheduleOpen,setScheduleOpen]=useState(false)
@@ -1727,8 +1738,8 @@ export default function EliteSquadApp() {
               </div>
             </div>
             <div className="flex gap-2">
-              <div className="flex-1"><DatePicker value={injForm.occurred_on} onChange={(v)=>setInjForm({...injForm,occurred_on:v})} placeholder="Date occurred"/></div>
-              <div className="flex-1"><DatePicker value={injForm.expected_return} onChange={(v)=>setInjForm({...injForm,expected_return:v})} placeholder="Expected return"/></div>
+              <div className="flex-1"><DatePicker variant="zinc" value={injForm.occurred_on} onChange={(v)=>setInjForm({...injForm,occurred_on:v})} placeholder="Date occurred"/></div>
+              <div className="flex-1"><DatePicker variant="zinc" value={injForm.expected_return} onChange={(v)=>setInjForm({...injForm,expected_return:v})} placeholder="Expected return"/></div>
             </div>
             <textarea placeholder="Notes (optional)" value={injForm.notes} onChange={e=>setInjForm({...injForm,notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none resize-none"/>
             <div className="flex gap-2 pt-1">
@@ -1791,9 +1802,8 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               {activeTab==="PLAYERS"?(
                 <>
                   <div className="mt-3 grid grid-cols-2 gap-3">
-                    <select value={form.position} onChange={e=>setForm({...form,position:e.target.value})} className="pm-field pm-select" required>
-                      <option value="">{tr.form.position}</option>{PLAYER_POSITIONS.filter(p=>p!=="ALL").map(p=><option key={p} value={p}>{p}</option>)}
-                    </select>
+                    <Select value={form.position} onChange={v=>setForm({...form,position:v})} placeholder={tr.form.position} required
+                      options={PLAYER_POSITIONS.filter(p=>p!=="ALL").map(p=>({value:p,label:p}))}/>
                     <JerseyScale value={form.jerseyNumber} onChange={v=>setForm({...form,jerseyNumber:v})} placeholder={tr.form.jersey}/>
                     <input placeholder={tr.form.heightCm} value={form.height} onChange={e=>setForm({...form,height:e.target.value})} className="pm-field"/>
                     <input placeholder={tr.form.caps} value={form.natMatches} onChange={e=>setForm({...form,natMatches:e.target.value})} className="pm-field"/>
@@ -1805,20 +1815,18 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   <div className="mt-3 pm-tile">
                     <p className="pm-label flex items-center gap-1.5"><AlertTriangle size={10} className="text-[#f6c744]"/> {tr.form.discipline}</p>
                     <div className="grid grid-cols-3 gap-2">
-                      <div><label className="pm-label">{tr.form.yellowCards}</label><input type="number" min="0" max="10" value={form.yellowCards} onChange={e=>setForm({...form,yellowCards:e.target.value})} className="pm-field"/></div>
-                      <div><label className="pm-label">{tr.form.redCards}</label><input type="number" min="0" max="5" value={form.redCards} onChange={e=>setForm({...form,redCards:e.target.value})} className="pm-field"/></div>
+                      <div><label className="pm-label">{tr.form.yellowCards}</label><NumberStepper min={0} max={10} accent="text-[#f6c744]" value={form.yellowCards} onChange={v=>setForm({...form,yellowCards:v})}/></div>
+                      <div><label className="pm-label">{tr.form.redCards}</label><NumberStepper min={0} max={5} accent="text-[#e3062c]" value={form.redCards} onChange={v=>setForm({...form,redCards:v})}/></div>
                       <div><label className="pm-label">{tr.form.suspended}</label><button type="button" onClick={()=>setForm({...form,suspended:!form.suspended})} className={`pm-chip pm-field justify-start ${form.suspended?'pm-chip-on':''}`}>{form.suspended?tr.profile.yes:tr.profile.no}</button></div>
                     </div>
                   </div>
                 </>
               ):(
                 <div className="mt-3 grid grid-cols-2 gap-3">
-                  <select value={form.position} onChange={e=>setForm({...form,position:e.target.value})} className="pm-field pm-select col-span-2" required>
-                    <option value="">{tr.form.coachingRole}</option>{COACH_POSITIONS.map(p=><option key={p} value={p}>{p}</option>)}
-                  </select>
-                  <select value={form.natMatches} onChange={e=>setForm({...form,natMatches:e.target.value})} className="pm-field pm-select">
-                    <option value="">{tr.form.license}</option>{CAF_LICENSES.map(l=><option key={l} value={l}>{l}</option>)}
-                  </select>
+                  <Select className="col-span-2" value={form.position} onChange={v=>setForm({...form,position:v})} placeholder={tr.form.coachingRole} required
+                    options={COACH_POSITIONS.map(p=>({value:p,label:p}))}/>
+                  <Select value={form.natMatches} onChange={v=>setForm({...form,natMatches:v})} placeholder={tr.form.license}
+                    options={CAF_LICENSES.map(l=>({value:l,label:l}))}/>
                   <input placeholder={tr.form.nationality} value={form.nationality} onChange={e=>setForm({...form,nationality:e.target.value})} className="pm-field"/>
                   <div className="col-span-2 pm-tile">
                     <p className="pm-label">Preferred Tactics / Formation</p>
@@ -2399,7 +2407,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     </div>
                     <div>
                       <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Match Date</label>
-                      <DatePicker value={matchForm.date} onChange={(v)=>setMatchForm({...matchForm,date:v})} placeholder="Match date"/>
+                      <DatePicker variant="big" value={matchForm.date} onChange={(v)=>setMatchForm({...matchForm,date:v})} placeholder="Match date"/>
                     </div>
                   </div>
 
@@ -2450,14 +2458,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 <div className="space-y-5">
                   <button type="button" onClick={async()=>{
                     const templates=await fetchSquadTemplates(teamCat!)
-                    if(templates.length===0){alert("No saved lineups yet — build one in Squad Lab first");return}
-                    const names=templates.map((t:any,i:number)=>`${i+1}. ${t.name} (${t.formation})`).join("\n")
-                    const pick=window.prompt(`Load which lineup?\n\n${names}\n\nEnter the number:`)
-                    const idx=parseInt(pick||"")-1
-                    if(isNaN(idx)||!templates[idx])return
-                    const t=templates[idx]
-                    const orderedIds=(FORMATIONS[t.formation]||[]).map((s:any)=>t.slots[s.slotKey]).filter(Boolean)
-                    setMatchForm({...matchForm,squad:[...orderedIds,...matchForm.squad.slice(11)],formation:t.formation,formationSlots:t.slots})
+                    setLineupPicker({templates})
                   }} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-[#f6c744]/40 bg-[#f6c744]/5 text-[#f6c744] text-[9px] font-black uppercase tracking-wider hover:bg-[#f6c744]/10 transition-all">
                     <Users size={12}/>Load from Squad Lab
                   </button>
@@ -2659,6 +2660,40 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
       {/* ═══════════════════════════════════════════
           CUSTOM CONFIRM DIALOG — replaces native browser confirm()
       ═══════════════════════════════════════════ */}
+      {lineupPicker&&(
+        <div className="pm-backdrop" style={{zIndex:400}} onClick={()=>setLineupPicker(null)}>
+          <div className="pm-panel pm-panel-sm" onClick={e=>e.stopPropagation()}>
+            <div className="pm-head">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-[#f6c744]/12 border border-[#f6c744]/35 flex items-center justify-center">
+                  <Users size={14} className="text-[#f6c744]"/>
+                </div>
+                <span className="pm-title">Load lineup</span>
+              </div>
+              <button onClick={()=>setLineupPicker(null)} className="pm-close"><X size={14}/></button>
+            </div>
+            <div className="pm-body">
+              {lineupPicker.templates.length===0?(
+                <p className="text-[12px] font-semibold text-[var(--c-textMid)] leading-relaxed">No saved lineups yet — build one in Squad Lab first.</p>
+              ):(
+                <div className="flex flex-col gap-1.5 max-h-[50dvh] overflow-y-auto pk-scroll">
+                  {lineupPicker.templates.map((t:any,i:number)=>(
+                    <button key={t.id??i} type="button" onClick={()=>applyLineupTemplate(t)}
+                      className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-[var(--c-panel4)] border border-[rgba(var(--line-rgb),.14)] hover:border-[#E30613]/50 hover:bg-[#E30613]/8 text-left transition-all">
+                      <span className="text-[12px] font-black uppercase tracking-wide text-[var(--c-text)] truncate">{t.name}</span>
+                      <span className="shrink-0 px-2 py-1 rounded-lg bg-[#f6c744]/12 text-[#f6c744] text-[10px] font-black">{t.formation}</span>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="pm-foot">
+              <button onClick={()=>setLineupPicker(null)} className="pm-btn pm-btn-ghost">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {confirmState&&(
         <div className="pm-backdrop" style={{zIndex:400}}>
           <div className="pm-panel pm-panel-sm">
@@ -2696,7 +2731,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
 
             <input placeholder="Opponent" value={scheduleForm.opponent} onChange={e=>setScheduleForm({...scheduleForm,opponent:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[12px] font-bold outline-none"/>
 
-            <DatePicker value={scheduleForm.date} onChange={(v)=>setScheduleForm({...scheduleForm,date:v})} placeholder="Match date"/>
+            <DatePicker variant="zinc" value={scheduleForm.date} onChange={(v)=>setScheduleForm({...scheduleForm,date:v})} placeholder="Match date"/>
 
             <div>
               <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">Competition</p>
@@ -2753,10 +2788,8 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     <span className="w-9 h-7 rounded-lg bg-[rgba(var(--line-rgb),.1)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textBlue)] text-[10px] font-black flex items-center justify-center">{h2h.d}D</span>
                     <span className="w-9 h-7 rounded-lg bg-[#e3062c] text-white text-[10px] font-black flex items-center justify-center">{h2h.l}L</span>
                   </div>}
-                  {uniqueOpponents.length>0&&<select value={opponentFilter} onChange={e=>setOpponentFilter(e.target.value)} className="px-2.5 py-1.5 rounded-lg bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.2)] outline-none text-[8px] font-bold text-[var(--c-textBlue)]">
-                    <option value="" className="bg-[var(--c-surface)]">All opponents</option>
-                    {uniqueOpponents.map((o:any)=><option key={o} value={o} className="bg-[var(--c-surface)]">{o}</option>)}
-                  </select>}
+                  {uniqueOpponents.length>0&&<Select variant="mini" value={opponentFilter} onChange={setOpponentFilter} placeholder="All opponents"
+                    options={uniqueOpponents.map((o:any)=>({value:String(o),label:String(o)}))}/>}
                 </div>
                 <button onClick={()=>{setIsHistoryOpen(false);setSelMatch(null);setOpponentFilter("")}} className="pm-close shrink-0"><X size={15}/></button>
               </div>

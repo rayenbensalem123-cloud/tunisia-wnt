@@ -1,0 +1,1968 @@
+diff --git a/app/api/import-players/route.ts b/app/api/import-players/route.ts
+index 857e90f..044f999 100644
+--- a/app/api/import-players/route.ts
++++ b/app/api/import-players/route.ts
+@@ -44,7 +44,9 @@ export async function POST(req: Request) {
+     const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
+     // pdfjs-dist is external (serverExternalPackages), so the real filesystem files exist at runtime
+     pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(path.join(process.cwd(), 'node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs')).href
+-    const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), useWorkerFetch: false, isEvalSupported: false }).promise
++    // isEvalSupported was removed in pdfjs-dist v6 (eval is no longer used for
++    // this feature internally), so there's nothing to disable here anymore.
++    const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), useWorkerFetch: false }).promise
+ 
+     if (doc.numPages > MAX_PAGES) {
+       return NextResponse.json({ error: `PDF too long (max ${MAX_PAGES} pages)` }, { status: 413 })
+diff --git a/app/coaches/page.tsx b/app/coaches/page.tsx
+index 562e5c6..ce2ad83 100644
+--- a/app/coaches/page.tsx
++++ b/app/coaches/page.tsx
+@@ -2,11 +2,13 @@
+ import React, { useState } from "react"
+ import { UserPlus, Globe2, ShieldCheck, Edit2, Trash2, Activity, Briefcase, Trophy } from "lucide-react"
+ import { usePlayers } from "@/lib/players-context"
++import { useTranslate } from "@/lib/language-context"
+ import { NavSwitcher } from "@/components/nav-switcher"
+ import { CoachDialog } from "@/components/coach-dialog"
+ import { PlayerCard } from "@/components/player-card"
+ 
+ export default function CoachesPage() {
++  const { tr } = useTranslate()
+   const { coaches, deleteCoach } = usePlayers()
+   const [isDialogOpen, setIsDialogOpen] = useState(false)
+   const [selectedCoach, setSelectedCoach] = useState<any>(null)
+@@ -26,9 +28,9 @@ export default function CoachesPage() {
+       <div className="flex justify-between items-center mb-12">
+         <div>
+           <h1 className="text-4xl font-[1000] italic uppercase tracking-tighter">
+-            SQUAD <span className="text-[#E30613]">STAFF</span>
++            {tr.coach.squadStaffTitle1} <span className="text-[#E30613]">{tr.coach.squadStaffTitle2}</span>
+           </h1>
+-          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">Management & Technical Body</p>
++          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">{tr.coach.pageSubtitle}</p>
+         </div>
+ 
+         <NavSwitcher />
+@@ -37,7 +39,7 @@ export default function CoachesPage() {
+           onClick={handleHire}
+           className="bg-[#E30613] text-white px-6 py-3 rounded-xl font-black uppercase text-[11px] flex items-center gap-2 hover:brightness-110 transition-all shadow-lg"
+         >
+-          <UserPlus size={16} /> Hire Staff
++          <UserPlus size={16} /> {tr.coach.hireStaff}
+         </button>
+       </div>
+ 
+@@ -45,11 +47,11 @@ export default function CoachesPage() {
+         <div className="flex flex-col items-center justify-center py-24 gap-5 rounded-2xl border-2 border-dashed border-[rgba(var(--line-rgb),.18)] text-center">
+           <div className="w-16 h-16 rounded-2xl bg-[var(--c-panel2)] border border-[rgba(var(--line-rgb),.18)] flex items-center justify-center"><Briefcase size={26} className="text-[#f6c744]"/></div>
+           <div>
+-            <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">No staff registered</p>
+-            <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">Hire your technical body to build the delegation</p>
++            <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">{tr.coach.noStaffRegistered}</p>
++            <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">{tr.coach.hireToBuildDelegation}</p>
+           </div>
+           <button onClick={handleHire} className="mt-2 px-6 py-3 rounded-full bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg">
+-            <UserPlus size={15} /> Hire Staff
++            <UserPlus size={15} /> {tr.coach.hireStaff}
+           </button>
+         </div>
+       ) : (
+@@ -85,17 +87,17 @@ export default function CoachesPage() {
+                 <div className="flex items-center gap-2 mb-4">
+                    <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{coach.nationality || "TUNISIA"}</span>
+                    <span className="w-1 h-1 bg-zinc-300 rounded-full" />
+-                   <span className="text-[9px] font-black text-[#E30613] uppercase tracking-widest italic">STAFF</span>
++                   <span className="text-[9px] font-black text-[#E30613] uppercase tracking-widest italic">{tr.coach.staffWord}</span>
+                 </div>
+ 
+                 {/* METADATA GRID FOR COACHES */}
+                 <div className="w-full grid grid-cols-2 gap-0.5 bg-zinc-100 border border-zinc-200 rounded-lg overflow-hidden mb-6">
+                    <div className="bg-white p-2 flex flex-col items-center">
+-                      <span className="text-[7px] font-black text-zinc-400 uppercase tracking-tighter mb-0.5">LICENSE</span>
++                      <span className="text-[7px] font-black text-zinc-400 uppercase tracking-tighter mb-0.5">{tr.coach.license}</span>
+                       <span className="text-[10px] font-black italic text-zinc-800 uppercase">{coach.license || "PRO"}</span>
+                    </div>
+                    <div className="bg-white p-2 flex flex-col items-center">
+-                      <span className="text-[7px] font-black text-zinc-400 uppercase tracking-tighter mb-0.5">EXP</span>
++                      <span className="text-[7px] font-black text-zinc-400 uppercase tracking-tighter mb-0.5">{tr.coach.exp}</span>
+                       <span className="text-[10px] font-black italic text-zinc-800 uppercase">10+ YRS</span>
+                    </div>
+                 </div>
+@@ -108,11 +110,11 @@ export default function CoachesPage() {
+                   </div>
+                   <div className="flex items-center gap-1 px-2 py-0.5 bg-zinc-100 border border-zinc-200 rounded-full">
+                     <Globe2 className="w-2 h-2 text-zinc-400" />
+-                    <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-tight">Technical</span>
++                    <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-tight">{tr.coach.technical}</span>
+                   </div>
+                   <div className="flex items-center gap-1 px-2 py-0.5 bg-[#e3062c]/15 border border-[#e3062c]/35 rounded-full">
+                     <Activity className="w-2 h-2 text-[#ff5f72]" />
+-                    <span className="text-[7px] font-black text-[#ff5f72] uppercase tracking-tight">Active</span>
++                    <span className="text-[7px] font-black text-[#ff5f72] uppercase tracking-tight">{tr.coach.active}</span>
+                   </div>
+                 </div>
+               </div>
+diff --git a/app/page.tsx b/app/page.tsx
+index 1bd60ab..10c8900 100644
+--- a/app/page.tsx
++++ b/app/page.tsx
+@@ -572,12 +572,10 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
+ // ─────────────────────────────────────────────
+ // PERMISSION LABELS
+ // ─────────────────────────────────────────────
+-const PERM_LABELS: {key:keyof UserPerms;label:string}[] = [
+-  {key:"addPlayer",label:"Add Player"},{key:"editPlayer",label:"Edit Player"},{key:"deletePlayer",label:"Delete Player"},
+-  {key:"addMatch",label:"Add Match"},{key:"deleteMatch",label:"Delete Match"},
+-  {key:"exportData",label:"Export Data"},
+-  {key:"viewMedical",label:"View Medical"},{key:"editMedical",label:"Edit Medical"},
+-  {key:"addCamps",label:"Manage Camps (Stages)"},
++// Just the keys — the display label is looked up from tr.perms at render time
++// (this array lives outside the component, so it can't call useTranslate()).
++const PERM_KEYS: (keyof UserPerms)[] = [
++  "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps",
+ ]
+ 
+ // ═════════════════════════════════════════════
+@@ -1134,11 +1132,11 @@ export default function EliteSquadApp() {
+             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
+             <ThemeToggle className="p-2.5"/>
+             <Dropdown trigger={
+-              <button title={tr.header.language? (tr.header.language as string):"Language"} className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)]">
++              <button title={tr.common.language} className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)]">
+                 <Globe size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">{lang.toUpperCase()}</span><ChevronDown size={11}/>
+               </button>
+             }>
+-              <div className="px-3.5 py-1.5 text-[8px] font-black uppercase tracking-widest text-zinc-400">Language</div>
++              <div className="px-3.5 py-1.5 text-[8px] font-black uppercase tracking-widest text-zinc-400">{tr.common.language}</div>
+               {(["en","fr","ar"]as const).map(l=>(
+                 <button key={l} onClick={()=>setLang(l)} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider transition-all text-left ${lang===l?"text-[#a9822e] bg-[#fdf8ee]":"text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900"}`}>
+                   <Globe size={13} className={lang===l?"text-[#a9822e]":"text-[#a9822e]/50"}/>
+@@ -1148,33 +1146,33 @@ export default function EliteSquadApp() {
+               ))}
+             </Dropdown>
+             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
+-            <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} />
++            <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} pendingUsers={pendingUsers} canManageUsers={canManageUsers} onOpenApprovals={()=>setPendingReviewOpen(true)} />
+ 
+             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
+ 
+             <Dropdown trigger={
+               <button title="Menu" className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(246,199,68,.35)] bg-[#0d1f3c]/75 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0d1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.22)]">
+                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+-                <span className="hidden sm:inline">Menu</span><ChevronDown size={11}/>
++                <span className="hidden sm:inline">{tr.common.menu}</span><ChevronDown size={11}/>
+                 {canManageUsers&&pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}
+               </button>
+             }>
+               {canManageUsers&&(<>
+                 <button onClick={()=>setPendingReviewOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+-                  <Bell size={14} className="text-[#a9822e]"/>Pending Approvals{pendingCount>0&&<span className="ml-auto bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingCount}</span>}
++                  <Bell size={14} className="text-[#a9822e]"/>{tr.common.pendingApprovals}{pendingCount>0&&<span className="ml-auto bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingCount}</span>}
+                 </button>
+                 <button onClick={()=>setUsersOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+-                  <Users size={14} className="text-[#a9822e]"/>Manage Users
++                  <Users size={14} className="text-[#a9822e]"/>{tr.common.manageUsers}
+                 </button>
+                 <button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+-                  <Activity size={14} className="text-[#a9822e]"/>Activity Log
++                  <Activity size={14} className="text-[#a9822e]"/>{tr.common.activityLog}
+                 </button>
+                 <div className="h-px bg-zinc-200 my-1 mx-2"/>
+               </>)}
+               {p.exportData&&<div className="px-1"><ExportTools members={members} matches={matches} teamCat={teamCat} onImport={handleImport} onImportPlayers={handleImportPlayers} /></div>}
+               <button onClick={()=>window.print()} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#a9822e]"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+-                Print
++                {tr.common.print}
+               </button>
+               <button onClick={()=>setUpcomingOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                 <Calendar size={14} className="text-[#a9822e]"/>Upcoming Matches
+@@ -1640,10 +1638,10 @@ export default function EliteSquadApp() {
+                   <div className="grid grid-cols-2 gap-3">
+                     <div className="rounded-lg border border-[rgba(227,6,44,.35)] bg-[#e3062c]/5 p-3 text-[var(--c-text)]">
+                       <p className="text-[9px] font-black uppercase tracking-wider text-[#ff4f66]">Biggest Win</p>
+-                      {biggestWin?(<>
+-                        <p className="text-lg font-black mt-0.5 text-[#ff4f66]">{biggestWin.result}</p>
+-                        <p className="text-[10px] font-bold text-[var(--c-textBlue)] truncate flex items-center gap-1.5"><span className="italic shrink-0">vs</span><CountryFlag name={biggestWin.opponent} className="w-4 h-2.5 rounded-[2px]"/><span className="truncate">{biggestWin.opponent}</span></p>
+-                      </>):(
++                      {biggestWin?(()=>{const bw=biggestWin as {opponent:string,result:string,diff:number};return(<>
++                        <p className="text-lg font-black mt-0.5 text-[#ff4f66]">{bw.result}</p>
++                        <p className="text-[10px] font-bold text-[var(--c-textBlue)] truncate flex items-center gap-1.5"><span className="italic shrink-0">vs</span><CountryFlag name={bw.opponent} className="w-4 h-2.5 rounded-[2px]"/><span className="truncate">{bw.opponent}</span></p>
++                      </>)})():(
+                         <p className="text-[10px] font-bold text-[var(--c-textDim)] mt-1.5">No wins recorded yet</p>
+                       )}
+                     </div>
+@@ -1730,7 +1728,7 @@ export default function EliteSquadApp() {
+             <form onSubmit={saveForm} className="pm-body">
+               <div className="relative">
+                 <div onClick={()=>fileRef.current?.click()} className="flex flex-col items-center gap-2 py-5 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.25)] hover:border-[#e3062c]/60 cursor-pointer bg-[var(--c-deep)] transition-all">
+-                  <input type="file" ref={fileRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,image:d.url,imagePath:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,image:r2.result as string});r2.readAsDataURL(f)}}}
++                  <input type="file" ref={fileRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob:File|Blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,image:d.url,imagePath:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,image:r2.result as string});r2.readAsDataURL(f)}}}
+ className="hidden" accept="image/jpeg,image/png,image/gif"/>
+                   {form.image?<img src={form.imagePath?(imgUrls[String(form.imagePath)]||form.image):form.image} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="w-14 h-14 rounded-lg object-cover" alt=""/>:<Camera size={20} className="text-[var(--c-textDim)]"/>}
+                   <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.portraitUpload}</span>
+@@ -1740,7 +1738,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
+               {activeTab==="PLAYERS"&&(
+                 <div className="relative mt-3">
+                   <div onClick={()=>passRef.current?.click()} className="flex flex-col items-center gap-2 py-4 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.25)] hover:border-[#f6c744]/60 cursor-pointer bg-[var(--c-deep)] transition-all">
+-                    <input type="file" ref={passRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f,1800,0.85);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);fd.append('folder','passports');const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.path){setForm({...form,passportImage:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,passportImage:r2.result as string});r2.readAsDataURL(f)}}}
++                    <input type="file" ref={passRef} onChange={async e=>{const f=e.target.files?.[0];if(f){try{let blob:File|Blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f,1800,0.85);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);fd.append('folder','passports');const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.path){setForm({...form,passportImage:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,passportImage:r2.result as string});r2.readAsDataURL(f)}}}
+  className="hidden" accept="image/jpeg,image/png"/>
+                     {form.passportImage?<img src={getPassportSrc(form,imgUrls)} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="max-h-24 rounded-lg object-contain" alt=""/>:<IdCard size={20} className="text-[var(--c-textDim)]"/>}
+                     <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.passportUpload}</span>
+@@ -1858,10 +1856,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
+           <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-[var(--c-cream2)] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 shrink-0">
+               <div>
+-                <h2 className="text-2xl font-black uppercase tracking-tight">Pending Users</h2>
+-                <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{pendingCount} awaiting approval</p>
++                <h2 className="text-2xl font-black uppercase tracking-tight">{tr.users.pendingTitle}</h2>
++                <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{pendingCount} {tr.users.awaitingReview}</p>
+               </div>
+-              <button onClick={()=>setPendingReviewOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
++              <button onClick={()=>setPendingReviewOpen(false)} title={tr.common.close} className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
+             </div>
+             <div className="p-6 space-y-5 overflow-y-auto">
+               {pendingUsers.map((u)=>{
+@@ -1885,27 +1883,27 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
+                         <div>
+                           <p className="text-lg font-black uppercase leading-tight">{u.firstName} {u.lastName}</p>
+                           <p className="text-[9px] font-medium tracking-wide text-zinc-500">@{u.username}</p>
+-                          <p className="text-[8px] font-black uppercase tracking-wider text-amber-600">PENDING · Awaiting your review</p>
++                          <p className="text-[8px] font-black uppercase tracking-wider text-amber-600">{tr.users.awaitingYourReview}</p>
+                         </div>
+                       </div>
+                     </div>
+                     <div className="p-5 space-y-4">
+-                      <p className="text-[7px] font-black uppercase text-zinc-500 tracking-wider">Assign Permissions</p>
++                      <p className="text-[7px] font-black uppercase text-zinc-500 tracking-wider">{tr.users.assignPermissions}</p>
+                       <div className="flex flex-wrap gap-2">
+-                        {PERM_LABELS.map(({key,label})=>{
++                        {PERM_KEYS.map((key)=>{
+                           const on=allUsers[realIdx]?.perms[key]
+                           return(
+                             <button key={key} onClick={()=>togglePerm(key)}
+                               className={`px-3.5 py-2 rounded-xl text-[7px] font-black uppercase tracking-wider border transition-all ${on?'bg-[#E30613] border-[#E30613] text-white shadow-md shadow-[#E30613]/30':'bg-white border-zinc-200 text-zinc-500 hover:border-[#E30613]/30'}`}>
+-                              {on&&<Check size={10} className="inline mr-1"/>}{label}
++                              {on&&<Check size={10} className="inline mr-1"/>}{tr.perms[key]}
+                             </button>
+                           )
+                         })}
+                       </div>
+                     </div>
+                     <div className="flex gap-3 px-5 pb-5">
+-                      <button onClick={doApprove} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Save & Approve</button>
+-                      <button onClick={doHold} className="flex-1 py-3 rounded-xl border border-zinc-300 bg-white text-zinc-500 text-[8px] font-black uppercase tracking-wider hover:bg-zinc-100 transition-all">Hold</button>
++                      <button onClick={doApprove} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>{tr.users.saveAndApprove}</button>
++                      <button onClick={doHold} className="flex-1 py-3 rounded-xl border border-zinc-300 bg-white text-zinc-500 text-[8px] font-black uppercase tracking-wider hover:bg-zinc-100 transition-all">{tr.common.hold}</button>
+                       <button onClick={doDelete} className="py-3 px-4 rounded-xl border border-[#e3062c]/40 text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all"><Trash2 size={12}/></button>
+                     </div>
+                   </div>
+@@ -1914,7 +1912,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
+               {pendingCount===0&&(
+                 <div className="flex flex-col items-center justify-center py-16 gap-4 text-zinc-300">
+                   <Bell size={48}/>
+-                  <p className="text-[11px] font-black uppercase tracking-[0.3em]">No pending users</p>
++                  <p className="text-[11px] font-black uppercase tracking-[0.3em]">{tr.common.noPendingUsers}</p>
+                 </div>
+               )}
+             </div>
+@@ -1930,10 +1928,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
+           <div className="w-full max-w-2xl rounded-2xl border border-zinc-200 bg-[var(--c-cream2)] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 shrink-0">
+               <div>
+-                <h2 className="text-2xl font-black uppercase tracking-tight">Pending Matches</h2>
+-                <p className="text-[8px] font-black text-[#e3062c] uppercase tracking-[0.3em] mt-0.5">{pendingMatches.length} awaiting approval</p>
++                <h2 className="text-2xl font-black uppercase tracking-tight">{tr.match.pendingTitle}</h2>
++                <p className="text-[8px] font-black text-[#e3062c] uppercase tracking-[0.3em] mt-0.5">{pendingMatches.length} {tr.match.awaitingApproval}</p>
+               </div>
+-              <button onClick={()=>setPendingMatchesOpen(false)} title="Close" className="pm-close shrink-0"><X size={18}/></button>
++              <button onClick={()=>setPendingMatchesOpen(false)} title={tr.common.close} className="pm-close shrink-0"><X size={18}/></button>
+             </div>
+             <div className="p-6 space-y-4 overflow-y-auto">
+               {pendingMatches.map(m=>(
+@@ -1944,27 +1942,27 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
+                         <div className="w-12 h-12 rounded-2xl bg-[#f6c744]/10 border border-[#f6c744]/30 flex items-center justify-center"><BookOpen size={18} className="text-[#f6c744]"/></div>
+                         <div>
+                           <div className="flex items-center gap-2"><CountryFlag name={m.opponent} className="w-6 h-4 rounded-sm"/><p className="font-black uppercase text-sm leading-tight">{m.opponent}</p></div>
+-                          <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">{fmtDateWords(m.date)} · {m.competition||"Friendly"} · by @{m.submittedBy}</p>
++                          <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">{fmtDateWords(m.date)} · {m.competition||tr.match.friendly} · {tr.match.by} @{m.submittedBy}</p>
+                         </div>
+                       </div>
+-                      <span className="text-[9px] font-black text-[#f6c744] bg-[#f6c744]/15 border border-[#f6c744]/30 px-2.5 py-1 rounded-lg uppercase">Pending</span>
++                      <span className="text-[9px] font-black text-[#f6c744] bg-[#f6c744]/15 border border-[#f6c744]/30 px-2.5 py-1 rounded-lg uppercase">{tr.users.pending}</span>
+                     </div>
+                   </div>
+                   <div className="p-5 space-y-2 text-[9px] font-bold text-zinc-600">
+-                    {m.venue&&<p>Venue: {m.venue}</p>}
+-                    {m.result&&<p>Result: {m.result}</p>}
+-                    <p>Squad: {m.squad?.length||0} players · Scorers: {m.scorers?.length||0}</p>
++                    {m.venue&&<p>{tr.match.venue2}: {m.venue}</p>}
++                    {m.result&&<p>{tr.match.result}: {m.result}</p>}
++                    <p>{tr.match.squad}: {m.squad?.length||0} · {tr.match.scorers2}: {m.scorers?.length||0}</p>
+                   </div>
+                   <div className="flex gap-3 px-5 pb-5">
+-                    <button onClick={()=>approveMatch(m)} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>Approve Match</button>
+-                    <button onClick={()=>{setMatches(p=>p.filter((x:any)=>x.id!==m.id));setPendingMatchesOpen(false)}} className="py-3 px-5 rounded-xl border border-[rgba(255,79,102,.35)] text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c]/10 transition-all"><Trash2 size={12} className="inline mr-1"/>Reject</button>
++                    <button onClick={()=>approveMatch(m)} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>{tr.match.approveMatch}</button>
++                    <button onClick={()=>{setMatches(p=>p.filter((x:any)=>x.id!==m.id));setPendingMatchesOpen(false)}} className="py-3 px-5 rounded-xl border border-[rgba(255,79,102,.35)] text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c]/10 transition-all"><Trash2 size={12} className="inline mr-1"/>{tr.match.reject}</button>
+                   </div>
+                 </div>
+               ))}
+               {pendingMatches.length===0&&(
+                 <div className="flex flex-col items-center justify-center py-16 gap-4 text-zinc-300">
+                   <BookOpen size={48}/>
+-                  <p className="text-[11px] font-black uppercase tracking-[0.3em]">No pending matches</p>
++                  <p className="text-[11px] font-black uppercase tracking-[0.3em]">{tr.match.noPendingMatches}</p>
+                 </div>
+               )}
+             </div>
+@@ -1979,10 +1977,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
+         <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
+           <div className="w-full max-w-lg rounded-2xl border border-zinc-200 bg-[var(--c-cream2)] text-zinc-900 shadow-2xl flex flex-col max-h-[90vh]">
+             <div className="flex items-center justify-between px-5 py-4 border-b border-zinc-200 shrink-0">
+-              <h2 className="text-lg font-black uppercase tracking-tight">User Management</h2>
++              <h2 className="text-lg font-black uppercase tracking-tight">{tr.common.userManagement}</h2>
+               <div className="flex items-center gap-2">
+-                <button onClick={()=>{syncUsers()}} className="p-2 rounded-xl border border-zinc-200 hover:bg-zinc-100 transition-all" title="Refresh"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
+-                <button onClick={()=>setUsersOpen(false)} title="Close" className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={16}/></button>
++                <button onClick={()=>{syncUsers()}} className="p-2 rounded-xl border border-zinc-200 hover:bg-zinc-100 transition-all" title={tr.common.refresh}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg></button>
++                <button onClick={()=>setUsersOpen(false)} title={tr.common.close} className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={16}/></button>
+               </div>
+             </div>
+             <div className="p-5 space-y-3 overflow-y-auto">
+@@ -2000,25 +1998,25 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
+                   <div key={i} className="p-3 rounded-xl border border-zinc-200 bg-zinc-50">
+                     <div className="flex items-center justify-between mb-2">
+                       <div>
+-                        <p className="text-[11px] font-black uppercase leading-tight">{u.username}{currentUser&&<span className="text-[#E30613] ml-2 text-[8px]">(you)</span>}</p>
+-                        <p className="text-[7px] font-black uppercase tracking-wider" style={{color:u.status==="active"?"#16a34a":"#E30613"}}>{u.status==="active"?"ACTIVE":"PENDING"}</p>
++                        <p className="text-[11px] font-black uppercase leading-tight">{u.username}{currentUser&&<span className="text-[#E30613] ml-2 text-[8px]">{tr.users.you}</span>}</p>
++                        <p className="text-[7px] font-black uppercase tracking-wider" style={{color:u.status==="active"?"#16a34a":"#E30613"}}>{u.status==="active"?tr.users.active:tr.users.pending}</p>
+                       </div>
+                       <div className="flex gap-1.5">
+-                        {u.status==="pending"&&canManageUsers&&<button onClick={approveUser} className="px-3 py-1.5 rounded-lg border border-[#7fd6a8]/30 text-[#7fd6a8] text-[7px] font-black uppercase tracking-wider hover:bg-[#7fd6a8]/10 transition-all">Approve</button>}
++                        {u.status==="pending"&&canManageUsers&&<button onClick={approveUser} className="px-3 py-1.5 rounded-lg border border-[#7fd6a8]/30 text-[#7fd6a8] text-[7px] font-black uppercase tracking-wider hover:bg-[#7fd6a8]/10 transition-all">{tr.common.approve}</button>}
+                         {canManageUsers&&!currentUser&&(<>
+-                          <button onClick={()=>openPw('admin',u.username)} className="px-3 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">Reset PW</button>
+-                          <button onClick={()=>{deleteProfile(u.username).then(reloadProfiles)}} className="px-3 py-1.5 rounded-lg border border-[#e3062c]/40 text-[#ff4f66] text-[7px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all">Remove</button>
++                          <button onClick={()=>openPw('admin',u.username)} className="px-3 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">{tr.common.resetPw}</button>
++                          <button onClick={()=>{deleteProfile(u.username).then(reloadProfiles)}} className="px-3 py-1.5 rounded-lg border border-[#e3062c]/40 text-[#ff4f66] text-[7px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all">{tr.common.remove}</button>
+                         </>)}
+                       </div>
+                     </div>
+                     {canManageUsers&&(
+                       <div className="flex flex-wrap gap-1.5 mt-1">
+-                        {PERM_LABELS.map(({key,label})=>{
++                        {PERM_KEYS.map((key)=>{
+                           const on=u.perms[key]
+                           return(
+                             <button key={key} onClick={()=>togglePerm(key)}
+                               className={`px-2.5 py-1 rounded-lg text-[6px] font-black uppercase tracking-wider border transition-all ${on?'bg-[#E30613]/15 border-[#E30613]/40 text-[#E30613]':'bg-zinc-100 border-zinc-200 text-zinc-400 hover:bg-zinc-200'}`}>
+-                              {label}
++                              {tr.perms[key]}
+                             </button>
+                           )
+                         })}
+diff --git a/components/coach-dialog.tsx b/components/coach-dialog.tsx
+index 7d32792..0cd7c67 100644
+--- a/components/coach-dialog.tsx
++++ b/components/coach-dialog.tsx
+@@ -1,9 +1,11 @@
+ "use client"
+ import { useState, useEffect, useRef } from "react"
+ import { usePlayers } from "@/lib/players-context"
++import { useTranslate } from "@/lib/language-context"
+ import { X, ShieldCheck, Camera, Upload } from "lucide-react"
+ 
+ export function CoachDialog({ open, onOpenChange, coach }: any) {
++  const { tr } = useTranslate()
+   const { addCoach, updateCoach } = usePlayers()
+   const fileInputRef = useRef<HTMLInputElement>(null)
+   const [formData, setFormData] = useState({ 
+@@ -50,13 +52,13 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
+         </button>
+ 
+         <h2 className="text-3xl font-[1000] italic uppercase tracking-tighter mb-2 leading-none">
+-          {coach ? "EDIT" : "HIRE"} <span className="text-[#E30613]">STAFF</span>
++          {coach ? tr.coach.edit : tr.coach.hire} <span className="text-[#E30613]">{tr.coach.staffWord}</span>
+         </h2>
+-        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-8">Technical & Management Registration</p>
++        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-8">{tr.coach.regSubtitle}</p>
+ 
+         <form onSubmit={handleSubmit} className="space-y-4 relative">
+           <div className="mb-6">
+-            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-2 block">Staff Photo</label>
++            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-2 block">{tr.coach.staffPhoto}</label>
+             <div className="flex gap-4 items-center">
+               <div className="w-24 h-24 bg-zinc-100 rounded-3xl border-2 border-dashed border-zinc-200 flex items-center justify-center overflow-hidden">
+                 {formData.image ? (
+@@ -71,7 +73,7 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
+                   onClick={() => fileInputRef.current?.click()}
+                   className="w-full bg-zinc-50 border border-zinc-100 p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-zinc-600 hover:bg-zinc-100 transition-all flex items-center justify-center gap-2"
+                 >
+-                  <Upload size={14} /> Select Picture
++                  <Upload size={14} /> {tr.coach.selectPicture}
+                 </button>
+                 <input 
+                   type="file" 
+@@ -85,10 +87,10 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
+           </div>
+ 
+           <div>
+-            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">Full Name</label>
++            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.fullName}</label>
+             <input 
+               value={formData.name}
+-              placeholder="E.G. SABRI GHANEM" 
++              placeholder={tr.coach.namePlaceholder} 
+               className="w-full bg-zinc-50 border border-zinc-100 p-4 rounded-2xl font-bold text-xs uppercase outline-none focus:border-black transition-all" 
+               onChange={e => setFormData({...formData, name: e.target.value})} 
+               required 
+@@ -97,22 +99,24 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
+ 
+           <div className="grid grid-cols-2 gap-4">
+             <div>
+-              <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">Role</label>
++              <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.role}</label>
+               <select 
+                 value={formData.role}
+                 className="w-full bg-zinc-50 border border-zinc-100 p-4 rounded-2xl font-bold text-xs uppercase outline-none focus:border-black appearance-none"
+                 onChange={e => setFormData({...formData, role: e.target.value})}
+               >
+-                <option>HEAD COACH</option>
+-                <option>ASSISTANT COACH</option>
+-                <option>ANALYST</option>
+-                <option>MENTAL PREPARATION COACH</option>
+-                <option>GK COACH</option>
+-                <option>FITNESS COACH</option>
++                {/* value stays a fixed English constant (matches how roles are
++                    stored/filtered elsewhere); only the visible label is translated */}
++                <option value="HEAD COACH">{tr.coach.headCoach}</option>
++                <option value="ASSISTANT COACH">{tr.coach.assistantCoach}</option>
++                <option value="ANALYST">{tr.coach.analyst}</option>
++                <option value="MENTAL PREPARATION COACH">{tr.coach.mentalCoach}</option>
++                <option value="GK COACH">{tr.coach.gkCoach}</option>
++                <option value="FITNESS COACH">{tr.coach.fitnessCoach}</option>
+               </select>
+             </div>
+             <div>
+-              <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">Nationality</label>
++              <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.nationality}</label>
+               <input 
+                 value={formData.nationality}
+                 placeholder="TUNISIA" 
+@@ -123,17 +127,17 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
+           </div>
+ 
+           <div>
+-            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">License Type</label>
++            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.licenseType}</label>
+             <input 
+               value={formData.license}
+-              placeholder="E.G. UEFA PRO" 
++              placeholder={tr.coach.licensePlaceholder} 
+               className="w-full bg-zinc-50 border border-zinc-100 p-4 rounded-2xl font-bold text-xs uppercase outline-none focus:border-black transition-all" 
+               onChange={e => setFormData({...formData, license: e.target.value})} 
+             />
+           </div>
+ 
+           <div>
+-            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">Preferred Tactics / Formation</label>
++            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.formation}</label>
+             <div className="flex flex-wrap gap-1.5">
+               {["4-3-3","3-4-3","4-2-3-1","3-5-2","4-4-2","4-3-2-1","4-1-4-1"].map(f => (
+                 <button
+@@ -151,12 +155,12 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
+               ))}
+             </div>
+             {formData.formation && (
+-              <p className="text-[8px] font-black text-[#E30613] uppercase mt-1 ml-2">✓ {formData.formation} — Preferred Setup</p>
++              <p className="text-[8px] font-black text-[#E30613] uppercase mt-1 ml-2">✓ {formData.formation} — {tr.coach.preferredSetup}</p>
+             )}
+           </div>
+ 
+           <div>
+-            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">Preferred Tactics / Formation</label>
++            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.formation}</label>
+             <div className="flex flex-wrap gap-1.5">
+               {["4-3-3","4-4-2","4-2-3-1","3-5-2","3-4-3","4-1-4-1","4-3-2-1","5-3-2"].map(f => (
+                 <button
+@@ -174,12 +178,12 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
+               ))}
+             </div>
+             {formData.formation && (
+-              <p className="text-[8px] font-black text-[#E30613] uppercase ml-2 mt-1.5">✓ Prefers {formData.formation}</p>
++              <p className="text-[8px] font-black text-[#E30613] uppercase ml-2 mt-1.5">✓ {tr.coach.prefers} {formData.formation}</p>
+             )}
+           </div>
+ 
+           <button type="submit" className="w-full bg-[#E30613] text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-tighter hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-xl">
+-            <ShieldCheck size={16} /> Confirm Staff
++            <ShieldCheck size={16} /> {tr.coach.confirmStaff}
+           </button>
+         </form>
+       </div>
+diff --git a/components/export-tools.tsx b/components/export-tools.tsx
+index de59840..d834242 100644
+--- a/components/export-tools.tsx
++++ b/components/export-tools.tsx
+@@ -2,6 +2,7 @@
+ import React, { useState } from "react"
+ import { createPortal } from "react-dom"
+ import { Download, Upload, Printer, FileSpreadsheet, FileJson, X, FileText, Check } from "lucide-react"
++import { useTranslate } from "@/lib/language-context"
+ 
+ type Props = {
+   members: any[]
+@@ -12,6 +13,7 @@ type Props = {
+ }
+ 
+ export function ExportTools({ members, matches, teamCat, onImport, onImportPlayers }: Props) {
++  const { tr } = useTranslate()
+   const [open, setOpen] = useState(false)
+   const [importOpen, setImportOpen] = useState(false)
+   const [importData, setImportData] = useState("")
+@@ -87,11 +89,11 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
+       else {
+         setRows(d.rows || [])
+         if (d.scannedPages > 0 && (d.rows || []).length === 0) {
+-          setPdfError(`This PDF has ${d.scannedPages} scanned page(s) with no text. Scanned files can't be auto-read — please type the names manually or use a text PDF.`)
++          setPdfError(`${d.scannedPages} ${tr.importPlayers.scannedNoText}`)
+         }
+       }
+     } catch (e: any) {
+-      setPdfError('Could not process PDF: ' + (e?.message || 'unknown'))
++      setPdfError(tr.importPlayers.couldNotProcess + (e?.message || 'unknown'))
+     }
+     setBusy(false)
+   }
+@@ -114,7 +116,7 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
+         className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-300 bg-white text-zinc-500 hover:text-zinc-900 text-[9px] font-black uppercase tracking-widest transition-all"
+       >
+         <Download size={14} />
+-        <span className="hidden sm:inline">Export</span>
++        <span className="hidden sm:inline">{tr.exportTools.export}</span>
+       </button>
+ 
+       {open && (
+@@ -123,25 +125,25 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
+           <div className="absolute right-0 top-12 z-[190] w-56 rounded-2xl border border-zinc-200 bg-white shadow-2xl max-h-[calc(100dvh-6rem)] overflow-y-auto text-zinc-900">
+             <div className="divide-y divide-zinc-200">
+               <button onClick={() => { exportCSV(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
+-                <FileSpreadsheet size={13} className="text-green-500" /> CSV Roster
++                <FileSpreadsheet size={13} className="text-green-500" /> {tr.exportTools.csvRoster}
+               </button>
+               <button onClick={() => { exportJSON(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
+-                <FileJson size={13} className="text-blue-500" /> JSON (Category)
++                <FileJson size={13} className="text-blue-500" /> {tr.exportTools.jsonCategory}
+               </button>
+               <button onClick={() => { exportFullJSON(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
+-                <FileJson size={13} className="text-[#E30613]" /> JSON (Full Backup)
++                <FileJson size={13} className="text-[#E30613]" /> {tr.exportTools.jsonFullBackup}
+               </button>
+               <button onClick={() => { setOpen(false); setImportOpen(true) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
+-                <Upload size={13} className="text-orange-500" /> Import JSON
++                <Upload size={13} className="text-orange-500" /> {tr.exportTools.importJson}
+               </button>
+               {onImportPlayers && (
+                 <button onClick={() => { setOpen(false); openPdf() }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
+-                  <FileText size={13} className="text-red-500" /> Import Players (PDF)
++                  <FileText size={13} className="text-red-500" /> {tr.exportTools.importPlayersPdf}
+                 </button>
+               )}
+               <div className="h-px bg-zinc-200" />
+               <button onClick={() => { handlePrint(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
+-                <Printer size={13} /> Print Roster
++                <Printer size={13} /> {tr.exportTools.printRoster}
+               </button>
+             </div>
+           </div>
+@@ -153,19 +155,19 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
+         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80" onMouseDownCapture={(e) => e.stopPropagation()}>
+           <div className="w-full max-w-lg p-6 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900">
+             <div className="flex items-center justify-between mb-4">
+-              <h2 className="text-xl font-black italic uppercase tracking-tighter">Import JSON</h2>
++              <h2 className="text-xl font-black italic uppercase tracking-tighter">{tr.exportTools.importJson}</h2>
+               <button onClick={() => setImportOpen(false)} className="p-2 hover:bg-red-500/10 rounded-xl"><X size={20} /></button>
+             </div>
+             <textarea
+               value={importData}
+               onChange={e => setImportData(e.target.value)}
+-              placeholder="Paste JSON data here..."
++              placeholder={tr.exportTools.pasteJsonHere}
+               rows={8}
+               className="w-full p-3 rounded-xl border border-zinc-200 bg-zinc-50 text-[10px] font-bold outline-none resize-none"
+             />
+             <div className="flex gap-3 mt-4">
+-              <button onClick={() => setImportOpen(false)} className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
+-              <button onClick={handleImport} className="flex-[2] py-3 bg-[#E30613] text-white rounded-xl text-[10px] font-black uppercase tracking-wider">Import</button>
++              <button onClick={() => setImportOpen(false)} className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">{tr.common.cancel}</button>
++              <button onClick={handleImport} className="flex-[2] py-3 bg-[#E30613] text-white rounded-xl text-[10px] font-black uppercase tracking-wider">{tr.exportTools.import}</button>
+             </div>
+           </div>
+         </div>
+@@ -178,8 +180,8 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
+           <div className="w-full max-w-2xl flex flex-col max-h-[90vh] overflow-hidden p-6 rounded-[2rem] border border-zinc-200 bg-white text-zinc-900">
+             <div className="flex items-center justify-between mb-4 shrink-0">
+               <div>
+-                <h2 className="text-xl font-black italic uppercase tracking-tighter">Import Players (PDF)</h2>
+-                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400 mt-1">New names create cards · existing names update team · camps recorded</p>
++                <h2 className="text-xl font-black italic uppercase tracking-tighter">{tr.exportTools.importPlayersPdf}</h2>
++                <p className="text-[8px] font-black uppercase tracking-[0.3em] text-zinc-400 mt-1">{tr.exportTools.newNamesNote}</p>
+               </div>
+               <button onClick={() => setPdfOpen(false)} className="p-2 hover:bg-red-500/10 rounded-xl"><X size={20} /></button>
+             </div>
+@@ -187,8 +189,8 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
+             <label className={`shrink-0 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 cursor-pointer transition-all ${fileName ? 'border-green-400 bg-green-50' : 'border-zinc-300 bg-zinc-50 hover:border-red-400'}`}>
+               <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={onFile} />
+               <FileText size={24} className={fileName ? 'text-green-500' : 'text-zinc-400'} />
+-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{busy ? 'Reading PDF…' : fileName ? fileName : 'Click to choose a PDF'}</span>
+-              <span className="text-[8px] text-zinc-400">Columns: Name, Team, Camp (one player per row)</span>
++              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{busy ? tr.importPlayers.readingPdf : fileName ? fileName : tr.importPlayers.clickToChoosePdf}</span>
++              <span className="text-[8px] text-zinc-400">{tr.importPlayers.columnsNote}</span>
+             </label>
+ 
+             {pdfError && <p className="shrink-0 mt-3 text-[10px] font-bold text-red-500 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{pdfError}</p>}
+@@ -197,7 +199,7 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
+               <>
+                 <div className="flex-1 min-h-0 mt-4 overflow-y-auto rounded-2xl border border-zinc-200">
+                   <div className="sticky top-0 bg-zinc-100 grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-2 text-[8px] font-black uppercase tracking-wider text-zinc-500">
+-                    <span>Name</span><span>Team</span><span>Camp</span>
++                    <span>{tr.importPlayers.nameHeader}</span><span>{tr.importPlayers.teamHeader}</span><span>{tr.importPlayers.campHeader}</span>
+                   </div>
+                   {rows.map((r, i) => (
+                     <div key={i} className={`grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-1.5 ${i>0?'border-t border-zinc-100':''}`}>
+@@ -207,11 +209,11 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
+                     </div>
+                   ))}
+                 </div>
+-                <p className="shrink-0 mt-2 text-[8px] font-black uppercase tracking-wider text-zinc-400">{rows.length} player(s) detected — review/edit then confirm</p>
++                <p className="shrink-0 mt-2 text-[8px] font-black uppercase tracking-wider text-zinc-400">{rows.length} {tr.importPlayers.playersDetectedNote}</p>
+                 <div className="shrink-0 flex gap-3 mt-3">
+-                  <button onClick={() => setPdfOpen(false)} className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
++                  <button onClick={() => setPdfOpen(false)} className="flex-1 py-3 rounded-xl text-[10px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">{tr.common.cancel}</button>
+                   <button onClick={confirmImport} className="flex items-center justify-center gap-1.5 flex-[2] py-3 bg-[#E30613] text-white rounded-xl text-[10px] font-black uppercase tracking-wider hover:bg-red-700">
+-                    <Check size={13}/> Import {rows.filter(r => r.name && r.name.trim()).length}
++                    <Check size={13}/> {tr.importPlayers.importCount} {rows.filter(r => r.name && r.name.trim()).length}
+                   </button>
+                 </div>
+               </>
+diff --git a/components/notification-system.tsx b/components/notification-system.tsx
+index 88d26c9..587a6dc 100644
+--- a/components/notification-system.tsx
++++ b/components/notification-system.tsx
+@@ -1,23 +1,30 @@
+ "use client"
+ import React, { useState, useMemo } from "react"
+-import { Bell, Ban, AlertTriangle, Calendar, X, ChevronRight } from "lucide-react"
++import { Bell, Ban, AlertTriangle, Calendar, UserPlus, X, ChevronRight } from "lucide-react"
++import { useTranslate } from "@/lib/language-context"
+ 
+ type Notification = {
+   id: string
+-  type: "suspension" | "warning" | "upcoming"
++  type: "suspension" | "warning" | "upcoming" | "approval"
+   message: string
+   playerId?: number
+   matchId?: number
+ }
+ 
++type PendingUser = { username: string; firstName: string; lastName: string }
++
+ type Props = {
+   members: any[]
+   matches: any[]
+   teamCat: string | null
+   onSelectMember: (m: any) => void
++  pendingUsers?: PendingUser[]
++  canManageUsers?: boolean
++  onOpenApprovals?: () => void
+ }
+ 
+-export function NotificationBell({ members, matches, teamCat, onSelectMember }: Props) {
++export function NotificationBell({ members, matches, teamCat, onSelectMember, pendingUsers = [], canManageUsers = false, onOpenApprovals }: Props) {
++  const { tr } = useTranslate()
+   const [open, setOpen] = useState(false)
+   const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
+     if (typeof window === "undefined") return new Set()
+@@ -37,26 +44,35 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember }:
+ 
+   const notifications = useMemo(() => {
+     const n: Notification[] = []
++
++    // Account approvals are admin-only and not tied to a team category, so they
++    // always show regardless of which category is currently selected.
++    if (canManageUsers) {
++      pendingUsers.forEach(u => {
++        n.push({ id: `approval-${u.username}`, type: "approval", message: `${u.firstName} ${u.lastName} — ${tr.notifications.pendingApproval}` })
++      })
++    }
++
+     const catPlayers = members.filter(m => m.role === "PLAYERS" && m.teamCategory === teamCat)
+ 
+     catPlayers.forEach(p => {
+       const yc = p.yellowCards || 0
+       if (p.suspended || (p.redCards || 0) > 0 || yc >= 2) {
+-        n.push({ id: `s-${p.id}`, type: "suspension", message: `${p.name} — SUSPENDED`, playerId: p.id })
++        n.push({ id: `s-${p.id}`, type: "suspension", message: `${p.name} — ${tr.profile.suspended}`, playerId: p.id })
+       } else if (yc === 1) {
+-        n.push({ id: `w-${p.id}`, type: "warning", message: `${p.name} — 1 yellow away from ban`, playerId: p.id })
++        n.push({ id: `w-${p.id}`, type: "warning", message: `${p.name} — ${tr.notifications.oneYellowAway}`, playerId: p.id })
+       }
+     })
+ 
+     const catMatches = matches.filter(m => m.teamCategory === teamCat)
+     catMatches.forEach(m => {
+       if (!m.result) {
+-        n.push({ id: `m-${m.id}`, type: "upcoming", message: `vs ${m.opponent} (${m.date || "TBD"}) — no result`, matchId: m.id })
++        n.push({ id: `m-${m.id}`, type: "upcoming", message: `vs ${m.opponent} (${m.date || tr.notifications.tbd}) — ${tr.notifications.noResult}`, matchId: m.id })
+       }
+     })
+ 
+     return n
+-  }, [members, matches, teamCat])
++  }, [members, matches, teamCat, pendingUsers, canManageUsers, tr])
+ 
+   const visibleNotifications = notifications.filter(n => !dismissedIds.has(n.id))
+ 
+@@ -79,19 +95,26 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember }:
+           <div className="fixed inset-0 z-[180]" onClick={() => setOpen(false)} />
+           <div className="absolute right-0 top-12 z-[190] w-80 rounded-2xl border border-zinc-200 bg-white shadow-2xl overflow-hidden text-zinc-900">
+             <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between">
+-              <h3 className="text-[9px] font-black uppercase tracking-widest">Notifications</h3>
++              <h3 className="text-[9px] font-black uppercase tracking-widest">{tr.notifications.title}</h3>
+               <span className={`text-[8px] font-black px-2 py-0.5 rounded-lg ${visibleNotifications.length > 0 ? 'bg-[#E30613]/10 text-[#E30613]' : 'bg-zinc-500/10 text-zinc-500'}`}>
+                 {visibleNotifications.length}
+               </span>
+             </div>
+             <div className="max-h-64 overflow-y-auto divide-y divide-zinc-200">
+               {visibleNotifications.length === 0 && (
+-                <div className="p-6 text-center text-[10px] font-black uppercase tracking-widest opacity-40">All clear</div>
++                <div className="p-6 text-center text-[10px] font-black uppercase tracking-widest opacity-40">{tr.notifications.allClear}</div>
+               )}
+               {visibleNotifications.map(n => (
+                 <button
+                   key={n.id}
+                   onClick={() => {
++                    if (n.type === "approval") {
++                      // Not dismissed here: it should only disappear once the
++                      // account is actually approved or removed, not just viewed.
++                      onOpenApprovals?.()
++                      setOpen(false)
++                      return
++                    }
+                     if (n.playerId) {
+                       const m = members.find(x => x.id === n.playerId)
+                       if (m) onSelectMember(m)
+@@ -101,13 +124,13 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember }:
+                   }}
+                   className="w-full text-left px-4 py-3 flex items-center gap-3 transition-all hover:bg-zinc-50"
+                 >
+-                  <div className={`p-2 rounded-xl shrink-0 ${n.type === 'suspension' ? 'bg-red-600/10 text-red-500' : n.type === 'warning' ? 'bg-yellow-400/10 text-yellow-500' : 'bg-blue-500/10 text-blue-500'}`}>
+-                    {n.type === 'suspension' ? <Ban size={12} /> : n.type === 'warning' ? <AlertTriangle size={12} /> : <Calendar size={12} />}
++                  <div className={`p-2 rounded-xl shrink-0 ${n.type === 'suspension' ? 'bg-red-600/10 text-red-500' : n.type === 'warning' ? 'bg-yellow-400/10 text-yellow-500' : n.type === 'approval' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-blue-500/10 text-blue-500'}`}>
++                    {n.type === 'suspension' ? <Ban size={12} /> : n.type === 'warning' ? <AlertTriangle size={12} /> : n.type === 'approval' ? <UserPlus size={12} /> : <Calendar size={12} />}
+                   </div>
+                   <div className="flex-1 min-w-0">
+                     <p className="text-[9px] font-black uppercase truncate">{n.message}</p>
+                     <p className="text-[7px] uppercase mt-0.5 text-zinc-400">
+-                      {n.type === 'suspension' ? 'Cannot play next match' : n.type === 'warning' ? 'CAF rule: 2 yellows = ban' : 'Upcoming match'}
++                      {n.type === 'suspension' ? tr.notifications.cannotPlayNext : n.type === 'warning' ? tr.notifications.cafRule2Yellows : n.type === 'approval' ? tr.notifications.tapToReview : tr.notifications.upcomingMatch}
+                     </p>
+                   </div>
+                   <ChevronRight size={12} className="opacity-30 shrink-0" />
+diff --git a/components/password-modal.tsx b/components/password-modal.tsx
+index 4203257..a98626f 100644
+--- a/components/password-modal.tsx
++++ b/components/password-modal.tsx
+@@ -1,6 +1,7 @@
+ 'use client'
+ import { useState } from 'react'
+ import { X } from 'lucide-react'
++import { useTranslate } from '@/lib/language-context'
+ 
+ export type PasswordTarget = { mode: 'self' | 'admin'; username?: string } | null
+ 
+@@ -15,6 +16,7 @@ const MIN = 6
+ const MAX = 200
+ 
+ export function PasswordModal({ target, onClose, onSubmit }: Props) {
++  const { tr } = useTranslate()
+   const [value, setValue] = useState('')
+   const [confirm, setConfirm] = useState('')
+   const [error, setError] = useState('')
+@@ -32,9 +34,9 @@ export function PasswordModal({ target, onClose, onSubmit }: Props) {
+ 
+   const submit = async (e: React.FormEvent) => {
+     e.preventDefault()
+-    if (value.length < MIN) return setError(`Password must be at least ${MIN} characters`)
+-    if (value.length > MAX) return setError('Password is too long')
+-    if (value !== confirm) return setError("Passwords don't match")
++    if (value.length < MIN) return setError(tr.passwordModal.mustBeAtLeast.replace('{min}', String(MIN)))
++    if (value.length > MAX) return setError(tr.passwordModal.tooLong)
++    if (value !== confirm) return setError(tr.passwordModal.dontMatch)
+     setBusy(true)
+     const err = await onSubmit(value)
+     setBusy(false)
+@@ -50,14 +52,14 @@ export function PasswordModal({ target, onClose, onSubmit }: Props) {
+       >
+         <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(var(--line-rgb),.12)]">
+           <h2 className="text-sm font-black uppercase tracking-tight">
+-            {target.mode === 'self' ? 'Change password' : `Reset password — ${target.username}`}
++            {target.mode === 'self' ? tr.passwordModal.changeTitle : `${tr.passwordModal.resetTitle} — ${target.username}`}
+           </h2>
+           <button onClick={close} title="Close" className="pm-close"><X size={15} /></button>
+         </div>
+         <form onSubmit={submit} className="p-5 space-y-3">
+           <div>
+             <label className="block text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] mb-1.5">
+-              New password (min {MIN} chars)
++              {tr.passwordModal.newPassword.replace('{min}', String(MIN))}
+             </label>
+             <input
+               type="password" autoComplete="new-password" value={value} autoFocus
+@@ -67,7 +69,7 @@ export function PasswordModal({ target, onClose, onSubmit }: Props) {
+           </div>
+           <div>
+             <label className="block text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] mb-1.5">
+-              Confirm password
++              {tr.passwordModal.confirmPassword}
+             </label>
+             <input
+               type="password" autoComplete="new-password" value={confirm}
+@@ -81,13 +83,13 @@ export function PasswordModal({ target, onClose, onSubmit }: Props) {
+               type="submit" disabled={busy}
+               className="flex-1 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider disabled:opacity-50"
+             >
+-              {busy ? 'Saving...' : 'Save'}
++              {busy ? tr.passwordModal.saving : tr.passwordModal.save}
+             </button>
+             <button
+               type="button" onClick={close}
+               className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.18)] text-[9px] font-black uppercase tracking-wider text-[var(--c-textDim)]"
+             >
+-              Cancel
++              {tr.passwordModal.cancel}
+             </button>
+           </div>
+         </form>
+diff --git a/components/player-card.tsx b/components/player-card.tsx
+index b77fb2e..d0a1596 100644
+--- a/components/player-card.tsx
++++ b/components/player-card.tsx
+@@ -1,5 +1,6 @@
+ "use client"
+ import React, { useState, useRef, useEffect, useCallback } from 'react';
++import { useTranslate } from '@/lib/language-context';
+ 
+ interface PlayerCardProps {
+   name: string;
+@@ -47,6 +48,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
+   reds,
+   entranceDelay = 0,
+ }) => {
++  const { tr } = useTranslate();
+   const code = fullPosition ? "STAFF" : (posAbbr[position] || position.slice(0, 4));
+   const num = String(n ?? "—").padStart(2, "0");
+   const [popped, setPopped] = useState(false);
+@@ -159,7 +161,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
+           </div>
+           {fullPosition ? (
+             <div className="pt-1">
+-              <span className="px-1.5 py-0.5 rounded-sm border border-[var(--c-hover)] bg-[var(--c-panel4)] text-[6px] font-black uppercase tracking-widest text-[var(--c-cream)]/60">Fédération Tunisienne — Team Staff</span>
++              <span className="px-1.5 py-0.5 rounded-sm border border-[var(--c-hover)] bg-[var(--c-panel4)] text-[6px] font-black uppercase tracking-widest text-[var(--c-cream)]/60">Fédération Tunisienne — {tr.coach.teamStaffBadge}</span>
+             </div>
+           ) : (
+             <div className="pt-1 flex items-center gap-2">
+diff --git a/components/stages-manager.tsx b/components/stages-manager.tsx
+index fb39b88..2c3d4df 100644
+--- a/components/stages-manager.tsx
++++ b/components/stages-manager.tsx
+@@ -3,6 +3,7 @@ import React, { useState } from "react"
+ import { ChevronLeft, X, Plus, ArrowLeft, Calendar, CalendarDays, MapPin, Users, FileText, Image as ImageIcon, Trash2, Save, Pencil, Download, Check, Briefcase, CalendarRange, Clock, Activity } from "lucide-react"
+ import ThemeToggle from "@/components/theme-toggle"
+ import { useTheme } from "@/lib/theme-context"
++import { useTranslate } from "@/lib/language-context"
+ 
+ type Stage = {
+   id?: number
+@@ -31,7 +32,7 @@ type Props = {
+   onSave: (stage: Stage) => Promise<boolean> | boolean
+   onDelete?: (id: number) => Promise<boolean> | boolean
+   onRefresh?: () => void
+-  user?: { username?: string }
++  user?: { username?: string } | null
+ }
+ 
+ const emptyStage = (cat: string | null): Stage => ({
+@@ -63,11 +64,11 @@ const durDays = (s: Stage): number | null => {
+   return d >= 0 ? d + 1 : null
+ }
+ 
+-const stageStatus = (s: Stage): { key: "done" | "live" | "upcoming"; label: string } => {
++const stageStatus = (s: Stage, tr: any): { key: "done" | "live" | "upcoming"; label: string } => {
+   const today = new Date().toISOString().slice(0, 10)
+-  if (s.endDate && s.endDate < today) return { key: "done", label: "Terminé" }
+-  if (s.startDate && s.startDate > today) return { key: "upcoming", label: "À venir" }
+-  return { key: "live", label: "En cours" }
++  if (s.endDate && s.endDate < today) return { key: "done", label: tr.stages.doneStatus }
++  if (s.startDate && s.startDate > today) return { key: "upcoming", label: tr.stages.upcomingStatus }
++  return { key: "live", label: tr.stages.liveStatus }
+ }
+ 
+ let toastTimer: any = null
+@@ -82,6 +83,7 @@ function useToast() {
+ }
+ 
+ export function StagesManager({ open, onClose, stages, members, teamCat, canManage, onSave, onDelete, onRefresh, user }: Props) {
++  const { tr } = useTranslate()
+   const [view, setView] = useState<"list" | "edit" | "detail">("list")
+   const [editing, setEditing] = useState<Stage | null>(null)
+   const [tab, setTab] = useState<TabKey>("program")
+@@ -121,7 +123,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+     const ok = await onSave(draft)
+     setBusy(false)
+     if (ok) {
+-      show("Rassemblement enregistré ✓")
++      show(tr.stages.savedToast)
+       onRefresh?.()
+       setView("list")
+     }
+@@ -146,7 +148,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+     const url = await upload(f, 'camps-reports')
+     setBusy(false)
+     if (url) setDraft(d => ({ ...d, reportUrl: url, reportName: f.name }))
+-    else show("Erreur d'upload")
++    else show(tr.stages.uploadError)
+   }
+ 
+   const onPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+@@ -161,7 +163,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+     }
+     setBusy(false)
+     if (urls.length) setDraft(d => ({ ...d, images: [...(d.images || []), ...urls] }))
+-    else show("Erreur d'upload")
++    else show(tr.stages.uploadError)
+   }
+ 
+   const allCandidates = members.filter(m => m.name && m.role)
+@@ -176,13 +178,13 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+       <div className="sticky top-0 z-[100] border-b border-[rgba(var(--line-rgb),.12)] bg-[var(--c-bg)]">
+         <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between gap-4">
+           <div className="flex items-center gap-3 min-w-0">
+-            <button onClick={onClose} title="Retour au tableau de bord" className="p-2 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]/60 transition-all shrink-0">
++            <button onClick={onClose} title={tr.stages.backToDashboard} className="p-2 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]/60 transition-all shrink-0">
+               <ChevronLeft size={17}/>
+             </button>
+             <img src="/ftf-logo.png" className="h-9" alt="FTF"/>
+             <div className="leading-tight min-w-0">
+-              <h1 className="text-sm font-black italic uppercase tracking-wider text-[var(--c-text)] truncate">Rassemblements Nationaux</h1>
+-              <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em]">Camps & Stages</p>
++              <h1 className="text-sm font-black italic uppercase tracking-wider text-[var(--c-text)] truncate">{tr.stages.title}</h1>
++              <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em]">{tr.stages.subtitle}</p>
+             </div>
+           </div>
+           <div className="flex items-center gap-2 shrink-0">
+@@ -209,13 +211,13 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+ 
+             {/* ─── HERO ─── */}
+             <div className="relative overflow-hidden rounded-[28px] mt-6 px-7 sm:px-10 py-10 sm:py-12 bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white">
+-              <div className="absolute -right-4 -top-8 text-[110px] sm:text-[150px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">Rassemblements</div>
++              <div className="absolute -right-4 -top-8 text-[110px] sm:text-[150px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">{tr.stages.heroTitle1}</div>
+               <div className="relative">
+                 <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f6c744]/15 border border-[#f6c744]/40 text-[#f6c744] text-[8px] font-black uppercase tracking-[0.25em]">
+-                  <CalendarRange size={12}/> Portail Camps
++                  <CalendarRange size={12}/> {tr.stages.portalBadge}
+                 </span>
+                 <h2 className="mt-5 text-4xl sm:text-5xl font-black italic uppercase tracking-tighter leading-[0.95]">
+-                  Rassemblements <span className="text-[#f6c744]">Nationaux</span>
++                  {tr.stages.heroTitle1} <span className="text-[#f6c744]">{tr.stages.heroTitle2}</span>
+                 </h2>
+               </div>
+             </div>
+@@ -223,12 +225,12 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+             {/* ─── FILTER + CREATE ─── */}
+             <div className="mt-8 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
+               <div className="flex p-1 rounded-2xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.14)] self-start">
+-                <button onClick={() => setFiltCat("ALL")} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filtCat === "ALL" ? 'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25' : 'text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>Tous</button>
++                <button onClick={() => setFiltCat("ALL")} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filtCat === "ALL" ? 'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25' : 'text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{tr.stages.all}</button>
+                 {CATS.map(c => (
+                   <button key={c.value} onClick={() => setFiltCat(c.value)} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filtCat === c.value ? 'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25' : 'text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{c.label}</button>
+                 ))}
+               </div>
+-              <p className="text-[9px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{filtered.length} rassemblement{filtered.length > 1 ? "s" : ""}</p>
++              <p className="text-[9px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{filtered.length} {filtered.length > 1 ? tr.stages.campWordPlural : tr.stages.campWord}</p>
+             </div>
+ 
+             {/* ─── CREATE CTA ─── */}
+@@ -237,7 +239,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+                 <span className="w-8 h-8 rounded-full bg-[#f6c744] text-[#7a4b00] flex items-center justify-center shadow-md shadow-black/25 group-hover:rotate-90 transition-transform duration-300">
+                   <Plus size={16} strokeWidth={3}/>
+                 </span>
+-                <span className="leading-none">Créer un nouveau rassemblement</span>
++                <span className="leading-none">{tr.stages.createNew}</span>
+               </button>
+             )}
+ 
+@@ -248,12 +250,12 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+                   <CalendarRange size={26} className="text-[var(--acc-gold)]"/>
+                 </div>
+                 <div>
+-                  <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">Aucun rassemblement enregistré</p>
+-                  <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">Créez votre premier rassemblement de préparation</p>
++                  <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">{tr.stages.emptyTitle}</p>
++                  <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">{tr.stages.emptySubtitle}</p>
+                 </div>
+                 {canManage && (
+                   <button onClick={startCreate} className="mt-1 px-6 py-3 rounded-full bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-[#E30613]/25 hover:bg-red-700 transition-all">
+-                    <Plus size={15}/> Créer un rassemblement
++                    <Plus size={15}/> {tr.stages.createFirst}
+                   </button>
+                 )}
+               </div>
+@@ -278,7 +280,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+                           <span className="inline-block px-2.5 py-1 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[var(--acc-red)] text-[7px] font-black uppercase tracking-widest">{catName(s.teamCategory)}</span>
+                           <h3 className="mt-3 text-[15px] font-black uppercase tracking-tight text-[var(--c-text)] truncate">{s.name}</h3>
+                           <p className="mt-1.5 flex items-center gap-1.5 text-[9px] font-bold text-[var(--c-textDim)]">
+-                            <MapPin size={11}/>{s.location || "Lieu —"}
++                            <MapPin size={11}/>{s.location || tr.stages.venueDash}
+                           </p>
+                         </div>
+                         {d && (
+@@ -292,26 +294,26 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+ 
+                       <div className="mt-4 flex items-center gap-3 text-[9px] font-bold text-[var(--c-textDim)] flex-wrap">
+                         <span className="flex items-center gap-1.5"><Calendar size={11}/>{s.startDate ? fmtDate(s.startDate) : "—"} {s.endDate ? `→ ${fmtDate(s.endDate)}` : ""}</span>
+-                        {dur !== null && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.16)]">{dur} j</span>}
++                        {dur !== null && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.16)]">{dur} {tr.stages.daysAbbrev}</span>}
+                       </div>
+ 
+                       <div className="mt-4 flex gap-1.5 flex-wrap">
+-                        {hasProgram && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">Programme</span>}
+-                        {hasPlayers && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">{s.players.length} joueurs</span>}
+-                        {hasStaff && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">Staff</span>}
+-                        {hasReport && <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[7px] font-black uppercase tracking-wider">Rapport</span>}
+-                        {hasPhotos && <span className="px-2 py-0.5 rounded-md bg-[#7ec3ff]/10 border border-[#7ec3ff]/30 text-[var(--acc-blue)] text-[7px] font-black uppercase tracking-wider">{s.images.length} photos</span>}
++                        {hasProgram && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">{tr.stages.program}</span>}
++                        {hasPlayers && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">{s.players.length} {tr.stages.playersWord}</span>}
++                        {hasStaff && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">{tr.common.staff}</span>}
++                        {hasReport && <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[7px] font-black uppercase tracking-wider">{tr.stages.report}</span>}
++                        {hasPhotos && <span className="px-2 py-0.5 rounded-md bg-[#7ec3ff]/10 border border-[#7ec3ff]/30 text-[var(--acc-blue)] text-[7px] font-black uppercase tracking-wider">{s.images.length} {tr.stages.photosWord}</span>}
+                       </div>
+ 
+                       <div className="mt-6 flex items-center gap-2">
+                         <button onClick={() => s.id && openDetail(s)} className="flex-1 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-md shadow-[#E30613]/20">
+-                          Ouvrir le dossier
++                          {tr.stages.openFile}
+                         </button>
+                         {canManage && (
+-                          <button onClick={(e) => { e.stopPropagation(); startEdit(s) }} title="Modifier" className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--acc-gold)] hover:border-[#f6c744]/40 transition-all"><Pencil size={15}/></button>
++                          <button onClick={(e) => { e.stopPropagation(); startEdit(s) }} title={tr.common.edit} className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--acc-gold)] hover:border-[#f6c744]/40 transition-all"><Pencil size={15}/></button>
+                         )}
+                         {canManage && (
+-                          <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(s) }} title="Supprimer" className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><Trash2 size={15}/></button>
++                          <button onClick={(e) => { e.stopPropagation(); setDeleteTarget(s) }} title={tr.common.delete} className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><Trash2 size={15}/></button>
+                         )}
+                       </div>
+                     </div>
+@@ -323,7 +325,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+         )}
+ 
+         {view === "detail" && editing && (
+-          <StageDetail stage={editing} members={members} canManage={canManage}
++          <StageDetail stage={editing} members={members} canManage={canManage} tr={tr}
+             onBack={() => setView("list")}
+             onEdit={() => { setDraft(JSON.parse(JSON.stringify(editing))); setTab("program"); setView("edit") }}
+             onDelete={() => setDeleteTarget(editing)} />
+@@ -334,13 +336,13 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+             {/* ─── EDIT HEADER ─── */}
+             <div className="mt-6 flex items-end justify-between gap-4 flex-wrap">
+               <div>
+-                <p className="text-[8px] font-black uppercase tracking-[0.25em] text-[var(--c-textDim)]">Rassemblements / {editing ? "Modifier" : "Nouveau"}</p>
+-                <h2 className="mt-1 text-2xl font-black italic uppercase tracking-tight text-[var(--c-text)]">{editing ? "Modifier le Rassemblement" : "Nouveau Rassemblement"}</h2>
++                <p className="text-[8px] font-black uppercase tracking-[0.25em] text-[var(--c-textDim)]">{tr.stages.title} / {editing ? tr.stages.edit : tr.stages.new}</p>
++                <h2 className="mt-1 text-2xl font-black italic uppercase tracking-tight text-[var(--c-text)]">{editing ? tr.stages.editTitle : tr.stages.newTitle}</h2>
+               </div>
+               <div className="flex gap-2">
+-                <button onClick={() => setView("list")} className="px-5 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]/40 text-[9px] font-black uppercase tracking-wider transition-all">Annuler</button>
++                <button onClick={() => setView("list")} className="px-5 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]/40 text-[9px] font-black uppercase tracking-wider transition-all">{tr.common.cancel}</button>
+                 <button onClick={save} disabled={!canSubmit || busy} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-40 shadow-lg shadow-[#E30613]/25">
+-                  <Save size={14}/> {busy ? 'Enregistrement…' : editing ? 'Enregistrer' : 'Créer le rassemblement'}
++                  <Save size={14}/> {busy ? tr.stages.saving : editing ? tr.common.save : tr.stages.createCamp}
+                 </button>
+               </div>
+             </div>
+@@ -348,35 +350,35 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+             {/* ─── BASIC INFO ─── */}
+             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+               <div className="sm:col-span-2">
+-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Nom du rassemblement *</label>
++                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.nameLabel}</label>
+                 <input
+                   value={draft.name}
+                   onChange={e => setDraft({ ...draft, name: e.target.value })}
+-                  placeholder="ex: Rassemblement National — Mars"
++                  placeholder={tr.stages.namePlaceholder}
+                   className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+               </div>
+               <div>
+-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Lieu</label>
++                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.locationLabel}</label>
+                 <input
+                   value={draft.location}
+                   onChange={e => setDraft({ ...draft, location: e.target.value })}
+-                  placeholder="ex: Tunis"
++                  placeholder={tr.stages.locationPlaceholder}
+                   className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+               </div>
+               <div>
+-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Catégorie</label>
++                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.categoryLabel}</label>
+                 <select value={draft.teamCategory} onChange={e => setDraft({ ...draft, teamCategory: e.target.value })}
+                   className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all">
+                   {CATS.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                 </select>
+               </div>
+               <div>
+-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Début</label>
++                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.startLabel}</label>
+                 <input type="date" value={draft.startDate} onChange={e => setDraft({ ...draft, startDate: e.target.value })}
+                   className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+               </div>
+               <div>
+-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">Fin</label>
++                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.endLabel}</label>
+                 <input type="date" value={draft.endDate} onChange={e => setDraft({ ...draft, endDate: e.target.value })}
+                   className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+               </div>
+@@ -384,7 +386,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+ 
+             {/* ─── TABS ─── */}
+             <div className="mt-6 flex gap-1.5 flex-wrap">
+-              {([["program","Programme"],["players","Convocations"],["staff","Staff"],["report","Rapport PDF"],["photos","Photos"]] as [TabKey,string][]).map(([k,label]) => (
++              {([["program",tr.stages.programTab],["players",tr.stages.callupsTab],["staff",tr.common.staff],["report",tr.stages.reportPdfTab],["photos",tr.stages.photosTab]] as [TabKey,string][]).map(([k,label]) => (
+                 <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${tab===k?'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25':'bg-[var(--c-panel3)] text-[var(--c-textMid)] border border-[rgba(var(--line-rgb),.16)] hover:text-[var(--c-text)]'}`}>{label}</button>
+               ))}
+             </div>
+@@ -392,33 +394,33 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+             {/* ─── TAB CONTENT ─── */}
+             <div className="mt-5">
+               {tab === "program" && (
+-                <ProgramTab draft={draft} setDraft={setDraft}/>
++                <ProgramTab draft={draft} setDraft={setDraft} tr={tr}/>
+               )}
+ 
+               {tab === "players" && (
+-                <PlayersTab draft={draft} setDraft={setDraft} members={availablePlayers.length ? availablePlayers : allCandidates.filter(m => (m.role||'').toUpperCase()==='PLAYERS')}/>
++                <PlayersTab draft={draft} setDraft={setDraft} members={availablePlayers.length ? availablePlayers : allCandidates.filter(m => (m.role||'').toUpperCase()==='PLAYERS')} tr={tr}/>
+               )}
+ 
+               {tab === "staff" && (
+-                <StaffTab draft={draft} setDraft={setDraft} members={availableStaff.length ? availableStaff : allCandidates.filter(m => (m.role||'').toUpperCase()!=='PLAYERS')}/>
++                <StaffTab draft={draft} setDraft={setDraft} members={availableStaff.length ? availableStaff : allCandidates.filter(m => (m.role||'').toUpperCase()!=='PLAYERS')} tr={tr}/>
+               )}
+ 
+               {tab === "report" && (
+                 <div>
+-                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">Rapport de fin de rassemblement (PDF)</p>
++                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">{tr.stages.reportSectionTitle}</p>
+                   <label className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-9 cursor-pointer transition-all ${draft.reportUrl ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#E30613]/50'}`}>
+                     <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={onReportFile}/>
+                     <FileText size={30} className={draft.reportUrl ? 'text-emerald-500' : 'text-[var(--c-textDim)]'}/>
+-                    <span className="text-[11px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? 'Upload…' : draft.reportUrl ? draft.reportName || 'Rapport joint ✓' : 'Déposez le rapport PDF ici'}</span>
+-                    <span className="text-[8px] text-[var(--c-textDim)]">Glissez-déposez ou cliquez pour choisir · PDF uniquement</span>
++                    <span className="text-[11px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? tr.stages.uploading : draft.reportUrl ? draft.reportName || tr.stages.reportAttached : tr.stages.dropReportHere}</span>
++                    <span className="text-[8px] text-[var(--c-textDim)]">{tr.stages.dropHintPdf}</span>
+                   </label>
+                   {draft.reportUrl && (
+                     <div className="flex gap-2 mt-3 flex-wrap">
+                       <a href={draft.reportUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/15 transition-all">
+-                        <Download size={12}/> Ouvrir le rapport
++                        <Download size={12}/> {tr.stages.openReport}
+                       </a>
+                       <button onClick={() => setDraft({ ...draft, reportUrl: "", reportName: "" })} className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--acc-red)] text-[9px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all">
+-                        <Trash2 size={12}/> Retirer
++                        <Trash2 size={12}/> {tr.common.remove}
+                       </button>
+                     </div>
+                   )}
+@@ -427,18 +429,18 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+ 
+               {tab === "photos" && (
+                 <div>
+-                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">Photos du rassemblement</p>
++                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">{tr.stages.photosSectionTitle}</p>
+                   <label className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-7 cursor-pointer transition-all mb-4 ${'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#f6c744]/50'}`}>
+                     <input type="file" accept="image/*" multiple className="hidden" onChange={onPhotos}/>
+                     <ImageIcon size={26} className="text-[var(--c-textDim)]"/>
+-                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? 'Upload…' : 'Ajouter des photos'}</span>
+-                    <span className="text-[8px] text-[var(--c-textDim)]">Glissez-déposez ou cliquez · jusqu'à 12 images</span>
++                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? tr.stages.uploading : tr.stages.addPhotos}</span>
++                    <span className="text-[8px] text-[var(--c-textDim)]">{tr.stages.dropHintPhotos}</span>
+                   </label>
+                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                     {(draft.images || []).map((img, i) => (
+                       <div key={img + i} className="group relative rounded-xl overflow-hidden border border-[rgba(var(--line-rgb),.16)]">
+                         <img src={img} alt={`photo ${i+1}`} className="w-full h-32 object-cover"/>
+-                        <button onClick={() => setDraft(d => ({ ...d, images: (d.images || []).filter((_, j) => j !== i) }))} className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/70 text-white opacity-0 group-hover:opacity-100 hover:bg-[#E30613] transition-all" title="Remove">
++                        <button onClick={() => setDraft(d => ({ ...d, images: (d.images || []).filter((_, j) => j !== i) }))} className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/70 text-white opacity-0 group-hover:opacity-100 hover:bg-[#E30613] transition-all" title={tr.common.remove}>
+                           <Trash2 size={12}/>
+                         </button>
+                       </div>
+@@ -455,16 +457,16 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+       {deleteTarget && (
+         <div className="fixed inset-0 z-[450] flex items-center justify-center bg-black/60 p-4">
+           <div className="w-full max-w-sm rounded-2xl bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.18)] shadow-2xl p-6">
+-            <h3 className="text-sm font-black uppercase tracking-tight text-[var(--c-text)] mb-2">Supprimer ce rassemblement ?</h3>
+-            <p className="text-[10px] font-bold text-[var(--c-textDim)] mb-5">« {deleteTarget.name} » sera définitivement supprimé, ainsi que son programme, ses convocations et ses documents.</p>
++            <h3 className="text-sm font-black uppercase tracking-tight text-[var(--c-text)] mb-2">{tr.stages.deleteConfirmTitle}</h3>
++            <p className="text-[10px] font-bold text-[var(--c-textDim)] mb-5">{tr.stages.deleteConfirmBody.replace('{name}', deleteTarget.name)}</p>
+             <div className="flex gap-2">
+-              <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] text-[9px] font-black uppercase tracking-wider transition-all">Annuler</button>
++              <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] text-[9px] font-black uppercase tracking-wider transition-all">{tr.common.cancel}</button>
+               <button onClick={async () => {
+                 if (deleteTarget.id && onDelete) await onDelete(deleteTarget.id)
+                 onRefresh?.()
+                 setDeleteTarget(null)
+                 setView("list")
+-              }} className="flex-1 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">Supprimer</button>
++              }} className="flex-1 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">{tr.common.delete}</button>
+             </div>
+           </div>
+         </div>
+@@ -473,18 +475,19 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
+   )
+ }
+ 
+-function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
++function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }: {
+   stage: Stage
+   members: any[]
+   canManage: boolean
+   onBack: () => void
+   onEdit: () => void
+   onDelete?: () => void
++  tr: any
+ }) {
+   const [tab, setTab] = useState<TabKey>("program")
+   const memberById = (id: number) => members.find(m => m.id === id)
+   const dur = durDays(stage)
+-  const status = stageStatus(stage)
++  const status = stageStatus(stage, tr)
+   const d = stage.startDate ? new Date(stage.startDate + "T00:00:00") : null
+   const sessions = (stage.program || []).length
+   const photos = (stage.images || []).length
+@@ -508,18 +511,18 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+ 
+   const groupedDays: { label: string; items: NonNullable<Stage["program"]> }[] = []
+   for (const p of stage.program || []) {
+-    const label = (p.day || "Jour").trim().toUpperCase()
++    const label = (p.day || tr.stages.dayWord).trim().toUpperCase()
+     const last = groupedDays[groupedDays.length - 1]
+     if (last && last.label === label) last.items.push(p)
+     else groupedDays.push({ label, items: [p] })
+   }
+ 
+   const tabs: [TabKey, string, number][] = [
+-    ["program", "Programme", sessions],
+-    ["players", "Joueurs", players.length],
+-    ["staff", "Staff", staff.length],
+-    ["report", "Rapport", stage.reportUrl ? 1 : 0],
+-    ["photos", "Photos", photos],
++    ["program", tr.stages.programTab, sessions],
++    ["players", tr.stages.playersLabel, players.length],
++    ["staff", tr.common.staff, staff.length],
++    ["report", tr.stages.report, stage.reportUrl ? 1 : 0],
++    ["photos", tr.stages.photosTab, photos],
+   ]
+ 
+   return (
+@@ -527,15 +530,15 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+       {/* Breadcrumb */}
+       <div className="mt-6 flex items-center justify-between gap-3 flex-wrap">
+         <button onClick={onBack} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-panel3)]/70 text-[var(--c-textMid)] hover:text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider transition-all">
+-          <ArrowLeft size={13}/> Tous les rassemblements
++          <ArrowLeft size={13}/> {tr.stages.allCamps}
+         </button>
+         {canManage && (
+           <div className="flex gap-2">
+             <button onClick={onEdit} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 shadow-md shadow-[#E30613]/20 transition-all">
+-              <Pencil size={13}/> Modifier
++              <Pencil size={13}/> {tr.common.edit}
+             </button>
+             <button onClick={onDelete} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#ff4f66]/30 bg-[#E30613]/10 text-[var(--acc-red)] hover:bg-[#E30613]/20 text-[9px] font-black uppercase tracking-wider transition-all">
+-              <Trash2 size={13}/> Supprimer
++              <Trash2 size={13}/> {tr.common.delete}
+             </button>
+           </div>
+         )}
+@@ -564,7 +567,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+                   {[...Array(Math.min(dur, 14))].map((_, i) => (
+                     <span key={i} className={`w-1 h-1 rounded-full ${light ? 'bg-[#E30613]/60' : 'bg-[#f6c744]/70'}`}/>
+                   ))}
+-                  <span className={`hidden lg:block col-span-full mt-1.5 text-[7px] font-black uppercase tracking-widest text-center ${light ? 'text-[#0c1f3d]/45' : 'text-white/50'}`}>{dur} jours</span>
++                  <span className={`hidden lg:block col-span-full mt-1.5 text-[7px] font-black uppercase tracking-widest text-center ${light ? 'text-[#0c1f3d]/45' : 'text-white/50'}`}>{dur} {tr.stages.daysWord}</span>
+                 </div>
+               )}
+             </div>
+@@ -582,24 +585,24 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+                 <span className={`w-1.5 h-1.5 rounded-full ${statusDot[status.key]}`}/>
+                 {status.label}
+               </span>
+-              <span className={`text-[9px] font-black italic uppercase tracking-[0.2em] ${light ? 'text-[#0c1f3d]/40' : 'text-white/40'}`}>Camp #{stage.id}</span>
++              <span className={`text-[9px] font-black italic uppercase tracking-[0.2em] ${light ? 'text-[#0c1f3d]/40' : 'text-white/40'}`}>{tr.stages.campHash} #{stage.id}</span>
+             </div>
+ 
+             <h2 className="mt-4 text-3xl sm:text-[42px] font-black italic uppercase tracking-tighter leading-[0.98]">{stage.name}</h2>
+ 
+             <div className={`mt-4 flex items-center gap-3 text-[9px] font-bold flex-wrap ${light ? 'text-[#0c1f3d]/60' : 'text-white/60'}`}>
+-              <span className="flex items-center gap-1.5"><MapPin size={11}/>{stage.location || "Lieu —"}</span>
++              <span className="flex items-center gap-1.5"><MapPin size={11}/>{stage.location || tr.stages.venueDash}</span>
+               <span className="flex items-center gap-1.5"><Calendar size={11}/>{fmtDate(stage.startDate)} → {fmtDate(stage.endDate)}</span>
+-              <span className="flex items-center gap-1.5"><Clock size={11}/>{dur !== null ? `${dur} jours` : "Durée —"}</span>
+-              <span className="flex items-center gap-1.5"><CalendarDays size={11}/>{sessions} séance{sessions > 1 ? "s" : ""}</span>
++              <span className="flex items-center gap-1.5"><Clock size={11}/>{dur !== null ? `${dur} ${tr.stages.daysWord}` : tr.stages.durationDash}</span>
++              <span className="flex items-center gap-1.5"><CalendarDays size={11}/>{sessions} {sessions > 1 ? tr.stages.sessionsWord : tr.stages.sessionWord}</span>
+             </div>
+ 
+             {/* Quick stats strip */}
+             <div className="mt-6 grid grid-cols-3 gap-3 max-w-md">
+               {[
+-                { label: "Joueurs", value: players.length, icon: <Users size={14}/> },
+-                { label: "Staff", value: staff.length, icon: <Briefcase size={14}/> },
+-                { label: "Photos", value: photos, icon: <ImageIcon size={14}/> },
++                { label: tr.stages.playersLabel, value: players.length, icon: <Users size={14}/> },
++                { label: tr.common.staff, value: staff.length, icon: <Briefcase size={14}/> },
++                { label: tr.stages.photosLabel, value: photos, icon: <ImageIcon size={14}/> },
+               ].map(x => light ? (
+                 <div key={x.label} className="rounded-xl bg-[#0c1f3d] border border-[#ff5f72]/25 px-4 py-3 shadow-md shadow-[#0c1f3d]/15">
+                   <div className="flex items-center gap-1.5 text-white/55">{x.icon}<span className="text-[7px] font-black uppercase tracking-widest">{x.label}</span></div>
+@@ -614,7 +617,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+             </div>
+ 
+             {stage.createdByUsername && (
+-              <p className={`mt-4 text-[8px] font-bold uppercase tracking-widest ${light ? 'text-[#0c1f3d]/45' : 'text-white/40'}`}>Créé par {stage.createdByUsername}</p>
++              <p className={`mt-4 text-[8px] font-bold uppercase tracking-widest ${light ? 'text-[#0c1f3d]/45' : 'text-white/40'}`}>{tr.stages.createdBy} {stage.createdByUsername}</p>
+             )}
+           </div>
+         </div>
+@@ -640,7 +643,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+             {(stage.program || []).length === 0 && (
+               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+                 <Calendar size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucun programme enregistré.</p>
++                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noProgramSaved}</p>
+               </div>
+             )}
+             {groupedDays.length > 0 && (
+@@ -651,7 +654,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+                       <span className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#E30613] to-[#ff2b3a] text-white text-[8px] font-black uppercase tracking-widest shadow-md shadow-[#E30613]/20">
+                         <Activity size={11}/> {g.label}
+                       </span>
+-                      <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{g.items.length} séance{g.items.length > 1 ? "s" : ""}</span>
++                      <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{g.items.length} {g.items.length > 1 ? tr.stages.sessionsWord : tr.stages.sessionWord}</span>
+                       <div className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/>
+                     </div>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+@@ -661,9 +664,9 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+                           <div className="p-4 sm:p-5">
+                             <div className="flex items-center gap-2 flex-wrap text-[9px] font-bold text-[var(--c-textDim)]">
+                               {p.time && <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#E30613]/10 border border-[#E30613]/25 text-[var(--acc-red)]"><Clock size={10}/>{p.time}</span>}
+-                              <span className="text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Séance {i + 1}</span>
++                              <span className="text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.sessionNumber} {i + 1}</span>
+                             </div>
+-                            <p className="mt-2.5 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)]">{p.activity || "Séance"}</p>
++                            <p className="mt-2.5 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)]">{p.activity || tr.stages.sessionWord}</p>
+                             {p.details && <p className="mt-1.5 text-[10px] font-bold text-[var(--c-textDim)] leading-relaxed">{p.details}</p>}
+                           </div>
+                         </div>
+@@ -682,13 +685,13 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+             {(stage.players || []).length === 0 && (
+               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+                 <Users size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucun joueur.</p>
++                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noPlayers}</p>
+               </div>
+             )}
+             {(stage.players || []).length > 0 && (
+               <div className="rounded-2xl border border-[rgba(var(--line-rgb),.12)] bg-[var(--c-panel2)]/40 overflow-hidden">
+                 <div className="hidden sm:grid grid-cols-[56px_1fr_140px_100px] gap-3 px-5 py-3 text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)] border-b border-[rgba(var(--line-rgb),.12)]">
+-                  <span>N°</span><span>Joueuse</span><span>Poste</span><span>Club</span>
++                  <span>{tr.stages.numberHeader}</span><span>{tr.stages.playerHeader}</span><span>{tr.stages.positionHeader}</span><span>{tr.stages.clubHeader}</span>
+                 </div>
+                 <div className="divide-y divide-[rgba(var(--line-rgb),.1)]">
+                   {(stage.players || []).map((id, idx) => {
+@@ -725,7 +728,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+             {(stage.staff || []).length === 0 && (
+               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+                 <Briefcase size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucun staff enregistré.</p>
++                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noStaffSaved}</p>
+               </div>
+             )}
+             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+@@ -737,7 +740,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+                     <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7ec3ff]/20 to-[#E30613]/20 border border-[#7ec3ff]/25 flex items-center justify-center text-[15px] font-black text-[var(--acc-blue)] uppercase shrink-0">{(m?.name || "?")[0]}</div>
+                     <div className="flex-1 min-w-0">
+                       <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
+-                      <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase tracking-wider">{m?.role === "PLAYERS" ? "Staff" : (m?.role || "—")}</p>
++                      <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase tracking-wider">{m?.role === "PLAYERS" ? tr.common.staff : (m?.role || "—")}</p>
+                       {role && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-[#7ec3ff]/12 border border-[#7ec3ff]/35 text-[var(--acc-blue)] text-[7px] font-black uppercase tracking-widest">{role}</span>}
+                     </div>
+                   </div>
+@@ -758,19 +761,19 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+                     <FileText size={30} className="text-emerald-500"/>
+                   </div>
+                   <div className="flex-1 min-w-0">
+-                    <p className="text-[8px] font-black uppercase tracking-widest text-emerald-500/80">Rapport officiel</p>
+-                    <p className="mt-1.5 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)] truncate">{stage.reportName || "Rapport de fin de rassemblement"}</p>
+-                    <p className="mt-1 text-[9px] font-bold text-[var(--c-textDim)]">Document PDF déposé à la clôture du rassemblement.</p>
++                    <p className="text-[8px] font-black uppercase tracking-widest text-emerald-500/80">{tr.stages.officialReport}</p>
++                    <p className="mt-1.5 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)] truncate">{stage.reportName || tr.stages.reportFallbackName}</p>
++                    <p className="mt-1 text-[9px] font-bold text-[var(--c-textDim)]">{tr.stages.reportDepositedNote}</p>
+                   </div>
+                   <a href={stage.reportUrl} target="_blank" rel="noreferrer" className="shrink-0 flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/25 transition-all">
+-                    <Download size={14}/> Ouvrir le PDF
++                    <Download size={14}/> {tr.stages.openPdf}
+                   </a>
+                 </div>
+               </div>
+             ) : (
+               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+                 <FileText size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucun rapport de fin de rassemblement déposé.</p>
++                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noReportDeposited}</p>
+               </div>
+             )}
+           </div>
+@@ -782,7 +785,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+             {(stage.images || []).length === 0 && (
+               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+                 <ImageIcon size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Aucune photo du rassemblement.</p>
++                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noPhotosSaved}</p>
+               </div>
+             )}
+             {(stage.images || []).length > 0 && (
+@@ -807,7 +810,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete }: {
+ }
+ 
+ // ── Programme editor ──
+-function ProgramTab({ draft, setDraft }: { draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>> }) {
++function ProgramTab({ draft, setDraft, tr }: { draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; tr: any }) {
+   const items = draft.program || []
+   const add = () => setDraft(d => ({ ...d, program: [...(d.program || []), { day: "", time: "", activity: "", details: "" }] }))
+   const upd = (i: number, k: string, v: string) => setDraft(d => ({ ...d, program: (d.program || []).map((p, j) => j === i ? { ...p, [k]: v } : p) }))
+@@ -815,18 +818,18 @@ function ProgramTab({ draft, setDraft }: { draft: Stage; setDraft: React.Dispatc
+   return (
+     <div>
+       <div className="flex items-center justify-between mb-3">
+-        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Programme d'entraînement</p>
+-        <button onClick={add} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--c-panel3)] border border-[#f6c744]/30 text-[var(--acc-gold)] text-[8px] font-black uppercase tracking-wider hover:border-[#f6c744]/60 transition-all"><Plus size={11}/> Ajouter</button>
++        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.trainingProgramTitle}</p>
++        <button onClick={add} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--c-panel3)] border border-[#f6c744]/30 text-[var(--acc-gold)] text-[8px] font-black uppercase tracking-wider hover:border-[#f6c744]/60 transition-all"><Plus size={11}/> {tr.stages.addWord}</button>
+       </div>
+-      {items.length === 0 && <p className="text-[10px] font-bold text-[var(--c-textDim)] py-8 text-center border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">Aucune séance — ajoutez la première.</p>}
++      {items.length === 0 && <p className="text-[10px] font-bold text-[var(--c-textDim)] py-8 text-center border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">{tr.stages.noSessionsAddFirst}</p>}
+       <div className="space-y-2.5">
+         {items.map((p, i) => (
+           <div key={i} className="grid grid-cols-[80px_100px_1fr_40px] gap-2.5 items-start rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-3">
+-            <input value={p.day} onChange={e => upd(i, 'day', e.target.value)} placeholder="Jour" className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+-            <input value={p.time} onChange={e => upd(i, 'time', e.target.value)} placeholder="9h00" className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
++            <input value={p.day} onChange={e => upd(i, 'day', e.target.value)} placeholder={tr.stages.dayWord} className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
++            <input value={p.time} onChange={e => upd(i, 'time', e.target.value)} placeholder={tr.stages.timePlaceholder} className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+             <div className="space-y-2">
+-              <input value={p.activity} onChange={e => upd(i, 'activity', e.target.value)} placeholder="Activité (ex: Séance physique AM / Match amical)" className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+-              <input value={p.details || ''} onChange={e => upd(i, 'details', e.target.value)} placeholder="Détails (optionnel)" className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
++              <input value={p.activity} onChange={e => upd(i, 'activity', e.target.value)} placeholder={tr.stages.activityPlaceholder} className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
++              <input value={p.details || ''} onChange={e => upd(i, 'details', e.target.value)} placeholder={tr.stages.detailsPlaceholder} className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+             </div>
+             <button onClick={() => del(i)} className="p-2 rounded-lg text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><Trash2 size={14}/></button>
+           </div>
+@@ -837,7 +840,7 @@ function ProgramTab({ draft, setDraft }: { draft: Stage; setDraft: React.Dispatc
+ }
+ 
+ // ── Convocation editor ──
+-function PlayersTab({ draft, setDraft, members }: { draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[] }) {
++function PlayersTab({ draft, setDraft, members, tr }: { draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[]; tr: any }) {
+   const [q, setQ] = useState("")
+   const list = draft.players || []
+   const pool = members
+@@ -849,8 +852,8 @@ function PlayersTab({ draft, setDraft, members }: { draft: Stage; setDraft: Reac
+   return (
+     <div>
+       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+-        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} joueur(s) convoqué(s)</p>
+-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Rechercher…" className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
++        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} {tr.stages.callupsCountLabel}</p>
++        <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr.stages.searchPlaceholder} className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+       </div>
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+         {pool.map(m => (
+@@ -863,11 +866,11 @@ function PlayersTab({ draft, setDraft, members }: { draft: Stage; setDraft: Reac
+             <span className="w-6 h-6 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[var(--acc-gold)]"><Plus size={11}/></span>
+           </button>
+         ))}
+-        {pool.length === 0 && <p className="col-span-full text-[10px] font-bold text-[var(--c-textDim)] text-center py-8 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">Aucun joueur disponible.</p>}
++        {pool.length === 0 && <p className="col-span-full text-[10px] font-bold text-[var(--c-textDim)] text-center py-8 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">{tr.stages.noPlayersAvailable}</p>}
+       </div>
+       {list.length > 0 && (
+         <div className="mt-5">
+-          <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-2.5">Convoqués ({list.length})</p>
++          <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-2.5">{tr.stages.calledUpLabel} ({list.length})</p>
+           <div className="flex flex-wrap gap-2">
+             {list.map(id => {
+               const m = members.find(x => x.id === id)
+@@ -886,7 +889,7 @@ function PlayersTab({ draft, setDraft, members }: { draft: Stage; setDraft: Reac
+ }
+ 
+ // ── Staff editor ──
+-function StaffTab({ draft, setDraft, members }: { draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[] }) {
++function StaffTab({ draft, setDraft, members, tr }: { draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[]; tr: any }) {
+   const [q, setQ] = useState("")
+   const list = draft.staff || []
+   const pool = members
+@@ -902,8 +905,8 @@ function StaffTab({ draft, setDraft, members }: { draft: Stage; setDraft: React.
+   return (
+     <div>
+       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+-        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} membre(s) du staff</p>
+-        <input value={q} onChange={e => setQ(e.target.value)} placeholder="Rechercher…" className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
++        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} {tr.stages.staffCountLabel}</p>
++        <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr.stages.searchPlaceholder} className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+       </div>
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
+         {pool.map(m => (
+@@ -911,16 +914,16 @@ function StaffTab({ draft, setDraft, members }: { draft: Stage; setDraft: React.
+             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[var(--acc-blue)] uppercase shrink-0">{(m.name||"?")[0]}</div>
+             <div className="flex-1 min-w-0">
+               <p className="text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m.name}</p>
+-              <p className="text-[7px] font-bold text-[var(--c-textDim)] uppercase">{m.role || "STAFF"}</p>
++              <p className="text-[7px] font-bold text-[var(--c-textDim)] uppercase">{m.role || tr.common.staff}</p>
+             </div>
+             <span className="w-6 h-6 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[var(--acc-blue)]"><Plus size={11}/></span>
+           </button>
+         ))}
+-        {pool.length === 0 && <p className="col-span-full text-[10px] font-bold text-[var(--c-textDim)] text-center py-8 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">Aucun staff disponible.</p>}
++        {pool.length === 0 && <p className="col-span-full text-[10px] font-bold text-[var(--c-textDim)] text-center py-8 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">{tr.stages.noStaffAvailable}</p>}
+       </div>
+       {list.length > 0 && (
+         <div className="mt-5 space-y-2.5">
+-          <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Staff affecté</p>
++          <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.assignedStaff}</p>
+           {list.map(id => {
+             const m = members.find(x => x.id === id)
+             const roleVal = (draft.staffRoles || []).find(r => r.memberId === id)?.role || ""
+@@ -928,7 +931,7 @@ function StaffTab({ draft, setDraft, members }: { draft: Stage; setDraft: React.
+               <div key={id} className="flex items-center gap-3 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-3 flex-wrap">
+                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[var(--acc-blue)] uppercase shrink-0">{(m?.name||"?")[0]}</div>
+                 <p className="flex-1 min-w-32 text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
+-                <input value={roleVal} onChange={e => setRole(id, e.target.value)} placeholder="Rôle (ex: Sélectionneur, Kiné…)" className="w-52 px-3 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[9px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
++                <input value={roleVal} onChange={e => setRole(id, e.target.value)} placeholder={tr.stages.rolePlaceholder} className="w-52 px-3 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[9px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
+                 <button onClick={() => toggle(id)} className="p-1.5 rounded-lg text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><X size={13}/></button>
+               </div>
+             )
+diff --git a/lib/language-context.tsx b/lib/language-context.tsx
+index cb16642..8389ade 100644
+--- a/lib/language-context.tsx
++++ b/lib/language-context.tsx
+@@ -1,11 +1,11 @@
+ "use client"
+ import React, { createContext, useContext, useState, useEffect, useCallback } from "react"
+-import t, { type Lang } from "./translations"
++import t, { type Lang, type Translations } from "./translations"
+ 
+ type LanguageContextType = {
+   lang: Lang
+   setLang: (l: Lang) => void
+-  tr: typeof t.en
++  tr: Translations
+   dir: "ltr" | "rtl"
+ }
+ 
+@@ -18,7 +18,7 @@ const LanguageContext = createContext<LanguageContextType>({
+ 
+ export function LanguageProvider({ children }: { children: React.ReactNode }) {
+   const [lang, setLangState] = useState<Lang>("en")
+-  const [tr, setTr] = useState(t.en)
++  const [tr, setTr] = useState<Translations>(t.en)
+ 
+   useEffect(() => {
+     const saved = localStorage.getItem("esq-lang") as Lang | null
+@@ -42,7 +42,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
+   }, [lang, tr])
+ 
+   return (
+-    <LanguageContext.Provider value={{ lang, setLang, tr, dir: tr.lang.dir }}>
++    <LanguageContext.Provider value={{ lang, setLang, tr, dir: tr.lang.dir as "ltr" | "rtl" }}>
+       {children}
+     </LanguageContext.Provider>
+   )
+diff --git a/lib/translations.ts b/lib/translations.ts
+index 1bf7c16..cf86916 100644
+--- a/lib/translations.ts
++++ b/lib/translations.ts
+@@ -126,6 +126,9 @@ const t = {
+       disclaim: "Players NOT selected will receive an automatic yellow card. Under CAF rules, accumulating 2 yellow cards triggers a 1-match suspension. A red card = immediate 1-match ban.",
+       saveMatch: "Save Match",
+       cancel: "Cancel",
++      pendingTitle: "Pending Matches", awaitingApproval: "awaiting approval",
++      friendly: "Friendly", venue2: "Venue", squad: "Squad", scorers2: "Scorers",
++      approveMatch: "Approve Match", reject: "Reject", noPendingMatches: "No pending matches", by: "by",
+     },
+     history: {
+       matchHistory: "Match History",
+@@ -165,6 +168,104 @@ const t = {
+       active: "Active",
+       staff: "STAFF",
+     },
++    common: {
++      save: "Save", cancel: "Cancel", delete: "Delete", edit: "Edit", close: "Close",
++      confirm: "Confirm", back: "Back", menu: "Menu", logout: "Log Out", account: "Account",
++      language: "Language", loading: "Loading...", changePassword: "Change your password",
++      manageUsers: "Manage Users", activityLog: "Activity Log", pendingApprovals: "Pending Approvals",
++      noPendingUsers: "No pending users", noPendingMatches: "No pending matches",
++      approve: "Approve", reject: "Reject", hold: "Hold", resetPw: "Reset PW",
++      username: "Username", failed: "Failed: ", none: "None", export: "Export",
++      squadLab: "Squad Lab", camps: "Camps", medical: "Medical", staff: "Staff",
++      remove: "Remove", refresh: "Refresh",
++      passwordsDontMatch: "Passwords don't match", newPasswordMin: "New password (min 6 characters):",
++      confirmNewPassword: "Confirm new password:", passwordUpdated: "Password updated!",
++      enterUsernamePassword: "Enter username & password", userManagement: "User Management",
++      noActivityYet: "No activity yet", print: "Print", printSavePdf: "Print / Save PDF",
++    },
++    perms: {
++      addPlayer: "Add Player", editPlayer: "Edit Player", deletePlayer: "Delete Player",
++      addMatch: "Add Match", deleteMatch: "Delete Match", exportData: "Export Data",
++      viewMedical: "View Medical", editMedical: "Edit Medical", addCamps: "Manage Camps",
++    },
++    notifications: {
++      title: "Notifications", allClear: "All clear", cannotPlayNext: "Cannot play next match",
++      cafRule2Yellows: "CAF rule: 2 yellow cards → 1-match ban", upcomingMatch: "Upcoming match",
++      noResult: "no result", pendingApproval: "account pending approval", tapToReview: "Tap to review & approve",
++      oneYellowAway: "1 yellow away from ban", tbd: "TBD",
++    },
++    users: {
++      pendingTitle: "Pending Users", awaitingReview: "awaiting approval", awaitingYourReview: "PENDING · Awaiting your review",
++      assignPermissions: "Assign Permissions", saveAndApprove: "Save & Approve",
++      active: "ACTIVE", pending: "PENDING", you: "(you)",
++    },
++    camps: {
++      saved: "Camp saved ✓", uploadError: "Upload error", name: "Name", location: "Location",
++      startDate: "Start date", endDate: "End date", program: "Program", players: "Players",
++      staffAssigned: "Staff", report: "Report", photos: "Photos",
++    },
++    importPlayers: {
++      title: "Import Players from PDF", uploadPdf: "Upload a PDF roster", couldNotProcess: "Could not process PDF: ",
++      scannedNoText: "scanned page(s) with no text. Scanned files can't be auto-read — please type the names manually or use a text PDF.",
++      readingPdf: "Reading PDF…", clickToChoosePdf: "Click to choose a PDF", columnsNote: "Columns: Name, Team, Camp (one player per row)",
++      nameHeader: "Name", teamHeader: "Team", campHeader: "Camp", playersDetectedNote: "player(s) detected — review/edit then confirm",
++      importCount: "Import",
++    },
++    exportTools: {
++      export: "Export", csvRoster: "CSV Roster", jsonCategory: "JSON (Category)", jsonFullBackup: "JSON (Full Backup)",
++      importJson: "Import JSON", importPlayersPdf: "Import Players (PDF)", printRoster: "Print Roster",
++      pasteJsonHere: "Paste JSON data here...", import: "Import",
++      newNamesNote: "New names create cards · existing names update team · camps recorded",
++    },
++    coach: {
++      edit: "Edit", hire: "Hire", staffWord: "Staff", regSubtitle: "Technical & Management Registration",
++      staffPhoto: "Staff Photo", selectPicture: "Select Picture", fullName: "Full Name", namePlaceholder: "E.G. SABRI GHANEM",
++      role: "Role", headCoach: "HEAD COACH", assistantCoach: "ASSISTANT COACH", analyst: "ANALYST",
++      mentalCoach: "MENTAL PREPARATION COACH", gkCoach: "GK COACH", fitnessCoach: "FITNESS COACH",
++      nationality: "Nationality", licenseType: "License Type", licensePlaceholder: "E.G. UEFA PRO",
++      formation: "Preferred Tactics / Formation", preferredSetup: "Preferred Setup", prefers: "Prefers",
++      confirmStaff: "Confirm Staff",
++      squadStaffTitle1: "SQUAD", squadStaffTitle2: "STAFF", pageSubtitle: "Management & Technical Body",
++      hireStaff: "Hire Staff", noStaffRegistered: "No staff registered", hireToBuildDelegation: "Hire your technical body to build the delegation",
++      license: "LICENSE", exp: "EXP", technical: "Technical", active: "Active", teamStaffBadge: "Team Staff",
++    },
++    passwordModal: {
++      changeTitle: "Change password", resetTitle: "Reset password", newPassword: "New password (min {min} chars)",
++      confirmPassword: "Confirm password", saving: "Saving...", save: "Save", cancel: "Cancel",
++      mustBeAtLeast: "Password must be at least {min} characters", tooLong: "Password is too long",
++      dontMatch: "Passwords don't match",
++    },
++    stages: {
++      backToDashboard: "Back to dashboard", title: "National Camps", subtitle: "Camps & Gatherings",
++      portalBadge: "Camps Portal", heroTitle1: "National", heroTitle2: "Camps",
++      all: "All", campWord: "camp", campWordPlural: "camps",
++      createNew: "Create a new camp", emptyTitle: "No camps recorded", emptySubtitle: "Create your first preparation camp", createFirst: "Create a camp",
++      venueDash: "Venue —", daysAbbrev: "d", program: "Program", playersWord: "players", report: "Report", photosWord: "photos",
++      openFile: "Open file",
++      doneStatus: "Done", liveStatus: "Live", upcomingStatus: "Upcoming", savedToast: "Camp saved ✓", uploadError: "Upload error",
++      newTitle: "New Camp", editTitle: "Edit Camp", new: "New", edit: "Edit", saving: "Saving…", createCamp: "Create camp",
++      nameLabel: "Camp name *", namePlaceholder: "e.g. National Camp — March",
++      locationLabel: "Location", locationPlaceholder: "e.g. Tunis", categoryLabel: "Category", startLabel: "Start", endLabel: "End",
++      programTab: "Program", callupsTab: "Call-ups", reportPdfTab: "PDF Report", photosTab: "Photos",
++      reportSectionTitle: "End-of-camp report (PDF)", uploading: "Uploading…", reportAttached: "Report attached ✓",
++      dropReportHere: "Drop the PDF report here", dropHintPdf: "Drag & drop or click to choose · PDF only",
++      openReport: "Open report",
++      photosSectionTitle: "Camp photos", addPhotos: "Add photos", dropHintPhotos: "Drag & drop or click · up to 12 images",
++      deleteConfirmTitle: "Delete this camp?", deleteConfirmBody: '"{name}" will be permanently deleted, along with its program, call-ups and documents.',
++      allCamps: "All camps", campHash: "Camp", daysWord: "days", durationDash: "Duration —",
++      sessionWord: "Session", sessionsWord: "Sessions",
++      playersLabel: "Players", photosLabel: "Photos", createdBy: "Created by",
++      noProgramSaved: "No program recorded.", dayWord: "Day", sessionNumber: "Session",
++      noPlayers: "No players.", numberHeader: "No.", playerHeader: "Player", positionHeader: "Position", clubHeader: "Club",
++      noStaffSaved: "No staff recorded.",
++      officialReport: "Official report", reportFallbackName: "End-of-camp report",
++      reportDepositedNote: "PDF document submitted at camp close.", openPdf: "Open PDF", noReportDeposited: "No end-of-camp report submitted.",
++      noPhotosSaved: "No camp photos.",
++      trainingProgramTitle: "Training program", addWord: "Add", noSessionsAddFirst: "No sessions — add the first one.",
++      timePlaceholder: "9:00am", activityPlaceholder: "Activity (e.g. Morning fitness session / Friendly match)", detailsPlaceholder: "Details (optional)",
++      callupsCountLabel: "player(s) called up", searchPlaceholder: "Search…", noPlayersAvailable: "No players available.", calledUpLabel: "Called up",
++      staffCountLabel: "staff member(s)", noStaffAvailable: "No staff available.", assignedStaff: "Assigned staff", rolePlaceholder: "Role (e.g. Head Coach, Physio…)",
++    },
+   },
+   fr: {
+     lang: { name: "Français", flag: "🇫🇷", dir: "ltr" as const },
+@@ -291,6 +392,9 @@ const t = {
+       disclaim: "Les joueuses NON sélectionnées recevront un carton jaune automatique. Selon les règles CAF, 2 jaunes = 1 match de suspension. Un carton rouge = suspension immédiate d'1 match.",
+       saveMatch: "Sauvegarder",
+       cancel: "Annuler",
++      pendingTitle: "Matchs en attente", awaitingApproval: "en attente d'approbation",
++      friendly: "Amical", venue2: "Lieu", squad: "Effectif", scorers2: "Buteuses",
++      approveMatch: "Approuver le match", reject: "Rejeter", noPendingMatches: "Aucun match en attente", by: "par",
+     },
+     history: {
+       matchHistory: "Historique des Matchs",
+@@ -330,6 +434,104 @@ const t = {
+       active: "Actif",
+       staff: "STAFF",
+     },
++    common: {
++      save: "Enregistrer", cancel: "Annuler", delete: "Supprimer", edit: "Modifier", close: "Fermer",
++      confirm: "Confirmer", back: "Retour", menu: "Menu", logout: "Déconnexion", account: "Compte",
++      language: "Langue", loading: "Chargement...", changePassword: "Changer votre mot de passe",
++      manageUsers: "Gérer les utilisateurs", activityLog: "Journal d'activité", pendingApprovals: "Approbations en attente",
++      noPendingUsers: "Aucun utilisateur en attente", noPendingMatches: "Aucun match en attente",
++      approve: "Approuver", reject: "Rejeter", hold: "Mettre en attente", resetPw: "Réinitialiser le mot de passe",
++      username: "Nom d'utilisateur", failed: "Échec : ", none: "Aucun", export: "Exporter",
++      squadLab: "Labo d'équipe", camps: "Rassemblements", medical: "Médical", staff: "Staff",
++      remove: "Retirer", refresh: "Actualiser",
++      passwordsDontMatch: "Les mots de passe ne correspondent pas", newPasswordMin: "Nouveau mot de passe (6 caractères min) :",
++      confirmNewPassword: "Confirmer le nouveau mot de passe :", passwordUpdated: "Mot de passe mis à jour !",
++      enterUsernamePassword: "Entrez le nom d'utilisateur et le mot de passe", userManagement: "Gestion des utilisateurs",
++      noActivityYet: "Aucune activité pour le moment", print: "Imprimer", printSavePdf: "Imprimer / Enregistrer en PDF",
++    },
++    perms: {
++      addPlayer: "Ajouter Joueuse", editPlayer: "Modifier Joueuse", deletePlayer: "Supprimer Joueuse",
++      addMatch: "Ajouter Match", deleteMatch: "Supprimer Match", exportData: "Exporter Données",
++      viewMedical: "Voir Médical", editMedical: "Modifier Médical", addCamps: "Gérer Rassemblements",
++    },
++    notifications: {
++      title: "Notifications", allClear: "Tout est en ordre", cannotPlayNext: "Ne peut pas jouer le prochain match",
++      cafRule2Yellows: "Règle CAF : 2 cartons jaunes → suspension d'un match", upcomingMatch: "Match à venir",
++      noResult: "aucun résultat", pendingApproval: "compte en attente d'approbation", tapToReview: "Appuyez pour examiner et approuver",
++      oneYellowAway: "à 1 jaune de la suspension", tbd: "À déterminer",
++    },
++    users: {
++      pendingTitle: "Utilisateurs en attente", awaitingReview: "en attente d'approbation", awaitingYourReview: "EN ATTENTE · À examiner",
++      assignPermissions: "Attribuer les permissions", saveAndApprove: "Enregistrer et approuver",
++      active: "ACTIF", pending: "EN ATTENTE", you: "(vous)",
++    },
++    camps: {
++      saved: "Rassemblement enregistré ✓", uploadError: "Erreur d'upload", name: "Nom", location: "Lieu",
++      startDate: "Date de début", endDate: "Date de fin", program: "Programme", players: "Joueuses",
++      staffAssigned: "Staff", report: "Rapport", photos: "Photos",
++    },
++    importPlayers: {
++      title: "Importer des joueuses depuis un PDF", uploadPdf: "Téléverser une liste PDF", couldNotProcess: "Impossible de traiter le PDF : ",
++      scannedNoText: "page(s) scannée(s) sans texte. Les fichiers scannés ne peuvent pas être lus automatiquement — veuillez saisir les noms manuellement ou utiliser un PDF texte.",
++      readingPdf: "Lecture du PDF…", clickToChoosePdf: "Cliquez pour choisir un PDF", columnsNote: "Colonnes : Nom, Équipe, Rassemblement (une joueuse par ligne)",
++      nameHeader: "Nom", teamHeader: "Équipe", campHeader: "Rassemblement", playersDetectedNote: "joueuse(s) détectée(s) — vérifiez/modifiez puis confirmez",
++      importCount: "Importer",
++    },
++    exportTools: {
++      export: "Exporter", csvRoster: "Effectif CSV", jsonCategory: "JSON (Catégorie)", jsonFullBackup: "JSON (Sauvegarde complète)",
++      importJson: "Importer JSON", importPlayersPdf: "Importer joueuses (PDF)", printRoster: "Imprimer l'effectif",
++      pasteJsonHere: "Collez les données JSON ici...", import: "Importer",
++      newNamesNote: "Les nouveaux noms créent des fiches · les noms existants mettent à jour l'équipe · rassemblements enregistrés",
++    },
++    coach: {
++      edit: "Modifier", hire: "Recruter", staffWord: "Staff", regSubtitle: "Inscription Technique & Encadrement",
++      staffPhoto: "Photo du staff", selectPicture: "Choisir une photo", fullName: "Nom complet", namePlaceholder: "EX: SABRI GHANEM",
++      role: "Rôle", headCoach: "SÉLECTIONNEUR", assistantCoach: "ENTRAÎNEUR ADJOINT", analyst: "ANALYSTE",
++      mentalCoach: "PRÉPARATEUR MENTAL", gkCoach: "ENTRAÎNEUR GARDIENS", fitnessCoach: "PRÉPARATEUR PHYSIQUE",
++      nationality: "Nationalité", licenseType: "Type de licence", licensePlaceholder: "EX: UEFA PRO",
++      formation: "Tactiques / Formation préférées", preferredSetup: "Configuration préférée", prefers: "Préfère",
++      confirmStaff: "Confirmer le staff",
++      squadStaffTitle1: "STAFF", squadStaffTitle2: "ÉQUIPE", pageSubtitle: "Encadrement Technique & Direction",
++      hireStaff: "Recruter", noStaffRegistered: "Aucun staff enregistré", hireToBuildDelegation: "Recrutez votre encadrement technique pour constituer la délégation",
++      license: "LICENCE", exp: "EXP.", technical: "Technique", active: "Actif", teamStaffBadge: "Staff Technique",
++    },
++    passwordModal: {
++      changeTitle: "Changer le mot de passe", resetTitle: "Réinitialiser le mot de passe", newPassword: "Nouveau mot de passe ({min} caractères min)",
++      confirmPassword: "Confirmer le mot de passe", saving: "Enregistrement...", save: "Enregistrer", cancel: "Annuler",
++      mustBeAtLeast: "Le mot de passe doit contenir au moins {min} caractères", tooLong: "Le mot de passe est trop long",
++      dontMatch: "Les mots de passe ne correspondent pas",
++    },
++    stages: {
++      backToDashboard: "Retour au tableau de bord", title: "Rassemblements Nationaux", subtitle: "Camps & Stages",
++      portalBadge: "Portail Camps", heroTitle1: "Rassemblements", heroTitle2: "Nationaux",
++      all: "Tous", campWord: "rassemblement", campWordPlural: "rassemblements",
++      createNew: "Créer un nouveau rassemblement", emptyTitle: "Aucun rassemblement enregistré", emptySubtitle: "Créez votre premier rassemblement de préparation", createFirst: "Créer un rassemblement",
++      venueDash: "Lieu —", daysAbbrev: "j", program: "Programme", playersWord: "joueurs", report: "Rapport", photosWord: "photos",
++      openFile: "Ouvrir le dossier",
++      doneStatus: "Terminé", liveStatus: "En cours", upcomingStatus: "À venir", savedToast: "Rassemblement enregistré ✓", uploadError: "Erreur d'upload",
++      newTitle: "Nouveau Rassemblement", editTitle: "Modifier le Rassemblement", new: "Nouveau", edit: "Modifier", saving: "Enregistrement…", createCamp: "Créer le rassemblement",
++      nameLabel: "Nom du rassemblement *", namePlaceholder: "ex: Rassemblement National — Mars",
++      locationLabel: "Lieu", locationPlaceholder: "ex: Tunis", categoryLabel: "Catégorie", startLabel: "Début", endLabel: "Fin",
++      programTab: "Programme", callupsTab: "Convocations", reportPdfTab: "Rapport PDF", photosTab: "Photos",
++      reportSectionTitle: "Rapport de fin de rassemblement (PDF)", uploading: "Upload…", reportAttached: "Rapport joint ✓",
++      dropReportHere: "Déposez le rapport PDF ici", dropHintPdf: "Glissez-déposez ou cliquez pour choisir · PDF uniquement",
++      openReport: "Ouvrir le rapport",
++      photosSectionTitle: "Photos du rassemblement", addPhotos: "Ajouter des photos", dropHintPhotos: "Glissez-déposez ou cliquez · jusqu'à 12 images",
++      deleteConfirmTitle: "Supprimer ce rassemblement ?", deleteConfirmBody: '« {name} » sera définitivement supprimé, ainsi que son programme, ses convocations et ses documents.',
++      allCamps: "Tous les rassemblements", campHash: "Camp", daysWord: "jours", durationDash: "Durée —",
++      sessionWord: "Séance", sessionsWord: "Séances",
++      playersLabel: "Joueurs", photosLabel: "Photos", createdBy: "Créé par",
++      noProgramSaved: "Aucun programme enregistré.", dayWord: "Jour", sessionNumber: "Séance",
++      noPlayers: "Aucun joueur.", numberHeader: "N°", playerHeader: "Joueuse", positionHeader: "Poste", clubHeader: "Club",
++      noStaffSaved: "Aucun staff enregistré.",
++      officialReport: "Rapport officiel", reportFallbackName: "Rapport de fin de rassemblement",
++      reportDepositedNote: "Document PDF déposé à la clôture du rassemblement.", openPdf: "Ouvrir le PDF", noReportDeposited: "Aucun rapport de fin de rassemblement déposé.",
++      noPhotosSaved: "Aucune photo du rassemblement.",
++      trainingProgramTitle: "Programme d'entraînement", addWord: "Ajouter", noSessionsAddFirst: "Aucune séance — ajoutez la première.",
++      timePlaceholder: "9h00", activityPlaceholder: "Activité (ex: Séance physique AM / Match amical)", detailsPlaceholder: "Détails (optionnel)",
++      callupsCountLabel: "joueur(s) convoqué(s)", searchPlaceholder: "Rechercher…", noPlayersAvailable: "Aucun joueur disponible.", calledUpLabel: "Convoqués",
++      staffCountLabel: "membre(s) du staff", noStaffAvailable: "Aucun staff disponible.", assignedStaff: "Staff affecté", rolePlaceholder: "Rôle (ex: Sélectionneur, Kiné…)",
++    },
+   },
+   ar: {
+     lang: { name: "العربية", flag: "🇹🇳", dir: "rtl" as const },
+@@ -456,6 +658,9 @@ const t = {
+       disclaim: "اللاعبات غير المختارات سيحصلن على بطاقة صفراء تلقائية. حسب قواعد CAF، تراكم بطاقتين صفراوين يؤدي إلى إيقاف مباراة واحدة. البطاقة الحمراء = إيقاف فوري لمباراة واحدة.",
+       saveMatch: "حفظ المباراة",
+       cancel: "إلغاء",
++      pendingTitle: "مباريات معلقة", awaitingApproval: "بانتظار الموافقة",
++      friendly: "ودية", venue2: "الملعب", squad: "التشكيلة", scorers2: "الهدافات",
++      approveMatch: "الموافقة على المباراة", reject: "رفض", noPendingMatches: "لا توجد مباريات معلقة", by: "بواسطة",
+     },
+     history: {
+       matchHistory: "تاريخ المباريات",
+@@ -495,6 +700,104 @@ const t = {
+       active: "نشط",
+       staff: "جهاز فني",
+     },
++    common: {
++      save: "حفظ", cancel: "إلغاء", delete: "حذف", edit: "تعديل", close: "إغلاق",
++      confirm: "تأكيد", back: "رجوع", menu: "القائمة", logout: "تسجيل الخروج", account: "الحساب",
++      language: "اللغة", loading: "جارٍ التحميل...", changePassword: "تغيير كلمة المرور",
++      manageUsers: "إدارة المستخدمين", activityLog: "سجل النشاط", pendingApprovals: "الموافقات المعلقة",
++      noPendingUsers: "لا يوجد مستخدمون في الانتظار", noPendingMatches: "لا توجد مباريات في الانتظار",
++      approve: "الموافقة", reject: "رفض", hold: "تعليق", resetPw: "إعادة تعيين كلمة المرور",
++      username: "اسم المستخدم", failed: "فشل: ", none: "لا شيء", export: "تصدير",
++      squadLab: "مختبر التشكيلة", camps: "المعسكرات", medical: "طبي", staff: "الطاقم",
++      remove: "إزالة", refresh: "تحديث",
++      passwordsDontMatch: "كلمتا المرور غير متطابقتين", newPasswordMin: "كلمة مرور جديدة (6 أحرف على الأقل):",
++      confirmNewPassword: "تأكيد كلمة المرور الجديدة:", passwordUpdated: "تم تحديث كلمة المرور!",
++      enterUsernamePassword: "أدخل اسم المستخدم وكلمة المرور", userManagement: "إدارة المستخدمين",
++      noActivityYet: "لا يوجد نشاط بعد", print: "طباعة", printSavePdf: "طباعة / حفظ كملف PDF",
++    },
++    perms: {
++      addPlayer: "إضافة لاعبة", editPlayer: "تعديل لاعبة", deletePlayer: "حذف لاعبة",
++      addMatch: "إضافة مباراة", deleteMatch: "حذف مباراة", exportData: "تصدير البيانات",
++      viewMedical: "عرض الطبي", editMedical: "تعديل الطبي", addCamps: "إدارة المعسكرات",
++    },
++    notifications: {
++      title: "الإشعارات", allClear: "لا توجد إشعارات", cannotPlayNext: "لا يمكنها لعب المباراة القادمة",
++      cafRule2Yellows: "قاعدة الكاف: بطاقتان صفراوان → إيقاف مباراة واحدة", upcomingMatch: "مباراة قادمة",
++      noResult: "بدون نتيجة", pendingApproval: "حساب بانتظار الموافقة", tapToReview: "اضغط للمراجعة والموافقة",
++      oneYellowAway: "بطاقة صفراء واحدة قبل الإيقاف", tbd: "لم يُحدد",
++    },
++    users: {
++      pendingTitle: "المستخدمون المعلقون", awaitingReview: "بانتظار الموافقة", awaitingYourReview: "بالانتظار · بحاجة لمراجعتك",
++      assignPermissions: "تحديد الصلاحيات", saveAndApprove: "حفظ والموافقة",
++      active: "نشط", pending: "معلق", you: "(أنت)",
++    },
++    camps: {
++      saved: "تم حفظ المعسكر ✓", uploadError: "خطأ في الرفع", name: "الاسم", location: "المكان",
++      startDate: "تاريخ البداية", endDate: "تاريخ النهاية", program: "البرنامج", players: "اللاعبات",
++      staffAssigned: "الطاقم", report: "التقرير", photos: "الصور",
++    },
++    importPlayers: {
++      title: "استيراد اللاعبات من PDF", uploadPdf: "رفع قائمة PDF", couldNotProcess: "تعذّرت معالجة ملف PDF: ",
++      scannedNoText: "صفحة/صفحات ممسوحة ضوئيًا بدون نص. لا يمكن قراءة الملفات الممسوحة ضوئيًا تلقائيًا — يرجى كتابة الأسماء يدويًا أو استخدام ملف PDF نصي.",
++      readingPdf: "جارٍ قراءة PDF…", clickToChoosePdf: "انقر لاختيار ملف PDF", columnsNote: "الأعمدة: الاسم، الفريق، المعسكر (لاعبة واحدة في كل سطر)",
++      nameHeader: "الاسم", teamHeader: "الفريق", campHeader: "المعسكر", playersDetectedNote: "لاعبة/لاعبات مكتشفة — راجع/عدّل ثم أكّد",
++      importCount: "استيراد",
++    },
++    exportTools: {
++      export: "تصدير", csvRoster: "قائمة CSV", jsonCategory: "JSON (الفئة)", jsonFullBackup: "JSON (نسخة كاملة)",
++      importJson: "استيراد JSON", importPlayersPdf: "استيراد اللاعبات (PDF)", printRoster: "طباعة القائمة",
++      pasteJsonHere: "الصق بيانات JSON هنا...", import: "استيراد",
++      newNamesNote: "الأسماء الجديدة تُنشئ بطاقات · الأسماء الموجودة تُحدّث الفريق · المعسكرات تُسجَّل",
++    },
++    coach: {
++      edit: "تعديل", hire: "توظيف", staffWord: "الطاقم", regSubtitle: "تسجيل الجهاز الفني والإداري",
++      staffPhoto: "صورة الطاقم", selectPicture: "اختيار صورة", fullName: "الاسم الكامل", namePlaceholder: "مثال: صبري غانم",
++      role: "الدور", headCoach: "المدرب العام", assistantCoach: "المدرب المساعد", analyst: "محلل",
++      mentalCoach: "مدرب الإعداد الذهني", gkCoach: "مدرب حراس المرمى", fitnessCoach: "المعد البدني",
++      nationality: "الجنسية", licenseType: "نوع الرخصة", licensePlaceholder: "مثال: UEFA PRO",
++      formation: "التكتيكات / التشكيل المفضل", preferredSetup: "الإعداد المفضل", prefers: "يفضّل",
++      confirmStaff: "تأكيد عضو الطاقم",
++      squadStaffTitle1: "طاقم", squadStaffTitle2: "الفريق", pageSubtitle: "الإدارة والجهاز الفني",
++      hireStaff: "توظيف", noStaffRegistered: "لا يوجد طاقم مسجل", hireToBuildDelegation: "وظّف جهازك الفني لتشكيل البعثة",
++      license: "الرخصة", exp: "الخبرة", technical: "فني", active: "نشط", teamStaffBadge: "الجهاز الفني",
++    },
++    passwordModal: {
++      changeTitle: "تغيير كلمة المرور", resetTitle: "إعادة تعيين كلمة المرور", newPassword: "كلمة مرور جديدة ({min} أحرف على الأقل)",
++      confirmPassword: "تأكيد كلمة المرور", saving: "جارٍ الحفظ...", save: "حفظ", cancel: "إلغاء",
++      mustBeAtLeast: "يجب أن تحتوي كلمة المرور على {min} أحرف على الأقل", tooLong: "كلمة المرور طويلة جدًا",
++      dontMatch: "كلمتا المرور غير متطابقتين",
++    },
++    stages: {
++      backToDashboard: "العودة إلى لوحة التحكم", title: "المعسكرات الوطنية", subtitle: "المعسكرات والتجمعات",
++      portalBadge: "بوابة المعسكرات", heroTitle1: "المعسكرات", heroTitle2: "الوطنية",
++      all: "الكل", campWord: "معسكر", campWordPlural: "معسكرات",
++      createNew: "إنشاء معسكر جديد", emptyTitle: "لا يوجد معسكرات مسجلة", emptySubtitle: "أنشئ أول معسكر تحضيري", createFirst: "إنشاء معسكر",
++      venueDash: "الملعب —", daysAbbrev: "ي", program: "البرنامج", playersWord: "لاعبات", report: "التقرير", photosWord: "صور",
++      openFile: "فتح الملف",
++      doneStatus: "منتهٍ", liveStatus: "جارٍ", upcomingStatus: "قادم", savedToast: "تم حفظ المعسكر ✓", uploadError: "خطأ في الرفع",
++      newTitle: "معسكر جديد", editTitle: "تعديل المعسكر", new: "جديد", edit: "تعديل", saving: "جارٍ الحفظ…", createCamp: "إنشاء المعسكر",
++      nameLabel: "اسم المعسكر *", namePlaceholder: "مثال: المعسكر الوطني — مارس",
++      locationLabel: "المكان", locationPlaceholder: "مثال: تونس", categoryLabel: "الفئة", startLabel: "البداية", endLabel: "النهاية",
++      programTab: "البرنامج", callupsTab: "الاستدعاءات", reportPdfTab: "تقرير PDF", photosTab: "الصور",
++      reportSectionTitle: "تقرير نهاية المعسكر (PDF)", uploading: "جارٍ الرفع…", reportAttached: "تم إرفاق التقرير ✓",
++      dropReportHere: "أفلت تقرير PDF هنا", dropHintPdf: "اسحب وأفلت أو انقر للاختيار · PDF فقط",
++      openReport: "فتح التقرير",
++      photosSectionTitle: "صور المعسكر", addPhotos: "إضافة صور", dropHintPhotos: "اسحب وأفلت أو انقر · حتى 12 صورة",
++      deleteConfirmTitle: "حذف هذا المعسكر؟", deleteConfirmBody: 'سيتم حذف "{name}" نهائيًا، مع برنامجه واستدعاءاته ومستنداته.',
++      allCamps: "جميع المعسكرات", campHash: "معسكر", daysWord: "أيام", durationDash: "المدة —",
++      sessionWord: "حصة", sessionsWord: "حصص",
++      playersLabel: "اللاعبات", photosLabel: "الصور", createdBy: "أنشأه",
++      noProgramSaved: "لا يوجد برنامج مسجل.", dayWord: "اليوم", sessionNumber: "حصة",
++      noPlayers: "لا يوجد لاعبات.", numberHeader: "الرقم", playerHeader: "اللاعبة", positionHeader: "المركز", clubHeader: "النادي",
++      noStaffSaved: "لا يوجد طاقم مسجل.",
++      officialReport: "التقرير الرسمي", reportFallbackName: "تقرير نهاية المعسكر",
++      reportDepositedNote: "تم إيداع مستند PDF عند اختتام المعسكر.", openPdf: "فتح PDF", noReportDeposited: "لم يُودع أي تقرير نهاية معسكر.",
++      noPhotosSaved: "لا توجد صور للمعسكر.",
++      trainingProgramTitle: "برنامج التدريب", addWord: "إضافة", noSessionsAddFirst: "لا توجد حصص — أضف الأولى.",
++      timePlaceholder: "9:00 ص", activityPlaceholder: "النشاط (مثال: حصة بدنية صباحية / مباراة ودية)", detailsPlaceholder: "التفاصيل (اختياري)",
++      callupsCountLabel: "لاعبة/لاعبات مستدعاة", searchPlaceholder: "بحث…", noPlayersAvailable: "لا توجد لاعبات متاحة.", calledUpLabel: "المستدعون",
++      staffCountLabel: "عضو/أعضاء من الطاقم", noStaffAvailable: "لا يوجد طاقم متاح.", assignedStaff: "الطاقم المعيّن", rolePlaceholder: "الدور (مثال: المدرب العام، أخصائي علاج طبيعي…)",
++    },
+   },
+ } as const
+ 
+@@ -507,4 +810,17 @@ export type NestedKey<T, Prefix extends string = ""> = {
+ 
+ export type TKey = NestedKey<typeof t.en>
+ 
++// `t` is declared with `as const`, so each language's object has its own precise
++// string-literal types (e.g. en's lang.dir is exactly "ltr", ar's is exactly "rtl").
++// That makes `typeof t.en` too narrow to hold any language's data — widen every
++// string literal to `string` so `t.en`, `t.fr` and `t.ar` are all assignable to it.
++type Widen<T> = T extends string
++  ? string
++  : T extends readonly (infer U)[]
++  ? Widen<U>[]
++  : T extends object
++  ? { [K in keyof T]: Widen<T[K]> }
++  : T
++export type Translations = Widen<typeof t.en>
++
+ export default t

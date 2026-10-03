@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { X } from 'lucide-react'
+import { useTranslate } from '@/lib/language-context'
 
 export type PasswordTarget = { mode: 'self' | 'admin'; username?: string } | null
 
@@ -15,6 +16,7 @@ const MIN = 6
 const MAX = 200
 
 export function PasswordModal({ target, onClose, onSubmit }: Props) {
+  const { tr } = useTranslate()
   const [value, setValue] = useState('')
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState('')
@@ -32,9 +34,9 @@ export function PasswordModal({ target, onClose, onSubmit }: Props) {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (value.length < MIN) return setError(`Password must be at least ${MIN} characters`)
-    if (value.length > MAX) return setError('Password is too long')
-    if (value !== confirm) return setError("Passwords don't match")
+    if (value.length < MIN) return setError(tr.passwordModal.mustBeAtLeast.replace('{min}', String(MIN)))
+    if (value.length > MAX) return setError(tr.passwordModal.tooLong)
+    if (value !== confirm) return setError(tr.passwordModal.dontMatch)
     setBusy(true)
     const err = await onSubmit(value)
     setBusy(false)
@@ -50,14 +52,14 @@ export function PasswordModal({ target, onClose, onSubmit }: Props) {
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-[rgba(var(--line-rgb),.12)]">
           <h2 className="text-sm font-black uppercase tracking-tight">
-            {target.mode === 'self' ? 'Change password' : `Reset password — ${target.username}`}
+            {target.mode === 'self' ? tr.passwordModal.changeTitle : `${tr.passwordModal.resetTitle} — ${target.username}`}
           </h2>
           <button onClick={close} title="Close" className="pm-close"><X size={15} /></button>
         </div>
         <form onSubmit={submit} className="p-5 space-y-3">
           <div>
             <label className="block text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] mb-1.5">
-              New password (min {MIN} chars)
+              {tr.passwordModal.newPassword.replace('{min}', String(MIN))}
             </label>
             <input
               type="password" autoComplete="new-password" value={value} autoFocus
@@ -67,7 +69,7 @@ export function PasswordModal({ target, onClose, onSubmit }: Props) {
           </div>
           <div>
             <label className="block text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] mb-1.5">
-              Confirm password
+              {tr.passwordModal.confirmPassword}
             </label>
             <input
               type="password" autoComplete="new-password" value={confirm}
@@ -81,13 +83,13 @@ export function PasswordModal({ target, onClose, onSubmit }: Props) {
               type="submit" disabled={busy}
               className="flex-1 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider disabled:opacity-50"
             >
-              {busy ? 'Saving...' : 'Save'}
+              {busy ? tr.passwordModal.saving : tr.passwordModal.save}
             </button>
             <button
               type="button" onClick={close}
               className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.18)] text-[9px] font-black uppercase tracking-wider text-[var(--c-textDim)]"
             >
-              Cancel
+              {tr.passwordModal.cancel}
             </button>
           </div>
         </form>

@@ -19,7 +19,6 @@ interface PlayerCardProps {
   yellows?: number;
   reds?: number;
   entranceDelay?: number;
-  license?: string;
 }
 
 const posAbbr: Record<string, string> = {
@@ -62,7 +61,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   yellows,
   reds,
   entranceDelay = 0,
-  license,
 }) => {
   const { tr } = useTranslate();
   // For staff this used to always be the literal word "STAFF" no matter the
@@ -70,11 +68,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   // Head Coach) so different staff cards are distinguishable at a glance.
   const code = fullPosition
     ? (staffAbbr[(position || "").toUpperCase()] || (position || "STAFF").slice(0, 4).toUpperCase())
-<<<<<<< HEAD
-    : (posAbbr[position] || (position || "").slice(0, 4));
-=======
     : (posAbbr[position] || position.slice(0, 4));
->>>>>>> 84dea573fb473de12e97d5221e50f31da9e1dcba
   const num = String(n ?? "—").padStart(2, "0");
   const [popped, setPopped] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
@@ -166,63 +160,29 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         <span className="absolute bottom-2 left-2 text-[13px] font-black italic leading-none text-white/90 drop-shadow-[0_1px_2px_rgba(0,0,0,.65)] pointer-events-none">{fullPosition ? "T" : code}</span>
       </div>
 
-      {fullPosition ? (
-        // ── STAFF CARD ──
-        // Staff aren't numbered athletes, so this layout doesn't borrow the
-        // player card's jersey-number treatment. Instead their role itself —
-        // the thing that actually matters for a coach or analyst — gets the
-        // large, bold typographic treatment a number gets on the player card.
-        // Being on the federation delegation is implied by them being on this
-        // roster at all, so that used to be spelled out as its own line; it
-        // no longer needs to be, which also frees up real space on the card.
-        <div className="flex-1 px-4 py-4 flex flex-col min-w-0 relative">
-          <p className="text-[7px] text-[var(--c-textWarm2)] font-black uppercase tracking-[.22em] truncate">{club}</p>
-          <h3 className="font-black text-[21px] leading-[1.05] uppercase mt-1 text-[var(--c-cream)] break-words">{titleCase(name)}</h3>
-          <span className="mt-1.5 text-[6.5px] font-black tracking-[.2em] text-[var(--c-cream)]/55 uppercase">{tr.coach.teamStaffBadge}</span>
-
-          <div className="mt-4 flex-1 flex flex-col justify-center gap-2 relative z-10">
-            <div className="h-px w-8 bg-[#f6c744]/60" />
-            <p className="text-[17px] leading-[1.15] font-black italic uppercase text-[#f6c744] break-words">{position || tr.common.none}</p>
-            <div className="flex items-center gap-2 flex-wrap text-[7px] font-black uppercase tracking-widest text-[var(--c-textWarm)]">
-              <span>{(nationality || "TUN").slice(0, 3)}</span>
-              {license ? (
-                <span className="px-1.5 py-0.5 rounded-sm border border-[#f6c744]/30 bg-[#f6c744]/10 text-[#f6c744] tracking-wide">{license}</span>
-              ) : null}
-            </div>
-          </div>
-
-          <span className="absolute right-3 bottom-16 text-[9rem] leading-none font-black italic text-[#f6c744]/[.07] select-none pointer-events-none">T</span>
-
-          <div className="mt-auto relative z-10">
-            <div className="h-px bg-[var(--c-hover)]" />
-            <div className="mt-3 flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)]">
-              <div className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 min-w-0 text-center">
-                <span className="block text-[6px] text-[var(--c-textWarm)] font-black uppercase tracking-widest">{tr.coach.ageStat}</span>
-                <strong className="text-lg leading-none text-[var(--c-cream)]">{String(age ?? "—")}</strong>
-              </div>
-            </div>
-          </div>
+      <div className="flex-1 px-4 py-4 flex flex-col min-w-0 relative">
+        <p className="text-[7px] text-[var(--c-textWarm2)] font-black uppercase tracking-[.22em] truncate">{club}</p>
+        <h3 className="font-black text-[21px] leading-[1.05] uppercase mt-1 text-[var(--c-cream)] break-words">{titleCase(name)}</h3>
+        <div className="mt-2 flex items-center gap-2">
+          <span className="px-1.5 py-0.5 rounded-sm bg-[#e3062c] text-white text-[6px] font-black uppercase tracking-[.18em]">{code}</span>
+          <span className="text-[6.5px] font-black tracking-[.2em] text-[var(--c-cream)]/55 uppercase">{fullPosition ? "DELEGATION STAFF" : "TUNISIA WNT"}</span>
         </div>
-      ) : (
-        // ── PLAYER CARD ──
-        <div className="flex-1 px-4 py-4 flex flex-col min-w-0 relative">
-          <p className="text-[7px] text-[var(--c-textWarm2)] font-black uppercase tracking-[.22em] truncate">{club}</p>
-          <h3 className="font-black text-[21px] leading-[1.05] uppercase mt-1 text-[var(--c-cream)] break-words">{titleCase(name)}</h3>
-          <div className="mt-2 flex items-center gap-2">
-            <span className="px-1.5 py-0.5 rounded-sm bg-[#e3062c] text-white text-[6px] font-black uppercase tracking-[.18em]">{code}</span>
-            <span className="text-[6.5px] font-black tracking-[.2em] text-[var(--c-cream)]/55 uppercase">TUNISIA WNT</span>
-          </div>
 
-          <div className="mt-4 space-y-1.5 relative z-10">
-            <div className="flex items-baseline gap-2">
-              <span className="text-[22px] leading-none font-black italic text-[#e3062c] tracking-tight">№ {num}</span>
-              <span className="text-[6px] font-black uppercase tracking-[.24em] text-[var(--c-cream)]/45">NATIONAL</span>
+        <div className="mt-4 space-y-1.5 relative z-10">
+          <div className="flex items-baseline gap-2">
+            <span className="text-[22px] leading-none font-black italic text-[#e3062c] tracking-tight">№ {num}</span>
+            <span className="text-[6px] font-black uppercase tracking-[.24em] text-[var(--c-cream)]/45">{fullPosition ? "OFFICIAL" : "NATIONAL"}</span>
+          </div>
+          <div className="flex items-center gap-2 text-[7px] font-black uppercase tracking-widest text-[var(--c-textWarm)]">
+            <span>{(nationality || "TUN").slice(0, 3)}</span>
+            {height ? <span>• {height} cm</span> : null}
+            {foot ? <span>• {foot}</span> : null}
+          </div>
+          {fullPosition ? (
+            <div className="pt-1">
+              <span className="px-1.5 py-0.5 rounded-sm border border-[var(--c-hover)] bg-[var(--c-panel4)] text-[6px] font-black uppercase tracking-widest text-[var(--c-cream)]/60">Fédération Tunisienne — {tr.coach.teamStaffBadge}</span>
             </div>
-            <div className="flex items-center gap-2 text-[7px] font-black uppercase tracking-widest text-[var(--c-textWarm)]">
-              <span>{(nationality || "TUN").slice(0, 3)}</span>
-              {height ? <span>• {height} cm</span> : null}
-              {foot ? <span>• {foot}</span> : null}
-            </div>
+          ) : (
             <div className="pt-1 flex items-center gap-2">
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border border-[var(--c-hover)] bg-[var(--c-panel4)]">
                 <span className="w-2 h-2 rounded-full bg-yellow-400" />
@@ -233,28 +193,37 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                 <span className="text-[6px] font-black uppercase tracking-widest text-[var(--c-textWarm)]">{reds || 0} RC</span>
               </span>
             </div>
-          </div>
+          )}
+        </div>
 
-          <span className="absolute right-2 bottom-10 text-[5.5rem] leading-none font-black italic text-[#e3062c]/[.09] select-none pointer-events-none">{num}</span>
+        <span className="absolute right-2 bottom-10 text-[5.5rem] leading-none font-black italic text-[#e3062c]/[.09] select-none pointer-events-none">{num}</span>
 
-          <div className="mt-auto relative z-10">
-            <div className="h-px bg-[var(--c-hover)]" />
-            <div className="mt-3 flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)]">
-              {[
-                [tr.coach.ageStat, String(age ?? "—")],
-                [tr.coach.capsStat, String(caps ?? "—")],
-                [tr.coach.goalsStat, String(goals ?? "—")],
-                [tr.coach.astStat, String(assists ?? "—")],
-              ].map(([l, v], i) => (
+        <div className="mt-auto relative z-10">
+          <div className="h-px bg-[var(--c-hover)]" />
+          <div className="mt-3 flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)]">
+            {[
+              [tr.coach.ageStat, String(age ?? "—")],
+              fullPosition
+                ? [tr.coach.roleStat, code]
+                : [tr.coach.capsStat, String(caps ?? "—")],
+              // "Foot" (preferred foot) is a player-only attribute; showing it
+              // on staff cards never made sense, so staff get a blank cell
+              // here instead (filtered out below) rather than a meaningless stat.
+              fullPosition
+                ? ["", ""]
+                : [tr.coach.goalsStat, String(goals ?? "—")],
+              fullPosition ? ["", ""] : [tr.coach.astStat, String(assists ?? "—")],
+            ]
+              .filter(([, v]) => v !== "")
+              .map(([l, v], i) => (
                 <div key={String(i)} className={`flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 min-w-0 text-center ${i ? "border-l border-[var(--c-hover)]" : ""}`}>
                   <span className="block text-[6px] text-[var(--c-textWarm)] font-black uppercase tracking-widest">{String(l)}</span>
                   <strong className="text-lg leading-none text-[var(--c-cream)]">{String(v)}</strong>
                 </div>
               ))}
-            </div>
           </div>
         </div>
-      )}
+      </div>
 
       <div className="absolute inset-x-0 bottom-0 h-[3px] bg-[#e3062c]" />
     </article>

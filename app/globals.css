@@ -82,6 +82,14 @@
   --acc-gold: #f6c744;
   --acc-red: #ff5f72;
   --acc-blue: #7ec3ff;
+
+  /* Native form controls (date/number inputs, <select>, etc.) default to the
+     browser's light-mode appearance unless told otherwise — that's what made
+     the calendar-icon button on date inputs nearly invisible on these dark
+     panels, and made the native calendar popup itself open in jarring white
+     instead of matching the rest of the app. This one line fixes every such
+     native control app-wide, including ones not covered by this file. */
+  color-scheme: dark;
 }
 
 /* ── Light theme ── */
@@ -128,6 +136,7 @@ html[data-theme="light"] {
   --acc-gold: #8a6100;
   --acc-red: #c2253c;
   --acc-blue: #1e66a8;
+  color-scheme: light;
 }
 
 /* Football operations identity — the dashboard is intentionally built around
@@ -1279,3 +1288,14 @@ body [class*="bg-[#F3F0E8]"] { background-color: #0e2345 !important; }
   position: fixed; inset: 0; pointer-events: none;
   background-image: repeating-linear-gradient(-55deg, transparent 0 26px, rgba(148, 170, 210, .03) 26px 27px);
 }
+
+/* ── Shared picker popups (components/pickers.tsx) ── */
+@keyframes pk-pop {
+  from { opacity: 0; transform: translateY(-6px) scale(.97); }
+  to   { opacity: 1; transform: none; }
+}
+.pk-pop { animation: pk-pop .14s ease-out; transform-origin: top center; }
+.pk-scroll { scrollbar-width: thin; scrollbar-color: rgba(148, 170, 210, .3) transparent; }
+.pk-scroll::-webkit-scrollbar { width: 6px; }
+.pk-scroll::-webkit-scrollbar-thumb { background: rgba(148, 170, 210, .3); border-radius: 999px; }
+@media (prefers-reduced-motion: reduce) { .pk-pop { animation: none; } }
