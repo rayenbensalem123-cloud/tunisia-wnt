@@ -278,7 +278,11 @@ const PopoverPortal = ({anchorRef,open,onClose,width,children}:{anchorRef:React.
 
   if(!open||!pos||typeof document==="undefined")return null
   return createPortal(
-    <div ref={popRef} style={{position:"fixed",top:pos.top,left:pos.left,width}} className="z-[300] rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
+    // Portaling to document.body escapes the .ftf-portal wrapper that carries the
+    // app's font (Oswald) and letter-spacing via a scoped CSS rule, so without
+    // restating them inline here the popup would silently fall back to the
+    // browser default font — same colors, wrong typography, looking off-theme.
+    <div ref={popRef} style={{position:"fixed",top:pos.top,left:pos.left,width,fontFamily:"'Oswald','Arial Narrow',Arial,sans-serif",letterSpacing:".02em"}} className="z-[300] rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.2)] shadow-2xl p-3">
       {children}
     </div>,
     document.body
