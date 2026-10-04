@@ -448,7 +448,10 @@ export default function EliteSquadApp() {
   const [injForm,setInjForm]=useState({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""})
   useEffect(()=>{
     setProfileTab("profile")
-    if(selMember&&(p.viewMedical||canManageUsers||isPlayerAccount)) fetchInjuries(selMember.id).then(setInjuries)
+    // canSeePrivate, not a bare role check: a player opening a teammate's card
+    // must not pull that player's injuries. RLS would return nothing anyway,
+    // but not asking keeps the answer honest if the policy is ever widened.
+    if(selMember&&canSeePrivate(selMember)) fetchInjuries(selMember.id).then(setInjuries)
     else setInjuries([])
   },[selMember?.id])
   const [isFormOpen,setIsFormOpen]=useState(false)
@@ -500,6 +503,21 @@ export default function EliteSquadApp() {
 
   const [loaded,setLoaded]=useState(false)
 
+  // Medical history and passport scans are private per-card data. A 'player'
+  // account sees the whole squad but may open these on its OWN linked card
+  // only; staff need the viewMedical flag; admins always may. Every read path
+  // for this data goes through here -- the tab bar, the injuries fetch, and
+  // both places a passport signed URL is minted. RLS enforces the same rule
+  // for injuries; the passport rule is storage-side and has no equivalent, so
+  // this guard is the only thing stopping a hover from exposing a teammate's
+  // identity document.
+  const canSeePrivate=(m:any)=>{
+    if(!m||!user)return false
+    if(user.role==="admin")return true
+    if(user.role==="player")return !!user.memberId&&m.id===user.memberId
+    return !!user.perms?.viewMedical
+  }
+
   // Private-bucket images: mint short-lived signed URLs with the signed-in
   // user's own session. An <img> tag cannot send an Authorization header, so
   // the URL is resolved here and handed to the plain <img src>.
@@ -518,12 +536,13 @@ export default function EliteSquadApp() {
   // signedImageUrl caches per path, so re-opening a card is instant.
   useEffect(()=>{
     if(!user)return
+    if(!canSeePrivate(selMember))return
     const p=String(selMember?.passportImage||"")
     if(!p||p.startsWith("data:")||p.startsWith("blob:"))return
     let alive=true
     signedImageUrl(p).then(u=>{if(alive&&u)setImgUrls(prev=>(prev[p]?prev:{...prev,[p]:u}))})
     return ()=>{alive=false}
-  },[user,selMember?.passportImage])
+  },[user,selMember?.passportImage,selMember?.id,canSeePrivate(selMember)])
 
   // Hover intent. Pointing at a card is the only moment we know which passport
   // is about to be wanted, and it arrives a few hundred ms before the click --
@@ -537,6 +556,10 @@ export default function EliteSquadApp() {
   const warming=useRef<Set<string>>(new Set())
   const prefetchPassport=(m:any)=>{
     if(!user)return
+    // Same rule as the open-card effect above: never mint a passport URL the
+    // viewer is not allowed to see, or a plain hover would hand a player the
+    // signed URL of a teammate's identity document.
+    if(!canSeePrivate(m))return
     const p=String(m?.passportImage||"")
     if(!p||p.startsWith("data:")||p.startsWith("blob:")||warming.current.has(p))return
     warming.current.add(p)
@@ -805,10 +828,6 @@ export default function EliteSquadApp() {
   }
   const p = user?.perms || DEFAULT_PERMS
   const canManageUsers = user?.role === "admin"
-  // A 'player' account gets its own card and nothing else. It skips the team
-  // selector, the roster grid and every tool. RLS already limits it to one
-  // members row; this flag is what keeps the rest of the UI out of reach.
-  const isPlayerAccount = user?.role === "player"
 
   // ── STATS DASHBOARD ──
   const StatsView = () => {
@@ -842,92 +861,6 @@ export default function EliteSquadApp() {
             </div>
           ))}
         </div>
-      </div>
-    )
-  }
-
-  // ── PLAYER SELF VIEW ──
-  // A 'player' account lands here instead of the team selector. It shows the
-  // one card RLS returned — its own — and nothing else. Every control that
-  // could change a record is already gated on a permission flag, which a
-  // player never has, so the view is read-only by construction.
-  const PlayerSelfView=()=>{
-    const me=members[0]
-    return(
-      <div className="ftf-portal min-h-screen bg-zinc-50 text-zinc-900 relative">
-        {!loaded&&<div className="fixed inset-0 z-[999] bg-white flex items-center justify-center"><div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin"/></div>}
-        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-          <div className="absolute inset-0 flex items-center justify-center">
-            <img src="/ftf-logo.png" className="w-[60%] opacity-[0.03] grayscale animate-[spin_60s_linear_infinite]" alt=""/>
-          </div>
-        </div>
-
-        <header className="sticky top-0 z-[100] bg-white/85 backdrop-blur-xl border-b border-zinc-200">
-          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E30613]/40 to-transparent animate-[pulse_3s_ease-in-out_infinite]"/>
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <img src="/ftf-logo.png" className="h-10 shrink-0" alt=""/>
-              <div className="leading-tight min-w-0">
-                <h1 className="text-xs sm:text-lg font-black italic uppercase tracking-wider leading-none truncate">My Profile</h1>
-                <p className="text-[9px] font-black text-[#E30613] uppercase tracking-[0.3em]">{user?.firstName||""} {user?.lastName||""}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <ThemeToggle className="p-2.5"/>
-              <Dropdown trigger={
-                <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] transition-all">
-                  <div className="w-6 h-6 rounded-full border border-[#f6c744]/60 bg-gradient-to-br from-[#12305a] to-[#0c1f3d] text-[#f6c744] flex items-center justify-center text-[9px] font-black uppercase shrink-0">{(user?.username||"?")[0]}</div>
-                  <ChevronDown size={11}/>
-                </button>
-              }>
-                <button onClick={handleChangePassword} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] transition-all text-left">
-                  <Key size={14} className="text-[#a9822e]"/>Change Password
-                </button>
-                <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all text-left">
-                  <LogOut size={14}/>Log Out
-                </button>
-              </Dropdown>
-            </div>
-          </div>
-        </header>
-
-        <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
-          {!me?(
-            <div className="flex flex-col items-center justify-center py-24 gap-6 text-center">
-              <User size={56} className="text-zinc-300"/>
-              <p className="text-[11px] font-black uppercase tracking-[0.35em] text-zinc-400">No card linked to this account</p>
-              <p className="max-w-md text-[11px] leading-relaxed text-zinc-500">Ask an administrator to link your account to your player card.</p>
-            </div>
-          ):(
-            <>
-              <div className="mb-5 flex items-center gap-2">
-                <span className="px-2 py-1 rounded-sm bg-[#E30613] text-white text-[8px] font-black uppercase tracking-[0.18em]">My Card</span>
-                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">Read-only</span>
-              </div>
-              <div onClick={()=>setSelMember(me)} className="cursor-pointer group relative animate-[fadeUp_0.5s_ease-out_both] max-w-sm">
-                <PlayerCard
-                  name={me.name}
-                  club={me.role==="PLAYERS"?me.club||"TUNISIA":me.nationality||"TUNISIA"}
-                  position={me.position||"PLAYER"}
-                  age={calculateAge(me.birthdate)}
-                  caps={me.role==="PLAYERS"?Number(me.natMatches)||0:undefined}
-                  goals={me.role==="PLAYERS"?Number(me.goals)||0:undefined}
-                  imageSrc={getImageSrc(me,imgUrls)}
-                  fullPosition={me.role!=="PLAYERS"}
-                  license={me.role!=="PLAYERS"?me.natMatches:undefined}
-                  n={me.jerseyNumber!=null&&me.jerseyNumber!==""?Number(me.jerseyNumber):1}
-                  nationality={me.nationality}
-                  height={me.height}
-                  foot={me.foot}
-                  assists={me.role==="PLAYERS"?Number(me.assists)||0:undefined}
-                  yellows={me.yellowCards}
-                  reds={me.redCards}
-                />
-              </div>
-              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Tap your card for full details</p>
-            </>
-          )}
-        </main>
       </div>
     )
   }
@@ -1000,8 +933,6 @@ export default function EliteSquadApp() {
     </div>
   )
   if(authChecked&&!user) return <LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>{setBuffering(false);beginFadeIn()},1200))}}/>
-  // A player account never reaches the team selector or the squad view.
-  if(isPlayerAccount) return busy?<div data-x="loader-overlay" className="fed-screen min-h-screen flex items-center justify-center relative overflow-hidden"><FedBg/><div className="relative z-10 flex flex-col items-center gap-6"><div className="w-14 h-14 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin"/><p className="text-[10px] font-black uppercase tracking-[0.35em] text-white">{tr.login.loadingDb}</p></div></div>:<PlayerSelfView/>
   if(!teamCat) return renderTeamSelect()
 
   // ── MAIN SQUAD VIEW ──
@@ -1320,7 +1251,7 @@ export default function EliteSquadApp() {
               <div className="pm-body pm-scroll">
 
                 {isPlayer?(
-                  (p.viewMedical||canManageUsers||isPlayerAccount)&&(
+                  canSeePrivate(selMember)&&(
                     <div className="flex gap-1 -mt-1 mb-2">
                       <button onClick={()=>setProfileTab("profile")} className={`pm-chip flex-1 justify-center ${profileTab==="profile"?'pm-chip-on':''}`}>Profile</button>
                       <button onClick={()=>setProfileTab("medical")} className={`pm-chip flex-1 justify-center ${profileTab==="medical"?'pm-chip-on':''}`}>Medical</button>

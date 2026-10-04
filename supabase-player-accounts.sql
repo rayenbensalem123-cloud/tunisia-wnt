@@ -142,9 +142,11 @@ CREATE POLICY "activity_log_insert" ON public.activity_log
 -- ------------------------------------------------------------
 -- 5. CLOSE squad_public TO SIGNED-IN USERS
 -- squad_public deliberately reads as its owner, so the table's RLS
--- is NOT re-applied through it. Granting it to `authenticated` would
--- hand every logged-in player the entire roster, defeating section 4.
--- The public page still reads it with the anon key, which is fine.
+-- is NOT re-applied through it. That makes it a straight bypass of any
+-- members policy you care about, which is why it stays ungranted to
+-- `authenticated` even though section 8 now lets players read members
+-- properly. The public page still reads it with the anon key, which is
+-- fine.
 -- ------------------------------------------------------------
 REVOKE ALL ON public.squad_public FROM authenticated;
 GRANT SELECT ON public.squad_public TO anon;
@@ -260,6 +262,43 @@ WHERE p.role = 'player'
 --   ORDER BY p.username;
 
 -- ------------------------------------------------------------
--- AFTER THIS: new player accounts link themselves on sign-up. Anything
--- unmatched shows up in Manage Users under "Linked player card".
+-- 8. PLAYERS SEE THE WHOLE APP, READ-ONLY
+-- ------------------------------------------------------------
+-- Supersedes section 4's "a player reads exactly its own row". A 'player'
+-- account now gets the same read access to the squad and the fixtures as
+-- staff. What it still does not get:
+--
+--   * ANY write. Every write policy keys off has_permission(), and a player
+--     holds no flags, so INSERT/UPDATE/DELETE keep failing. That is what
+--     makes this read-only -- not the UI, which is bypassable via PostgREST.
+--   * medical or passport data for anybody but itself. Section 4's injuries
+--     policy already draws that line and is left alone.
+--   * the activity log, which records changes across the whole squad and is
+--     admin-only in the UI anyway.
+--
+-- The passport rule is the one that is NOT database-enforced: passports live
+-- in a private storage bucket and the signed URLs are minted by client code
+-- (canSeePrivate() in app/page.tsx, applied to both the open-card effect and
+-- the hover prefetch). If that minting ever moves into an API route, the
+-- guard has to move with it, or a player regains the whole squad's passports.
+--
+-- Re-running this section is safe: it only drops and recreates two policies.
+-- ------------------------------------------------------------
+DROP POLICY IF EXISTS "members_select_active" ON public.members;
+CREATE POLICY "members_select_active" ON public.members
+  FOR SELECT USING (public.current_active_user());
+
+DROP POLICY IF EXISTS "matches_select_active" ON public.matches;
+CREATE POLICY "matches_select_active" ON public.matches
+  FOR SELECT USING (public.current_active_user());
+
+-- Sanity check: a player should now get the full roster, the fixtures,
+-- and NOTHING from injuries but its own row, and no activity log.
+--   SELECT public.is_staff_account(), public.current_member_id();
+
+-- ------------------------------------------------------------
+-- AFTER THIS: new player accounts link themselves on sign-up, land on the
+-- normal team selector and squad view like staff, and can play the games.
+-- Anything the name match could not place shows up in Manage Users under
+-- "Linked player card".
 -- ============================================================
