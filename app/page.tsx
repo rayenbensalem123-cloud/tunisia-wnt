@@ -5,7 +5,7 @@ import {
   LogOut, Goal, History, Trash2, Trophy,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase, BriefcaseBusiness,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange, Minus
+  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange, Minus, Gamepad2
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
@@ -29,6 +29,10 @@ import {
 import { StagesManager } from "@/components/stages-manager"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
 import { cleanEventMinutes } from "@/lib/bingo-logic"
+import { WhoAmI } from "@/components/games/who-am-i"
+import { MatchBingo } from "@/components/games/match-bingo"
+import { GameErrorBoundary } from "@/components/games/error-boundary"
+import { GS as GAME_STRINGS } from "@/components/games/strings"
 
 // ─────────────────────────────────────────────
 // CONSTANTS
@@ -463,6 +467,8 @@ export default function EliteSquadApp() {
   const [activityLog,setActivityLog]=useState<any[]>([])
   const [newsOpen,setNewsOpen]=useState(false)
   const [upcomingOpen,setUpcomingOpen]=useState(false)
+  const [gamesOpen,setGamesOpen]=useState(false)
+  const [gameTab,setGameTab]=useState<"bingo"|"whoami">("bingo")
   const [newsItems,setNewsItems]=useState<any[]|null>(null)
   const [newsLoading,setNewsLoading]=useState(false)
   const [pendingReviewOpen,setPendingReviewOpen]=useState(false)
@@ -943,6 +949,9 @@ export default function EliteSquadApp() {
             </button>}
             {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className={HEADER_BTN}>
               <Calendar size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">Schedule Match</span>
+            </button>}
+            {user&&<button onClick={()=>setGamesOpen(true)} title={GAME_STRINGS[lang].gamesTitle} className={HEADER_BTN}>
+              <Gamepad2 size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">{GAME_STRINGS[lang].gamesTitle}</span>
             </button>}
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
             <ThemeToggle className="p-2.5"/>
@@ -1924,6 +1933,44 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
       {/* ═══════════════════════════════════════════
           UPCOMING MATCHES — its own special, featured space
       ═══════════════════════════════════════════ */}
+      {gamesOpen&&user&&(()=>{
+        const G=GAME_STRINGS[lang]
+        const catPlayersForGames=members.filter((m:any)=>m.role==="PLAYERS"&&m.teamCategory===teamCat)
+        const catMatchesForGames=matches.filter((m:any)=>m.teamCategory===teamCat)
+        const gameUser={id:user.id,username:user.username}
+        return(
+          <div className="pm-backdrop" style={{zIndex:350}} onClick={()=>setGamesOpen(false)}>
+            <div className="pm-panel pm-panel-md" onClick={e=>e.stopPropagation()}>
+              <div className="pm-head">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#f6c744]/12 border border-[#f6c744]/35 flex items-center justify-center">
+                    <Gamepad2 size={14} className="text-[#f6c744]"/>
+                  </div>
+                  <div>
+                    <span className="pm-title block">{G.gamesTitle}</span>
+                    <span className="block text-[8px] font-bold uppercase tracking-wider text-[var(--c-textFaint)] mt-0.5">{G.gamesSub}</span>
+                  </div>
+                </div>
+                <button onClick={()=>setGamesOpen(false)} className="pm-close"><X size={14}/></button>
+              </div>
+              <div className="pm-body">
+                <div className="flex gap-1.5 mb-4">
+                  {([["bingo",G.bgTitle],["whoami",G.waTitle]] as ["bingo"|"whoami",string][]).map(([k,label])=>(
+                    <button key={k} onClick={()=>setGameTab(k)}
+                      className={`flex-1 px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${gameTab===k?"bg-[#E30613]/12 border-[#E30613]/60 text-[#E30613]":"bg-[var(--c-panel4)] border-[rgba(var(--line-rgb),.16)] text-[var(--c-textMid)] hover:text-[var(--c-text)]"}`}>{label}</button>
+                  ))}
+                </div>
+                <GameErrorBoundary key={gameTab} message="This game hit a problem. Close and reopen Games to try again.">
+                  {gameTab==="bingo"
+                    ?<MatchBingo matches={catMatchesForGames} user={gameUser} lang={lang}/>
+                    :<WhoAmI players={catPlayersForGames} user={gameUser} lang={lang} getImage={(m:any)=>getImageSrc(m,imgUrls)}/>}
+                </GameErrorBoundary>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {upcomingOpen&&(()=>{
         const today=new Date().toISOString().slice(0,10)
         const upcoming=matches.filter((m:any)=>m.date&&m.date>=today&&!m.result).sort((a:any,b:any)=>a.date.localeCompare(b.date))
