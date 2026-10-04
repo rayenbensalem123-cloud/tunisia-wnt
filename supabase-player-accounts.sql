@@ -296,9 +296,73 @@ CREATE POLICY "matches_select_active" ON public.matches
 -- and NOTHING from injuries but its own row, and no activity log.
 --   SELECT public.is_staff_account(), public.current_member_id();
 
+-- ============================================================
+-- 9. PASSPORTS: ENFORCE THE RULE WHERE IT CANNOT BE BYPASSED
+-- ------------------------------------------------------------
+-- canSeePrivate() in app/page.tsx hides the Passport tab and skips minting a
+-- URL on hover. That is presentation only. /api/image?path=... signs as the
+-- CALLER and accepts any path, and section 8 lets a player read every members
+-- row -- passport_image included. So before this section a player could read
+-- a teammate's passport path straight out of the table and trade it for
+-- signed URL bytes. Read the path, request it, done.
+--
+-- The path carries no member id -- it is passports/<timestamp>-<rand>-<name>
+-- -- so ownership is resolved through the database rather than the filename:
+-- an object IS a passport exactly when some member row points at it. That
+-- also covers passports uploaded before the folder convention existed, which
+-- a name-prefix test would have let straight through.
+--
+-- Re-running this section is safe: it only replaces functions and one policy.
+-- ============================================================
+CREATE OR REPLACE FUNCTION public.is_member_passport(obj_name text)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT EXISTS (SELECT 1 FROM members m WHERE m.passport_image = obj_name);
+$$;
+
+-- Your own passport is yours. current_member_id() is NULL for staff by design,
+-- so this is false for them and they fall through to the viewMedical branch.
+CREATE OR REPLACE FUNCTION public.is_own_passport(obj_name text)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public
+AS $$
+  SELECT public.is_member_passport(obj_name)
+     AND EXISTS (
+       SELECT 1 FROM members m
+       WHERE m.passport_image = obj_name
+         AND m.id = public.current_member_id()
+     );
+$$;
+
+DROP POLICY IF EXISTS "members_storage_read" ON storage.objects;
+CREATE POLICY "members_storage_read" ON storage.objects
+  FOR SELECT USING (
+    bucket_id = 'members'
+    AND public.current_active_user()
+    AND (
+      public.has_permission('viewMedical')  -- returns true for admins too
+      OR public.is_own_passport(storage.objects.name)
+      OR NOT public.is_member_passport(storage.objects.name)
+    )
+  );
+
+-- Confirm after running, signed in as a player account:
+--   SELECT public.is_member_passport('passports/whatever.jpg');  -- true
+--   SELECT public.is_own_passport('passports/whatever.jpg');     -- false
+-- Then have that player request someone else's passport_image through
+-- /api/image?path=... -- it must 404, not redirect.
+
 -- ------------------------------------------------------------
 -- AFTER THIS: new player accounts link themselves on sign-up, land on the
 -- normal team selector and squad view like staff, and can play the games.
+-- Medical and passport data stay private to each player's own card.
 -- Anything the name match could not place shows up in Manage Users under
 -- "Linked player card".
 -- ============================================================
