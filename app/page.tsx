@@ -24,7 +24,8 @@ import {
   fetchMembers, fetchMatches, syncMembers, syncMatches, fetchCamps, syncCamps,
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
   fetchInjuries, addInjury, updateInjuryStatus,
-  fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl
+  fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl,
+  linkProfileToMember
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
@@ -114,6 +115,8 @@ interface UserPerms {
 }
 interface AppUser {
   username: string; firstName: string; lastName: string; status: "active" | "pending"
+  role: string
+  memberId: number | null   // the player card this account is linked to
   perms: UserPerms
 }
 
@@ -125,6 +128,8 @@ const profileToAppUser = (p: any): AppUser => ({
   username: p.username,
   firstName: p.first_name,
   lastName: p.last_name,
+  role: p.role,
+  memberId: p.member_id ?? null,
   status: p.status,
   perms: p.permissions,
 })
@@ -395,7 +400,7 @@ const PERM_KEYS: (keyof UserPerms)[] = [
 // ═════════════════════════════════════════════
 export default function EliteSquadApp() {
   const { tr, setLang, lang } = useTranslate()
-  const [user,setUser]=useState<{id:string;username:string;firstName:string;lastName:string;role:string;perms:UserPerms}|null>(null)
+  const [user,setUser]=useState<{id:string;username:string;firstName:string;lastName:string;role:string;perms:UserPerms;memberId:number|null}|null>(null)
   const [authChecked,setAuthChecked]=useState(false)
   const [buffering,setBuffering]=useState(false)
   const [leaving,setLeaving]=useState(false)
@@ -422,7 +427,7 @@ export default function EliteSquadApp() {
   const loadMyUser=async()=>{
     const profile=await fetchMyProfile()
     if(!profile||profile.status!=="active"){ setUser(null); return null }
-    const u={id:profile.id,username:profile.username,firstName:profile.first_name,lastName:profile.last_name,role:profile.role,perms:profile.permissions}
+    const u={id:profile.id,username:profile.username,firstName:profile.first_name,lastName:profile.last_name,role:profile.role,perms:profile.permissions,memberId:profile.member_id??null}
     setUser(u)
     return u
   }
@@ -443,7 +448,7 @@ export default function EliteSquadApp() {
   const [injForm,setInjForm]=useState({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""})
   useEffect(()=>{
     setProfileTab("profile")
-    if(selMember&&(p.viewMedical||canManageUsers)) fetchInjuries(selMember.id).then(setInjuries)
+    if(selMember&&(p.viewMedical||canManageUsers||isPlayerAccount)) fetchInjuries(selMember.id).then(setInjuries)
     else setInjuries([])
   },[selMember?.id])
   const [isFormOpen,setIsFormOpen]=useState(false)
@@ -800,6 +805,10 @@ export default function EliteSquadApp() {
   }
   const p = user?.perms || DEFAULT_PERMS
   const canManageUsers = user?.role === "admin"
+  // A 'player' account gets its own card and nothing else. It skips the team
+  // selector, the roster grid and every tool. RLS already limits it to one
+  // members row; this flag is what keeps the rest of the UI out of reach.
+  const isPlayerAccount = user?.role === "player"
 
   // ── STATS DASHBOARD ──
   const StatsView = () => {
@@ -833,6 +842,92 @@ export default function EliteSquadApp() {
             </div>
           ))}
         </div>
+      </div>
+    )
+  }
+
+  // ── PLAYER SELF VIEW ──
+  // A 'player' account lands here instead of the team selector. It shows the
+  // one card RLS returned — its own — and nothing else. Every control that
+  // could change a record is already gated on a permission flag, which a
+  // player never has, so the view is read-only by construction.
+  const PlayerSelfView=()=>{
+    const me=members[0]
+    return(
+      <div className="ftf-portal min-h-screen bg-zinc-50 text-zinc-900 relative">
+        {!loaded&&<div className="fixed inset-0 z-[999] bg-white flex items-center justify-center"><div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin"/></div>}
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+          <div className="absolute inset-0 flex items-center justify-center">
+            <img src="/ftf-logo.png" className="w-[60%] opacity-[0.03] grayscale animate-[spin_60s_linear_infinite]" alt=""/>
+          </div>
+        </div>
+
+        <header className="sticky top-0 z-[100] bg-white/85 backdrop-blur-xl border-b border-zinc-200">
+          <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E30613]/40 to-transparent animate-[pulse_3s_ease-in-out_infinite]"/>
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <img src="/ftf-logo.png" className="h-10 shrink-0" alt=""/>
+              <div className="leading-tight min-w-0">
+                <h1 className="text-xs sm:text-lg font-black italic uppercase tracking-wider leading-none truncate">My Profile</h1>
+                <p className="text-[9px] font-black text-[#E30613] uppercase tracking-[0.3em]">{user?.firstName||""} {user?.lastName||""}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <ThemeToggle className="p-2.5"/>
+              <Dropdown trigger={
+                <button className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] transition-all">
+                  <div className="w-6 h-6 rounded-full border border-[#f6c744]/60 bg-gradient-to-br from-[#12305a] to-[#0c1f3d] text-[#f6c744] flex items-center justify-center text-[9px] font-black uppercase shrink-0">{(user?.username||"?")[0]}</div>
+                  <ChevronDown size={11}/>
+                </button>
+              }>
+                <button onClick={handleChangePassword} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] transition-all text-left">
+                  <Key size={14} className="text-[#a9822e]"/>Change Password
+                </button>
+                <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all text-left">
+                  <LogOut size={14}/>Log Out
+                </button>
+              </Dropdown>
+            </div>
+          </div>
+        </header>
+
+        <main className="max-w-5xl mx-auto px-4 sm:px-6 py-10">
+          {!me?(
+            <div className="flex flex-col items-center justify-center py-24 gap-6 text-center">
+              <User size={56} className="text-zinc-300"/>
+              <p className="text-[11px] font-black uppercase tracking-[0.35em] text-zinc-400">No card linked to this account</p>
+              <p className="max-w-md text-[11px] leading-relaxed text-zinc-500">Ask an administrator to link your account to your player card.</p>
+            </div>
+          ):(
+            <>
+              <div className="mb-5 flex items-center gap-2">
+                <span className="px-2 py-1 rounded-sm bg-[#E30613] text-white text-[8px] font-black uppercase tracking-[0.18em]">My Card</span>
+                <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400">Read-only</span>
+              </div>
+              <div onClick={()=>setSelMember(me)} className="cursor-pointer group relative animate-[fadeUp_0.5s_ease-out_both] max-w-sm">
+                <PlayerCard
+                  name={me.name}
+                  club={me.role==="PLAYERS"?me.club||"TUNISIA":me.nationality||"TUNISIA"}
+                  position={me.position||"PLAYER"}
+                  age={calculateAge(me.birthdate)}
+                  caps={me.role==="PLAYERS"?Number(me.natMatches)||0:undefined}
+                  goals={me.role==="PLAYERS"?Number(me.goals)||0:undefined}
+                  imageSrc={getImageSrc(me,imgUrls)}
+                  fullPosition={me.role!=="PLAYERS"}
+                  license={me.role!=="PLAYERS"?me.natMatches:undefined}
+                  n={me.jerseyNumber!=null&&me.jerseyNumber!==""?Number(me.jerseyNumber):1}
+                  nationality={me.nationality}
+                  height={me.height}
+                  foot={me.foot}
+                  assists={me.role==="PLAYERS"?Number(me.assists)||0:undefined}
+                  yellows={me.yellowCards}
+                  reds={me.redCards}
+                />
+              </div>
+              <p className="mt-6 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">Tap your card for full details</p>
+            </>
+          )}
+        </main>
       </div>
     )
   }
@@ -905,6 +1000,8 @@ export default function EliteSquadApp() {
     </div>
   )
   if(authChecked&&!user) return <LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>{setBuffering(false);beginFadeIn()},1200))}}/>
+  // A player account never reaches the team selector or the squad view.
+  if(isPlayerAccount) return busy?<div data-x="loader-overlay" className="fed-screen min-h-screen flex items-center justify-center relative overflow-hidden"><FedBg/><div className="relative z-10 flex flex-col items-center gap-6"><div className="w-14 h-14 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin"/><p className="text-[10px] font-black uppercase tracking-[0.35em] text-white">{tr.login.loadingDb}</p></div></div>:<PlayerSelfView/>
   if(!teamCat) return renderTeamSelect()
 
   // ── MAIN SQUAD VIEW ──
@@ -1223,7 +1320,7 @@ export default function EliteSquadApp() {
               <div className="pm-body pm-scroll">
 
                 {isPlayer?(
-                  (p.viewMedical||canManageUsers)&&(
+                  (p.viewMedical||canManageUsers||isPlayerAccount)&&(
                     <div className="flex gap-1 -mt-1 mb-2">
                       <button onClick={()=>setProfileTab("profile")} className={`pm-chip flex-1 justify-center ${profileTab==="profile"?'pm-chip-on':''}`}>Profile</button>
                       <button onClick={()=>setProfileTab("medical")} className={`pm-chip flex-1 justify-center ${profileTab==="medical"?'pm-chip-on':''}`}>Medical</button>
@@ -1823,6 +1920,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 const approveUser=()=>{
                   updateProfile(u.username,{status:"active"}).then(reloadProfiles)
                 }
+                const linkedMember=members.find((m:any)=>m.id===u.memberId)
                 return(
                   <div key={i} className="p-3 rounded-xl border border-zinc-200 bg-zinc-50">
                     <div className="flex items-center justify-between mb-2">
@@ -1838,7 +1936,29 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                         </>)}
                       </div>
                     </div>
-                    {canManageUsers&&(
+                    {/* LINKED CARD — a 'player' account sees only this one row */}
+                    {canManageUsers&&u.role==="player"&&(
+                      <div className="mt-2 pt-2 border-t border-zinc-200">
+                        <p className="text-[6px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1.5">Linked player card</p>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={u.memberId??""}
+                            onChange={e=>linkProfileToMember(u.username, e.target.value?Number(e.target.value):null).then(reloadProfiles)}
+                            className="flex-1 min-w-0 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[8px] font-black uppercase tracking-wider text-zinc-700 outline-none focus:border-[#E30613]/60"
+                          >
+                            <option value="">— not linked —</option>
+                            {members.map((m:any)=>(
+                              <option key={m.id} value={m.id}>{m.name} · {m.teamCategory||"—"}{m.position?` · ${m.position}`:""}</option>
+                            ))}
+                          </select>
+                          {linkedMember&&(
+                            <button onClick={()=>setSelMember(linkedMember)} className="shrink-0 px-2.5 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">View</button>
+                          )}
+                        </div>
+                        {!u.memberId&&<p className="mt-1.5 text-[6px] font-bold uppercase tracking-wider text-[#E30613]">This player sees nothing until a card is linked</p>}
+                      </div>
+                    )}
+                    {canManageUsers&&u.role!=="player"&&(
                       <div className="flex flex-wrap gap-1.5 mt-1">
                         {PERM_KEYS.map((key)=>{
                           const on=u.perms[key]
@@ -1849,9 +1969,9 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                             </button>
                           )
                         })}
-          </div>
-        )}
-      </div>
+                      </div>
+                    )}
+                  </div>
                 )
               })}
             </div>
