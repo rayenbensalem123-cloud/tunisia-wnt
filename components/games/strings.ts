@@ -30,6 +30,7 @@ const en = {
   bgDeviceOnly: "Picks are saved on this device only. Ask an admin to run supabase-games.sql to share them with the whole staff.",
   bgPracticeNote: "Practice: nothing is saved and no points are awarded.",
   bgYou: "you", bgTotal: "Total", bgResultLine: "Result: {r}",
+  soundOn: "Sound on", soundOff: "Sound off", bgLineDone: "Line complete!", waTarget: "Points for this clue", bgUpTo: "Up to {n} pts",
 }
 
 const fr: typeof en = {
@@ -59,6 +60,7 @@ const fr: typeof en = {
   bgDeviceOnly: "Les choix sont enregistrés sur cet appareil uniquement. Demandez à un admin d'exécuter supabase-games.sql pour les partager avec tout le staff.",
   bgPracticeNote: "Entraînement : rien n'est enregistré et aucun point n'est attribué.",
   bgYou: "vous", bgTotal: "Total", bgResultLine: "Résultat : {r}",
+  soundOn: "Son activé", soundOff: "Son coupé", bgLineDone: "Ligne complète !", waTarget: "Points pour cet indice", bgUpTo: "Jusqu'à {n} pts",
 }
 
 const ar: typeof en = {
@@ -88,6 +90,7 @@ const ar: typeof en = {
   bgDeviceOnly: "تُحفظ الاختيارات على هذا الجهاز فقط. اطلب من المشرف تشغيل supabase-games.sql لمشاركتها مع كل الطاقم.",
   bgPracticeNote: "تدريب: لا يتم حفظ أي شيء ولا تُمنح نقاط.",
   bgYou: "أنت", bgTotal: "المجموع", bgResultLine: "النتيجة: {r}",
+  soundOn: "الصوت يعمل", soundOff: "الصوت متوقف", bgLineDone: "خط كامل!", waTarget: "نقاط هذا التلميح", bgUpTo: "حتى {n} نقطة",
 }
 
 export const GS: Record<Lang, typeof en> = { en, fr, ar }

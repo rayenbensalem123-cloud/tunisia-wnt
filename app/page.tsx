@@ -32,6 +32,7 @@ import { cleanEventMinutes } from "@/lib/bingo-logic"
 import { WhoAmI } from "@/components/games/who-am-i"
 import { MatchBingo } from "@/components/games/match-bingo"
 import { GameErrorBoundary } from "@/components/games/error-boundary"
+import { SoundToggle } from "@/components/games/fx"
 import { GS as GAME_STRINGS } from "@/components/games/strings"
 
 // ─────────────────────────────────────────────
@@ -1951,7 +1952,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     <span className="block text-[8px] font-bold uppercase tracking-wider text-[var(--c-textFaint)] mt-0.5">{G.gamesSub}</span>
                   </div>
                 </div>
-                <button onClick={()=>setGamesOpen(false)} className="pm-close"><X size={14}/></button>
+                <div className="flex items-center gap-1.5">
+                  <SoundToggle onLabel={G.soundOn} offLabel={G.soundOff}/>
+                  <button onClick={()=>setGamesOpen(false)} className="pm-close"><X size={14}/></button>
+                </div>
               </div>
               <div className="pm-body">
                 <div className="flex gap-1.5 mb-4">
