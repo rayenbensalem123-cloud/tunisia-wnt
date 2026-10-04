@@ -79,7 +79,13 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 BEGIN
-  IF public.current_active_admin() THEN
+  -- auth.uid() IS NULL means the statement did not arrive through PostgREST
+  -- as an authenticated user: it is the SQL editor or a service-role call.
+  -- That is a trusted context, and section 7 needs it to backfill member_id.
+  -- This does not open the API, because an anonymous PostgREST write is
+  -- already refused by RLS (no UPDATE policy grants anything to anon) before
+  -- this trigger runs.
+  IF public.current_active_admin() OR auth.uid() IS NULL THEN
     RETURN NEW;
   END IF;
 
@@ -144,19 +150,116 @@ REVOKE ALL ON public.squad_public FROM authenticated;
 GRANT SELECT ON public.squad_public TO anon;
 
 -- ------------------------------------------------------------
--- 6. LINK EXISTING PLAYER ACCOUNTS
--- One-off helper: point unlinked 'player' accounts at a card by matching
--- the username against the member's name (case/space insensitive).
--- Review the SELECT before running the UPDATE.
+-- 6. AUTO-LINK ON REGISTRATION
+-- A player picks "Player" on the sign-up form and types their first and
+-- last name. That is all the information needed to find their card, so the
+-- database does the matching itself: no admin click, and no way for a
+-- client to point itself at someone else's card.
+--
+-- Runs on INSERT only. An account that already exists (or a link an admin
+-- set by hand) is never touched.
 -- ------------------------------------------------------------
--- SELECT p.username, p.member_id, m.id AS matched_member, m.name
--- FROM public.profiles p
--- LEFT JOIN public.members m
---   ON lower(regexp_replace(m.name, '\s+', '', 'g'))
---    = lower(regexp_replace(p.username, '[^a-zA-Z0-9]', '', 'g'))
--- WHERE p.role = 'player' AND p.member_id IS NULL;
+
+-- "Béchir Abla" -> "bechirabla", so accents, spacing, punctuation and case
+-- cannot stop a match. translate() folds the accents to ASCII first;
+-- dropping non-letters instead would turn "Béchir" into "bchr" and never
+-- match the plain "Bechir".
+CREATE OR REPLACE FUNCTION public.norm_person_name(txt text)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+AS $$
+  SELECT regexp_replace(
+    translate(lower(coalesce(txt, '')),
+      'àáâãäåèéêëìíîïòóôõöùúûüýÿçñ',
+      'aaaaaaeeeeiiiiooooouuuuyycn'),
+    '[^a-z]', '', 'g');
+$$;
+
+CREATE OR REPLACE FUNCTION public.autolink_player_card()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  keys text[];
+  k    text;
+  hits bigint[];
+BEGIN
+  -- Staff get no link: they see the whole squad by role, so a card would
+  -- be meaningless. An existing link is left exactly as it is.
+  IF NEW.role IS DISTINCT FROM 'player' OR NEW.member_id IS NOT NULL THEN
+    RETURN NEW;
+  END IF;
+
+  -- Prefer the real name; fall back to the username for people who sign up
+  -- as e.g. "smarzouki".
+  keys := ARRAY[
+    public.norm_person_name(NEW.first_name || ' ' || NEW.last_name),
+    public.norm_person_name(NEW.username)
+  ];
+
+  FOREACH k IN ARRAY keys LOOP
+    CONTINUE WHEN k IS NULL OR k = '';
+    SELECT array_agg(m.id) INTO hits
+    FROM public.members m
+    WHERE m.role = 'PLAYERS'
+      AND public.norm_person_name(m.name) = k;
+    -- Only link on a unique hit. Two players sharing a name (Salma
+    -- Marzouki / Salma Zemzem) must NOT be guessed at, so those accounts
+    -- stay unlinked and an admin picks from Manage Users.
+    IF hits IS NOT NULL AND array_length(hits, 1) = 1 THEN
+      NEW.member_id := hits[1];
+      RETURN NEW;
+    END IF;
+  END LOOP;
+
+  RETURN NEW;
+END;
+$$;
+
+-- Named so it sorts AFTER trg_guard_profile_insert: Postgres fires BEFORE
+-- triggers in name order, and the insert guard is what normalises role and
+-- status first.
+DROP TRIGGER IF EXISTS trg_profile_autolink_player_card ON public.profiles;
+CREATE TRIGGER trg_profile_autolink_player_card
+  BEFORE INSERT ON public.profiles
+  FOR EACH ROW EXECUTE FUNCTION public.autolink_player_card();
 
 -- ------------------------------------------------------------
--- AFTER THIS: sign in as admin, open Menu > Manage Users, and set
--- "Linked card" on each player account.
+-- 7. LINK ACCOUNTS THAT ALREADY EXIST
+-- Section 6 only fires on new sign-ups. This does the same matching for
+-- accounts that were created before it existed.
+--
+-- It has to write member_id, which section 3 blocks for everyone but an
+-- active admin. auth.uid() is NULL for a direct database/SQL-editor
+-- session (and for a service-role call), which is what makes this run at
+-- all: an anonymous PostgREST caller still cannot update profiles, because
+-- RLS refuses the write before the trigger is ever reached.
+-- ------------------------------------------------------------
+UPDATE public.profiles p
+SET member_id = m.id
+FROM public.members m
+WHERE p.role = 'player'
+  AND p.member_id IS NULL
+  AND m.role = 'PLAYERS'
+  AND public.norm_person_name(m.name)
+      = public.norm_person_name(p.first_name || ' ' || p.last_name)
+  -- Same unique-only rule as the trigger. UPDATE ... FROM would otherwise pick
+  -- an arbitrary row, silently linking two same-named players to one card.
+  AND 1 = (SELECT count(*) FROM public.members m2
+           WHERE m2.role = 'PLAYERS'
+             AND public.norm_person_name(m2.name)
+                 = public.norm_person_name(m.name));
+
+-- Anyone the name match could not place, for an admin to set by hand:
+--   SELECT p.username, p.first_name, p.last_name
+--   FROM public.profiles p
+--   WHERE p.role = 'player' AND p.member_id IS NULL
+--   ORDER BY p.username;
+
+-- ------------------------------------------------------------
+-- AFTER THIS: new player accounts link themselves on sign-up. Anything
+-- unmatched shows up in Manage Users under "Linked player card".
 -- ============================================================
