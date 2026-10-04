@@ -9,7 +9,8 @@
 --   2. lets an ADMIN set that link (and nobody else)
 --   3. makes a 'player' account read exactly ONE members row: its own
 --   4. lets a player read its own medical record, nobody else's
---   5. stops a signed-in player from reading squad_public (the whole roster)
+--   5. keeps a player out of matches, the activity log, and squad_public
+--      (the whole roster)
 --
 -- Admin/staff accounts are unaffected: they still see everything.
 -- ============================================================
@@ -118,6 +119,19 @@ CREATE POLICY "injuries_select_active" ON public.injuries
 DROP POLICY IF EXISTS "matches_select_active" ON public.matches;
 CREATE POLICY "matches_select_active" ON public.matches
   FOR SELECT USING (public.is_staff_account());
+
+-- The activity log records who changed what, across the WHOLE squad. It was
+-- gated on current_active_user(), which is true for any active account, so a
+-- 'player' could read every other user's changes through PostgREST even though
+-- the UI only offers the log to admins. Staff only, both ways: a player makes
+-- no changes, so they generate no entries either.
+DROP POLICY IF EXISTS "activity_log_select_active" ON public.activity_log;
+CREATE POLICY "activity_log_select_active" ON public.activity_log
+  FOR SELECT USING (public.is_staff_account());
+
+DROP POLICY IF EXISTS "activity_log_insert" ON public.activity_log;
+CREATE POLICY "activity_log_insert" ON public.activity_log
+  FOR INSERT WITH CHECK (public.is_staff_account());
 
 -- ------------------------------------------------------------
 -- 5. CLOSE squad_public TO SIGNED-IN USERS
