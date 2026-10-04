@@ -71,7 +71,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   const code = fullPosition
     ? (staffAbbr[(position || "").toUpperCase()] || (position || "STAFF").slice(0, 4).toUpperCase())
     : (posAbbr[position] || (position || "").slice(0, 4));
-  const num = String(n ?? "—").padStart(2, "0");
+  // padStart was applied even to the "—" placeholder itself, so a player
+  // with no jersey number yet showed "0—" instead of a clean dash — only
+  // pad when there's an actual number to pad.
+  const num = (n===undefined||n===null) ? "—" : String(n).padStart(2, "0");
   const [popped, setPopped] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
   const [gifMoving, setGifMoving] = useState(false);
