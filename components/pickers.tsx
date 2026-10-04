@@ -633,3 +633,30 @@ export const JerseyScale = ({
     </div>
   )
 }
+
+// ── MinuteBox: small "min'" input for the exact minute of a match event ──
+export const MinuteBox = ({
+  value, onChange, label, title = "Minute",
+}: {
+  value: number | undefined
+  onChange: (v: number | undefined) => void
+  label?: string
+  title?: string
+}) => (
+  <label
+    title={title}
+    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--c-panel4)] border border-[rgba(var(--line-rgb),.18)] focus-within:border-[#E30613]/60 text-[9px] font-black text-[var(--c-textDim)] transition-colors"
+  >
+    {label && <span className="uppercase tracking-wider">{label}</span>}
+    <input
+      inputMode="numeric" pattern="[0-9]*" maxLength={3} placeholder="–"
+      value={value === undefined ? "" : String(value)}
+      onChange={e => {
+        const d = e.target.value.replace(/\D/g, "").slice(0, 3)
+        onChange(d === "" ? undefined : Math.min(130, parseInt(d, 10)))
+      }}
+      className="w-7 bg-transparent outline-none text-center text-[var(--c-text)] font-black"
+    />
+    <span>{"'"}</span>
+  </label>
+)

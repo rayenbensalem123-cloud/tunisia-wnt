@@ -27,7 +27,8 @@ import {
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
-import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper } from "@/components/pickers"
+import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
+import { cleanEventMinutes } from "@/lib/bingo-logic"
 
 // ─────────────────────────────────────────────
 // CONSTANTS
@@ -131,6 +132,8 @@ const B_FIELD_KEY = "w-full rounded-xl border border-white/15 bg-black/25 pl-11 
 const B_BTN = "mt-5 w-full rounded-xl bg-gradient-to-r from-[#e3062c] to-[#8f0319] py-3.5 text-[10px] font-black uppercase tracking-[.2em] text-white shadow-lg shadow-[#e3062c]/30 hover:shadow-[#e3062c]/50 transition-all disabled:opacity-45"
 
 // ── Header & menu button styles (unified navy/gold) ──
+// Small "23'" chip for a recorded event minute (nothing is shown for older matches without minutes)
+const minuteChip=(m:any,k:string)=>m?.eventMinutes?.[k]!=null?<span className="px-1.5 py-0.5 rounded bg-[var(--c-panel4)] text-[9px] font-black text-[var(--c-text)]">{m.eventMinutes[k]}{"'"}</span>:null
 const HEADER_BTN = "flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] whitespace-nowrap"
 const HEADER_ICON_BTN = "p-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)]"
 
@@ -479,7 +482,7 @@ export default function EliteSquadApp() {
 
   const initForm={name:"",club:"",position:"",image:"",passportImage:"",jerseyNumber:"",camps:[],natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",bioQuote:"",leagueRegion:"",dualNationality:false,secondNationality:""}
   const [form,setForm]=useState<any>(initForm)
-  const initMatch={opponent:"",date:"",result:"",venue:"",competition:"",squad:[] as number[],scorers:[] as {playerId:number,goals:number}[],yellowCards:[] as number[],redCards:[] as number[],subs:[] as {out:number;in:number}[],notes:"",opponentSquad:[] as string[],opponentScorers:[] as {name:string,goals:number}[],opponentYellowCards:[] as string[],opponentRedCards:[] as string[],opponentSubs:[] as {out:string;in:string}[],tunisiaPossession:"",opponentPossession:"",tunisiaShots:"",opponentShots:"",tunisiaShotsOnTarget:"",opponentShotsOnTarget:"",tunisiaCorners:"",opponentCorners:"",tunisiaFouls:"",opponentFouls:""}
+  const initMatch={opponent:"",date:"",result:"",venue:"",competition:"",squad:[] as number[],scorers:[] as {playerId:number,goals:number}[],yellowCards:[] as number[],redCards:[] as number[],subs:[] as {out:number;in:number}[],notes:"",opponentSquad:[] as string[],opponentScorers:[] as {name:string,goals:number}[],opponentYellowCards:[] as string[],opponentRedCards:[] as string[],opponentSubs:[] as {out:string;in:string}[],tunisiaPossession:"",opponentPossession:"",tunisiaShots:"",opponentShots:"",tunisiaShotsOnTarget:"",opponentShotsOnTarget:"",tunisiaCorners:"",opponentCorners:"",tunisiaFouls:"",opponentFouls:"",eventMinutes:{} as Record<string,number>}
   const countryFlags:Record<string,string>={"Tunisia":"tn","Algeria":"dz","Egypt":"eg","Morocco":"ma","Senegal":"sn","Nigeria":"ng","Cameroon":"cm","Ghana":"gh","Ivory Coast":"ci","Côte d'Ivoire":"ci","Cote d'Ivoire":"ci","Mali":"ml","Burkina Faso":"bf","South Africa":"za","DR Congo":"cd","DRC":"cd","Congo":"cg","Zambia":"zm","Equatorial Guinea":"gq","Guinea":"gn","Guinea-Bissau":"gw","Benin":"bj","Togo":"tg","Sierra Leone":"sl","Liberia":"lr","Sudan":"sd","South Sudan":"ss","Uganda":"ug","Kenya":"ke","Tanzania":"tz","Rwanda":"rw","Burundi":"bi","Ethiopia":"et","Eritrea":"er","Somalia":"so","Angola":"ao","Namibia":"na","Botswana":"bw","Zimbabwe":"zw","Mozambique":"mz","Malawi":"mw","Lesotho":"ls","Eswatini":"sz","Madagascar":"mg","Mauritius":"mu","Cape Verde":"cv","Mauritania":"mr","Gambia":"gm","Gabon":"ga","Chad":"td","Niger":"ne","Libya":"ly","France":"fr","England":"gb-eng","Spain":"es","Germany":"de","Italy":"it","Netherlands":"nl","Portugal":"pt","Belgium":"be","Croatia":"hr","Switzerland":"ch","Sweden":"se","Denmark":"dk","Norway":"no","Poland":"pl","Brazil":"br","Argentina":"ar","Uruguay":"uy","Colombia":"co","Chile":"cl","Peru":"pe","Ecuador":"ec","Mexico":"mx","USA":"us","United States":"us","Canada":"ca","Japan":"jp","South Korea":"kr","Korea Republic":"kr","Saudi Arabia":"sa","Iran":"ir","Australia":"au","New Zealand":"nz"}
   const [matchForm,setMatchForm]=useState<any>(initMatch)
 
@@ -738,7 +741,7 @@ export default function EliteSquadApp() {
   const saveMatch=(e:React.FormEvent)=>{
     e.preventDefault()
     const id=Date.now()
-    const newMatch={...matchForm,id,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username}
+    const newMatch={...matchForm,eventMinutes:cleanEventMinutes(matchForm),id,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username}
     setMatches(p=>[...p,newMatch])
     if(canManageUsers) approveMatch(newMatch)
     setIsMatchOpen(false); setMatchForm(initMatch)
@@ -754,6 +757,7 @@ export default function EliteSquadApp() {
   const undoSub=(id:number,isIn:boolean)=>setMatchForm((p:any)=>{const ms=isIn?p.subs.find((s:any)=>s["in"]===id):p.subs.find((s:any)=>s.out===id);if(!ms)return p;return{...p,squad:p.squad.map((x:number)=>x===ms.out?ms["in"]:x===ms["in"]?ms.out:x),subs:p.subs.filter((s:any)=>s.out!==ms.out||s["in"]!==ms["in"])}})
   const editGoals=(id:number,delta:number)=>setMatchForm((p:any)=>{const g=(p.scorers.find((s:any)=>s.playerId===id)?.goals||0)+delta;if(g<=0)return{...p,scorers:p.scorers.filter((s:any)=>s.playerId!==id)};if(p.scorers.find((s:any)=>s.playerId===id))return{...p,scorers:p.scorers.map((s:any)=>s.playerId===id?{...s,goals:g}:s)};return{...p,scorers:[...p.scorers,{playerId:id,goals:g}]}})
   const removeGoal=(id:number)=>setMatchForm((p:any)=>({...p,scorers:p.scorers.filter((s:any)=>s.playerId!==id)}))
+  const setMinute=(k:string,v:number|undefined)=>setMatchForm((p:any)=>{const em={...(p.eventMinutes||{})};if(v===undefined)delete em[k];else em[k]=v;return{...p,eventMinutes:em}})
   const toggleYellow=(id:number)=>setMatchForm((p:any)=>({...p,yellowCards:p.yellowCards.includes(id)?p.yellowCards.filter((x:number)=>x!==id):[...p.yellowCards,id]}))
   const toggleRed=(id:number)=>setMatchForm((p:any)=>({...p,redCards:p.redCards.includes(id)?p.redCards.filter((x:number)=>x!==id):[...p.redCards,id]}))
   const NumBox=({value,set,align,max=99}:{value:string;set:(v:string)=>void;align?:"l"|"r";max?:number})=>(
@@ -2340,7 +2344,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           const pl=members.find((m:any)=>m.id===s.playerId)
                           if(!pl)return null
                           return(
-                            <div key={s.playerId} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-[#7fd6a8]/15 group">
+                            <div key={s.playerId} className="flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-[#7fd6a8]/15 group">
                               <span className="font-bold text-xs flex-1 text-zinc-800">{pl.name}</span>
                               <div className="flex items-center gap-1">
                                 <span onClick={()=>editGoals(pl.id,-1)} className={`w-4 h-4 rounded flex items-center justify-center text-[9px] font-black cursor-pointer ${s.goals>1?'bg-[#7fd6a8]/25 text-[#7fd6a8]':'text-[#7fd6a8]/30'}`}>–</span>
@@ -2348,6 +2352,9 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                                 <span onClick={()=>editGoals(pl.id,1)} className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-black cursor-pointer bg-[#7fd6a8]/25 text-[#7fd6a8]">+</span>
                               </div>
                               <button onClick={()=>removeGoal(pl.id)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
+                              <div className="basis-full flex flex-wrap items-center gap-1.5">
+                                {Array.from({length:s.goals}).map((_,gi)=>(<MinuteBox key={gi} label={s.goals>1?`#${gi+1}`:"Min"} title="Minute of the goal" value={matchForm.eventMinutes?.[`g:${s.playerId}:${gi+1}`]} onChange={v=>setMinute(`g:${s.playerId}:${gi+1}`,v)}/>))}
+                              </div>
                             </div>
                           )
                         })}
@@ -2363,6 +2370,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           return(
                             <span key={"y"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#f6c744]/25 text-[10px] font-bold group">
                               <span className="w-3 h-4 rounded-[2px] bg-yellow-400"/> {pl.name.split(' ').slice(-1)}
+                              <MinuteBox title="Minute of the yellow card" value={matchForm.eventMinutes?.[`y:${pid}`]} onChange={v=>setMinute(`y:${pid}`,v)}/>
                               <button onClick={()=>toggleYellow(pid)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </span>
                           )
@@ -2373,6 +2381,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           return(
                             <span key={"r"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#e3062c]/30 text-[10px] font-bold group">
                               <span className="w-3 h-4 rounded-[2px] bg-red-600"/> {pl.name.split(' ').slice(-1)}
+                              <MinuteBox title="Minute of the red card" value={matchForm.eventMinutes?.[`r:${pid}`]} onChange={v=>setMinute(`r:${pid}`,v)}/>
                               <button onClick={()=>toggleRed(pid)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </span>
                           )
@@ -2391,6 +2400,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <span className="text-red-500 line-through">{on}</span>
                               <span className="text-zinc-300">→</span>
                               <span className="text-[#7fd6a8]">{inn}</span>
+                              <MinuteBox title="Minute of the substitution" value={matchForm.eventMinutes?.[`s:${s.out}:${s["in"]}`]} onChange={v=>setMinute(`s:${s.out}:${s["in"]}`,v)}/>
                               <button onClick={()=>removeSub(i)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </div>
                           )
@@ -2677,7 +2687,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <div key={`g-${s.playerId}-${gi}`} className="flex items-center gap-3 pl-0 relative">
                                 <div className="w-[19px] h-[19px] rounded-full bg-[#f6c744]/15 border-2 border-[#f6c744] flex items-center justify-center shrink-0 z-10 text-[9px]">⚽</div>
                                 <span className="font-bold text-xs text-zinc-800">{pl.name}</span>
-                                <span className="text-[7px] font-bold text-[#f6c744] ml-auto uppercase tracking-wider">Goal</span>
+                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`g:${s.playerId}:${gi+1}`)}<span className="text-[7px] font-bold text-[#f6c744] uppercase tracking-wider">Goal</span></span>
                               </div>
                             ))
                           }).flat()}
@@ -2688,7 +2698,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <div key={`y-${pid}`} className="flex items-center gap-3 pl-0 relative">
                                 <div className="w-[19px] h-[19px] rounded-full bg-[#f6c744]/10 border-2 border-[#f6c744]/60 shrink-0 z-10"/>
                                 <span className="font-bold text-xs text-zinc-800">{pl.name}</span>
-                                <span className="text-[7px] font-bold text-[#f6c744] ml-auto uppercase tracking-wider">Yellow</span>
+                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`y:${pid}`)}<span className="text-[7px] font-bold text-[#f6c744] uppercase tracking-wider">Yellow</span></span>
                               </div>
                             )
                           })}
@@ -2699,7 +2709,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <div key={`r-${pid}`} className="flex items-center gap-3 pl-0 relative">
                                 <div className="w-[19px] h-[19px] rounded-full bg-[#e3062c]/15 border-2 border-[#e3062c] shrink-0 z-10"/>
                                 <span className="font-bold text-xs text-zinc-800">{pl.name}</span>
-                                <span className="text-[7px] font-bold text-[#ff4f66] ml-auto uppercase tracking-wider">Red</span>
+                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`r:${pid}`)}<span className="text-[7px] font-bold text-[#ff4f66] uppercase tracking-wider">Red</span></span>
                               </div>
                             )
                           })}
@@ -2710,7 +2720,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <div key={`s-${i}`} className="flex items-center gap-3 pl-0 relative">
                                 <div className="w-[19px] h-[19px] rounded-full bg-[var(--c-blue)]/20 border-2 border-[var(--c-blue)] flex items-center justify-center shrink-0 z-10 text-[9px]">↔</div>
                                 <span className="font-bold text-xs text-zinc-800"><span className="text-[#ff4f66] line-through">{on}</span> → <span className="text-[#7fd6a8]">{inn}</span></span>
-                                <span className="text-[7px] font-bold text-[var(--c-blueSoft)] ml-auto uppercase tracking-wider">Sub</span>
+                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`s:${s.out}:${s["in"]}`)}<span className="text-[7px] font-bold text-[var(--c-blueSoft)] uppercase tracking-wider">Sub</span></span>
                               </div>
                             )
                           })}
