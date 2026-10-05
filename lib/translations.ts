@@ -187,6 +187,14 @@ const t = {
       addPlayer: "Add Player", editPlayer: "Edit Player", deletePlayer: "Delete Player",
       addMatch: "Add Match", deleteMatch: "Delete Match", exportData: "Export Data",
       viewMedical: "View Medical", editMedical: "Edit Medical", addCamps: "Manage Camps",
+      viewClubReports: "View Club Reports",
+    },
+    clubReports: {
+      tab: "Club", logMatch: "Log Club Match", none: "No club matches logged yet",
+      unknownOpponent: "Unknown opponent", mins: "mins", goals: "goals", assists: "assists",
+      confirmDelete: "Delete this match report?", opponentPh: "Opponent club",
+      competitionPh: "Competition (optional)", resultPh: "Result (e.g. 2-1)",
+      notesPh: "Notes (optional)", needOpponent: "Enter the opponent club",
     },
     notifications: {
       title: "Notifications", allClear: "All clear", cannotPlayNext: "Cannot play next match",
@@ -198,6 +206,7 @@ const t = {
       pendingTitle: "Pending Users", awaitingReview: "awaiting approval", awaitingYourReview: "PENDING · Awaiting your review",
       assignPermissions: "Assign Permissions", saveAndApprove: "Save & Approve",
       active: "ACTIVE", pending: "PENDING", you: "(you)",
+      linkToPlayer: "Link to squad player", notLinked: "Not linked",
     },
     camps: {
       saved: "Camp saved ✓", uploadError: "Upload error", name: "Name", location: "Location",
@@ -454,6 +463,14 @@ const t = {
       addPlayer: "Ajouter Joueuse", editPlayer: "Modifier Joueuse", deletePlayer: "Supprimer Joueuse",
       addMatch: "Ajouter Match", deleteMatch: "Supprimer Match", exportData: "Exporter Données",
       viewMedical: "Voir Médical", editMedical: "Modifier Médical", addCamps: "Gérer Rassemblements",
+      viewClubReports: "Voir rapports de club",
+    },
+    clubReports: {
+      tab: "Club", logMatch: "Ajouter un match de club", none: "Aucun match de club enregistré",
+      unknownOpponent: "Adversaire inconnu", mins: "min", goals: "buts", assists: "passes",
+      confirmDelete: "Supprimer ce rapport de match ?", opponentPh: "Club adverse",
+      competitionPh: "Compétition (optionnel)", resultPh: "Résultat (ex. 2-1)",
+      notesPh: "Notes (optionnel)", needOpponent: "Entrez le club adverse",
     },
     notifications: {
       title: "Notifications", allClear: "Tout est en ordre", cannotPlayNext: "Ne peut pas jouer le prochain match",
@@ -465,6 +482,7 @@ const t = {
       pendingTitle: "Utilisateurs en attente", awaitingReview: "en attente d'approbation", awaitingYourReview: "EN ATTENTE · À examiner",
       assignPermissions: "Attribuer les permissions", saveAndApprove: "Enregistrer et approuver",
       active: "ACTIF", pending: "EN ATTENTE", you: "(vous)",
+      linkToPlayer: "Lier à une joueuse", notLinked: "Non lié",
     },
     camps: {
       saved: "Rassemblement enregistré ✓", uploadError: "Erreur d'upload", name: "Nom", location: "Lieu",
@@ -721,6 +739,14 @@ const t = {
       addPlayer: "إضافة لاعبة", editPlayer: "تعديل لاعبة", deletePlayer: "حذف لاعبة",
       addMatch: "إضافة مباراة", deleteMatch: "حذف مباراة", exportData: "تصدير البيانات",
       viewMedical: "عرض الطبي", editMedical: "تعديل الطبي", addCamps: "إدارة المعسكرات",
+      viewClubReports: "عرض تقارير النادي",
+    },
+    clubReports: {
+      tab: "النادي", logMatch: "تسجيل مباراة نادي", none: "لا توجد مباريات نادٍ مسجلة",
+      unknownOpponent: "خصم غير معروف", mins: "دقيقة", goals: "أهداف", assists: "تمريرات",
+      confirmDelete: "حذف تقرير هذه المباراة؟", opponentPh: "نادي الخصم",
+      competitionPh: "البطولة (اختياري)", resultPh: "النتيجة (مثال 2-1)",
+      notesPh: "ملاحظات (اختياري)", needOpponent: "أدخل نادي الخصم",
     },
     notifications: {
       title: "الإشعارات", allClear: "لا توجد إشعارات", cannotPlayNext: "لا يمكنها لعب المباراة القادمة",
@@ -732,6 +758,7 @@ const t = {
       pendingTitle: "المستخدمون المعلقون", awaitingReview: "بانتظار الموافقة", awaitingYourReview: "بالانتظار · بحاجة لمراجعتك",
       assignPermissions: "تحديد الصلاحيات", saveAndApprove: "حفظ والموافقة",
       active: "نشط", pending: "معلق", you: "(أنت)",
+      linkToPlayer: "ربط بلاعبة في التشكيلة", notLinked: "غير مرتبط",
     },
     camps: {
       saved: "تم حفظ المعسكر ✓", uploadError: "خطأ في الرفع", name: "الاسم", location: "المكان",

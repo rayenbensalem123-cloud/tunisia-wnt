@@ -313,6 +313,46 @@ export async function updateInjuryStatus(injuryId: number, status: 'active' | 'r
 }
 
 // ─────────────────────────────────────────────
+// CLUB MATCH REPORTS (a player's self-logged stats from matches played
+// with their CLUB, not the national team — minutes, goals, assists, cards)
+// ─────────────────────────────────────────────
+export async function fetchClubReports(memberId: number) {
+  const { data, error } = await supabase
+    .from('club_match_reports')
+    .select('*')
+    .eq('member_id', memberId)
+    .order('match_date', { ascending: false })
+  if (error) { console.error('fetchClubReports', error); return [] }
+  return data
+}
+
+export async function addClubReport(memberId: number, payload: {
+  match_date?: string; opponent?: string; competition?: string
+  minutes_played?: number; goals?: number; assists?: number
+  yellow_cards?: number; red_cards?: number; result?: string; notes?: string
+}) {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const uid = sessionData.session?.user.id || null
+  const { error } = await supabase.from('club_match_reports').insert({
+    member_id: memberId, submitted_by: uid, ...payload,
+  })
+  return { error: error?.message || null }
+}
+
+export async function deleteClubReport(id: number) {
+  const { error } = await supabase.from('club_match_reports').delete().eq('id', id)
+  return { error: error?.message || null }
+}
+
+// Admin links a player's login to the squad roster row it represents, so
+// their self-reports attach to the right person. Guarded server-side:
+// only an active admin can actually change member_id (see migration).
+export async function linkProfileToMember(username: string, memberId: number | null) {
+  const { error } = await supabase.from('profiles').update({ member_id: memberId }).eq('username', username)
+  return { error: error?.message || null }
+}
+
+// ─────────────────────────────────────────────
 // SQUAD TEMPLATES (Squad Lab — save/load formations & lineups)
 // ─────────────────────────────────────────────
 export async function fetchSquadTemplates(teamCategory: string) {

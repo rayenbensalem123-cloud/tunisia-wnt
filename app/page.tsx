@@ -24,7 +24,8 @@ import {
   fetchMembers, fetchMatches, syncMembers, syncMatches, fetchCamps, syncCamps,
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
   fetchInjuries, addInjury, updateInjuryStatus,
-  fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl
+  fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl,
+  fetchClubReports, addClubReport, deleteClubReport, linkProfileToMember
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper } from "@/components/pickers"
@@ -105,14 +106,17 @@ interface UserPerms {
   exportData: boolean
   viewMedical: boolean; editMedical: boolean
   addCamps: boolean
+  viewClubReports: boolean
 }
 interface AppUser {
   username: string; firstName: string; lastName: string; status: "active" | "pending"
   perms: UserPerms
+  role?: string
+  memberId?: number | null
 }
 
-const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false, addCamps:false }
-  const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true }
+const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false, addCamps:false, viewClubReports:false }
+  const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true, viewClubReports:true }
 
 // Maps a DB profiles row -> the shape the UI already expects
 const profileToAppUser = (p: any): AppUser => ({
@@ -121,6 +125,8 @@ const profileToAppUser = (p: any): AppUser => ({
   lastName: p.last_name,
   status: p.status,
   perms: p.permissions,
+  role: p.role,
+  memberId: p.member_id ?? null,
 })
 
 const LOGIN_AND_REGISTER_STYLE = "fed-screen min-h-screen relative overflow-hidden"
@@ -379,7 +385,7 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
 // Just the keys — the display label is looked up from tr.perms at render time
 // (this array lives outside the component, so it can't call useTranslate()).
 const PERM_KEYS: (keyof UserPerms)[] = [
-  "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps",
+  "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps","viewClubReports",
 ]
 
 // ═════════════════════════════════════════════
@@ -387,7 +393,7 @@ const PERM_KEYS: (keyof UserPerms)[] = [
 // ═════════════════════════════════════════════
 export default function EliteSquadApp() {
   const { tr, setLang, lang } = useTranslate()
-  const [user,setUser]=useState<{id:string;username:string;firstName:string;lastName:string;role:string;perms:UserPerms}|null>(null)
+  const [user,setUser]=useState<{id:string;username:string;firstName:string;lastName:string;role:string;perms:UserPerms;memberId:number|null}|null>(null)
   const [authChecked,setAuthChecked]=useState(false)
   const [buffering,setBuffering]=useState(false)
   const [leaving,setLeaving]=useState(false)
@@ -414,7 +420,7 @@ export default function EliteSquadApp() {
   const loadMyUser=async()=>{
     const profile=await fetchMyProfile()
     if(!profile||profile.status!=="active"){ setUser(null); return null }
-    const u={id:profile.id,username:profile.username,firstName:profile.first_name,lastName:profile.last_name,role:profile.role,perms:profile.permissions}
+    const u={id:profile.id,username:profile.username,firstName:profile.first_name,lastName:profile.last_name,role:profile.role,perms:profile.permissions,memberId:profile.member_id??null}
     setUser(u)
     return u
   }
@@ -429,14 +435,24 @@ export default function EliteSquadApp() {
   const reloadProfiles=async()=>{const data=await fetchAllProfiles();setRawProfiles(data)}
   const syncUsers=()=>{reloadProfiles()}
   const [selMember,setSelMember]=useState<any>(null)
-  const [profileTab,setProfileTab]=useState<"profile"|"medical"|"passport">("profile")
+  const [profileTab,setProfileTab]=useState<"profile"|"medical"|"passport"|"club">("profile")
   const [injuries,setInjuries]=useState<any[]>([])
   const [addInjuryOpen,setAddInjuryOpen]=useState(false)
   const [injForm,setInjForm]=useState({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""})
+  // Club match reports — a player's own self-logged stats from matches
+  // played with their CLUB (not the national team squad).
+  const [clubReports,setClubReports]=useState<any[]>([])
+  const [addClubReportOpen,setAddClubReportOpen]=useState(false)
+  const initClubReportForm={match_date:"",opponent:"",competition:"",minutes_played:"",goals:"",assists:"",yellow_cards:"",red_cards:"",result:"",notes:""}
+  const [clubReportForm,setClubReportForm]=useState(initClubReportForm)
+  const canSeeClubReports=(m:any)=>!!m&&(p.viewClubReports||canManageUsers||user?.memberId===m.id)
+  const canAddClubReport=(m:any)=>!!m&&(user?.memberId===m.id||canManageUsers||p.addPlayer||p.editPlayer)
   useEffect(()=>{
     setProfileTab("profile")
     if(selMember&&(p.viewMedical||canManageUsers)) fetchInjuries(selMember.id).then(setInjuries)
     else setInjuries([])
+    if(canSeeClubReports(selMember)) fetchClubReports(selMember.id).then(setClubReports)
+    else setClubReports([])
   },[selMember?.id])
   const [isFormOpen,setIsFormOpen]=useState(false)
   const [editingId,setEditingId]=useState<number|null>(null)
@@ -1209,10 +1225,11 @@ export default function EliteSquadApp() {
               <div className="pm-body pm-scroll">
 
                 {isPlayer?(
-                  (p.viewMedical||canManageUsers)&&(
+                  (p.viewMedical||canManageUsers||canSeeClubReports(selMember))&&(
                     <div className="flex gap-1 -mt-1 mb-2">
                       <button onClick={()=>setProfileTab("profile")} className={`pm-chip flex-1 justify-center ${profileTab==="profile"?'pm-chip-on':''}`}>Profile</button>
-                      <button onClick={()=>setProfileTab("medical")} className={`pm-chip flex-1 justify-center ${profileTab==="medical"?'pm-chip-on':''}`}>Medical</button>
+                      {(p.viewMedical||canManageUsers)&&<button onClick={()=>setProfileTab("medical")} className={`pm-chip flex-1 justify-center ${profileTab==="medical"?'pm-chip-on':''}`}>Medical</button>}
+                      {canSeeClubReports(selMember)&&<button onClick={()=>setProfileTab("club")} className={`pm-chip flex-1 justify-center ${profileTab==="club"?'pm-chip-on':''}`}>{tr.clubReports.tab}</button>}
                       <button onClick={()=>setProfileTab("passport")} className={`pm-chip flex-1 justify-center ${profileTab==="passport"?'pm-chip-on':''}`}>{tr.profile.passport}</button>
                     </div>
                   )
@@ -1339,6 +1356,39 @@ export default function EliteSquadApp() {
                 </section>
 
               </>)}
+
+              {profileTab==="club"&&isPlayer&&canSeeClubReports(selMember)&&(
+                <div className="space-y-2.5">
+                  {canAddClubReport(selMember)&&(
+                    <button onClick={()=>{setClubReportForm(initClubReportForm);setAddClubReportOpen(true)}} className="w-full py-2 rounded-lg border border-dashed border-[#e3062c]/40 text-[12px] font-black uppercase tracking-wider text-[#ff4f66] hover:bg-[#e3062c]/5 transition-all flex items-center justify-center gap-1.5">
+                      <Plus size={11}/>{tr.clubReports.logMatch}
+                    </button>
+                  )}
+                  {clubReports.length===0&&<p className="text-[12px] text-[var(--c-textDim)] py-6 text-center">{tr.clubReports.none}</p>}
+                  {clubReports.map((r:any)=>(
+                    <div key={r.id} className="rounded-lg border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-deep)] p-3">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-[14px] font-bold text-[var(--c-text)]">{r.opponent||tr.clubReports.unknownOpponent}</p>
+                          <p className="text-[12px] text-[var(--c-textMid)] mt-0.5">{r.match_date||""}{r.competition?` · ${r.competition}`:""}</p>
+                        </div>
+                        {r.result&&<span className="shrink-0 text-[11px] font-black uppercase px-2 py-1 rounded bg-[var(--c-surface)] text-[var(--c-textDim)] border border-[rgba(var(--line-rgb),.18)]">{r.result}</span>}
+                      </div>
+                      <div className="flex flex-wrap gap-3 mt-2 text-[12px] font-bold text-[var(--c-textMid)]">
+                        <span>{r.minutes_played??0}&apos; {tr.clubReports.mins}</span>
+                        <span className="text-[#7fd6a8]">{r.goals||0} {tr.clubReports.goals}</span>
+                        <span className="text-[#7ec3ff]">{r.assists||0} {tr.clubReports.assists}</span>
+                        {!!r.yellow_cards&&<span className="text-[#f6c744]">{r.yellow_cards} YC</span>}
+                        {!!r.red_cards&&<span className="text-[#ff5f72]">{r.red_cards} RC</span>}
+                      </div>
+                      {r.notes&&<p className="text-[12px] text-[var(--c-textMid)] mt-1.5">{r.notes}</p>}
+                      {canAddClubReport(selMember)&&(
+                        <button onClick={async()=>{if(await askConfirm(tr.clubReports.confirmDelete)){const{error}=await deleteClubReport(r.id);if(error){alert("Failed: "+error);return}fetchClubReports(selMember.id).then(setClubReports)}}} className="mt-2 text-[11px] font-black uppercase tracking-wider text-[#ff4f66] hover:underline">{tr.common.remove}</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {profileTab==="passport"&&isPlayer&&(
                 <div className="flex items-center justify-center py-4">
@@ -1522,6 +1572,72 @@ export default function EliteSquadApp() {
                 setInjForm({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""})
                 fetchInjuries(selMember.id).then(setInjuries)
               }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">Save</button>
+            </div>
+          </div>
+        </div>
+      )})()}
+
+      {addClubReportOpen&&selMember&&(()=>{
+        const setN=(k:string,v:string)=>setClubReportForm({...clubReportForm,[k]:v.replace(/[^0-9]/g,"")})
+        return(
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80">
+          <div className="w-full max-w-sm rounded-2xl bg-[var(--c-cream2)] text-zinc-900 shadow-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-black uppercase tracking-tight">{tr.clubReports.logMatch} — {selMember.name}</h2>
+              <button onClick={()=>setAddClubReportOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100"><X size={18}/></button>
+            </div>
+            <DatePicker variant="zinc" value={clubReportForm.match_date} onChange={(v)=>setClubReportForm({...clubReportForm,match_date:v})} placeholder={tr.form.date}/>
+            <input placeholder={tr.clubReports.opponentPh} value={clubReportForm.opponent} onChange={e=>setClubReportForm({...clubReportForm,opponent:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+            <div className="flex gap-2">
+              <input placeholder={tr.clubReports.competitionPh} value={clubReportForm.competition} onChange={e=>setClubReportForm({...clubReportForm,competition:e.target.value})} className="flex-1 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+              <input placeholder={tr.clubReports.resultPh} value={clubReportForm.result} onChange={e=>setClubReportForm({...clubReportForm,result:e.target.value})} className="w-24 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.mins}</p>
+                <input inputMode="numeric" placeholder="0" value={clubReportForm.minutes_played} onChange={e=>setN("minutes_played",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+              </div>
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.goals}</p>
+                <input inputMode="numeric" placeholder="0" value={clubReportForm.goals} onChange={e=>setN("goals",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+              </div>
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.assists}</p>
+                <input inputMode="numeric" placeholder="0" value={clubReportForm.assists} onChange={e=>setN("assists",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+              </div>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">YC</p>
+                  <input inputMode="numeric" placeholder="0" value={clubReportForm.yellow_cards} onChange={e=>setN("yellow_cards",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+                </div>
+                <div className="flex-1">
+                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">RC</p>
+                  <input inputMode="numeric" placeholder="0" value={clubReportForm.red_cards} onChange={e=>setN("red_cards",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+                </div>
+              </div>
+            </div>
+            <textarea placeholder={tr.clubReports.notesPh} value={clubReportForm.notes} onChange={e=>setClubReportForm({...clubReportForm,notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none resize-none"/>
+            <div className="flex gap-2 pt-1">
+              <button onClick={()=>setAddClubReportOpen(false)} className="flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">{tr.common.cancel}</button>
+              <button onClick={async()=>{
+                if(!clubReportForm.opponent.trim()){alert(tr.clubReports.needOpponent);return}
+                const {error}=await addClubReport(selMember.id,{
+                  match_date:clubReportForm.match_date||undefined,
+                  opponent:clubReportForm.opponent.trim(),
+                  competition:clubReportForm.competition.trim()||undefined,
+                  minutes_played:clubReportForm.minutes_played?parseInt(clubReportForm.minutes_played,10):undefined,
+                  goals:clubReportForm.goals?parseInt(clubReportForm.goals,10):0,
+                  assists:clubReportForm.assists?parseInt(clubReportForm.assists,10):0,
+                  yellow_cards:clubReportForm.yellow_cards?parseInt(clubReportForm.yellow_cards,10):0,
+                  red_cards:clubReportForm.red_cards?parseInt(clubReportForm.red_cards,10):0,
+                  result:clubReportForm.result.trim()||undefined,
+                  notes:clubReportForm.notes.trim()||undefined,
+                })
+                if(error){alert("Failed: "+error);return}
+                setAddClubReportOpen(false)
+                setClubReportForm(initClubReportForm)
+                fetchClubReports(selMember.id).then(setClubReports)
+              }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">{tr.common.save}</button>
             </div>
           </div>
         </div>
@@ -1835,6 +1951,18 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                             </button>
                           )
                         })}
+          </div>
+        )}
+        {canManageUsers&&u.role==="player"&&(
+          <div className="mt-2 pt-2 border-t border-zinc-200">
+            <p className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.users.linkToPlayer}</p>
+            <Select
+              variant="zinc"
+              value={u.memberId?String(u.memberId):""}
+              onChange={(v)=>{linkProfileToMember(u.username,v?parseInt(v,10):null).then(reloadProfiles)}}
+              placeholder={tr.users.notLinked}
+              options={members.filter((m:any)=>m.role==="PLAYERS").sort((a:any,b:any)=>a.name.localeCompare(b.name)).map((m:any)=>({value:String(m.id),label:m.name}))}
+            />
           </div>
         )}
       </div>
