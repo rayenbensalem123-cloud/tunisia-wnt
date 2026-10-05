@@ -344,14 +344,6 @@ export async function deleteClubReport(id: number) {
   return { error: error?.message || null }
 }
 
-// Admin links a player's login to the squad roster row it represents, so
-// their self-reports attach to the right person. Guarded server-side:
-// only an active admin can actually change member_id (see migration).
-export async function linkProfileToMember(username: string, memberId: number | null) {
-  const { error } = await supabase.from('profiles').update({ member_id: memberId }).eq('username', username)
-  return { error: error?.message || null }
-}
-
 // ─────────────────────────────────────────────
 // SQUAD TEMPLATES (Squad Lab — save/load formations & lineups)
 // ─────────────────────────────────────────────
@@ -403,6 +395,16 @@ export async function updateProfile(username: string, patch: any) {
   return { error }
 }
 
+/**
+ * Point an account at its own player card. Admin-only: the
+ * guard_profile_privileges trigger refuses member_id changes from
+ * anyone who is not an active admin.
+ * Pass null to unlink.
+ */
+export async function linkProfileToMember(username: string, memberId: number | null) {
+  return updateProfile(username, { member_id: memberId })
+}
+
 export async function deleteProfile(username: string) {
   const { error } = await supabase.from('profiles').delete().eq('username', username)
   return { error }
@@ -426,11 +428,14 @@ export async function deleteProfile(username: string) {
 export async function fetchMembers() {
   const { data: sessionData } = await supabase.auth.getSession()
   if (sessionData.session) {
+    // RLS decides what this caller may see: a 'player' account gets only the
+    // row linked to it, staff/admin get the whole table. There is deliberately
+    // NO fallback to squad_public here. That view reads as its owner, so the
+    // table's RLS is not re-applied through it — falling back would hand a
+    // player the entire roster.
     const { data, error } = await supabase.from('members').select('*')
-    if (!error && (data?.length ?? 0) > 0) return (data ?? []).map(memberFromDb)
-    // Zero rows for a signed-in caller means the account is not approved yet
-    // (status <> 'active'). RLS is doing its job; fall through so the public
-    // roster still renders read-only.
+    if (error) { console.error('fetchMembers', error); return [] }
+    return (data ?? []).map(memberFromDb)
   }
   const { data, error } = await supabase.from('squad_public').select('*')
   if (error) { console.error('fetchMembers', error); return [] }

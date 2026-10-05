@@ -5,7 +5,7 @@ import {
   LogOut, Goal, History, Trash2, Trophy,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase, BriefcaseBusiness,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange, Minus
+  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange, Minus, Gamepad2
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
@@ -28,7 +28,13 @@ import {
   fetchClubReports, addClubReport, deleteClubReport, linkProfileToMember
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
-import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper } from "@/components/pickers"
+import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
+import { cleanEventMinutes } from "@/lib/bingo-logic"
+import { WhoAmI } from "@/components/games/who-am-i"
+import { MatchBingo } from "@/components/games/match-bingo"
+import { GameErrorBoundary } from "@/components/games/error-boundary"
+import { SoundToggle } from "@/components/games/fx"
+import { GS as GAME_STRINGS } from "@/components/games/strings"
 
 // ─────────────────────────────────────────────
 // CONSTANTS
@@ -110,23 +116,23 @@ interface UserPerms {
 }
 interface AppUser {
   username: string; firstName: string; lastName: string; status: "active" | "pending"
+  role: string
+  memberId: number | null   // the player card this account is linked to
   perms: UserPerms
-  role?: string
-  memberId?: number | null
 }
 
 const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false, addCamps:false, viewClubReports:false }
-  const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true, viewClubReports:true }
+const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true, viewClubReports:true }
 
 // Maps a DB profiles row -> the shape the UI already expects
 const profileToAppUser = (p: any): AppUser => ({
   username: p.username,
   firstName: p.first_name,
   lastName: p.last_name,
-  status: p.status,
-  perms: p.permissions,
   role: p.role,
   memberId: p.member_id ?? null,
+  status: p.status,
+  perms: p.permissions,
 })
 
 const LOGIN_AND_REGISTER_STYLE = "fed-screen min-h-screen relative overflow-hidden"
@@ -137,6 +143,8 @@ const B_FIELD_KEY = "w-full rounded-xl border border-white/15 bg-black/25 pl-11 
 const B_BTN = "mt-5 w-full rounded-xl bg-gradient-to-r from-[#e3062c] to-[#8f0319] py-3.5 text-[10px] font-black uppercase tracking-[.2em] text-white shadow-lg shadow-[#e3062c]/30 hover:shadow-[#e3062c]/50 transition-all disabled:opacity-45"
 
 // ── Header & menu button styles (unified navy/gold) ──
+// Small "23'" chip for a recorded event minute (nothing is shown for older matches without minutes)
+const minuteChip=(m:any,k:string)=>m?.eventMinutes?.[k]!=null?<span className="px-1.5 py-0.5 rounded bg-[var(--c-panel4)] text-[9px] font-black text-[var(--c-text)]">{m.eventMinutes[k]}{"'"}</span>:null
 const HEADER_BTN = "flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] whitespace-nowrap"
 const HEADER_ICON_BTN = "p-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)]"
 
@@ -449,7 +457,10 @@ export default function EliteSquadApp() {
   const canAddClubReport=(m:any)=>!!m&&(user?.memberId===m.id||canManageUsers||p.addPlayer||p.editPlayer)
   useEffect(()=>{
     setProfileTab("profile")
-    if(selMember&&(p.viewMedical||canManageUsers)) fetchInjuries(selMember.id).then(setInjuries)
+    // canSeePrivate, not a bare role check: a player opening a teammate's card
+    // must not pull that player's injuries. RLS would return nothing anyway,
+    // but not asking keeps the answer honest if the policy is ever widened.
+    if(selMember&&canSeePrivate(selMember)) fetchInjuries(selMember.id).then(setInjuries)
     else setInjuries([])
     if(canSeeClubReports(selMember)) fetchClubReports(selMember.id).then(setClubReports)
     else setClubReports([])
@@ -476,6 +487,8 @@ export default function EliteSquadApp() {
   const [activityLog,setActivityLog]=useState<any[]>([])
   const [newsOpen,setNewsOpen]=useState(false)
   const [upcomingOpen,setUpcomingOpen]=useState(false)
+  const [gamesOpen,setGamesOpen]=useState(false)
+  const [gameTab,setGameTab]=useState<"bingo"|"whoami">("bingo")
   const [newsItems,setNewsItems]=useState<any[]|null>(null)
   const [newsLoading,setNewsLoading]=useState(false)
   const [pendingReviewOpen,setPendingReviewOpen]=useState(false)
@@ -495,11 +508,26 @@ export default function EliteSquadApp() {
 
   const initForm={name:"",club:"",position:"",image:"",passportImage:"",jerseyNumber:"",camps:[],natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",bioQuote:"",leagueRegion:"",dualNationality:false,secondNationality:""}
   const [form,setForm]=useState<any>(initForm)
-  const initMatch={opponent:"",date:"",result:"",venue:"",competition:"",squad:[] as number[],scorers:[] as {playerId:number,goals:number}[],yellowCards:[] as number[],redCards:[] as number[],subs:[] as {out:number;in:number}[],notes:"",opponentSquad:[] as string[],opponentScorers:[] as {name:string,goals:number}[],opponentYellowCards:[] as string[],opponentRedCards:[] as string[],opponentSubs:[] as {out:string;in:string}[],tunisiaPossession:"",opponentPossession:"",tunisiaShots:"",opponentShots:"",tunisiaShotsOnTarget:"",opponentShotsOnTarget:"",tunisiaCorners:"",opponentCorners:"",tunisiaFouls:"",opponentFouls:""}
+  const initMatch={opponent:"",date:"",result:"",venue:"",competition:"",squad:[] as number[],scorers:[] as {playerId:number,goals:number}[],yellowCards:[] as number[],redCards:[] as number[],subs:[] as {out:number;in:number}[],notes:"",opponentSquad:[] as string[],opponentScorers:[] as {name:string,goals:number}[],opponentYellowCards:[] as string[],opponentRedCards:[] as string[],opponentSubs:[] as {out:string;in:string}[],tunisiaPossession:"",opponentPossession:"",tunisiaShots:"",opponentShots:"",tunisiaShotsOnTarget:"",opponentShotsOnTarget:"",tunisiaCorners:"",opponentCorners:"",tunisiaFouls:"",opponentFouls:"",eventMinutes:{} as Record<string,number>}
   const countryFlags:Record<string,string>={"Tunisia":"tn","Algeria":"dz","Egypt":"eg","Morocco":"ma","Senegal":"sn","Nigeria":"ng","Cameroon":"cm","Ghana":"gh","Ivory Coast":"ci","Côte d'Ivoire":"ci","Cote d'Ivoire":"ci","Mali":"ml","Burkina Faso":"bf","South Africa":"za","DR Congo":"cd","DRC":"cd","Congo":"cg","Zambia":"zm","Equatorial Guinea":"gq","Guinea":"gn","Guinea-Bissau":"gw","Benin":"bj","Togo":"tg","Sierra Leone":"sl","Liberia":"lr","Sudan":"sd","South Sudan":"ss","Uganda":"ug","Kenya":"ke","Tanzania":"tz","Rwanda":"rw","Burundi":"bi","Ethiopia":"et","Eritrea":"er","Somalia":"so","Angola":"ao","Namibia":"na","Botswana":"bw","Zimbabwe":"zw","Mozambique":"mz","Malawi":"mw","Lesotho":"ls","Eswatini":"sz","Madagascar":"mg","Mauritius":"mu","Cape Verde":"cv","Mauritania":"mr","Gambia":"gm","Gabon":"ga","Chad":"td","Niger":"ne","Libya":"ly","France":"fr","England":"gb-eng","Spain":"es","Germany":"de","Italy":"it","Netherlands":"nl","Portugal":"pt","Belgium":"be","Croatia":"hr","Switzerland":"ch","Sweden":"se","Denmark":"dk","Norway":"no","Poland":"pl","Brazil":"br","Argentina":"ar","Uruguay":"uy","Colombia":"co","Chile":"cl","Peru":"pe","Ecuador":"ec","Mexico":"mx","USA":"us","United States":"us","Canada":"ca","Japan":"jp","South Korea":"kr","Korea Republic":"kr","Saudi Arabia":"sa","Iran":"ir","Australia":"au","New Zealand":"nz"}
   const [matchForm,setMatchForm]=useState<any>(initMatch)
 
   const [loaded,setLoaded]=useState(false)
+
+  // Medical history and passport scans are private per-card data. A 'player'
+  // account sees the whole squad but may open these on its OWN linked card
+  // only; staff need the viewMedical flag; admins always may. Every read path
+  // for this data goes through here -- the tab bar, the injuries fetch, and
+  // both places a passport signed URL is minted. RLS enforces the same rule
+  // for injuries; the passport rule is storage-side and has no equivalent, so
+  // this guard is the only thing stopping a hover from exposing a teammate's
+  // identity document.
+  const canSeePrivate=(m:any)=>{
+    if(!m||!user)return false
+    if(user.role==="admin")return true
+    if(user.role==="player")return !!user.memberId&&m.id===user.memberId
+    return !!user.perms?.viewMedical
+  }
 
   // Private-bucket images: mint short-lived signed URLs with the signed-in
   // user's own session. An <img> tag cannot send an Authorization header, so
@@ -519,12 +547,13 @@ export default function EliteSquadApp() {
   // signedImageUrl caches per path, so re-opening a card is instant.
   useEffect(()=>{
     if(!user)return
+    if(!canSeePrivate(selMember))return
     const p=String(selMember?.passportImage||"")
     if(!p||p.startsWith("data:")||p.startsWith("blob:"))return
     let alive=true
     signedImageUrl(p).then(u=>{if(alive&&u)setImgUrls(prev=>(prev[p]?prev:{...prev,[p]:u}))})
     return ()=>{alive=false}
-  },[user,selMember?.passportImage])
+  },[user,selMember?.passportImage,selMember?.id,canSeePrivate(selMember)])
 
   // Hover intent. Pointing at a card is the only moment we know which passport
   // is about to be wanted, and it arrives a few hundred ms before the click --
@@ -538,6 +567,10 @@ export default function EliteSquadApp() {
   const warming=useRef<Set<string>>(new Set())
   const prefetchPassport=(m:any)=>{
     if(!user)return
+    // Same rule as the open-card effect above: never mint a passport URL the
+    // viewer is not allowed to see, or a plain hover would hand a player the
+    // signed URL of a teammate's identity document.
+    if(!canSeePrivate(m))return
     const p=String(m?.passportImage||"")
     if(!p||p.startsWith("data:")||p.startsWith("blob:")||warming.current.has(p))return
     warming.current.add(p)
@@ -754,7 +787,7 @@ export default function EliteSquadApp() {
   const saveMatch=(e:React.FormEvent)=>{
     e.preventDefault()
     const id=Date.now()
-    const newMatch={...matchForm,id,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username}
+    const newMatch={...matchForm,eventMinutes:cleanEventMinutes(matchForm),id,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username}
     setMatches(p=>[...p,newMatch])
     if(canManageUsers) approveMatch(newMatch)
     setIsMatchOpen(false); setMatchForm(initMatch)
@@ -770,6 +803,7 @@ export default function EliteSquadApp() {
   const undoSub=(id:number,isIn:boolean)=>setMatchForm((p:any)=>{const ms=isIn?p.subs.find((s:any)=>s["in"]===id):p.subs.find((s:any)=>s.out===id);if(!ms)return p;return{...p,squad:p.squad.map((x:number)=>x===ms.out?ms["in"]:x===ms["in"]?ms.out:x),subs:p.subs.filter((s:any)=>s.out!==ms.out||s["in"]!==ms["in"])}})
   const editGoals=(id:number,delta:number)=>setMatchForm((p:any)=>{const g=(p.scorers.find((s:any)=>s.playerId===id)?.goals||0)+delta;if(g<=0)return{...p,scorers:p.scorers.filter((s:any)=>s.playerId!==id)};if(p.scorers.find((s:any)=>s.playerId===id))return{...p,scorers:p.scorers.map((s:any)=>s.playerId===id?{...s,goals:g}:s)};return{...p,scorers:[...p.scorers,{playerId:id,goals:g}]}})
   const removeGoal=(id:number)=>setMatchForm((p:any)=>({...p,scorers:p.scorers.filter((s:any)=>s.playerId!==id)}))
+  const setMinute=(k:string,v:number|undefined)=>setMatchForm((p:any)=>{const em={...(p.eventMinutes||{})};if(v===undefined)delete em[k];else em[k]=v;return{...p,eventMinutes:em}})
   const toggleYellow=(id:number)=>setMatchForm((p:any)=>({...p,yellowCards:p.yellowCards.includes(id)?p.yellowCards.filter((x:number)=>x!==id):[...p.yellowCards,id]}))
   const toggleRed=(id:number)=>setMatchForm((p:any)=>({...p,redCards:p.redCards.includes(id)?p.redCards.filter((x:number)=>x!==id):[...p.redCards,id]}))
   const NumBox=({value,set,align,max=99}:{value:string;set:(v:string)=>void;align?:"l"|"r";max?:number})=>(
@@ -955,6 +989,9 @@ export default function EliteSquadApp() {
             </button>}
             {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className={HEADER_BTN}>
               <Calendar size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">Schedule Match</span>
+            </button>}
+            {user&&<button onClick={()=>setGamesOpen(true)} title={GAME_STRINGS[lang].gamesTitle} className={HEADER_BTN}>
+              <Gamepad2 size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">{GAME_STRINGS[lang].gamesTitle}</span>
             </button>}
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
             <ThemeToggle className="p-2.5"/>
@@ -1225,10 +1262,10 @@ export default function EliteSquadApp() {
               <div className="pm-body pm-scroll">
 
                 {isPlayer?(
-                  (p.viewMedical||canManageUsers||canSeeClubReports(selMember))&&(
+                  (canSeePrivate(selMember)||canSeeClubReports(selMember))&&(
                     <div className="flex gap-1 -mt-1 mb-2">
                       <button onClick={()=>setProfileTab("profile")} className={`pm-chip flex-1 justify-center ${profileTab==="profile"?'pm-chip-on':''}`}>Profile</button>
-                      {(p.viewMedical||canManageUsers)&&<button onClick={()=>setProfileTab("medical")} className={`pm-chip flex-1 justify-center ${profileTab==="medical"?'pm-chip-on':''}`}>Medical</button>}
+                      {canSeePrivate(selMember)&&<button onClick={()=>setProfileTab("medical")} className={`pm-chip flex-1 justify-center ${profileTab==="medical"?'pm-chip-on':''}`}>Medical</button>}
                       {canSeeClubReports(selMember)&&<button onClick={()=>setProfileTab("club")} className={`pm-chip flex-1 justify-center ${profileTab==="club"?'pm-chip-on':''}`}>{tr.clubReports.tab}</button>}
                       <button onClick={()=>setProfileTab("passport")} className={`pm-chip flex-1 justify-center ${profileTab==="passport"?'pm-chip-on':''}`}>{tr.profile.passport}</button>
                     </div>
@@ -1925,6 +1962,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 const approveUser=()=>{
                   updateProfile(u.username,{status:"active"}).then(reloadProfiles)
                 }
+                const linkedMember=members.find((m:any)=>m.id===u.memberId)
                 return(
                   <div key={i} className="p-3 rounded-xl border border-zinc-200 bg-zinc-50">
                     <div className="flex items-center justify-between mb-2">
@@ -1940,7 +1978,29 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                         </>)}
                       </div>
                     </div>
-                    {canManageUsers&&(
+                    {/* LINKED CARD — a 'player' account sees only this one row */}
+                    {canManageUsers&&u.role==="player"&&(
+                      <div className="mt-2 pt-2 border-t border-zinc-200">
+                        <p className="text-[6px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1.5">Linked player card</p>
+                        <div className="flex items-center gap-2">
+                          <select
+                            value={u.memberId??""}
+                            onChange={e=>linkProfileToMember(u.username, e.target.value?Number(e.target.value):null).then(reloadProfiles)}
+                            className="flex-1 min-w-0 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[8px] font-black uppercase tracking-wider text-zinc-700 outline-none focus:border-[#E30613]/60"
+                          >
+                            <option value="">— not linked —</option>
+                            {members.map((m:any)=>(
+                              <option key={m.id} value={m.id}>{m.name} · {m.teamCategory||"—"}{m.position?` · ${m.position}`:""}</option>
+                            ))}
+                          </select>
+                          {linkedMember&&(
+                            <button onClick={()=>setSelMember(linkedMember)} className="shrink-0 px-2.5 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">View</button>
+                          )}
+                        </div>
+                        {!u.memberId&&<p className="mt-1.5 text-[6px] font-bold uppercase tracking-wider text-[#E30613]">This player sees nothing until a card is linked</p>}
+                      </div>
+                    )}
+                    {canManageUsers&&u.role!=="player"&&(
                       <div className="flex flex-wrap gap-1.5 mt-1">
                         {PERM_KEYS.map((key)=>{
                           const on=u.perms[key]
@@ -1951,21 +2011,9 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                             </button>
                           )
                         })}
-          </div>
-        )}
-        {canManageUsers&&u.role==="player"&&(
-          <div className="mt-2 pt-2 border-t border-zinc-200">
-            <p className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.users.linkToPlayer}</p>
-            <Select
-              variant="zinc"
-              value={u.memberId?String(u.memberId):""}
-              onChange={(v)=>{linkProfileToMember(u.username,v?parseInt(v,10):null).then(reloadProfiles)}}
-              placeholder={tr.users.notLinked}
-              options={members.filter((m:any)=>m.role==="PLAYERS").sort((a:any,b:any)=>a.name.localeCompare(b.name)).map((m:any)=>({value:String(m.id),label:m.name}))}
-            />
-          </div>
-        )}
-      </div>
+                      </div>
+                    )}
+                  </div>
                 )
               })}
             </div>
@@ -2048,6 +2096,47 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
       {/* ═══════════════════════════════════════════
           UPCOMING MATCHES — its own special, featured space
       ═══════════════════════════════════════════ */}
+      {gamesOpen&&user&&(()=>{
+        const G=GAME_STRINGS[lang]
+        const catPlayersForGames=members.filter((m:any)=>m.role==="PLAYERS"&&m.teamCategory===teamCat)
+        const catMatchesForGames=matches.filter((m:any)=>m.teamCategory===teamCat)
+        const gameUser={id:user.id,username:user.username}
+        return(
+          <div className="pm-backdrop" style={{zIndex:350}} onClick={()=>setGamesOpen(false)}>
+            <div className="pm-panel pm-panel-md" onClick={e=>e.stopPropagation()}>
+              <div className="pm-head">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-[#f6c744]/12 border border-[#f6c744]/35 flex items-center justify-center">
+                    <Gamepad2 size={14} className="text-[#f6c744]"/>
+                  </div>
+                  <div>
+                    <span className="pm-title block">{G.gamesTitle}</span>
+                    <span className="block text-[8px] font-bold uppercase tracking-wider text-[var(--c-textFaint)] mt-0.5">{G.gamesSub}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <SoundToggle onLabel={G.soundOn} offLabel={G.soundOff}/>
+                  <button onClick={()=>setGamesOpen(false)} className="pm-close"><X size={14}/></button>
+                </div>
+              </div>
+              <div className="pm-body">
+                <div className="flex gap-1.5 mb-4">
+                  {([["bingo",G.bgTitle],["whoami",G.waTitle]] as ["bingo"|"whoami",string][]).map(([k,label])=>(
+                    <button key={k} onClick={()=>setGameTab(k)}
+                      className={`flex-1 px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${gameTab===k?"bg-[#E30613]/12 border-[#E30613]/60 text-[#E30613]":"bg-[var(--c-panel4)] border-[rgba(var(--line-rgb),.16)] text-[var(--c-textMid)] hover:text-[var(--c-text)]"}`}>{label}</button>
+                  ))}
+                </div>
+                <GameErrorBoundary key={gameTab} message="This game hit a problem. Close and reopen Games to try again.">
+                  {gameTab==="bingo"
+                    ?<MatchBingo matches={catMatchesForGames} user={gameUser} lang={lang}/>
+                    :<WhoAmI players={catPlayersForGames} user={gameUser} lang={lang} getImage={(m:any)=>getImageSrc(m,imgUrls)}/>}
+                </GameErrorBoundary>
+              </div>
+            </div>
+          </div>
+        )
+      })()}
+
       {upcomingOpen&&(()=>{
         const today=new Date().toISOString().slice(0,10)
         const upcoming=matches.filter((m:any)=>m.date&&m.date>=today&&!m.result).sort((a:any,b:any)=>a.date.localeCompare(b.date))
@@ -2468,7 +2557,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           const pl=members.find((m:any)=>m.id===s.playerId)
                           if(!pl)return null
                           return(
-                            <div key={s.playerId} className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-[#7fd6a8]/15 group">
+                            <div key={s.playerId} className="flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-[#7fd6a8]/15 group">
                               <span className="font-bold text-xs flex-1 text-zinc-800">{pl.name}</span>
                               <div className="flex items-center gap-1">
                                 <span onClick={()=>editGoals(pl.id,-1)} className={`w-4 h-4 rounded flex items-center justify-center text-[9px] font-black cursor-pointer ${s.goals>1?'bg-[#7fd6a8]/25 text-[#7fd6a8]':'text-[#7fd6a8]/30'}`}>–</span>
@@ -2476,6 +2565,9 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                                 <span onClick={()=>editGoals(pl.id,1)} className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-black cursor-pointer bg-[#7fd6a8]/25 text-[#7fd6a8]">+</span>
                               </div>
                               <button onClick={()=>removeGoal(pl.id)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
+                              <div className="basis-full flex flex-wrap items-center gap-1.5">
+                                {Array.from({length:s.goals}).map((_,gi)=>(<MinuteBox key={gi} label={s.goals>1?`#${gi+1}`:"Min"} title="Minute of the goal" value={matchForm.eventMinutes?.[`g:${s.playerId}:${gi+1}`]} onChange={v=>setMinute(`g:${s.playerId}:${gi+1}`,v)}/>))}
+                              </div>
                             </div>
                           )
                         })}
@@ -2491,6 +2583,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           return(
                             <span key={"y"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#f6c744]/25 text-[10px] font-bold group">
                               <span className="w-3 h-4 rounded-[2px] bg-yellow-400"/> {pl.name.split(' ').slice(-1)}
+                              <MinuteBox title="Minute of the yellow card" value={matchForm.eventMinutes?.[`y:${pid}`]} onChange={v=>setMinute(`y:${pid}`,v)}/>
                               <button onClick={()=>toggleYellow(pid)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </span>
                           )
@@ -2501,6 +2594,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           return(
                             <span key={"r"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#e3062c]/30 text-[10px] font-bold group">
                               <span className="w-3 h-4 rounded-[2px] bg-red-600"/> {pl.name.split(' ').slice(-1)}
+                              <MinuteBox title="Minute of the red card" value={matchForm.eventMinutes?.[`r:${pid}`]} onChange={v=>setMinute(`r:${pid}`,v)}/>
                               <button onClick={()=>toggleRed(pid)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </span>
                           )
@@ -2519,6 +2613,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <span className="text-red-500 line-through">{on}</span>
                               <span className="text-zinc-300">→</span>
                               <span className="text-[#7fd6a8]">{inn}</span>
+                              <MinuteBox title="Minute of the substitution" value={matchForm.eventMinutes?.[`s:${s.out}:${s["in"]}`]} onChange={v=>setMinute(`s:${s.out}:${s["in"]}`,v)}/>
                               <button onClick={()=>removeSub(i)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                             </div>
                           )
@@ -2805,7 +2900,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <div key={`g-${s.playerId}-${gi}`} className="flex items-center gap-3 pl-0 relative">
                                 <div className="w-[19px] h-[19px] rounded-full bg-[#f6c744]/15 border-2 border-[#f6c744] flex items-center justify-center shrink-0 z-10 text-[9px]">⚽</div>
                                 <span className="font-bold text-xs text-zinc-800">{pl.name}</span>
-                                <span className="text-[7px] font-bold text-[#f6c744] ml-auto uppercase tracking-wider">Goal</span>
+                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`g:${s.playerId}:${gi+1}`)}<span className="text-[7px] font-bold text-[#f6c744] uppercase tracking-wider">Goal</span></span>
                               </div>
                             ))
                           }).flat()}
@@ -2816,7 +2911,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <div key={`y-${pid}`} className="flex items-center gap-3 pl-0 relative">
                                 <div className="w-[19px] h-[19px] rounded-full bg-[#f6c744]/10 border-2 border-[#f6c744]/60 shrink-0 z-10"/>
                                 <span className="font-bold text-xs text-zinc-800">{pl.name}</span>
-                                <span className="text-[7px] font-bold text-[#f6c744] ml-auto uppercase tracking-wider">Yellow</span>
+                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`y:${pid}`)}<span className="text-[7px] font-bold text-[#f6c744] uppercase tracking-wider">Yellow</span></span>
                               </div>
                             )
                           })}
@@ -2827,7 +2922,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <div key={`r-${pid}`} className="flex items-center gap-3 pl-0 relative">
                                 <div className="w-[19px] h-[19px] rounded-full bg-[#e3062c]/15 border-2 border-[#e3062c] shrink-0 z-10"/>
                                 <span className="font-bold text-xs text-zinc-800">{pl.name}</span>
-                                <span className="text-[7px] font-bold text-[#ff4f66] ml-auto uppercase tracking-wider">Red</span>
+                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`r:${pid}`)}<span className="text-[7px] font-bold text-[#ff4f66] uppercase tracking-wider">Red</span></span>
                               </div>
                             )
                           })}
@@ -2838,7 +2933,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <div key={`s-${i}`} className="flex items-center gap-3 pl-0 relative">
                                 <div className="w-[19px] h-[19px] rounded-full bg-[var(--c-blue)]/20 border-2 border-[var(--c-blue)] flex items-center justify-center shrink-0 z-10 text-[9px]">↔</div>
                                 <span className="font-bold text-xs text-zinc-800"><span className="text-[#ff4f66] line-through">{on}</span> → <span className="text-[#7fd6a8]">{inn}</span></span>
-                                <span className="text-[7px] font-bold text-[var(--c-blueSoft)] ml-auto uppercase tracking-wider">Sub</span>
+                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`s:${s.out}:${s["in"]}`)}<span className="text-[7px] font-bold text-[var(--c-blueSoft)] uppercase tracking-wider">Sub</span></span>
                               </div>
                             )
                           })}

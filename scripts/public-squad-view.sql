@@ -28,8 +28,14 @@ CREATE OR REPLACE VIEW public.squad_public AS
 -- SELECT only. A view is updatable by default, so granting anything else here
 -- would let a write reach the table through it. Revoke first so re-running
 -- this cannot leave an earlier, wider grant behind.
+--
+-- anon ONLY. The view reads as its owner (postgres), so the table's RLS is not
+-- re-applied through it — granting it to `authenticated` would publish the
+-- entire roster to every logged-in account, including 'player' accounts that
+-- are only supposed to see their own card. Signed-in callers read `members`,
+-- where RLS does apply. See supabase-player-accounts.sql.
 REVOKE ALL ON public.squad_public FROM anon, authenticated;
-GRANT SELECT ON public.squad_public TO anon, authenticated;
+GRANT SELECT ON public.squad_public TO anon;
 
 -- Fail loudly if the table ever regains a public read policy: this view only
 -- stays safe while the table behind it is closed.

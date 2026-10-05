@@ -30,6 +30,42 @@ function safeKey(p: string): boolean {
   return /^[A-Za-z0-9._/-]+$/.test(p) && !p.includes('..') && !p.startsWith('/')
 }
 
+// A passport scan belongs to exactly one member. The storage policy refuses to
+// sign anybody else's, so RLS is the real enforcement -- but this route takes a
+// caller-supplied path and signs as that caller, so it is worth deciding here
+// too: it keeps a path leaked out of the members table from being sufficient
+// on its own, and puts the rule in one readable place.
+//
+// Everything that is not a passport (squad photos, camp photos, camp reports)
+// stays readable by any active account. A player reads its own passport and
+// nobody else's; staff need viewMedical; admins have it implicitly.
+async function mayReadObject(
+  c: ReturnType<typeof userClient>,
+  userId: string,
+  path: string
+): Promise<boolean> {
+  const { data: prof } = await c
+    .from('profiles')
+    .select('role, permissions, member_id')
+    .eq('id', userId)
+    .maybeSingle()
+  if (!prof) return false
+  // Mirror has_permission(), which compares `permissions ->> perm` to the
+  // string 'true'. jsonb normally holds a real boolean here, but a quoted
+  // "true" would silently deny staff the passport tab rather than allow it.
+  const vm = prof.permissions?.viewMedical as boolean | string | undefined
+  if (prof.role === 'admin' || vm === true || vm === 'true') return true
+
+  const { data: owners } = await c
+    .from('members')
+    .select('id')
+    .eq('passport_image', path)
+    .limit(1)
+  const owner = owners?.[0]
+  if (!owner) return true // not a passport
+  return prof.role === 'player' && prof.member_id != null && prof.member_id === owner.id
+}
+
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url)
   const path = searchParams.get('path')
@@ -64,6 +100,11 @@ export async function GET(req: Request) {
   const asCaller = userClient(token)
   const { data: userData, error: userErr } = await asCaller.auth.getUser(token)
   if (userErr || !userData?.user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
+
+  if (!(await mayReadObject(asCaller, userData.user.id, path))) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
+
   const cacheKey = `${userData.user.id}:${path}`
 
   const hit = signedCache.get(cacheKey)
