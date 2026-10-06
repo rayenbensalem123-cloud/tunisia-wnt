@@ -10,9 +10,16 @@ type Props = {
   teamCat: string | null
   onImport: (data: { members: any[]; matches: any[] }) => void
   onImportPlayers?: (rows: { name: string; team?: string; camp?: string }[]) => void
+  camps?: any[]
+  // Fetched on demand (not pre-loaded into app state) so the full backup
+  // stays cheap for callers who never open this menu. Omit either to leave
+  // that data out of the backup — e.g. a non-medical exporter never gets
+  // the injuries fetcher passed in, so it's just absent from the file.
+  fetchInjuriesAll?: () => Promise<any[]>
+  fetchClubReportsAll?: () => Promise<any[]>
 }
 
-export function ExportTools({ members, matches, teamCat, onImport, onImportPlayers }: Props) {
+export function ExportTools({ members, matches, teamCat, onImport, onImportPlayers, camps, fetchInjuriesAll, fetchClubReportsAll }: Props) {
   const { tr } = useTranslate()
   const [open, setOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
@@ -26,11 +33,11 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
   const catMembers = members.filter(m => m.teamCategory === teamCat)
 
   const exportCSV = () => {
-    const headers = ["Name", "Position", "Club", "Age", "Caps", "Goals", "Assists", "Yellow Cards", "Red Cards", "Suspended"]
+    const headers = ["Name", "Position", "Club", "Age", "Caps", "Goals", "Assists", "Yellow Cards", "Red Cards", "Suspended", "FIFA Connect ID"]
     const rows = catMembers.map((m: any) => [
       m.name, m.position, m.club, m.birthdate ? calculateAge(m.birthdate) : "N/A",
       m.natMatches || "0", m.goals || "0", m.assists || "0",
-      m.yellowCards || 0, m.redCards || 0, m.suspended ? "YES" : "NO"
+      m.yellowCards || 0, m.redCards || 0, m.suspended ? "YES" : "NO", m.fifaConnectId || ""
     ])
     const csv = [headers.join(","), ...rows.map(r => r.map((v: any) => `"${v}"`).join(","))].join("\n")
     download(csv, `squad-${teamCat}-${new Date().toISOString().split("T")[0]}.csv`, "text/csv")
@@ -46,13 +53,37 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
     download(JSON.stringify(data, null, 2), `squad-backup-${new Date().toISOString().split("T")[0]}.json`, "application/json")
   }
 
-  const exportFullJSON = () => {
-    const data = {
+  const exportFullJSON = async () => {
+    setBusy(true)
+    const [injuries, clubReports] = await Promise.all([
+      fetchInjuriesAll ? fetchInjuriesAll() : Promise.resolve(undefined),
+      fetchClubReportsAll ? fetchClubReportsAll() : Promise.resolve(undefined),
+    ])
+    const data: any = {
       exportedAt: new Date().toISOString(),
       members,
       matches,
+      camps: camps || [],
     }
+    if (injuries) data.injuries = injuries
+    if (clubReports) data.clubMatchReports = clubReports
+    setBusy(false)
     download(JSON.stringify(data, null, 2), `full-backup-${new Date().toISOString().split("T")[0]}.json`, "application/json")
+  }
+
+  const exportClubReportsCSV = async () => {
+    if (!fetchClubReportsAll) return
+    setBusy(true)
+    const reports = await fetchClubReportsAll()
+    setBusy(false)
+    const byId = new Map(members.map((m: any) => [m.id, m.name]))
+    const headers = ["Player", "Date", "Opponent", "Competition", "Minutes", "Goals", "Assists", "Yellow Cards", "Red Cards", "Result", "Notes"]
+    const rows = reports.map((r: any) => [
+      byId.get(r.member_id) || r.member_id, r.match_date || "", r.opponent || "", r.competition || "",
+      r.minutes_played ?? "", r.goals ?? 0, r.assists ?? 0, r.yellow_cards ?? 0, r.red_cards ?? 0, r.result || "", r.notes || "",
+    ])
+    const csv = [headers.join(","), ...rows.map((r: any) => r.map((v: any) => `"${String(v).replace(/"/g, '""')}"`).join(","))].join("\n")
+    download(csv, `club-match-reports-${new Date().toISOString().split("T")[0]}.csv`, "text/csv")
   }
 
   const handlePrint = () => {
@@ -130,9 +161,14 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
               <button onClick={() => { exportJSON(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
                 <FileJson size={13} className="text-blue-500" /> {tr.exportTools.jsonCategory}
               </button>
-              <button onClick={() => { exportFullJSON(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
+              <button onClick={() => { setOpen(false); exportFullJSON() }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
                 <FileJson size={13} className="text-[#E30613]" /> {tr.exportTools.jsonFullBackup}
               </button>
+              {fetchClubReportsAll && (
+                <button onClick={() => { setOpen(false); exportClubReportsCSV() }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
+                  <FileSpreadsheet size={13} className="text-emerald-500" /> {tr.exportTools.csvClubReports}
+                </button>
+              )}
               <button onClick={() => { setOpen(false); setImportOpen(true) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[9px] font-black uppercase transition-all hover:bg-zinc-50">
                 <Upload size={13} className="text-orange-500" /> {tr.exportTools.importJson}
               </button>

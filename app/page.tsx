@@ -25,7 +25,8 @@ import {
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
   fetchInjuries, addInjury, updateInjuryStatus,
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl,
-  fetchClubReports, addClubReport, deleteClubReport, linkProfileToMember
+  fetchClubReports, addClubReport, deleteClubReport, linkProfileToMember,
+  fetchAllInjuries, fetchAllClubReports
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
@@ -1033,7 +1034,10 @@ export default function EliteSquadApp() {
                 </button>
                 <div className="h-px bg-zinc-200 my-1 mx-2"/>
               </>)}
-              {p.exportData&&<div className="px-1"><ExportTools members={members} matches={matches} teamCat={teamCat} onImport={handleImport} onImportPlayers={handleImportPlayers} /></div>}
+              {p.exportData&&<div className="px-1"><ExportTools members={members} matches={matches} teamCat={teamCat} onImport={handleImport} onImportPlayers={handleImportPlayers} camps={camps}
+                fetchInjuriesAll={(p.viewMedical||canManageUsers)?fetchAllInjuries:undefined}
+                fetchClubReportsAll={(p.viewClubReports||canManageUsers)?fetchAllClubReports:undefined}
+              /></div>}
               <button onClick={()=>window.print()} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#a9822e]"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 {tr.common.print}
@@ -1315,6 +1319,10 @@ export default function EliteSquadApp() {
                       <span className="text-[11px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.suspended}</span>
                       <span className={`px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-wider ${selMember.suspended?'bg-[#e3062c] text-white':'bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textDim)]'}`}>{selMember.suspended?tr.profile.yes:tr.profile.no}</span>
                     </div>
+                    {selMember.fifaConnectId&&<div className="mt-2 rounded-lg border border-[rgba(var(--line-rgb),.1)] px-3 py-2.5 flex items-center justify-between bg-[var(--c-deep)]">
+                      <span className="text-[11px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.form.fifaConnectId}</span>
+                      <span className="text-[11px] font-black text-[var(--c-text)] tracking-wider">{selMember.fifaConnectId}</span>
+                    </div>}
                   </section>
                   </>
                 )}
@@ -1734,6 +1742,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                       <input placeholder={tr.form.goals} value={form.goals} onChange={e=>setForm({...form,goals:e.target.value})} className="pm-field"/>
                       <input placeholder={tr.form.assists} value={form.assists} onChange={e=>setForm({...form,assists:e.target.value})} className="pm-field"/>
                     </div>
+                    <input placeholder={tr.form.fifaConnectId} value={form.fifaConnectId||""} onChange={e=>setForm({...form,fifaConnectId:e.target.value})} className="pm-field col-span-2"/>
                   </div>
                   <div className="mt-3 pm-tile">
                     <p className="pm-label flex items-center gap-1.5"><AlertTriangle size={10} className="text-[#f6c744]"/> {tr.form.discipline}</p>

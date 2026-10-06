@@ -60,6 +60,7 @@ export const memberFromDb = (r: any) => ({
   image: r.image_url,
   imagePath: r.image_path,
   jerseyNumber: r.jersey_number != null ? r.jersey_number : null,
+  fifaConnectId: r.fifa_connect_id || null,
   camps: r.camps || [],
   passportImage: r.passport_image || null,
   bioQuote: r.bio_quote,
@@ -94,6 +95,7 @@ export const memberToDb = (m: any) => ({
   image_url: m.image || null,
   image_path: m.imagePath || null,
   jersey_number: m.jerseyNumber != null ? Number(m.jerseyNumber) : null,
+  fifa_connect_id: m.fifaConnectId ? String(m.fifaConnectId).trim() : null,
   camps: Array.isArray(m.camps) ? m.camps : [],
   passport_image: m.passportImage || null,
   // passport_number is deliberately absent. Nothing on a squad page needs the
@@ -290,6 +292,17 @@ export async function fetchInjuries(memberId: number) {
   return data
 }
 
+// Every injury record across the roster, for data-export and the welfare
+// dashboard. RLS limits a non-medical caller to their own linked rows.
+export async function fetchAllInjuries() {
+  const { data, error } = await supabase
+    .from('injuries')
+    .select('*')
+    .order('occurred_on', { ascending: false })
+  if (error) { console.error('fetchAllInjuries', error); return [] }
+  return data
+}
+
 export async function addInjury(memberId: number, payload: {
   injury_type: string; body_part?: string; severity?: string
   occurred_on?: string; expected_return?: string; notes?: string
@@ -323,6 +336,18 @@ export async function fetchClubReports(memberId: number) {
     .eq('member_id', memberId)
     .order('match_date', { ascending: false })
   if (error) { console.error('fetchClubReports', error); return [] }
+  return data
+}
+
+// Every club match report across the whole roster, for data-export use.
+// RLS still applies: a caller without addPlayer/editPlayer/admin only ever
+// gets their own linked rows back here, same as the per-member fetch above.
+export async function fetchAllClubReports() {
+  const { data, error } = await supabase
+    .from('club_match_reports')
+    .select('*')
+    .order('match_date', { ascending: false })
+  if (error) { console.error('fetchAllClubReports', error); return [] }
   return data
 }
 
