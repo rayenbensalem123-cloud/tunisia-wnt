@@ -840,22 +840,64 @@ export default function EliteSquadApp() {
   }
   const p = user?.perms || DEFAULT_PERMS
   const canManageUsers = user?.role === "admin"
+  const canSeeWelfare = p.viewMedical||canManageUsers
+
+  // Loaded only when the Stats tab is open and the viewer can see medical
+  // data — the welfare card below reads from this, nowhere else does.
+  const [allInjuries,setAllInjuries]=useState<any[]>([])
+  useEffect(()=>{
+    if(activeTab==="STATS"&&canSeeWelfare) fetchAllInjuries().then(setAllInjuries)
+  },[activeTab,canSeeWelfare])
 
   // ── STATS DASHBOARD ──
   const StatsView = () => {
     const squad = catPlayers.filter(p=>p.role==="PLAYERS")
+    const squadIds = new Set(squad.map((p:any)=>p.id))
     const topScorers = [...squad].sort((a,b)=>(b.goals||0)-(a.goals||0)).slice(0,10)
     const topAssists = [...squad].sort((a,b)=>(b.assists||0)-(a.assists||0)).slice(0,10)
     const topCaps = [...squad].sort((a,b)=>(b.natMatches||0)-(a.natMatches||0)).slice(0,10)
     const recent = catMatches.slice(-5).map(m=>{const r=m.result;if(!r||!r.includes('-'))return null;const [a,b]=r.split('-').map(Number);return isNaN(a)||isNaN(b)?null:a>b?'W':a<b?'L':'D'}).filter(Boolean)
     const posCount = {GOALKEEPER:0,DEFENDER:0,MIDFIELDER:0,FORWARD:0}
     squad.forEach(p=>{if(p.position in posCount)posCount[p.position as keyof typeof posCount]++})
+    // Welfare: only this team category's players, only unresolved cases.
+    const byId = new Map(squad.map((m:any)=>[m.id,m]))
+    const catInjuries = allInjuries.filter((i:any)=>squadIds.has(i.member_id))
+    const activeInjuries = catInjuries.filter((i:any)=>i.status==="active").sort((a:any,b:any)=>(a.expected_return||"9999").localeCompare(b.expected_return||"9999"))
+    const recoveringInjuries = catInjuries.filter((i:any)=>i.status==="recovering").sort((a:any,b:any)=>(a.expected_return||"9999").localeCompare(b.expected_return||"9999"))
     return(
       <div className="p-4 sm:p-5 space-y-4">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {Object.entries(posCount).map(([pos,count])=>(<div key={pos} className="bg-white rounded-xl border border-zinc-100 p-3 text-center shadow-sm hover:shadow-md hover:border-[#E30613]/20 transition-all duration-300 hover:-translate-y-0.5"><p className="text-[18px] font-black text-zinc-800">{count}</p><p className="text-[7px] font-black uppercase tracking-wider text-zinc-400">{pos==='GOALKEEPER'?'GK':pos==='DEFENDER'?'DEF':pos==='MIDFIELDER'?'MID':'FWD'}</p></div>))}
         </div>
         {recent.length>0&&<div className="bg-white rounded-xl border border-zinc-100 p-3 shadow-sm hover:shadow-md transition-all duration-300"><p className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mb-2">Recent Form</p><div className="flex gap-1.5">{recent.map((r,i)=><div key={i} className={`w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-black ${r==='W'?'bg-[#f6c744] text-[var(--c-bg)] shadow-[0_0_14px_rgba(246,199,68,.25)]':r==='D'?'bg-white/5 text-[var(--c-cream4)] border border-[rgba(213,200,174,.22)]':'bg-[#e3062c] text-white shadow-[0_0_12px_rgba(227,6,44,.25)]'} hover:scale-110 transition-transform`}>{r}</div>)}</div></div>}
+        {canSeeWelfare&&(
+          <div className="bg-white rounded-xl border border-zinc-100 p-3 shadow-sm">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[7px] font-black uppercase tracking-wider text-zinc-400">Player Welfare</p>
+              <div className="flex items-center gap-2">
+                <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#e3062c]/10 text-[#E30613]">{activeInjuries.length} out</span>
+                <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#f6c744]/15 text-[#a9822e]">{recoveringInjuries.length} recovering</span>
+              </div>
+            </div>
+            {activeInjuries.length===0&&recoveringInjuries.length===0?(
+              <p className="text-[10px] text-zinc-400 py-2 text-center">No active injuries in this squad</p>
+            ):(
+              <div className="space-y-1.5">
+                {[...activeInjuries,...recoveringInjuries].map((inj:any)=>{
+                  const m:any=byId.get(inj.member_id)
+                  return(
+                    <div key={inj.id} className="flex items-center gap-2 text-[10px]">
+                      <span className={`text-[6px] font-black px-1 py-0.5 rounded uppercase ${inj.status==="active"?'bg-[#e3062c]/10 text-[#E30613]':'bg-[#f6c744]/15 text-[#a9822e]'}`}>{inj.status}</span>
+                      <span className="font-bold truncate text-zinc-800">{m?.name||"Unknown player"}</span>
+                      <span className="text-zinc-400 truncate">{inj.injury_type}</span>
+                      {inj.expected_return&&<span className="ml-auto font-black text-zinc-500 shrink-0">back {fmtDateWords(inj.expected_return)}</span>}
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {[{title:"Top Scorers",key:"goals",data:topScorers},{title:"Most Assists",key:"assists",data:topAssists},{title:"Most Caps",key:"natMatches",data:topCaps}].map(section=>(
             <div key={section.title} className="bg-white rounded-xl border border-zinc-100 p-3 shadow-sm">
