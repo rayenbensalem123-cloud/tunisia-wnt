@@ -276,6 +276,7 @@ const t = {
       timePlaceholder: "9:00am", activityPlaceholder: "Activity (e.g. Morning fitness session / Friendly match)", detailsPlaceholder: "Details (optional)",
       callupsCountLabel: "player(s) called up", searchPlaceholder: "Search…", noPlayersAvailable: "No players available.", calledUpLabel: "Called up",
       staffCountLabel: "staff member(s)", noStaffAvailable: "No staff available.", assignedStaff: "Assigned staff", rolePlaceholder: "Role (e.g. Head Coach, Physio…)",
+      attendanceLabel: "Attendance", markAttendance: "Mark attendance", presentCount: "present", noCallupsForAttendance: "Call up players first to track attendance.",
     },
   },
   fr: {
@@ -553,6 +554,7 @@ const t = {
       timePlaceholder: "9h00", activityPlaceholder: "Activité (ex: Séance physique AM / Match amical)", detailsPlaceholder: "Détails (optionnel)",
       callupsCountLabel: "joueur(s) convoqué(s)", searchPlaceholder: "Rechercher…", noPlayersAvailable: "Aucun joueur disponible.", calledUpLabel: "Convoqués",
       staffCountLabel: "membre(s) du staff", noStaffAvailable: "Aucun staff disponible.", assignedStaff: "Staff affecté", rolePlaceholder: "Rôle (ex: Sélectionneur, Kiné…)",
+      attendanceLabel: "Présence", markAttendance: "Noter la présence", presentCount: "présent(e)s", noCallupsForAttendance: "Convoquez des joueuses avant de noter la présence.",
     },
   },
   ar: {
@@ -830,6 +832,7 @@ const t = {
       timePlaceholder: "9:00 ص", activityPlaceholder: "النشاط (مثال: حصة بدنية صباحية / مباراة ودية)", detailsPlaceholder: "التفاصيل (اختياري)",
       callupsCountLabel: "لاعبة/لاعبات مستدعاة", searchPlaceholder: "بحث…", noPlayersAvailable: "لا توجد لاعبات متاحة.", calledUpLabel: "المستدعون",
       staffCountLabel: "عضو/أعضاء من الطاقم", noStaffAvailable: "لا يوجد طاقم متاح.", assignedStaff: "الطاقم المعيّن", rolePlaceholder: "الدور (مثال: المدرب العام، أخصائي علاج طبيعي…)",
+      attendanceLabel: "الحضور", markAttendance: "تسجيل الحضور", presentCount: "حاضرة/حاضرات", noCallupsForAttendance: "استدعِ لاعبات أولاً لتسجيل الحضور.",
     },
   },
 } as const

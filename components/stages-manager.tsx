@@ -13,7 +13,7 @@ type Stage = {
   startDate: string
   endDate: string
   teamCategory: string
-  program: { day: string; time: string; activity: string; details?: string }[]
+  program: { day: string; time: string; activity: string; details?: string; attendance?: number[] }[]
   players: number[]
   staff: number[]
   staffRoles: { memberId: number; role: string }[]
@@ -391,7 +391,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             {/* ─── TAB CONTENT ─── */}
             <div className="mt-5">
               {tab === "program" && (
-                <ProgramTab draft={draft} setDraft={setDraft} tr={tr}/>
+                <ProgramTab draft={draft} setDraft={setDraft} tr={tr} members={members}/>
               )}
 
               {tab === "players" && (
@@ -665,6 +665,11 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
                             </div>
                             <p className="mt-2.5 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)]">{p.activity || tr.stages.sessionWord}</p>
                             {p.details && <p className="mt-1.5 text-[10px] font-bold text-[var(--c-textDim)] leading-relaxed">{p.details}</p>}
+                            {(p.attendance?.length || 0) > 0 && (
+                              <p className="mt-2 flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-emerald-500">
+                                <Users size={10}/> {p.attendance!.length} {tr.stages.presentCount}
+                              </p>
+                            )}
                           </div>
                         </div>
                       ))}
@@ -807,11 +812,21 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
 }
 
 // ── Programme editor ──
-function ProgramTab({ draft, setDraft, tr }: { draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; tr: any }) {
+function ProgramTab({ draft, setDraft, tr, members }: { draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; tr: any; members: any[] }) {
   const items = draft.program || []
-  const add = () => setDraft(d => ({ ...d, program: [...(d.program || []), { day: "", time: "", activity: "", details: "" }] }))
+  const [openAttendance, setOpenAttendance] = useState<number | null>(null)
+  const add = () => setDraft(d => ({ ...d, program: [...(d.program || []), { day: "", time: "", activity: "", details: "", attendance: [] }] }))
   const upd = (i: number, k: string, v: string) => setDraft(d => ({ ...d, program: (d.program || []).map((p, j) => j === i ? { ...p, [k]: v } : p) }))
   const del = (i: number) => setDraft(d => ({ ...d, program: (d.program || []).filter((_, j) => j !== i) }))
+  const toggleAttendee = (i: number, memberId: number) => setDraft(d => ({
+    ...d,
+    program: (d.program || []).map((p, j) => {
+      if (j !== i) return p
+      const cur = p.attendance || []
+      return { ...p, attendance: cur.includes(memberId) ? cur.filter(x => x !== memberId) : [...cur, memberId] }
+    })
+  }))
+  const calledUp = (draft.players || []).map(id => members.find(m => m.id === id)).filter(Boolean)
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
@@ -821,14 +836,38 @@ function ProgramTab({ draft, setDraft, tr }: { draft: Stage; setDraft: React.Dis
       {items.length === 0 && <p className="text-[10px] font-bold text-[var(--c-textDim)] py-8 text-center border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">{tr.stages.noSessionsAddFirst}</p>}
       <div className="space-y-2.5">
         {items.map((p, i) => (
-          <div key={i} className="grid grid-cols-[80px_100px_1fr_40px] gap-2.5 items-start rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-3">
-            <input value={p.day} onChange={e => upd(i, 'day', e.target.value)} placeholder={tr.stages.dayWord} className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
-            <input value={p.time} onChange={e => upd(i, 'time', e.target.value)} placeholder={tr.stages.timePlaceholder} className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
-            <div className="space-y-2">
-              <input value={p.activity} onChange={e => upd(i, 'activity', e.target.value)} placeholder={tr.stages.activityPlaceholder} className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
-              <input value={p.details || ''} onChange={e => upd(i, 'details', e.target.value)} placeholder={tr.stages.detailsPlaceholder} className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+          <div key={i} className="rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-3">
+            <div className="grid grid-cols-[80px_100px_1fr_40px] gap-2.5 items-start">
+              <input value={p.day} onChange={e => upd(i, 'day', e.target.value)} placeholder={tr.stages.dayWord} className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+              <input value={p.time} onChange={e => upd(i, 'time', e.target.value)} placeholder={tr.stages.timePlaceholder} className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+              <div className="space-y-2">
+                <input value={p.activity} onChange={e => upd(i, 'activity', e.target.value)} placeholder={tr.stages.activityPlaceholder} className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+                <input value={p.details || ''} onChange={e => upd(i, 'details', e.target.value)} placeholder={tr.stages.detailsPlaceholder} className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+              </div>
+              <button onClick={() => del(i)} className="p-2 rounded-lg text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><Trash2 size={14}/></button>
             </div>
-            <button onClick={() => del(i)} className="p-2 rounded-lg text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><Trash2 size={14}/></button>
+            <div className="mt-2.5 pt-2.5 border-t border-[rgba(var(--line-rgb),.12)]">
+              <button onClick={() => setOpenAttendance(openAttendance === i ? null : i)} className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] hover:text-[var(--acc-gold)] transition-all">
+                <Users size={11}/> {tr.stages.attendanceLabel} — {(p.attendance || []).length}/{calledUp.length} {tr.stages.presentCount}
+              </button>
+              {openAttendance === i && (
+                calledUp.length === 0 ? (
+                  <p className="mt-2 text-[9px] font-bold text-[var(--c-textDim)]">{tr.stages.noCallupsForAttendance}</p>
+                ) : (
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {calledUp.map((m: any) => {
+                      const on = (p.attendance || []).includes(m.id)
+                      return (
+                        <button key={m.id} onClick={() => toggleAttendee(i, m.id)}
+                          className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-wider border transition-all ${on ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-500' : 'bg-[var(--c-panel3)] border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:border-[#f6c744]/40'}`}>
+                          {m.name}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )
+              )}
+            </div>
           </div>
         ))}
       </div>
