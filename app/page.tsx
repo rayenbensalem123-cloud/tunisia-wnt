@@ -146,6 +146,27 @@ const B_BTN = "mt-5 w-full rounded-xl bg-gradient-to-r from-[#e3062c] to-[#8f031
 // ── Header & menu button styles (unified navy/gold) ──
 // Small "23'" chip for a recorded event minute (nothing is shown for older matches without minutes)
 const minuteChip=(m:any,k:string)=>m?.eventMinutes?.[k]!=null?<span className="px-1.5 py-0.5 rounded bg-[var(--c-panel4)] text-[9px] font-black text-[var(--c-text)]">{m.eventMinutes[k]}{"'"}</span>:null
+// Post-match video library: turn a pasted YouTube/Vimeo link into an embeddable
+// player URL. Returns null for anything else so the UI can reject it up front
+// rather than silently rendering a broken iframe.
+const toEmbedUrl=(raw:string):string|null=>{
+  const s=(raw||"").trim()
+  if(!s) return null
+  try{
+    const u=new URL(s)
+    const host=u.hostname.replace(/^www\./,"")
+    if(host==="youtu.be"){const id=u.pathname.slice(1);return id?`https://www.youtube.com/embed/${id}`:null}
+    if(host==="youtube.com"||host==="m.youtube.com"){
+      if(u.pathname==="/watch"){const id=u.searchParams.get("v");return id?`https://www.youtube.com/embed/${id}`:null}
+      if(u.pathname.startsWith("/embed/"))return s
+      if(u.pathname.startsWith("/shorts/")){const id=u.pathname.split("/")[2];return id?`https://www.youtube.com/embed/${id}`:null}
+      return null
+    }
+    if(host==="vimeo.com"){const id=u.pathname.split("/").filter(Boolean)[0];return id&&/^\d+$/.test(id)?`https://player.vimeo.com/video/${id}`:null}
+    if(host==="player.vimeo.com")return s
+    return null
+  }catch{return null}
+}
 const HEADER_BTN = "flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] whitespace-nowrap"
 const HEADER_ICON_BTN = "p-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)]"
 
@@ -482,6 +503,9 @@ export default function EliteSquadApp() {
   const [scheduleForm,setScheduleForm]=useState({opponent:"",date:"",competition:"",venue:""})
   const [isHistoryOpen,setIsHistoryOpen]=useState(false)
   const [matchSheetTarget,setMatchSheetTarget]=useState<any>(null)
+  // Post-match video library: which match's "add video" form is open, and its draft fields.
+  const [addVideoFor,setAddVideoFor]=useState<number|null>(null)
+  const [videoDraft,setVideoDraft]=useState({title:"",url:""})
   const [selMatch,setSelMatch]=useState<any>(null)
   const [usersOpen,setUsersOpen]=useState(false)
   const [activityLogOpen,setActivityLogOpen]=useState(false)
@@ -3042,6 +3066,50 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           <span className="text-right text-zinc-700">{match.tunisiaFouls||"0"}</span><span className="text-[7px] font-black text-zinc-400">Fouls</span><span className="text-zinc-500">{match.opponentFouls||"0"}</span>
                         </div>
                       </div>}
+
+                      {/* Post-match video library */}
+                      <div className="bg-[var(--c-deep)] rounded-lg border border-[rgba(var(--line-rgb),.14)] p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-[7px] font-black uppercase tracking-wider text-zinc-500 flex items-center gap-2"><span className="w-3 h-[2px] rounded bg-[#7ec3ff]"/>{tr.videos.label}</p>
+                          {(p.addMatch||canManageUsers)&&(
+                            <button onClick={()=>{setAddVideoFor(addVideoFor===match.id?null:match.id);setVideoDraft({title:"",url:""})}} className="flex items-center gap-1 text-[7px] font-black uppercase tracking-wider text-[#7ec3ff] hover:text-[#a9dcff] transition-all"><Plus size={10}/> {tr.videos.addVideo}</button>
+                          )}
+                        </div>
+                        {addVideoFor===match.id&&(
+                          <div className="mb-3 p-2.5 rounded-lg bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.14)] space-y-2">
+                            <input value={videoDraft.title} onChange={e=>setVideoDraft({...videoDraft,title:e.target.value})} placeholder={tr.videos.titlePh} className="w-full px-2.5 py-2 rounded-lg bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
+                            <input value={videoDraft.url} onChange={e=>setVideoDraft({...videoDraft,url:e.target.value})} placeholder={tr.videos.urlPh} className="w-full px-2.5 py-2 rounded-lg bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
+                            <div className="flex justify-end gap-2">
+                              <button onClick={()=>setAddVideoFor(null)} className="px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)]">{tr.common.cancel}</button>
+                              <button onClick={()=>{
+                                const embed=toEmbedUrl(videoDraft.url)
+                                if(!embed){alert(tr.videos.invalidUrl);return}
+                                setMatches((ms:any[])=>ms.map((x:any)=>x.id===match.id?{...x,videos:[...(x.videos||[]),{title:videoDraft.title.trim()||tr.videos.label,url:videoDraft.url.trim(),embed}]}:x))
+                                setAddVideoFor(null)
+                              }} className="px-3 py-1.5 rounded-lg bg-[#7ec3ff] text-[#0c1f3d] text-[8px] font-black uppercase tracking-wider">{tr.common.save}</button>
+                            </div>
+                          </div>
+                        )}
+                        {(!match.videos||match.videos.length===0)?(
+                          <p className="text-[9px] text-zinc-400 font-semibold text-center py-2">{tr.videos.none}</p>
+                        ):(
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            {match.videos.map((v:any,vi:number)=>(
+                              <div key={vi} className="rounded-lg overflow-hidden border border-[rgba(var(--line-rgb),.14)] bg-black/20">
+                                <div className="aspect-video">
+                                  <iframe src={v.embed} title={v.title} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen/>
+                                </div>
+                                <div className="flex items-center justify-between gap-2 px-2.5 py-1.5">
+                                  <span className="text-[9px] font-bold text-[var(--c-text)] truncate">{v.title}</span>
+                                  {(p.deleteMatch||canManageUsers)&&(
+                                    <button onClick={async()=>{if(await askConfirm(tr.videos.confirmDelete))setMatches((ms:any[])=>ms.map((x:any)=>x.id===match.id?{...x,videos:(x.videos||[]).filter((_:any,j:number)=>j!==vi)}:x))}} className="shrink-0 text-[var(--c-textDim)] hover:text-[#ff4f66] transition-all"><Trash2 size={11}/></button>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
 
                       {/* Match Sheet + Delete */}
                       <div className="flex justify-end gap-2">

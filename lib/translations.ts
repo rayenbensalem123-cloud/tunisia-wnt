@@ -197,6 +197,11 @@ const t = {
       competitionPh: "Competition (optional)", resultPh: "Result (e.g. 2-1)",
       notesPh: "Notes (optional)", needOpponent: "Enter the opponent club",
     },
+    videos: {
+      label: "Videos", addVideo: "Add video", none: "No videos added yet",
+      urlPh: "YouTube or Vimeo link", titlePh: "Title (e.g. Full match replay, Goals recap)",
+      invalidUrl: "That doesn't look like a YouTube or Vimeo link", confirmDelete: "Remove this video?",
+    },
     notifications: {
       title: "Notifications", allClear: "All clear", cannotPlayNext: "Cannot play next match",
       cafRule2Yellows: "CAF rule: 2 yellow cards → 1-match ban", upcomingMatch: "Upcoming match",
@@ -475,6 +480,11 @@ const t = {
       competitionPh: "Compétition (optionnel)", resultPh: "Résultat (ex. 2-1)",
       notesPh: "Notes (optionnel)", needOpponent: "Entrez le club adverse",
     },
+    videos: {
+      label: "Vidéos", addVideo: "Ajouter une vidéo", none: "Aucune vidéo ajoutée",
+      urlPh: "Lien YouTube ou Vimeo", titlePh: "Titre (ex. Match complet, Résumé des buts)",
+      invalidUrl: "Ceci ne semble pas être un lien YouTube ou Vimeo", confirmDelete: "Supprimer cette vidéo ?",
+    },
     notifications: {
       title: "Notifications", allClear: "Tout est en ordre", cannotPlayNext: "Ne peut pas jouer le prochain match",
       cafRule2Yellows: "Règle CAF : 2 cartons jaunes → suspension d'un match", upcomingMatch: "Match à venir",
@@ -752,6 +762,11 @@ const t = {
       confirmDelete: "حذف تقرير هذه المباراة؟", opponentPh: "نادي الخصم",
       competitionPh: "البطولة (اختياري)", resultPh: "النتيجة (مثال 2-1)",
       notesPh: "ملاحظات (اختياري)", needOpponent: "أدخل نادي الخصم",
+    },
+    videos: {
+      label: "الفيديوهات", addVideo: "إضافة فيديو", none: "لم تُضَف أي فيديوهات بعد",
+      urlPh: "رابط يوتيوب أو فيميو", titlePh: "العنوان (مثال: المباراة كاملة، ملخص الأهداف)",
+      invalidUrl: "هذا لا يبدو رابط يوتيوب أو فيميو", confirmDelete: "حذف هذا الفيديو؟",
     },
     notifications: {
       title: "الإشعارات", allClear: "لا توجد إشعارات", cannotPlayNext: "لا يمكنها لعب المباراة القادمة",
