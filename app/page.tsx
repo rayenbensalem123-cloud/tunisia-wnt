@@ -5,7 +5,7 @@ import {
   LogOut, Goal, History, Trash2, Trophy,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase, BriefcaseBusiness,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange, Minus, Gamepad2
+  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange, Minus, Gamepad2, Video
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
@@ -26,9 +26,11 @@ import {
   fetchInjuries, addInjury, updateInjuryStatus,
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl,
   fetchClubReports, addClubReport, deleteClubReport, linkProfileToMember,
-  fetchAllInjuries, fetchAllClubReports
+  fetchAllInjuries, fetchAllClubReports,
+  fetchMeetings, deleteMeeting, scheduleMeeting, checkMeetingRecording
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
+import { MeetingsPanel } from "@/components/meetings-panel"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
 import { cleanEventMinutes } from "@/lib/bingo-logic"
 import { WhoAmI } from "@/components/games/who-am-i"
@@ -114,6 +116,7 @@ interface UserPerms {
   viewMedical: boolean; editMedical: boolean
   addCamps: boolean
   viewClubReports: boolean
+  manageMeetings: boolean
 }
 interface AppUser {
   username: string; firstName: string; lastName: string; status: "active" | "pending"
@@ -122,8 +125,8 @@ interface AppUser {
   perms: UserPerms
 }
 
-const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false, addCamps:false, viewClubReports:false }
-const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true, viewClubReports:true }
+const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false, addCamps:false, viewClubReports:false, manageMeetings:false }
+const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true, viewClubReports:true, manageMeetings:true }
 
 // Maps a DB profiles row -> the shape the UI already expects
 const profileToAppUser = (p: any): AppUser => ({
@@ -415,7 +418,7 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
 // Just the keys — the display label is looked up from tr.perms at render time
 // (this array lives outside the component, so it can't call useTranslate()).
 const PERM_KEYS: (keyof UserPerms)[] = [
-  "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps","viewClubReports",
+  "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps","viewClubReports","manageMeetings",
 ]
 
 // ═════════════════════════════════════════════
@@ -433,6 +436,7 @@ export default function EliteSquadApp() {
   const [imgUrls,setImgUrls]=useState<Record<string,string>>({})
   const [matches,setMatches]=useState<any[]>([])
   const [camps,setCamps]=useState<any[]>([])
+  const [meetings,setMeetings]=useState<any[]>([])
   const membersSnapshot=useRef<Map<any,any>>(new Map())
   const matchesSnapshot=useRef<Map<any,any>>(new Map())
   const campsSnapshot=useRef<Map<any,any>>(new Map())
@@ -629,6 +633,10 @@ export default function EliteSquadApp() {
     setCamps(data)
     setTimeout(()=>{applyingRemote.current=false},0)
   }
+  // Meetings have no local-edit diff-sync like camps/matches — they're only
+  // ever written through scheduleMeeting/deleteMeeting (direct RLS calls or
+  // the Zoom API route), so a plain reload after each action is enough.
+  const reloadMeetings=async()=>setMeetings(await fetchMeetings())
 
   // Check for an existing Supabase Auth session on mount, then load data.
   // A watchdog timeout guarantees the loading screen always clears, even if
@@ -642,7 +650,7 @@ export default function EliteSquadApp() {
       clearTimeout(watchdog)
       setAuthChecked(true)
       try{
-        await Promise.all([reloadMembers(),reloadMatches(),reloadCamps()])
+        await Promise.all([reloadMembers(),reloadMatches(),reloadCamps(),reloadMeetings()])
         await reloadProfiles()
       }catch(e){console.error("initial data load failed",e)}
       setLoaded(true)
@@ -703,6 +711,7 @@ export default function EliteSquadApp() {
   const [labTemplates,setLabTemplates]=useState<any[]>([])
   const [labTemplateName,setLabTemplateName]=useState("")
   const [stagesOpen,setStagesOpen]=useState(false)
+  const [meetingsOpen,setMeetingsOpen]=useState(false)
   const filtered=useMemo(()=>members.filter(m=>
     m.role===activeTab&&m.teamCategory===teamCat&&
     m.name.toLowerCase().includes(search.toLowerCase())&&
@@ -1026,6 +1035,12 @@ export default function EliteSquadApp() {
 
       {stagesOpen ? (
         <StagesManager open onClose={()=>setStagesOpen(false)} stages={camps} members={members} teamCat={teamCat} canManage={!!(canManageUsers||p.addCamps)} onSave={async(stage)=>{const next=[...(camps||[])];const idx=(camps||[]).findIndex((c:any)=>(c.id||0)===stage.id);if(idx>=0){const copy=[...next];copy[idx]={...copy[idx],...stage};setCamps(copy)}else{setCamps([...next,{...stage,id:typeof stage.id==='number'&&stage.id<2147483647?stage.id:Date.now(),createdByUsername:user?.username}])}return true}} onDelete={async(id)=>{setCamps((c:any[])=>c.filter((x:any)=>x.id!==id));return true}} onRefresh={reloadCamps} user={user}/>
+      ) : meetingsOpen ? (
+        <MeetingsPanel open onClose={()=>setMeetingsOpen(false)} meetings={meetings} canManage={!!(canManageUsers||p.manageMeetings)} teamCat={teamCat}
+          onSchedule={async(payload)=>{const res=await scheduleMeeting(payload);await reloadMeetings();return res}}
+          onDelete={async(id)=>{const res=await deleteMeeting(id);if(res.error)alert(res.error);await reloadMeetings()}}
+          onCheckRecording={async(id)=>{const res=await checkMeetingRecording(id);if(res.recordingUrl)await reloadMeetings();return res}}
+          tr={tr}/>
       ) : (
       <>
       {/* ─── HEADER ─── */}
@@ -1116,6 +1131,9 @@ export default function EliteSquadApp() {
               </button>}
               <button onClick={()=>setStagesOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <CalendarRange size={14} className="text-[#a9822e]"/>Rassemblements (Camps)
+              </button>
+              <button onClick={()=>{setMeetingsOpen(true);reloadMeetings()}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <Video size={14} className="text-[#a9822e]"/>{tr.meetings.title}
               </button>
               <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Newspaper size={14} className="text-[#a9822e]"/>Women's Football News

@@ -370,6 +370,40 @@ export async function deleteClubReport(id: number) {
 }
 
 // ─────────────────────────────────────────────
+// MEETINGS (Zoom-backed) — scheduling and recording lookup go through the
+// /api/zoom/* routes, which hold the Zoom secret server-side. These two are
+// plain RLS-protected reads/writes like everything else above.
+// ─────────────────────────────────────────────
+export async function fetchMeetings() {
+  const { data, error } = await supabase.from('meetings').select('*').order('scheduled_at', { ascending: false })
+  if (error) { console.error('fetchMeetings', error); return [] }
+  return data
+}
+
+export async function deleteMeeting(id: number) {
+  const { error } = await supabase.from('meetings').delete().eq('id', id)
+  return { error: error?.message || null }
+}
+
+async function authedPost(path: string, body: any) {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const token = sessionData.session?.access_token
+  if (!token) return { error: 'Not signed in' }
+  const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) return { error: data.error || `Request failed (${res.status})` }
+  return data
+}
+
+export async function scheduleMeeting(payload: { title: string; scheduledAt: string; teamCategory?: string | null }) {
+  return authedPost('/api/zoom/schedule', payload)
+}
+
+export async function checkMeetingRecording(meetingId: number) {
+  return authedPost('/api/zoom/recording', { meetingId })
+}
+
+// ─────────────────────────────────────────────
 // SQUAD TEMPLATES (Squad Lab — save/load formations & lineups)
 // ─────────────────────────────────────────────
 export async function fetchSquadTemplates(teamCategory: string) {
