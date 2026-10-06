@@ -2058,6 +2058,15 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   if(a.entity_type==="matches"){
                     return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> the match vs <span className="font-bold text-zinc-800">{a.entity_label}</span></>
                   }
+                  if(a.entity_type==="club_match_reports"){
+                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> a club match report vs <span className="font-bold text-zinc-800">{a.entity_label||"an opponent"}</span></>
+                  }
+                  if(a.entity_type==="camps"){
+                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> camp <span className="font-bold text-zinc-800">{a.entity_label}</span></>
+                  }
+                  if(a.entity_type==="squad_templates"){
+                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> squad template <span className="font-bold text-zinc-800">{a.entity_label}</span></>
+                  }
                   return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> account <span className="font-bold text-zinc-800">{a.entity_label}</span></>
                 }
                 const hiddenFields=new Set(["id","image_url","image_path","history","details"])
