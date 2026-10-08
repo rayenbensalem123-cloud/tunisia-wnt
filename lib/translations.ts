@@ -262,6 +262,20 @@ const t = {
       mustBeAtLeast: "Password must be at least {min} characters", tooLong: "Password is too long",
       dontMatch: "Passwords don't match",
     },
+    forgotPassword: {
+      link: "Forgot password?", title: "Forgot Password", subtitle: "Account Recovery",
+      needBoth: "Enter your username and recovery email", send: "Send reset link", backToLogin: "Back to login",
+      sentGeneric: "If that username and email match an account, a reset link has been sent.",
+    },
+    resetPassword: {
+      title: "Reset Password", newPassword: "New password", save: "Set new password",
+      invalidLink: "This reset link is invalid or has expired. Request a new one from the login screen.",
+      success: "Your password has been reset. You can now sign in with it.", goToLogin: "Go to login",
+    },
+    emailModal: {
+      title: "Recovery Email", menuLabel: "Recovery Email", emailLabel: "Email address",
+      hint: "Set an email so you can reset your password yourself if you forget it. This is separate from your username and is never shown to other users.",
+    },
     stages: {
       backToDashboard: "Back to dashboard", title: "National Camps", subtitle: "Camps & Gatherings",
       portalBadge: "Camps Portal", heroTitle1: "National", heroTitle2: "Camps",
@@ -556,6 +570,20 @@ const t = {
       mustBeAtLeast: "Le mot de passe doit contenir au moins {min} caractères", tooLong: "Le mot de passe est trop long",
       dontMatch: "Les mots de passe ne correspondent pas",
     },
+    forgotPassword: {
+      link: "Mot de passe oublié ?", title: "Mot de passe oublié", subtitle: "Récupération de compte",
+      needBoth: "Entrez votre nom d'utilisateur et votre e-mail de récupération", send: "Envoyer le lien", backToLogin: "Retour à la connexion",
+      sentGeneric: "Si ce nom d'utilisateur et cet e-mail correspondent à un compte, un lien de réinitialisation a été envoyé.",
+    },
+    resetPassword: {
+      title: "Réinitialiser le mot de passe", newPassword: "Nouveau mot de passe", save: "Définir le nouveau mot de passe",
+      invalidLink: "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau depuis l'écran de connexion.",
+      success: "Votre mot de passe a été réinitialisé. Vous pouvez maintenant vous connecter avec.", goToLogin: "Aller à la connexion",
+    },
+    emailModal: {
+      title: "E-mail de récupération", menuLabel: "E-mail de récupération", emailLabel: "Adresse e-mail",
+      hint: "Définissez un e-mail pour pouvoir réinitialiser votre mot de passe vous-même en cas d'oubli. Ceci est distinct de votre nom d'utilisateur et n'est jamais visible par les autres utilisateurs.",
+    },
     stages: {
       backToDashboard: "Retour au tableau de bord", title: "Rassemblements Nationaux", subtitle: "Camps & Stages",
       portalBadge: "Portail Camps", heroTitle1: "Rassemblements", heroTitle2: "Nationaux",
@@ -849,6 +877,20 @@ const t = {
       confirmPassword: "تأكيد كلمة المرور", saving: "جارٍ الحفظ...", save: "حفظ", cancel: "إلغاء",
       mustBeAtLeast: "يجب أن تحتوي كلمة المرور على {min} أحرف على الأقل", tooLong: "كلمة المرور طويلة جدًا",
       dontMatch: "كلمتا المرور غير متطابقتين",
+    },
+    forgotPassword: {
+      link: "نسيت كلمة المرور؟", title: "نسيت كلمة المرور", subtitle: "استعادة الحساب",
+      needBoth: "أدخل اسم المستخدم والبريد الإلكتروني للاسترداد", send: "إرسال رابط إعادة التعيين", backToLogin: "العودة لتسجيل الدخول",
+      sentGeneric: "إذا كان اسم المستخدم والبريد الإلكتروني مطابقين لحساب موجود، فقد تم إرسال رابط إعادة التعيين.",
+    },
+    resetPassword: {
+      title: "إعادة تعيين كلمة المرور", newPassword: "كلمة مرور جديدة", save: "تعيين كلمة المرور الجديدة",
+      invalidLink: "رابط إعادة التعيين هذا غير صالح أو منتهي الصلاحية. اطلب رابطًا جديدًا من شاشة تسجيل الدخول.",
+      success: "تمت إعادة تعيين كلمة المرور الخاصة بك. يمكنك الآن تسجيل الدخول بها.", goToLogin: "الذهاب لتسجيل الدخول",
+    },
+    emailModal: {
+      title: "بريد الاسترداد", menuLabel: "بريد الاسترداد", emailLabel: "البريد الإلكتروني",
+      hint: "حدد بريدًا إلكترونيًا لتتمكن من إعادة تعيين كلمة المرور بنفسك في حال نسيانها. هذا منفصل عن اسم المستخدم ولا يظهر أبدًا للمستخدمين الآخرين.",
     },
     stages: {
       backToDashboard: "العودة إلى لوحة التحكم", title: "المعسكرات الوطنية", subtitle: "المعسكرات والتجمعات",

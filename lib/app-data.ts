@@ -254,6 +254,45 @@ export async function changeMyPassword(newPassword: string) {
   return { error: error?.message || null }
 }
 
+// Self-service: save/change the recovery email on the caller's own profile.
+// Not guarded by guard_profile_privileges, so the existing "update own row"
+// RLS policy already allows this — no new policy needed.
+export async function updateMyEmail(email: string) {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const uid = sessionData.session?.user.id
+  if (!uid) return { error: 'Not signed in' }
+  const trimmed = email.trim()
+  if (trimmed && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) return { error: 'Invalid email' }
+  const { error } = await supabase.from('profiles').update({ email: trimmed || null }).eq('id', uid)
+  if (error) return { error: /duplicate key|already exists/i.test(error.message) ? 'Email already in use' : error.message }
+  return { error: null }
+}
+
+// Forgot-password, step 1: ask for a reset link. Always returns a generic
+// message from the server regardless of whether the account/email matched,
+// so this can't be used to enumerate usernames.
+export async function requestPasswordReset(username: string, email: string) {
+  const res = await fetch('/api/forgot-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, email }),
+  })
+  const json = await res.json().catch(() => ({}))
+  return { error: res.ok ? null : (json.error || 'Request failed'), message: json.message as string | undefined }
+}
+
+// Forgot-password, step 2: the emailed link lands on /reset-password?token=…
+// which calls this with the token and the chosen new password.
+export async function completePasswordReset(token: string, newPassword: string) {
+  const res = await fetch('/api/reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token, newPassword }),
+  })
+  const json = await res.json().catch(() => ({}))
+  return { error: res.ok ? null : (json.error || 'Reset failed') }
+}
+
 // Admin resets someone else's password (server-verified admin check)
 export async function adminResetPassword(username: string, newPassword: string) {
   const { data } = await supabase.auth.getSession()

@@ -5,11 +5,12 @@ import {
   LogOut, Goal, History, Trash2, Trophy,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase, BriefcaseBusiness,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange, Minus, Gamepad2, Video
+  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange, Minus, Gamepad2, Video, Mail
 } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
 import { PasswordModal, type PasswordTarget } from "@/components/password-modal"
+import { EmailModal } from "@/components/email-modal"
 import { ExportTools } from "@/components/export-tools"
 import { PlayerCard } from "@/components/player-card"
 import { CountryFlag } from "@/components/country-flag"
@@ -27,7 +28,8 @@ import {
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl,
   fetchClubReports, addClubReport, deleteClubReport, linkProfileToMember,
   fetchAllInjuries, fetchAllClubReports,
-  fetchMeetings, deleteMeeting, scheduleMeeting, checkMeetingRecording
+  fetchMeetings, deleteMeeting, scheduleMeeting, checkMeetingRecording,
+  updateMyEmail, requestPasswordReset
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
 import { MeetingsPanel } from "@/components/meetings-panel"
@@ -294,10 +296,62 @@ const Dropdown = ({trigger,children,align="right"}:{trigger:React.ReactNode;chil
   )
 }
 
+const ForgotPasswordScreen = ({onBack}:{onBack:()=>void}) => {
+  const { tr } = useTranslate()
+  const [uname,setUname]=useState(""), [email,setEmail]=useState(""), [msg,setMsg]=useState(""), [err,setErr]=useState(""), [busy,setBusy]=useState(false)
+  const submit=async()=>{
+    if(!uname.trim()||!email.trim()){setErr(tr.forgotPassword.needBoth);return}
+    setBusy(true); setErr(""); setMsg("")
+    const {error,message}=await requestPasswordReset(uname,email)
+    setBusy(false)
+    if(error) setErr(error)
+    else setMsg(message||tr.forgotPassword.sentGeneric)
+  }
+  return(
+    <div className={LOGIN_AND_REGISTER_STYLE}>
+      <FedBg/>
+      <div className={B_ADORN}/>
+      <ThemeToggle className="absolute top-6 right-16 z-20"/>
+      <LanguageToggle className="absolute top-6 right-4 z-20"/>
+      <div className="relative z-10 flex flex-col items-center justify-center min-h-[100dvh] w-full px-6 py-10">
+        <div className="flex flex-col items-center text-center">
+          <img src="/ftf-logo.png" className="h-20 drop-shadow-[0_12px_30px_rgba(0,0,0,.55)]" alt=""/>
+          <h2 className="mt-8 text-3xl font-black uppercase tracking-tight text-white leading-none">{tr.forgotPassword.title}</h2>
+          <p className="mt-3 text-[9px] font-bold uppercase tracking-[.4em] text-[#f6c744]">{tr.forgotPassword.subtitle}</p>
+        </div>
+        <div className={`${LOGIN_CARD_STYLE} mt-8 w-full max-w-md`}>
+          <div className="h-[3px] w-14 mx-auto rounded-full bg-gradient-to-r from-[#e3062c] to-[#f6c744]"/>
+          {msg ? (
+            <div className="mt-6 space-y-4 text-center">
+              <p className="text-[11px] font-bold text-white/85 leading-relaxed">{msg}</p>
+              <button onClick={onBack} className={B_BTN}>{tr.forgotPassword.backToLogin}</button>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-3.5">
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><User size={15}/></span>
+                <input type="text" placeholder={tr.login.username} value={uname} onChange={e=>setUname(e.target.value)} className={B_FIELD}/>
+              </div>
+              <div className="relative">
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><Mail size={15}/></span>
+                <input type="email" placeholder={tr.emailModal.emailLabel} value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()} className={B_FIELD}/>
+              </div>
+              {err&&<p className="text-center text-[9px] font-black uppercase tracking-widest text-[#ff4f66]">{err}</p>}
+              <button disabled={busy} onClick={submit} className={B_BTN}>{busy?"...":tr.forgotPassword.send}</button>
+              <button onClick={onBack} className="mt-1 w-full text-[9px] font-black uppercase tracking-widest text-white/50 hover:text-[#f6c744] transition-all">{tr.forgotPassword.backToLogin}</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
   const { tr } = useTranslate()
-  const [uname,setUname]=useState(""), [pw,setPw]=useState(""), [err,setErr]=useState(""), [reg,setReg]=useState(false), [busy,setBusy]=useState(false)
+  const [uname,setUname]=useState(""), [pw,setPw]=useState(""), [err,setErr]=useState(""), [reg,setReg]=useState(false), [forgot,setForgot]=useState(false), [busy,setBusy]=useState(false)
   if(reg) return <RegisterScreen onBack={()=>setReg(false)}/>
+  if(forgot) return <ForgotPasswordScreen onBack={()=>setForgot(false)}/>
   const doLogin=async()=>{
     if(!uname.trim()||!pw){setErr("Enter username & password");setTimeout(()=>setErr(""),2000);return}
     setBusy(true)
@@ -339,6 +393,7 @@ const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
             </div>
             {err&&<p className="text-center text-[9px] font-black uppercase tracking-widest text-[#ff4f66]">{err}</p>}
             <button disabled={busy} onClick={doLogin} className={B_BTN}>{busy?"...":tr.login.authorize}</button>
+            <button onClick={()=>setForgot(true)} className="mt-1 w-full text-[9px] font-black uppercase tracking-widest text-white/50 hover:text-[#f6c744] transition-all">{tr.forgotPassword.link}</button>
             <button onClick={()=>setReg(true)} className="mt-1 w-full text-[9px] font-black uppercase tracking-widest text-white/50 hover:text-[#f6c744] transition-all">Register ↗</button>
           </div>
         </div>
@@ -426,7 +481,7 @@ const PERM_KEYS: (keyof UserPerms)[] = [
 // ═════════════════════════════════════════════
 export default function EliteSquadApp() {
   const { tr, setLang, lang } = useTranslate()
-  const [user,setUser]=useState<{id:string;username:string;firstName:string;lastName:string;role:string;perms:UserPerms;memberId:number|null}|null>(null)
+  const [user,setUser]=useState<{id:string;username:string;firstName:string;lastName:string;role:string;perms:UserPerms;memberId:number|null;email:string|null}|null>(null)
   const [authChecked,setAuthChecked]=useState(false)
   const [buffering,setBuffering]=useState(false)
   const [leaving,setLeaving]=useState(false)
@@ -451,10 +506,15 @@ export default function EliteSquadApp() {
     return error?String(error):null
   }
   const handleChangePassword=()=>openPw('self')
+  const [emailModalOpen,setEmailModalOpen]=useState(false)
+  const submitEmail=async(email:string)=>{
+    const {error}=await updateMyEmail(email)
+    if(!error) setUser(u=>u?{...u,email}:u)
+    return error}
   const loadMyUser=async()=>{
     const profile=await fetchMyProfile()
     if(!profile||profile.status!=="active"){ setUser(null); return null }
-    const u={id:profile.id,username:profile.username,firstName:profile.first_name,lastName:profile.last_name,role:profile.role,perms:profile.permissions,memberId:profile.member_id??null}
+    const u={id:profile.id,username:profile.username,firstName:profile.first_name,lastName:profile.last_name,role:profile.role,perms:profile.permissions,memberId:profile.member_id??null,email:profile.email??null}
     setUser(u)
     return u
   }
@@ -1155,6 +1215,9 @@ export default function EliteSquadApp() {
             }>
               <button onClick={handleChangePassword} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Key size={14} className="text-[#a9822e]"/>Change Password
+              </button>
+              <button onClick={()=>setEmailModalOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <Mail size={14} className="text-[#a9822e]"/>{tr.emailModal.menuLabel}
               </button>
               <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all text-left">
                 <LogOut size={14}/>Log Out
@@ -2862,6 +2925,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
           MATCH HISTORY MODAL
       ═══════════════════════════════════════════ */}
       <PasswordModal target={pwTarget} onClose={closePw} onSubmit={submitPw}/>
+      <EmailModal open={emailModalOpen} currentEmail={user?.email??null} onClose={()=>setEmailModalOpen(false)} onSubmit={submitEmail}/>
       {isHistoryOpen&&(()=>{
         const uniqueOpponents=[...new Set(catMatches.map((m:any)=>m.opponent).filter(Boolean))].sort()
         const filteredMatches=opponentFilter?catMatches.filter((m:any)=>m.opponent===opponentFilter):catMatches
