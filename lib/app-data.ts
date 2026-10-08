@@ -394,6 +394,7 @@ export async function addClubReport(memberId: number, payload: {
   match_date?: string; opponent?: string; competition?: string
   minutes_played?: number; goals?: number; assists?: number
   yellow_cards?: number; red_cards?: number; result?: string; notes?: string
+  is_starting?: boolean; rating?: number; highlights_url?: string
 }) {
   const { data: sessionData } = await supabase.auth.getSession()
   const uid = sessionData.session?.user.id || null

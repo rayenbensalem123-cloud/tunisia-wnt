@@ -537,7 +537,7 @@ export default function EliteSquadApp() {
   // played with their CLUB (not the national team squad).
   const [clubReports,setClubReports]=useState<any[]>([])
   const [addClubReportOpen,setAddClubReportOpen]=useState(false)
-  const initClubReportForm={match_date:"",opponent:"",competition:"",minutes_played:"",goals:"",assists:"",yellow_cards:"",red_cards:"",result:"",notes:""}
+  const initClubReportForm={match_date:"",opponent:"",competition:"",minutes_played:"",goals:"",assists:"",yellow_cards:"",red_cards:"",result:"",notes:"",is_starting:"" as ""|"yes"|"no",rating:"",highlights_url:""}
   const [clubReportForm,setClubReportForm]=useState(initClubReportForm)
   const canSeeClubReports=(m:any)=>!!m&&(p.viewClubReports||canManageUsers||user?.memberId===m.id)
   const canAddClubReport=(m:any)=>!!m&&(user?.memberId===m.id||canManageUsers||p.addPlayer||p.editPlayer)
@@ -1564,9 +1564,13 @@ export default function EliteSquadApp() {
                           <p className="text-[14px] font-bold text-[var(--c-text)]">{r.opponent||tr.clubReports.unknownOpponent}</p>
                           <p className="text-[12px] text-[var(--c-textMid)] mt-0.5">{r.match_date||""}{r.competition?` · ${r.competition}`:""}</p>
                         </div>
-                        {r.result&&<span className="shrink-0 text-[11px] font-black uppercase px-2 py-1 rounded bg-[var(--c-surface)] text-[var(--c-textDim)] border border-[rgba(var(--line-rgb),.18)]">{r.result}</span>}
+                        <div className="shrink-0 flex items-center gap-1.5">
+                          {typeof r.rating==="number"&&<span className="text-[11px] font-black px-2 py-1 rounded bg-[#f6c744]/15 text-[#c89a1e] border border-[#f6c744]/30">{r.rating}/10</span>}
+                          {r.result&&<span className="text-[11px] font-black uppercase px-2 py-1 rounded bg-[var(--c-surface)] text-[var(--c-textDim)] border border-[rgba(var(--line-rgb),.18)]">{r.result}</span>}
+                        </div>
                       </div>
                       <div className="flex flex-wrap gap-3 mt-2 text-[12px] font-bold text-[var(--c-textMid)]">
+                        {r.is_starting!=null&&<span className={r.is_starting?"text-[#7ec3ff]":"text-[var(--c-textDim)]"}>{r.is_starting?tr.clubReports.startedLabel:tr.clubReports.benchLabel}</span>}
                         <span>{r.minutes_played??0}&apos; {tr.clubReports.mins}</span>
                         <span className="text-[#7fd6a8]">{r.goals||0} {tr.clubReports.goals}</span>
                         <span className="text-[#7ec3ff]">{r.assists||0} {tr.clubReports.assists}</span>
@@ -1574,6 +1578,13 @@ export default function EliteSquadApp() {
                         {!!r.red_cards&&<span className="text-[#ff5f72]">{r.red_cards} RC</span>}
                       </div>
                       {r.notes&&<p className="text-[12px] text-[var(--c-textMid)] mt-1.5">{r.notes}</p>}
+                      {r.highlights_url&&(()=>{const embed=toEmbedUrl(r.highlights_url);return embed?(
+                        <div className="mt-2 rounded-lg overflow-hidden aspect-video bg-black">
+                          <iframe src={embed} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen/>
+                        </div>
+                      ):(
+                        <a href={r.highlights_url} target="_blank" rel="noreferrer" className="mt-2 inline-block text-[11px] font-black uppercase tracking-wider text-[#7ec3ff] hover:underline">{tr.clubReports.watchHighlights} ↗</a>
+                      )})()}
                       {canAddClubReport(selMember)&&(
                         <button onClick={async()=>{if(await askConfirm(tr.clubReports.confirmDelete)){const{error}=await deleteClubReport(r.id);if(error){alert("Failed: "+error);return}fetchClubReports(selMember.id).then(setClubReports)}}} className="mt-2 text-[11px] font-black uppercase tracking-wider text-[#ff4f66] hover:underline">{tr.common.remove}</button>
                       )}
@@ -1771,6 +1782,12 @@ export default function EliteSquadApp() {
 
       {addClubReportOpen&&selMember&&(()=>{
         const setN=(k:string,v:string)=>setClubReportForm({...clubReportForm,[k]:v.replace(/[^0-9]/g,"")})
+        const setRating=(v:string)=>{
+          const cleaned=v.replace(/[^0-9.]/g,"")
+          const n=parseFloat(cleaned)
+          if(cleaned!==""&&!isNaN(n)&&n>10)return
+          setClubReportForm({...clubReportForm,rating:cleaned})
+        }
         return(
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-sm rounded-2xl bg-[var(--c-cream2)] text-zinc-900 shadow-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
@@ -1808,6 +1825,21 @@ export default function EliteSquadApp() {
                 </div>
               </div>
             </div>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.startingQuestion}</p>
+              <div className="flex gap-2">
+                <button type="button" onClick={()=>setClubReportForm({...clubReportForm,is_starting:"yes"})} className={`flex-1 py-2 rounded-lg border text-[11px] font-black uppercase tracking-wider transition-all ${clubReportForm.is_starting==="yes"?"bg-[#E30613] border-[#E30613] text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.startedLabel}</button>
+                <button type="button" onClick={()=>setClubReportForm({...clubReportForm,is_starting:"no"})} className={`flex-1 py-2 rounded-lg border text-[11px] font-black uppercase tracking-wider transition-all ${clubReportForm.is_starting==="no"?"bg-[#E30613] border-[#E30613] text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.benchLabel}</button>
+              </div>
+            </div>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.ratingLabel}</p>
+              <input inputMode="decimal" placeholder={tr.clubReports.ratingPh} value={clubReportForm.rating} onChange={e=>setRating(e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+            </div>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.highlightsLabel}</p>
+              <input placeholder={tr.clubReports.highlightsPh} value={clubReportForm.highlights_url} onChange={e=>setClubReportForm({...clubReportForm,highlights_url:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+            </div>
             <textarea placeholder={tr.clubReports.notesPh} value={clubReportForm.notes} onChange={e=>setClubReportForm({...clubReportForm,notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none resize-none"/>
             <div className="flex gap-2 pt-1">
               <button onClick={()=>setAddClubReportOpen(false)} className="flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">{tr.common.cancel}</button>
@@ -1824,6 +1856,9 @@ export default function EliteSquadApp() {
                   red_cards:clubReportForm.red_cards?parseInt(clubReportForm.red_cards,10):0,
                   result:clubReportForm.result.trim()||undefined,
                   notes:clubReportForm.notes.trim()||undefined,
+                  is_starting:clubReportForm.is_starting?clubReportForm.is_starting==="yes":undefined,
+                  rating:clubReportForm.rating?parseFloat(clubReportForm.rating):undefined,
+                  highlights_url:clubReportForm.highlights_url.trim()||undefined,
                 })
                 if(error){alert("Failed: "+error);return}
                 setAddClubReportOpen(false)

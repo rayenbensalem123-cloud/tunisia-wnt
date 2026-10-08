@@ -196,6 +196,10 @@ const t = {
       confirmDelete: "Delete this match report?", opponentPh: "Opponent club",
       competitionPh: "Competition (optional)", resultPh: "Result (e.g. 2-1)",
       notesPh: "Notes (optional)", needOpponent: "Enter the opponent club",
+      startingQuestion: "Did you start the match?", startedLabel: "Started (XI)", benchLabel: "Came off bench",
+      ratingLabel: "Rating out of 10 (optional)", ratingPh: "e.g. 7.5",
+      highlightsLabel: "Highlights link (optional)", highlightsPh: "YouTube or Vimeo link",
+      watchHighlights: "Watch highlights",
     },
     videos: {
       label: "Videos", addVideo: "Add video", none: "No videos added yet",
@@ -504,6 +508,10 @@ const t = {
       confirmDelete: "Supprimer ce rapport de match ?", opponentPh: "Club adverse",
       competitionPh: "Compétition (optionnel)", resultPh: "Résultat (ex. 2-1)",
       notesPh: "Notes (optionnel)", needOpponent: "Entrez le club adverse",
+      startingQuestion: "Avez-vous débuté le match ?", startedLabel: "Titulaire", benchLabel: "Entrée en jeu",
+      ratingLabel: "Note sur 10 (optionnel)", ratingPh: "ex. 7.5",
+      highlightsLabel: "Lien des temps forts (optionnel)", highlightsPh: "Lien YouTube ou Vimeo",
+      watchHighlights: "Voir les temps forts",
     },
     videos: {
       label: "Vidéos", addVideo: "Ajouter une vidéo", none: "Aucune vidéo ajoutée",
@@ -812,6 +820,10 @@ const t = {
       confirmDelete: "حذف تقرير هذه المباراة؟", opponentPh: "نادي الخصم",
       competitionPh: "البطولة (اختياري)", resultPh: "النتيجة (مثال 2-1)",
       notesPh: "ملاحظات (اختياري)", needOpponent: "أدخل نادي الخصم",
+      startingQuestion: "هل بدأتِ المباراة أساسية؟", startedLabel: "أساسية", benchLabel: "دخلت بديلة",
+      ratingLabel: "التقييم من 10 (اختياري)", ratingPh: "مثال 7.5",
+      highlightsLabel: "رابط أبرز اللحظات (اختياري)", highlightsPh: "رابط يوتيوب أو فيميو",
+      watchHighlights: "مشاهدة أبرز اللحظات",
     },
     videos: {
       label: "الفيديوهات", addVideo: "إضافة فيديو", none: "لم تُضَف أي فيديوهات بعد",
