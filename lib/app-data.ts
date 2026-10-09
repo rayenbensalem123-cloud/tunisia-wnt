@@ -395,6 +395,8 @@ export async function addClubReport(memberId: number, payload: {
   minutes_played?: number; goals?: number; assists?: number
   yellow_cards?: number; red_cards?: number; result?: string; notes?: string
   is_starting?: boolean; rating?: number; highlights_url?: string
+  position_played?: string; did_not_play?: boolean
+  had_injury?: boolean; injury_notes?: string
 }) {
   const { data: sessionData } = await supabase.auth.getSession()
   const uid = sessionData.session?.user.id || null
@@ -406,6 +408,18 @@ export async function addClubReport(memberId: number, payload: {
 
 export async function deleteClubReport(id: number) {
   const { error } = await supabase.from('club_match_reports').delete().eq('id', id)
+  return { error: error?.message || null }
+}
+
+// Staff-only in practice: trg_guard_club_report_verification blocks anyone
+// without editPlayer/addPlayer/admin from touching these three columns,
+// even though a player can otherwise update her own report.
+export async function verifyClubReport(id: number, verified: boolean, byUsername: string) {
+  const { error } = await supabase.from('club_match_reports').update({
+    verified,
+    verified_by_username: verified ? byUsername : null,
+    verified_at: verified ? new Date().toISOString() : null,
+  }).eq('id', id)
   return { error: error?.message || null }
 }
 
