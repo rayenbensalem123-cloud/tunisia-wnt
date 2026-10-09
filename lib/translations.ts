@@ -206,6 +206,11 @@ const t = {
       injuryFlag: "Injury reported in this match", yesLabel: "Yes", noLabel: "No",
       verified: "Verified", verify: "Verify", unverify: "Unverify", verifiedBy: "Verified by",
     },
+    clubReportsPage: {
+      title: "Reports", subtitle: "Club-match reports, all players",
+      allCategories: "All", allStatus: "All", unverified: "Unverified", verified: "Verified",
+      toReview: "to review", none: "No club-match reports yet",
+    },
     videos: {
       label: "Videos", addVideo: "Add video", none: "No videos added yet",
       urlPh: "YouTube or Vimeo link", titlePh: "Title (e.g. Full match replay, Goals recap)",
@@ -524,6 +529,11 @@ const t = {
       injuryFlag: "Blessure signalée lors de ce match", yesLabel: "Oui", noLabel: "Non",
       verified: "Vérifié", verify: "Vérifier", unverify: "Annuler la vérification", verifiedBy: "Vérifié par",
     },
+    clubReportsPage: {
+      title: "Rapports", subtitle: "Rapports de matchs de club, toutes les joueuses",
+      allCategories: "Tous", allStatus: "Tous", unverified: "Non vérifiés", verified: "Vérifiés",
+      toReview: "à vérifier", none: "Aucun rapport de match de club pour le moment",
+    },
     videos: {
       label: "Vidéos", addVideo: "Ajouter une vidéo", none: "Aucune vidéo ajoutée",
       urlPh: "Lien YouTube ou Vimeo", titlePh: "Titre (ex. Match complet, Résumé des buts)",
@@ -841,6 +851,11 @@ const t = {
       injuryQuestion: "هل أُصبتِ خلال هذه المباراة؟", injuryNotesPh: "ماذا حدث؟ (اختياري)",
       injuryFlag: "تم الإبلاغ عن إصابة في هذه المباراة", yesLabel: "نعم", noLabel: "لا",
       verified: "موثّق", verify: "توثيق", unverify: "إلغاء التوثيق", verifiedBy: "وثّقه",
+    },
+    clubReportsPage: {
+      title: "التقارير", subtitle: "تقارير مباريات الأندية لجميع اللاعبات",
+      allCategories: "الكل", allStatus: "الكل", unverified: "غير موثّقة", verified: "موثّقة",
+      toReview: "بحاجة للمراجعة", none: "لا توجد تقارير مباريات نادٍ بعد",
     },
     videos: {
       label: "الفيديوهات", addVideo: "إضافة فيديو", none: "لم تُضَف أي فيديوهات بعد",

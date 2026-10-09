@@ -33,6 +33,7 @@ import {
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
 import { MeetingsPanel } from "@/components/meetings-panel"
+import { ClubReportsPanel } from "@/components/club-reports-panel"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
 import { cleanEventMinutes } from "@/lib/bingo-logic"
 import { WhoAmI } from "@/components/games/who-am-i"
@@ -781,6 +782,7 @@ export default function EliteSquadApp() {
   const [labTemplateName,setLabTemplateName]=useState("")
   const [stagesOpen,setStagesOpen]=useState(false)
   const [meetingsOpen,setMeetingsOpen]=useState(false)
+  const [reportsOpen,setReportsOpen]=useState(false)
   const filtered=useMemo(()=>members.filter(m=>
     m.role===activeTab&&m.teamCategory===teamCat&&
     m.name.toLowerCase().includes(search.toLowerCase())&&
@@ -1110,6 +1112,13 @@ export default function EliteSquadApp() {
           onDelete={async(id)=>{const res=await deleteMeeting(id);if(res.error)alert(res.error);await reloadMeetings()}}
           onCheckRecording={async(id)=>{const res=await checkMeetingRecording(id);if(res.recordingUrl)await reloadMeetings();return res}}
           tr={tr}/>
+      ) : reportsOpen ? (
+        <ClubReportsPanel open onClose={()=>setReportsOpen(false)} reports={allClubReports} members={members} teamCat={teamCat}
+          canVerify={canVerifyClubReport()} canDelete={!!(canManageUsers||p.addPlayer||p.editPlayer)}
+          onVerify={async(id,verified)=>{const res=await verifyClubReport(id,verified,user?.username||"");if(!res.error)await reloadClubReports();return res}}
+          onDelete={async(id)=>{if(await askConfirm(tr.clubReports.confirmDelete)){const{error}=await deleteClubReport(id);if(error){alert("Failed: "+error);return}await reloadClubReports()}}}
+          onSelectPlayer={(memberId)=>{const m=members.find((x:any)=>x.id===memberId);if(m){setSelMember(m);setProfileTab("club");setReportsOpen(false)}}}
+          tr={tr}/>
       ) : (
       <>
       {/* ─── HEADER ─── */}
@@ -1254,6 +1263,15 @@ export default function EliteSquadApp() {
               </button>
             ))}
           </div>
+          {(canVerifyClubReport()||p.viewClubReports)&&(<>
+            <div className="w-px h-6 bg-zinc-200"/>
+            <button onClick={()=>setReportsOpen(true)} className="relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 transition-all">
+              <ClipboardCheck size={13} className="text-[#a9822e]"/>{tr.clubReportsPage.title}
+              {allClubReports.filter((r:any)=>!r.verified&&members.find((m:any)=>m.id===r.member_id)?.teamCategory===teamCat).length>0&&(
+                <span className="ml-0.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{allClubReports.filter((r:any)=>!r.verified&&members.find((m:any)=>m.id===r.member_id)?.teamCategory===teamCat).length}</span>
+              )}
+            </button>
+          </>)}
           <div className="w-px h-6 bg-zinc-200"/>
           <div className="flex gap-1.5 flex-wrap">
             {(activeTab==="PLAYERS"?PLAYER_POSITIONS:["ALL",...COACH_POSITIONS]).map(pos=>(
@@ -1577,9 +1595,9 @@ export default function EliteSquadApp() {
                           <p className="text-[12px] text-[var(--c-textMid)] mt-0.5">{r.match_date||""}{r.competition?` · ${r.competition}`:""}{r.position_played?` · ${r.position_played}`:""}</p>
                         </div>
                         <div className="shrink-0 flex items-center gap-1.5">
-                          {r.verified&&<span title={r.verified_by_username?`${tr.clubReports.verifiedBy} ${r.verified_by_username}`:""} className="text-[11px] font-black px-2 py-1 rounded bg-[#7fd6a8]/15 text-[#3f9c6e] border border-[#7fd6a8]/30 flex items-center gap-1"><ShieldCheck size={11}/>{tr.clubReports.verified}</span>}
                           {typeof r.rating==="number"&&<span className="text-[11px] font-black px-2 py-1 rounded bg-[#f6c744]/15 text-[#c89a1e] border border-[#f6c744]/30">{r.rating}/10</span>}
                           {r.result&&<span className="text-[11px] font-black uppercase px-2 py-1 rounded bg-[var(--c-surface)] text-[var(--c-textDim)] border border-[rgba(var(--line-rgb),.18)]">{r.result}</span>}
+                          {r.verified&&<span title={r.verified_by_username?`${tr.clubReports.verified} · ${tr.clubReports.verifiedBy} ${r.verified_by_username}`:tr.clubReports.verified} className="w-2.5 h-2.5 rounded-full bg-[#2fd46b] shadow-[0_0_8px_rgba(47,212,107,.6)] shrink-0"/>}
                         </div>
                       </div>
                       {r.did_not_play?(
