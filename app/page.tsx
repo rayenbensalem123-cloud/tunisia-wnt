@@ -698,6 +698,13 @@ export default function EliteSquadApp() {
   // ever written through scheduleMeeting/deleteMeeting (direct RLS calls or
   // the Zoom API route), so a plain reload after each action is enough.
   const reloadMeetings=async()=>setMeetings(await fetchMeetings())
+  // All club-match reports across the roster, used only to drive the "new
+  // club report to review" notification for staff. RLS already limits what
+  // comes back for a caller without viewClubReports/editPlayer/addPlayer/
+  // admin, so this is safe to call for anyone — it just won't surface
+  // anything for a player beyond her own linked reports.
+  const [allClubReports,setAllClubReports]=useState<any[]>([])
+  const reloadClubReports=async()=>setAllClubReports(await fetchAllClubReports())
 
   // Check for an existing Supabase Auth session on mount, then load data.
   // A watchdog timeout guarantees the loading screen always clears, even if
@@ -711,7 +718,7 @@ export default function EliteSquadApp() {
       clearTimeout(watchdog)
       setAuthChecked(true)
       try{
-        await Promise.all([reloadMembers(),reloadMatches(),reloadCamps(),reloadMeetings()])
+        await Promise.all([reloadMembers(),reloadMatches(),reloadCamps(),reloadMeetings(),reloadClubReports()])
         await reloadProfiles()
       }catch(e){console.error("initial data load failed",e)}
       setLoaded(true)
@@ -734,6 +741,7 @@ export default function EliteSquadApp() {
       onMatches:reloadMatches,
       onProfiles:reloadProfiles,
       onCamps:reloadCamps,
+      onClubReports:reloadClubReports,
     }).then(fn=>{ if(!cancelled) unsub=fn; else fn() })
     return ()=>{cancelled=true;unsub()}
   },[user?.id])
@@ -1153,7 +1161,10 @@ export default function EliteSquadApp() {
               ))}
             </Dropdown>
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
-            <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} pendingUsers={pendingUsers} canManageUsers={canManageUsers} onOpenApprovals={()=>setPendingReviewOpen(true)} />
+            <NotificationBell members={members} matches={matches} teamCat={teamCat} onSelectMember={setSelMember} pendingUsers={pendingUsers} canManageUsers={canManageUsers} onOpenApprovals={()=>setPendingReviewOpen(true)}
+              clubReports={allClubReports} canReviewClubReports={canVerifyClubReport()}
+              onOpenClubReport={(memberId)=>{const m=members.find((x:any)=>x.id===memberId);if(m){setSelMember(m);setProfileTab("club")}}}
+            />
 
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
 

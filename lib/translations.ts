@@ -227,6 +227,7 @@ const t = {
       cafRule2Yellows: "CAF rule: 2 yellow cards → 1-match ban", upcomingMatch: "Upcoming match",
       noResult: "no result", pendingApproval: "account pending approval", tapToReview: "Tap to review & approve",
       oneYellowAway: "1 yellow away from ban", tbd: "TBD",
+      clubReportSubmitted: "new club match report to review", tapToReviewReport: "Tap to review & verify",
     },
     users: {
       pendingTitle: "Pending Users", awaitingReview: "awaiting approval", awaitingYourReview: "PENDING · Awaiting your review",
@@ -544,6 +545,7 @@ const t = {
       cafRule2Yellows: "Règle CAF : 2 cartons jaunes → suspension d'un match", upcomingMatch: "Match à venir",
       noResult: "aucun résultat", pendingApproval: "compte en attente d'approbation", tapToReview: "Appuyez pour examiner et approuver",
       oneYellowAway: "à 1 jaune de la suspension", tbd: "À déterminer",
+      clubReportSubmitted: "nouveau rapport de match de club à examiner", tapToReviewReport: "Appuyez pour examiner et vérifier",
     },
     users: {
       pendingTitle: "Utilisateurs en attente", awaitingReview: "en attente d'approbation", awaitingYourReview: "EN ATTENTE · À examiner",
@@ -861,6 +863,7 @@ const t = {
       cafRule2Yellows: "قاعدة الكاف: بطاقتان صفراوان → إيقاف مباراة واحدة", upcomingMatch: "مباراة قادمة",
       noResult: "بدون نتيجة", pendingApproval: "حساب بانتظار الموافقة", tapToReview: "اضغط للمراجعة والموافقة",
       oneYellowAway: "بطاقة صفراء واحدة قبل الإيقاف", tbd: "لم يُحدد",
+      clubReportSubmitted: "تقرير مباراة نادٍ جديد بحاجة للمراجعة", tapToReviewReport: "اضغط للمراجعة والتوثيق",
     },
     users: {
       pendingTitle: "المستخدمون المعلقون", awaitingReview: "بانتظار الموافقة", awaitingYourReview: "بالانتظار · بحاجة لمراجعتك",

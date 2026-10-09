@@ -1,11 +1,11 @@
 "use client"
 import React, { useState, useMemo } from "react"
-import { Bell, Ban, AlertTriangle, Calendar, UserPlus, X, ChevronRight } from "lucide-react"
+import { Bell, Ban, AlertTriangle, Calendar, UserPlus, ClipboardCheck, X, ChevronRight } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 
 type Notification = {
   id: string
-  type: "suspension" | "warning" | "upcoming" | "approval"
+  type: "suspension" | "warning" | "upcoming" | "approval" | "clubReport"
   message: string
   playerId?: number
   matchId?: number
@@ -21,9 +21,14 @@ type Props = {
   pendingUsers?: PendingUser[]
   canManageUsers?: boolean
   onOpenApprovals?: () => void
+  // Unverified club-match reports to surface to staff who can review them
+  // (same set of people who can actually hit "Verify" on the Club tab).
+  clubReports?: { id: number; member_id: number; verified?: boolean }[]
+  canReviewClubReports?: boolean
+  onOpenClubReport?: (memberId: number) => void
 }
 
-export function NotificationBell({ members, matches, teamCat, onSelectMember, pendingUsers = [], canManageUsers = false, onOpenApprovals }: Props) {
+export function NotificationBell({ members, matches, teamCat, onSelectMember, pendingUsers = [], canManageUsers = false, onOpenApprovals, clubReports = [], canReviewClubReports = false, onOpenClubReport }: Props) {
   const { tr } = useTranslate()
   const [open, setOpen] = useState(false)
   const [dismissedIds, setDismissedIds] = useState<Set<string>>(() => {
@@ -71,8 +76,16 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember, pe
       }
     })
 
+    if (canReviewClubReports) {
+      const catPlayerIds = new Set(catPlayers.map(p => p.id))
+      clubReports.filter(r => !r.verified && catPlayerIds.has(r.member_id)).forEach(r => {
+        const player = catPlayers.find(p => p.id === r.member_id)
+        if (player) n.push({ id: `cr-${r.id}`, type: "clubReport", message: `${player.name} — ${tr.notifications.clubReportSubmitted}`, playerId: player.id })
+      })
+    }
+
     return n
-  }, [members, matches, teamCat, pendingUsers, canManageUsers, tr])
+  }, [members, matches, teamCat, pendingUsers, canManageUsers, clubReports, canReviewClubReports, tr])
 
   const visibleNotifications = notifications.filter(n => !dismissedIds.has(n.id))
 
@@ -115,6 +128,13 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember, pe
                       setOpen(false)
                       return
                     }
+                    if (n.type === "clubReport") {
+                      // Also not dismissed: stays until the report is actually
+                      // verified, same reasoning as approvals above.
+                      if (n.playerId) onOpenClubReport?.(n.playerId)
+                      setOpen(false)
+                      return
+                    }
                     if (n.playerId) {
                       const m = members.find(x => x.id === n.playerId)
                       if (m) onSelectMember(m)
@@ -124,13 +144,13 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember, pe
                   }}
                   className="w-full text-left px-4 py-3 flex items-center gap-3 transition-all hover:bg-zinc-50"
                 >
-                  <div className={`p-2 rounded-xl shrink-0 ${n.type === 'suspension' ? 'bg-red-600/10 text-red-500' : n.type === 'warning' ? 'bg-yellow-400/10 text-yellow-500' : n.type === 'approval' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-blue-500/10 text-blue-500'}`}>
-                    {n.type === 'suspension' ? <Ban size={12} /> : n.type === 'warning' ? <AlertTriangle size={12} /> : n.type === 'approval' ? <UserPlus size={12} /> : <Calendar size={12} />}
+                  <div className={`p-2 rounded-xl shrink-0 ${n.type === 'suspension' ? 'bg-red-600/10 text-red-500' : n.type === 'warning' ? 'bg-yellow-400/10 text-yellow-500' : n.type === 'approval' ? 'bg-emerald-500/10 text-emerald-600' : n.type === 'clubReport' ? 'bg-cyan-500/10 text-cyan-600' : 'bg-blue-500/10 text-blue-500'}`}>
+                    {n.type === 'suspension' ? <Ban size={12} /> : n.type === 'warning' ? <AlertTriangle size={12} /> : n.type === 'approval' ? <UserPlus size={12} /> : n.type === 'clubReport' ? <ClipboardCheck size={12} /> : <Calendar size={12} />}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-[9px] font-black uppercase truncate">{n.message}</p>
                     <p className="text-[7px] uppercase mt-0.5 text-zinc-400">
-                      {n.type === 'suspension' ? tr.notifications.cannotPlayNext : n.type === 'warning' ? tr.notifications.cafRule2Yellows : n.type === 'approval' ? tr.notifications.tapToReview : tr.notifications.upcomingMatch}
+                      {n.type === 'suspension' ? tr.notifications.cannotPlayNext : n.type === 'warning' ? tr.notifications.cafRule2Yellows : n.type === 'approval' ? tr.notifications.tapToReview : n.type === 'clubReport' ? tr.notifications.tapToReviewReport : tr.notifications.upcomingMatch}
                     </p>
                   </div>
                   <ChevronRight size={12} className="opacity-30 shrink-0" />

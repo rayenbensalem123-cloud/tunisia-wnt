@@ -643,6 +643,7 @@ export async function subscribeRealtime(handlers: {
   onMatches?: () => void
   onProfiles?: () => void
   onCamps?: () => void
+  onClubReports?: () => void
 }) {
   const { data } = await supabase.auth.getSession()
   if (data.session?.access_token) {
@@ -654,6 +655,9 @@ export async function subscribeRealtime(handlers: {
     .on('postgres_changes', { event: '*', schema: 'public', table: 'matches' }, () => handlers.onMatches?.())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'camps' }, () => handlers.onCamps?.())
     .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => handlers.onProfiles?.())
+    // A player submitting (or staff verifying) a club-match report — drives
+    // the "new club report to review" notification for staff who can see them.
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'club_match_reports' }, () => handlers.onClubReports?.())
     .subscribe()
   return () => { supabase.removeChannel(channel) }
 }
