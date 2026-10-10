@@ -10,6 +10,8 @@ interface PlayerCardProps {
   caps?: number;
   goals?: number;
   imageSrc?: string;
+  /** Celebration photo: swapped in while the card is hovered or tapped. */
+  image2Src?: string;
   fullPosition?: boolean;
   n?: number;
   nationality?: string;
@@ -53,6 +55,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   caps,
   goals,
   imageSrc = "/placeholder.jpg",
+  image2Src,
   fullPosition,
   n,
   nationality,
@@ -76,6 +79,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   // pad when there's an actual number to pad.
   const num = (n===undefined||n===null) ? "—" : String(n).padStart(2, "0");
   const [popped, setPopped] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [img2Failed, setImg2Failed] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
   const [gifMoving, setGifMoving] = useState(false);
   const isGif = /\.gif(?:\?|#|$)|^data:image\/gif/i.test(imageSrc || "");
@@ -102,9 +107,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     timerRef.current = setTimeout(() => setPopped(false), 2600); // ~one loop of a short reveal clip
   };
   const frozen = isGif && !gifMoving;
+  // The celebration photo shows while the card is hovered (desktop) or tapped (phone), then returns.
+  const celebrating = !!image2Src && !img2Failed && !noPhoto && (popped || hovered);
   return (
     <article className="player-squad-card w-full h-[25rem] bg-[var(--c-panel)] text-[var(--c-cream)] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
-      <div className="player-card-photo relative w-28 shrink-0 border-r border-[var(--c-hover)]" style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}>
+      <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)} className="player-card-photo relative w-28 shrink-0 border-r border-[var(--c-hover)]" style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}>
         {noPhoto ? (
           <div
             onClick={triggerPop}
@@ -143,7 +150,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               animation: popped ? "none" : undefined,
               backfaceVisibility:"hidden",
               WebkitBackfaceVisibility:"hidden",
-              opacity: frozen ? 0 : 1,
+              opacity: frozen || celebrating ? 0 : 1,
               transition:"transform 0.5s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease, opacity 0.3s ease",
               transform: popped
                 ? "translateZ(90px) scale(1.5) rotateY(-4deg)"
@@ -152,6 +159,24 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               transformOrigin: "center 40%",
             }}
           />
+          {image2Src && !img2Failed && (
+            <img
+              src={image2Src}
+              alt=""
+              aria-hidden="true"
+              onError={() => setImg2Failed(true)}
+              className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none"
+              style={{
+                opacity: celebrating ? 1 : 0,
+                backfaceVisibility: "hidden",
+                WebkitBackfaceVisibility: "hidden",
+                transition: "transform 0.5s cubic-bezier(0.34,1.56,0.64,1), filter 0.4s ease, opacity 0.3s ease",
+                transform: popped ? "translateZ(90px) scale(1.5) rotateY(-4deg)" : "translateZ(0) scale(1) rotateY(0deg)",
+                filter: popped ? "drop-shadow(0 20px 30px rgba(0,0,0,0.55))" : "none",
+                transformOrigin: "center 40%",
+              }}
+            />
+          )}
           {isGif && (
             <canvas
               ref={canvasRef}

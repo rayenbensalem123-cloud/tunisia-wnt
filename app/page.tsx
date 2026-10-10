@@ -73,6 +73,9 @@ const authHeaders=async():Promise<Record<string,string>>=>{
 // Storage objects live in a private bucket, so `imgUrls` holds short-lived
 // signed URLs minted with the signed-in user's own session (see signedImageUrls).
 // Never build a public storage URL here.
+const getImage2Src=(m:any,imgUrls?:Record<string,string>)=>{if(m?.image2Path)return imgUrls?.[String(m.image2Path)]||"";const i=String(m?.image2||"").trim();if(!i||i.startsWith("data:image/svg+xml"))return "";return i}
+// A card shows the normal portrait and swaps to the celebration photo; if only one was uploaded, that one is the portrait.
+const getCardImages=(m:any,imgUrls?:Record<string,string>)=>{const a=getImageSrc(m,imgUrls),b=getImage2Src(m,imgUrls);return a?{main:a,alt:b}:{main:b,alt:""}}
 const getImageSrc=(m:any,imgUrls?:Record<string,string>)=>{if(m?.imagePath)return imgUrls?.[String(m.imagePath)]||"";const i=String(m?.image||m?.image_url||"").trim();if(!i)return "";if(i.startsWith("data:image/svg+xml"))return "";return i}
 // A passport is stored as a STORAGE PATH and resolved through the same signed
 // -url map as a portrait. It used to hold an /api/image?path= URL instead, but
@@ -594,6 +597,7 @@ export default function EliteSquadApp() {
   const pendingUsers = fetchedUsers.filter(u=>u.status==="pending")
   const pendingCount = pendingUsers.length
   const fileRef=useRef<HTMLInputElement>(null)
+  const fileRef2=useRef<HTMLInputElement>(null)
   const passRef=useRef<HTMLInputElement>(null)
   const [passportZoom,setPassportZoom]=useState(false)
 
@@ -625,7 +629,7 @@ export default function EliteSquadApp() {
   // the URL is resolved here and handed to the plain <img src>.
   useEffect(()=>{
     if(!user)return
-    const paths=[...members.map(m=>m?.imagePath),form?.imagePath,form?.passportImage].filter(Boolean).map(String)
+    const paths=[...members.map(m=>m?.imagePath),...members.map(m=>m?.image2Path),form?.imagePath,form?.image2Path,form?.passportImage].filter(Boolean).map(String)
     if(paths.length===0)return
     let alive=true
     signedImageUrls(paths).then(next=>{if(alive)setImgUrls(prev=>({...prev,...next}))})
@@ -1335,7 +1339,8 @@ export default function EliteSquadApp() {
                 age={calculateAge(m.birthdate)}
                 caps={m.role==="PLAYERS"?Number(m.natMatches)||0:undefined}
                 goals={m.role==="PLAYERS"?Number(m.goals)||0:undefined}
-                imageSrc={getImageSrc(m,imgUrls)}
+                imageSrc={getCardImages(m,imgUrls).main}
+                image2Src={getCardImages(m,imgUrls).alt}
                 fullPosition={m.role!=="PLAYERS"}
                 license={m.role!=="PLAYERS"?m.natMatches:undefined}
                 n={n}
@@ -1385,6 +1390,12 @@ export default function EliteSquadApp() {
                     {getImageSrc(selMember,imgUrls)?<img src={getImageSrc(selMember,imgUrls)} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} className="w-full h-full object-cover object-top" alt=""/>:<div className="w-full h-full flex items-center justify-center text-lg font-black text-[#e3062c]/40">{mcode}</div>}
                     <div className="absolute inset-x-0 bottom-0 h-[3px] bg-[#e3062c]" />
                   </div>
+                  {getImage2Src(selMember,imgUrls)&&getImageSrc(selMember,imgUrls)&&(
+                    <div className="relative w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-deep)]">
+                      <img src={getImage2Src(selMember,imgUrls)} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} className="w-full h-full object-cover object-top" alt=""/>
+                      <div className="absolute inset-x-0 bottom-0 h-[3px] bg-[#f6c744]" />
+                    </div>
+                  )}
                   <div className="min-w-0">
                     <p className="text-[9px] font-bold uppercase tracking-[.2em] text-[var(--c-textMid)] truncate">{catLabel(selMember.teamCategory)}{selMember.club?` · ${selMember.club}`:""}</p>
                     <h2 className="mt-0.5 text-[22px] leading-[1.05] font-black uppercase tracking-tight text-[var(--c-text)] truncate">{titleCase(selMember.name)}</h2>
@@ -1967,6 +1978,14 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 </div>
                 {form.image&&<button type="button" onClick={e=>{e.stopPropagation();setForm({...form,image:""})}} className="absolute -top-1 -right-1 p-1.5 bg-[#e3062c] text-white rounded-full"><Trash2 size={11}/></button>}
               </div>
+              <div className="relative mt-3">
+                <div onClick={()=>fileRef2.current?.click()} className="flex flex-col items-center gap-2 py-4 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.25)] hover:border-[#e3062c]/60 cursor-pointer bg-[var(--c-deep)] transition-all">
+                  <input type="file" ref={fileRef2} onChange={async e=>{const f=e.target.files?.[0];e.target.value='';if(f){try{let blob:File|Blob=f,name=f.name;if(f.type!=='image/gif'&&!/\.gif$/i.test(f.name)){blob=await compressImage(f);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}const fd=new FormData();fd.append('file',blob,name);const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd});const d=await r.json();if(d.url&&d.url!=='/placeholder.jpg'){setForm({...form,image2:d.url,image2Path:d.path});return}}catch(err){}const r2=new FileReader();r2.onloadend=()=>setForm({...form,image2:r2.result as string});r2.readAsDataURL(f)}}} className="hidden" accept="image/jpeg,image/png,image/gif"/>
+                  {form.image2?<img src={form.image2Path?(imgUrls[String(form.image2Path)]||form.image2):form.image2} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="w-14 h-14 rounded-lg object-cover" alt=""/>:<Camera size={20} className="text-[var(--c-textDim)]"/>}
+                  <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.celebrationUpload}</span>
+                </div>
+                {form.image2&&<button type="button" onClick={e=>{e.stopPropagation();setForm({...form,image2:"",image2Path:""})}} className="absolute -top-1 -right-1 p-1.5 bg-[#e3062c] text-white rounded-full"><Trash2 size={11}/></button>}
+              </div>
               {activeTab==="PLAYERS"&&(
                 <div className="relative mt-3">
                   <div onClick={()=>passRef.current?.click()} className="flex flex-col items-center gap-2 py-4 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.25)] hover:border-[#f6c744]/60 cursor-pointer bg-[var(--c-deep)] transition-all">
@@ -2322,7 +2341,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   }
                   return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> account <span className="font-bold text-zinc-800">{a.entity_label}</span></>
                 }
-                const hiddenFields=new Set(["id","image_url","image_path","history","details"])
+                const hiddenFields=new Set(["id","image_url","image_path","image2_url","image2_path","history","details"])
                 const changeEntries=a.changes?Object.entries(a.changes).filter(([k]:any)=>!hiddenFields.has(k)):[]
                 const fieldLabel=(k:string)=>k.replace(/_/g," ").replace(/\b\w/g,(c:string)=>c.toUpperCase())
                 const fmtVal=(v:any)=>{
