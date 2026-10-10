@@ -1448,7 +1448,7 @@ export default function EliteSquadApp() {
                       <button onClick={()=>setProfileTab("profile")} className={`pm-chip flex-1 justify-center ${profileTab==="profile"?'pm-chip-on':''}`}>Profile</button>
                       {canSeePrivate(selMember)&&<button onClick={()=>setProfileTab("medical")} className={`pm-chip flex-1 justify-center ${profileTab==="medical"?'pm-chip-on':''}`}>Medical</button>}
                       {canSeeClubReports(selMember)&&<button onClick={()=>setProfileTab("club")} className={`pm-chip flex-1 justify-center ${profileTab==="club"?'pm-chip-on':''}`}>{tr.clubReports.tab}</button>}
-                      <button onClick={()=>setProfileTab("passport")} className={`pm-chip flex-1 justify-center ${profileTab==="passport"?'pm-chip-on':''}`}>{tr.profile.passport}</button>
+                      {canSeePrivate(selMember)&&<button onClick={()=>setProfileTab("passport")} className={`pm-chip flex-1 justify-center ${profileTab==="passport"?'pm-chip-on':''}`}>{tr.profile.passport}</button>}
                     </div>
                   )
                 ):(
@@ -1639,7 +1639,7 @@ export default function EliteSquadApp() {
                 </div>
               )}
 
-              {profileTab==="passport"&&isPlayer&&(
+              {profileTab==="passport"&&isPlayer&&canSeePrivate(selMember)&&(
                 <div className="flex items-center justify-center py-4">
                   {selMember.passportImage?(
                     <button type="button" onClick={()=>setPassportZoom(true)} className="group relative rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-deep)] overflow-hidden max-w-full cursor-zoom-in" title="Click to zoom">
