@@ -110,8 +110,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   // The celebration photo shows while the card is hovered (desktop) or tapped (phone), then returns.
   const celebrating = !!image2Src && !img2Failed && !noPhoto && (popped || hovered);
   return (
-    <article className="player-squad-card w-full h-[24rem] bg-[var(--c-panel)] text-[var(--c-cream)] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
-      <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)} className="player-card-photo relative w-[44%] min-w-[7rem] max-w-[11rem] shrink-0 border-r border-[var(--c-hover)]" style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}>
+    <article className="player-squad-card w-full h-[21rem] bg-[var(--c-panel)] text-[var(--c-cream)] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex flex-col" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
+      <div className="flex flex-1 min-h-0">
+      <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)} className="player-card-photo relative w-[58%] shrink-0 border-r border-[var(--c-hover)]" style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}>
         {noPhoto ? (
           <div
             onClick={triggerPop}
@@ -136,19 +137,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           </div>
         ) : (
           <>
-          {/* The whole picture shrinks to fit the strip (nothing is cropped); a blurred copy fills the space around it. */}
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              backgroundImage: `url("${celebrating && image2Src ? image2Src : imageSrc}")`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-              filter: "blur(14px) brightness(.55) saturate(1.1)",
-              transform: "scale(1.25)",
-              transition: "background-image .3s ease",
-            }}
-          />
           <img
             src={imageSrc}
             alt={name}
@@ -156,7 +144,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             onError={() => setImgFailed(true)}
             onMouseEnter={isGif ? () => setGifMoving(true) : undefined}
             onMouseLeave={isGif ? () => setGifMoving(false) : undefined}
-            className="absolute inset-0 w-full h-full object-contain object-center animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_backwards] cursor-pointer"
+            className="absolute inset-0 w-full h-full object-cover object-top animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_backwards] cursor-pointer"
             style={{
               willChange:"transform",
               animationDelay:`${entranceDelay}ms`,
@@ -178,7 +166,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               alt=""
               aria-hidden="true"
               onError={() => setImg2Failed(true)}
-              className="absolute inset-0 w-full h-full object-contain object-center pointer-events-none"
+              className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none"
               style={{
                 opacity: celebrating ? 1 : 0,
                 backfaceVisibility: "hidden",
@@ -212,9 +200,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         // Being on the federation delegation is implied by them being on this
         // roster at all, so that used to be spelled out as its own line; it
         // no longer needs to be, which also frees up real space on the card.
-        <div className="flex-1 px-4 py-4 flex flex-col min-w-0 relative">
+        <div className="flex-1 px-3 py-3 flex flex-col min-w-0 relative">
           <p className="text-[7px] text-[var(--c-textWarm2)] font-black uppercase tracking-[.22em] truncate">{club}</p>
-          <h3 className="font-black text-[21px] leading-[1.05] uppercase mt-1 text-[var(--c-cream)] break-words">{titleCase(name)}</h3>
+          <h3 className="font-black text-[18px] leading-[1.05] uppercase mt-1 text-[var(--c-cream)] break-words">{titleCase(name)}</h3>
           <span className="mt-1.5 text-[6.5px] font-black tracking-[.2em] text-[var(--c-cream)]/55 uppercase">{tr.coach.teamStaffBadge}</span>
 
           <div className="mt-4 flex-1 flex flex-col justify-center gap-2 relative z-10">
@@ -230,21 +218,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
 
           <span className="absolute right-3 bottom-16 text-[9rem] leading-none font-black italic text-[#f6c744]/[.07] select-none pointer-events-none">T</span>
 
-          <div className="mt-auto relative z-10">
-            <div className="h-px bg-[var(--c-hover)]" />
-            <div className="mt-3 flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)]">
-              <div className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 min-w-0 text-center">
-                <span className="block text-[6px] text-[var(--c-textWarm)] font-black uppercase tracking-widest">{tr.coach.ageStat}</span>
-                <strong className="text-lg leading-none text-[var(--c-cream)]">{String(age ?? "—")}</strong>
-              </div>
-            </div>
-          </div>
         </div>
       ) : (
         // ── PLAYER CARD ──
-        <div className="flex-1 px-4 py-4 flex flex-col min-w-0 relative">
+        <div className="flex-1 px-3 py-3 flex flex-col min-w-0 relative">
           <p className="text-[7px] text-[var(--c-textWarm2)] font-black uppercase tracking-[.22em] truncate">{club}</p>
-          <h3 className="font-black text-[21px] leading-[1.05] uppercase mt-1 text-[var(--c-cream)] break-words">{titleCase(name)}</h3>
+          <h3 className="font-black text-[18px] leading-[1.05] uppercase mt-1 text-[var(--c-cream)] break-words">{titleCase(name)}</h3>
           <div className="mt-2 flex items-center gap-2">
             <span className="px-1.5 py-0.5 rounded-sm bg-[#e3062c] text-white text-[6px] font-black uppercase tracking-[.18em]">{code}</span>
             <span className="text-[6.5px] font-black tracking-[.2em] text-[var(--c-cream)]/55 uppercase">TUNISIA WNT</span>
@@ -274,9 +253,20 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
 
           <span className="absolute right-2 bottom-10 text-[5.5rem] leading-none font-black italic text-[#e3062c]/[.09] select-none pointer-events-none">{num}</span>
 
-          <div className="mt-auto relative z-10">
-            <div className="h-px bg-[var(--c-hover)]" />
-            <div className="mt-3 flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)]">
+        </div>
+      )}
+      </div>
+
+      <div className="px-3 pb-3 relative z-10">
+        {fullPosition ? (
+            <div className="flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)]">
+              <div className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 min-w-0 text-center">
+                <span className="block text-[6px] text-[var(--c-textWarm)] font-black uppercase tracking-widest">{tr.coach.ageStat}</span>
+                <strong className="text-lg leading-none text-[var(--c-cream)]">{String(age ?? "—")}</strong>
+              </div>
+            </div>
+        ) : (
+            <div className="flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)]">
               {[
                 [tr.coach.ageStat, String(age ?? "—")],
                 [tr.coach.capsStat, String(caps ?? "—")],
@@ -289,9 +279,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
                 </div>
               ))}
             </div>
-          </div>
-        </div>
-      )}
+        )}
+      </div>
 
       <div className="absolute inset-x-0 bottom-0 h-[3px] bg-[#e3062c]" />
     </article>
