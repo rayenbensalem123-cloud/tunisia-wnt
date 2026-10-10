@@ -84,7 +84,7 @@ const t = {
     form: {
       update: "Update",
       newEntry: "New Entry",
-      portraitUpload: "Portrait Upload",
+      portraitUpload: "Portrait Upload", celebrationUpload: "Celebration Photo",
       passportUpload: "Passport Document (Scan)",
       fullName: "FULL NAME",
       clubTeam: "CLUB / TEAM",
@@ -407,7 +407,7 @@ const t = {
     form: {
       update: "Modifier",
       newEntry: "Nouvelle Entrée",
-      portraitUpload: "Télécharger Photo",
+      portraitUpload: "Télécharger Photo", celebrationUpload: "Photo de joie",
       passportUpload: "Document Passeport (Scan)",
       fullName: "NOM COMPLET",
       clubTeam: "CLUB / ÉQUIPE",
@@ -730,7 +730,7 @@ const t = {
     form: {
       update: "تحديث",
       newEntry: "إدخال جديد",
-      portraitUpload: "رفع صورة",
+      portraitUpload: "رفع صورة", celebrationUpload: "صورة الاحتفال",
       passportUpload: "وثيقة جواز السفر (مسح ضوئي)",
       fullName: "الاسم الكامل",
       clubTeam: "النادي / الفريق",

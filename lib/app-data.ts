@@ -59,6 +59,8 @@ export const memberFromDb = (r: any) => ({
   history: r.history || [],
   image: r.image_url,
   imagePath: r.image_path,
+  image2: r.image2_url,
+  image2Path: r.image2_path,
   jerseyNumber: r.jersey_number != null ? r.jersey_number : null,
   fifaConnectId: r.fifa_connect_id || null,
   camps: r.camps || [],
@@ -109,6 +111,11 @@ export const memberToDb = (m: any) => ({
   // the column didn't exist and this mapper never listed it, so every
   // selection was silently discarded. Both are now in place.
   formation: m.formation || null,
+  // Celebration photo. Only sent once a member carries the field, so a database that has
+  // not had supabase-celebration-photo.sql yet never sees an unknown column (PGRST204).
+  ...(m.image2 !== undefined || m.image2Path !== undefined
+    ? { image2_url: m.image2 || null, image2_path: m.image2Path || null }
+    : {}),
 })
 
 export const matchFromDb = (r: any) => ({
