@@ -259,21 +259,21 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
 
       <div className="px-3 pb-3 relative z-10">
         {fullPosition ? (
-          <div className="grid grid-cols-1 gap-1.5">
-            <div className="flex items-center justify-between rounded-lg border border-[var(--c-hover)] bg-[var(--c-panel4)] px-3 py-2">
-              <span className="text-[8px] text-[var(--c-textWarm)] font-black uppercase tracking-[.2em]">{tr.coach.ageStat}</span>
+          <div className="flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)] bg-[var(--c-panel4)]">
+            <div className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 px-1 min-w-0 text-center">
               <strong className="text-[22px] leading-none font-black text-[var(--c-cream)]">{String(age ?? "—")}</strong>
+              <span className="block text-[7.5px] text-[var(--c-textWarm)] font-black uppercase tracking-[.14em]">{tr.coach.ageStat}</span>
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-4 gap-1.5">
+          <div className="flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)] bg-[var(--c-panel4)]">
             {[
               [tr.coach.ageStat, String(age ?? "—"), "var(--c-cream)"],
               [tr.coach.capsStat, String(caps ?? "—"), "#f6c744"],
               [tr.coach.goalsStat, String(goals ?? "—"), "#e3062c"],
               [tr.coach.astStat, String(assists ?? "—"), "var(--c-cream)"],
-            ].map(([l, v, c]) => (
-              <div key={String(l)} className="flex flex-col items-center justify-center gap-1 py-2.5 px-1 min-w-0 text-center rounded-lg border border-[var(--c-hover)] bg-[var(--c-panel4)]">
+            ].map(([l, v, c], i) => (
+              <div key={String(l)} className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 px-1 min-w-0 text-center ${i ? "border-l border-[var(--c-hover)]" : ""}`}>
                 <strong className="text-[22px] leading-none font-black" style={{ color: String(c) }}>{String(v)}</strong>
                 <span className="block max-w-full truncate text-[7.5px] text-[var(--c-textWarm)] font-black uppercase tracking-[.14em]">{String(l)}</span>
               </div>
