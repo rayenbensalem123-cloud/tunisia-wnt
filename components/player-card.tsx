@@ -136,6 +136,19 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           </div>
         ) : (
           <>
+          {/* The whole picture shrinks to fit the strip (nothing is cropped); a blurred copy fills the space around it. */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              backgroundImage: `url("${celebrating && image2Src ? image2Src : imageSrc}")`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              filter: "blur(14px) brightness(.55) saturate(1.1)",
+              transform: "scale(1.25)",
+              transition: "background-image .3s ease",
+            }}
+          />
           <img
             src={imageSrc}
             alt={name}
@@ -143,7 +156,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             onError={() => setImgFailed(true)}
             onMouseEnter={isGif ? () => setGifMoving(true) : undefined}
             onMouseLeave={isGif ? () => setGifMoving(false) : undefined}
-            className="absolute inset-0 w-full h-full object-cover object-top animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_backwards] cursor-pointer"
+            className="absolute inset-0 w-full h-full object-contain object-center animate-[lineupReveal_0.9s_cubic-bezier(0.16,1,0.3,1)_backwards] cursor-pointer"
             style={{
               willChange:"transform",
               animationDelay:`${entranceDelay}ms`,
@@ -165,7 +178,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
               alt=""
               aria-hidden="true"
               onError={() => setImg2Failed(true)}
-              className="absolute inset-0 w-full h-full object-cover object-top pointer-events-none"
+              className="absolute inset-0 w-full h-full object-contain object-center pointer-events-none"
               style={{
                 opacity: celebrating ? 1 : 0,
                 backfaceVisibility: "hidden",
