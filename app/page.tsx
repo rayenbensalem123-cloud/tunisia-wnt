@@ -1307,7 +1307,7 @@ export default function EliteSquadApp() {
       {activeTab==="STATS"&&<StatsView/>}
 
       {/* ─── PLAYER GRID ─── */}
-      <div className="max-w-[1400px] mx-auto px-6 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+      <div className="max-w-[1400px] mx-auto px-6 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filtered.length===0&&(
           <div className="col-span-6 flex flex-col items-center justify-center py-24 gap-6 text-zinc-300"><User size={64}/><p className="text-[11px] font-black uppercase tracking-[0.4em]">{tr.empty.noRecords}</p></div>
         )}
