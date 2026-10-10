@@ -257,16 +257,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
       )}
       </div>
 
-      <div className="px-3 pb-3 relative z-10">
+      <div className="relative z-10 border-t border-[var(--c-hover)] pb-[3px]">
         {fullPosition ? (
-          <div className="flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)] bg-[var(--c-panel4)]">
+          <div className="flex items-stretch bg-[var(--c-panel4)]">
             <div className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 px-1 min-w-0 text-center">
               <strong className="text-[22px] leading-none font-black text-[var(--c-cream)]">{String(age ?? "—")}</strong>
               <span className="block text-[7.5px] text-[var(--c-textWarm)] font-black uppercase tracking-[.14em]">{tr.coach.ageStat}</span>
             </div>
           </div>
         ) : (
-          <div className="flex items-stretch overflow-hidden rounded-lg border border-[var(--c-hover)] bg-[var(--c-panel4)]">
+          <div className="flex items-stretch bg-[var(--c-panel4)]">
             {[
               [tr.coach.ageStat, String(age ?? "—"), "var(--c-cream)"],
               [tr.coach.capsStat, String(caps ?? "—"), "#f6c744"],
