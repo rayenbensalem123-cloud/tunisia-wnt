@@ -10,7 +10,7 @@ interface PlayerCardProps {
   caps?: number;
   goals?: number;
   imageSrc?: string;
-  /** Celebration photo: swapped in when the photo is clicked or tapped. */
+  /** Celebration photo: swapped in while the cursor is on the photo (or when it is clicked or tapped). */
   image2Src?: string;
   fullPosition?: boolean;
   n?: number;
@@ -79,6 +79,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   // pad when there's an actual number to pad.
   const num = (n===undefined||n===null) ? "—" : String(n).padStart(2, "0");
   const [popped, setPopped] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [img2Failed, setImg2Failed] = useState(false);
   const [imgFailed, setImgFailed] = useState(false);
   const [gifMoving, setGifMoving] = useState(false);
@@ -106,12 +107,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
     timerRef.current = setTimeout(() => setPopped(false), 2600); // ~one loop of a short reveal clip
   };
   const frozen = isGif && !gifMoving;
-  // The celebration photo shows for a moment when the photo is clicked or tapped, then returns.
-  const celebrating = !!image2Src && !img2Failed && !noPhoto && popped;
+  // The celebration photo shows while the cursor is on the photo, or for a moment after a click or tap.
+  const celebrating = !!image2Src && !img2Failed && !noPhoto && (popped || hovered);
   return (
     <article className="player-squad-card w-full h-[26rem] bg-[var(--c-panel)] text-[var(--c-cream)] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex flex-col" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
       <div className="flex flex-1 min-h-0">
-      <div className="player-card-photo relative w-[58%] shrink-0 border-r border-[var(--c-hover)]" style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}>
+      <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)} className="player-card-photo relative w-[58%] shrink-0 border-r border-[var(--c-hover)]" style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}>
         {noPhoto ? (
           <div
             onClick={triggerPop}
