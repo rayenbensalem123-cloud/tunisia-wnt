@@ -110,7 +110,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   // The celebration photo shows while the card is hovered (desktop) or tapped (phone), then returns.
   const celebrating = !!image2Src && !img2Failed && !noPhoto && (popped || hovered);
   return (
-    <article className="player-squad-card w-full h-[21rem] bg-[var(--c-panel)] text-[var(--c-cream)] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex flex-col" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
+    <article className="player-squad-card w-full h-[26rem] bg-[var(--c-panel)] text-[var(--c-cream)] overflow-hidden transition-all duration-500 hover:-translate-y-2 group relative flex flex-col" style={{transform:"translateZ(0)", backfaceVisibility:"hidden", WebkitBackfaceVisibility:"hidden"}}>
       <div className="flex flex-1 min-h-0">
       <div onMouseEnter={()=>setHovered(true)} onMouseLeave={()=>setHovered(false)} className="player-card-photo relative w-[58%] shrink-0 border-r border-[var(--c-hover)]" style={{perspective:"900px", zIndex: popped?50:1, overflow: popped?"visible":"hidden"}}>
         {noPhoto ? (
