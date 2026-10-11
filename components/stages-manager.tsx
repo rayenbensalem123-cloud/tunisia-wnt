@@ -893,8 +893,9 @@ function ProgramTab({ draft, setDraft, tr, members }: { draft: Stage; setDraft: 
 // ── Import call-ups from a PDF (players and staff are matched to member cards automatically) ──
 function CallupImport({ all, setDraft }: { all: any[]; setDraft: React.Dispatch<React.SetStateAction<Stage>> }) {
   const [busy, setBusy] = useState(false)
-  const [msg, setMsg] = useState<{ ok: boolean; text: string; unmatched: string[] } | null>(null)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string; unmatched: string[]; sample?: string[] } | null>(null)
   const run = async (f: File) => {
+    if (!isPdfFile(f)) { setMsg({ ok: false, text: 'Please choose a PDF file.', unmatched: [] }); return }
     setBusy(true); setMsg(null)
     try {
       const { data: sess } = await supabase.auth.getSession()
@@ -903,7 +904,14 @@ function CallupImport({ all, setDraft }: { all: any[]; setDraft: React.Dispatch<
       const r = await fetch('/api/parse-callups', { method: 'POST', body: fd, headers: token ? { Authorization: `Bearer ${token}` } : {} })
       const d = await r.json().catch(() => ({}))
       if (!r.ok) { setMsg({ ok: false, text: d.error || 'Could not read the PDF', unmatched: [] }); return }
-      const res = matchCallups(d.lines || [], all.map(m => ({ id: m.id, name: m.name, role: m.role, position: m.position })))
+      const lines: string[] = d.lines || []
+      const people = all.map(m => ({ id: m.id, name: m.name, role: m.role, position: m.position }))
+      const res = matchCallups(lines, people)
+      // second pass: a name split over two lines (surname, then first name)
+      const pairs = lines.slice(0, -1).map((l, i) => l + ' ' + lines[i + 1])
+      const extra = matchCallups(pairs, people)
+      res.players = Array.from(new Set([...res.players, ...extra.players]))
+      for (const s2 of extra.staff) if (!res.staff.some(x => x.id === s2.id)) res.staff.push(s2)
       setDraft(dr => {
         const players = Array.from(new Set([...(dr.players || []), ...res.players]))
         const staff = Array.from(new Set([...(dr.staff || []), ...res.staff.map(s => s.id)]))
@@ -911,19 +919,25 @@ function CallupImport({ all, setDraft }: { all: any[]; setDraft: React.Dispatch<
         const staffRoles = [...(dr.staffRoles || []), ...res.staff.filter(s => !have.has(s.id)).map(s => ({ memberId: s.id, role: s.role || '' }))]
         return { ...dr, players, staff, staffRoles }
       })
-      setMsg({ ok: true, text: `Added ${res.players.length} players and ${res.staff.length} staff from the PDF.`, unmatched: res.unmatched })
+      if (res.players.length + res.staff.length === 0) {
+        setMsg({ ok: false, text: `Read ${lines.length} lines from the PDF but no name matched a member card. Names in the PDF must match the names on the cards.`, unmatched: [], sample: lines.slice(0, 6) })
+      } else {
+        setMsg({ ok: true, text: `Read ${lines.length} lines. Added ${res.players.length} players and ${res.staff.length} staff. Press Save to keep them.`, unmatched: res.unmatched })
+      }
     } catch { setMsg({ ok: false, text: 'Could not read the PDF', unmatched: [] }) }
     finally { setBusy(false) }
   }
+  const drop = useFileDrop(files => run(files[0]), isPdfFile)
   return (
     <div className="mb-4">
-      <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613]/10 border border-[#E30613]/40 text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider cursor-pointer hover:bg-[#E30613]/20 transition-all">
+      <label {...drop.dropProps} className={`flex items-center justify-center gap-2 px-4 py-5 rounded-xl border-2 border-dashed text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider cursor-pointer transition-all ${drop.isDragging ? 'border-[#E30613] bg-[#E30613]/20' : 'border-[#E30613]/40 bg-[#E30613]/10 hover:bg-[#E30613]/20'}`}>
         <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) run(f) }}/>
-        <FileText size={13}/> {busy ? 'Reading PDF…' : 'Import call-up list (PDF)'}
+        <FileText size={13}/> {busy ? 'Reading PDF…' : 'Drop the call-up PDF here or click to choose'}
       </label>
       {msg && (
         <div className={`mt-3 rounded-xl border p-3 text-[10px] font-bold ${msg.ok ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-500' : 'border-[#E30613]/40 bg-[#E30613]/10 text-[var(--acc-red)]'}`}>
           <p>{msg.text}</p>
+          {msg.sample && msg.sample.length > 0 && <p className="mt-1.5 text-[var(--c-textDim)]">First lines read: {msg.sample.join(' | ')}</p>}
           {msg.unmatched.length > 0 && <p className="mt-1.5 text-[var(--c-textDim)]">Not found in your members ({msg.unmatched.length}): {msg.unmatched.join(' · ')}</p>}
         </div>
       )}
