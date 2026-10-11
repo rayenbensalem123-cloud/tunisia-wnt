@@ -141,7 +141,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
     try {
       const { data: sess } = await supabase.auth.getSession()
       const token = sess?.session?.access_token
-      const r = await fetch('/api/upload', { method: 'POST', body: fd, headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      const r = await fetch('/api/upload', { method: 'POST', body: fd, headers: token ? { Authorization: `Bearer ${token}` } : {}, signal: AbortSignal.timeout(60000) })
       const d = await r.json()
       return d.url || null
     } catch { return null }
@@ -162,17 +162,39 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
   }
   const reportDrop = useFileDrop(files => handleReportFile(files[0]), isPdfFile)
 
+  const [progress, setProgress] = useState('')
+  // Shrink big phone photos (often 5-10 MB) so they pass the 5 MB limit and upload fast.
+  const shrink = async (f: File): Promise<File> => {
+    if (!/^image\/(jpeg|png|webp)$/.test(f.type)) return f
+    try {
+      const bmp = await createImageBitmap(f)
+      const scale = Math.min(1, 2000 / Math.max(bmp.width, bmp.height))
+      if (scale === 1 && f.size < 1.5 * 1024 * 1024) return f
+      const c = document.createElement('canvas')
+      c.width = Math.round(bmp.width * scale); c.height = Math.round(bmp.height * scale)
+      c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height)
+      const blob: Blob | null = await new Promise(r => c.toBlob(r, 'image/jpeg', 0.85))
+      return blob ? new File([blob], f.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' }) : f
+    } catch { return f }
+  }
   const handlePhotoFiles = async (files: File[]) => {
     if (!files.length) return
     setBusy(true)
-    const urls: string[] = []
-    for (const f of files.slice(0, 12)) {
-      const url = await upload(f, 'camps-photos')
-      if (url) urls.push(url)
+    const urls: (string | null)[] = new Array(files.length).fill(null)
+    let next = 0, done = 0
+    const worker = async () => {
+      while (next < files.length) {
+        const i = next++
+        const small = await shrink(files[i])
+        urls[i] = await upload(small, 'camps-photos')
+        setProgress(`${++done}/${files.length}`)
+      }
     }
-    setBusy(false)
-    if (urls.length) setDraft(d => ({ ...d, images: [...(d.images || []), ...urls] }))
-    else show(tr.stages.uploadError)
+    await Promise.all([worker(), worker(), worker()])
+    setBusy(false); setProgress('')
+    const ok = urls.filter((u): u is string => !!u)
+    if (ok.length) setDraft(d => ({ ...d, images: [...(d.images || []), ...ok] }))
+    if (ok.length < files.length) show(`${files.length - ok.length} photo(s) could not be uploaded`)
   }
   const onPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -444,7 +466,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                   <label {...photosDrop.dropProps} className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-7 cursor-pointer transition-all mb-4 ${photosDrop.isDragging ? 'border-[#f6c744] bg-[#f6c744]/10 scale-[1.01]' : 'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#f6c744]/50'}`}>
                     <input type="file" accept="image/*" multiple className="hidden" onChange={onPhotos}/>
                     <ImageIcon size={26} className="text-[var(--c-textDim)]"/>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? tr.stages.uploading : tr.stages.addPhotos}</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? `${tr.stages.uploading} ${progress}` : tr.stages.addPhotos}</span>
                     <span className="text-[8px] text-[var(--c-textDim)]">{tr.stages.dropHintPhotos}</span>
                   </label>
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
