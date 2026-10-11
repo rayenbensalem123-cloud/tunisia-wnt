@@ -574,6 +574,19 @@ export async function fetchCamps() {
   return (data ?? []).map(campFromDb)
 }
 
+/** Save one camp straight to the database and report any error (the background sync hides them). */
+export async function saveCampRow(c: any, isNew: boolean): Promise<{ error: string | null }> {
+  const { id, ...rest } = campToDb(c)
+  if (isNew) {
+    const { error } = await supabase.from('camps').insert(rest)
+    return { error: error ? error.message : null }
+  }
+  const { data, error } = await supabase.from('camps').update(rest).eq('id', c.id).select('id')
+  if (error) return { error: error.message }
+  if (!data || data.length === 0) return { error: 'No row was updated (you may not have permission to edit camps)' }
+  return { error: null }
+}
+
 async function diffSync(
   table: 'members' | 'matches' | 'camps',
   prevMap: Map<any, any>,

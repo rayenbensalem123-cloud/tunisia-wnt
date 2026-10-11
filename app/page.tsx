@@ -22,7 +22,7 @@ import JSZip from "jszip"
 import {
   signInUsername, fetchMyProfile, registerUser,
   fetchAllProfiles, updateProfile, deleteProfile,
-  fetchMembers, fetchMatches, syncMembers, syncMatches, fetchCamps, syncCamps,
+  fetchMembers, fetchMatches, syncMembers, syncMatches, fetchCamps, syncCamps, saveCampRow,
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
   fetchInjuries, addInjury, updateInjuryStatus,
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl,
@@ -1135,7 +1135,7 @@ export default function EliteSquadApp() {
       </div>
 
       {stagesOpen ? (
-        <StagesManager open onClose={()=>setStagesOpen(false)} stages={camps} members={members} teamCat={teamCat} canManage={!!(canManageUsers||p.addCamps)} onSave={async(stage)=>{const next=[...(camps||[])];const idx=(camps||[]).findIndex((c:any)=>(c.id||0)===stage.id);if(idx>=0){const copy=[...next];copy[idx]={...copy[idx],...stage};setCamps(copy)}else{setCamps([...next,{...stage,id:typeof stage.id==='number'&&stage.id<2147483647?stage.id:Date.now(),createdByUsername:user?.username}])}return true}} onDelete={async(id)=>{setCamps((c:any[])=>c.filter((x:any)=>x.id!==id));return true}} onRefresh={reloadCamps} user={user}/>
+        <StagesManager open onClose={()=>setStagesOpen(false)} stages={camps} members={members} teamCat={teamCat} canManage={!!(canManageUsers||p.addCamps)} onSave={async(stage)=>{const isNew=!(camps||[]).some((c:any)=>(c.id||0)===stage.id);const payload=isNew?{...stage,createdByUsername:user?.username}:stage;const res=await saveCampRow(payload,isNew);if(res.error){alert('Could not save the camp: '+res.error);return false}await reloadCamps();return true}} onDelete={async(id)=>{setCamps((c:any[])=>c.filter((x:any)=>x.id!==id));return true}} onRefresh={reloadCamps} user={user}/>
       ) : meetingsOpen ? (
         <MeetingsPanel open onClose={()=>setMeetingsOpen(false)} meetings={meetings} canManage={!!(canManageUsers||p.manageMeetings)} teamCat={teamCat}
           onSchedule={async(payload)=>{const res=await scheduleMeeting(payload);await reloadMeetings();return res}}
