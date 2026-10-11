@@ -828,6 +828,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
               </div>
             )}
             {(stage.images || []).length > 0 && (
+              <>
               <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
                 {(stage.images || []).map((img, i) => (
                   <button key={img + i} onClick={() => setViewer(i)} className="group relative aspect-[4/3] rounded-xl overflow-hidden border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]">
@@ -844,6 +845,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
                   <span className="absolute bottom-4 px-3 py-1 rounded-lg bg-black/60 text-white text-[10px] font-black tracking-widest">{viewer + 1} / {stage.images.length}</span>
                 </div>
               )}
+              </>
             )}
           </div>
         )}
