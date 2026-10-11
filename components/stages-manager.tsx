@@ -472,7 +472,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
                     {(draft.images || []).map((img, i) => (
                       <div key={img + i} className="group relative rounded-xl overflow-hidden border border-[rgba(var(--line-rgb),.16)]">
-                        <StoredImg url={img} alt={`photo ${i+1}`} className="w-full aspect-[4/3] object-cover object-top"/>
+                        <StoredImg url={img} alt={`photo ${i+1}`} className="w-full aspect-[4/3] object-contain bg-black/30"/>
                         <button onClick={() => setDraft(d => ({ ...d, images: (d.images || []).filter((_, j) => j !== i) }))} className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/70 text-white opacity-0 group-hover:opacity-100 hover:bg-[#E30613] transition-all" title={tr.common.remove}>
                           <Trash2 size={12}/>
                         </button>
@@ -829,20 +829,35 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
             )}
             {(stage.images || []).length > 0 && (
               <>
-              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2.5">
-                {(stage.images || []).map((img, i) => (
-                  <button key={img + i} onClick={() => setViewer(i)} className="group relative aspect-[4/3] rounded-xl overflow-hidden border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]">
-                    <StoredImg url={img} alt={`photo ${i+1}`} className="absolute inset-0 w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-300"/>
-                  </button>
-                ))}
+              <div className="max-w-5xl mx-auto">
+                <div className="flex items-end justify-between mb-4 pb-3 border-b border-[rgba(var(--line-rgb),.14)]">
+                  <div>
+                    <p className="text-[8px] font-black uppercase tracking-widest text-[var(--acc-gold)]">{tr.stages.photosSectionTitle}</p>
+                    <p className="mt-1 text-[15px] font-black uppercase tracking-wide text-[var(--c-text)]">{stage.name}</p>
+                  </div>
+                  <span className="text-[10px] font-black text-[var(--c-textDim)]">{(stage.images || []).length} {tr.stages.photosWord}</span>
+                </div>
+                <div className="columns-2 sm:columns-3 lg:columns-4 gap-3">
+                  {(stage.images || []).map((img, i) => (
+                    <button key={img + i} onClick={() => setViewer(i)} className="group block w-full mb-3 break-inside-avoid rounded-xl overflow-hidden border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)] hover:border-[#f6c744]/50 transition-all">
+                      <StoredImg url={img} alt={`photo ${i+1}`} className="w-full h-auto block"/>
+                    </button>
+                  ))}
+                </div>
               </div>
               {viewer !== null && (stage.images || [])[viewer] && (
                 <div className="fixed inset-0 z-[500] bg-black/90 flex items-center justify-center p-4" onClick={() => setViewer(null)}>
                   <button onClick={() => setViewer(null)} className="absolute top-4 right-4 p-2.5 rounded-xl bg-white/10 text-white hover:bg-[#E30613] transition-all"><X size={18}/></button>
                   {(stage.images || []).length > 1 && <button onClick={e => { e.stopPropagation(); setViewer((viewer - 1 + stage.images.length) % stage.images.length) }} className="absolute left-3 sm:left-6 p-3 rounded-xl bg-white/10 text-white hover:bg-white/20"><ChevronLeft size={20}/></button>}
-                  <StoredImg url={stage.images[viewer]} alt={`photo ${viewer+1}`} className="max-h-[88vh] max-w-[92vw] object-contain rounded-lg" onClick={(e: React.MouseEvent) => e.stopPropagation()}/>
+                  <StoredImg url={stage.images[viewer]} alt={`photo ${viewer+1}`} className="max-h-[78vh] max-w-[92vw] object-contain rounded-lg" onClick={(e: React.MouseEvent) => e.stopPropagation()}/>
                   {(stage.images || []).length > 1 && <button onClick={e => { e.stopPropagation(); setViewer((viewer + 1) % stage.images.length) }} className="absolute right-3 sm:right-6 p-3 rounded-xl bg-white/10 text-white hover:bg-white/20"><ChevronLeft size={20} className="rotate-180"/></button>}
-                  <span className="absolute bottom-4 px-3 py-1 rounded-lg bg-black/60 text-white text-[10px] font-black tracking-widest">{viewer + 1} / {stage.images.length}</span>
+                  <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 max-w-[92vw] overflow-x-auto p-1.5 rounded-xl bg-black/50" onClick={e => e.stopPropagation()}>
+                    {stage.images.map((im: string, k: number) => (
+                      <button key={im + k} onClick={() => setViewer(k)} className={`shrink-0 w-12 h-12 rounded-lg overflow-hidden border-2 ${k === viewer ? 'border-[#f6c744]' : 'border-transparent opacity-60 hover:opacity-100'}`}>
+                        <StoredImg url={im} alt="" className="w-full h-full object-cover"/>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
               </>
