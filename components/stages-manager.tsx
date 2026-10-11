@@ -45,7 +45,7 @@ type Props = {
 
 const emptyStage = (cat: string | null): Stage => ({
   name: "", location: "", startDate: "", endDate: "", teamCategory: cat || "SENIORS",
-  program: [], players: [], staff: [], staffRoles: [], reportUrl: "", reportName: "", reports: [], images: [],
+  program: [], players: [], staff: [], staffRoles: [], reportUrl: "", reportName: "", images: [],
 })
 
 type TabKey = "program" | "players" | "staff" | "report" | "photos"
