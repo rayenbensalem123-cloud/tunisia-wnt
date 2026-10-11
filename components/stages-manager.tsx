@@ -6,6 +6,9 @@ import { useTheme } from "@/lib/theme-context"
 import { useTranslate } from "@/lib/language-context"
 import { DatePicker, Select } from "@/components/pickers"
 import { useFileDrop, isPdfFile } from "@/lib/use-file-drop"
+import { supabase } from "@/lib/supabase"
+import { matchCallups } from "@/lib/callups"
+import { StoredImg, openStored } from "@/components/stored-file"
 
 type Stage = {
   id?: number
@@ -136,7 +139,9 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
     fd.append('file', file, file.name)
     fd.append('folder', folder)
     try {
-      const r = await fetch('/api/upload', { method: 'POST', body: fd })
+      const { data: sess } = await supabase.auth.getSession()
+      const token = sess?.session?.access_token
+      const r = await fetch('/api/upload', { method: 'POST', body: fd, headers: token ? { Authorization: `Bearer ${token}` } : {} })
       const d = await r.json()
       return d.url || null
     } catch { return null }
@@ -404,11 +409,11 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
               )}
 
               {tab === "players" && (
-                <PlayersTab draft={draft} setDraft={setDraft} members={availablePlayers.length ? availablePlayers : allCandidates.filter(m => (m.role||'').toUpperCase()==='PLAYERS')} tr={tr}/>
+                <PlayersTab all={allCandidates} draft={draft} setDraft={setDraft} members={availablePlayers.length ? availablePlayers : allCandidates.filter(m => (m.role||'').toUpperCase()==='PLAYERS')} tr={tr}/>
               )}
 
               {tab === "staff" && (
-                <StaffTab draft={draft} setDraft={setDraft} members={availableStaff.length ? availableStaff : allCandidates.filter(m => (m.role||'').toUpperCase()!=='PLAYERS')} tr={tr}/>
+                <StaffTab all={allCandidates} draft={draft} setDraft={setDraft} members={availableStaff.length ? availableStaff : allCandidates.filter(m => (m.role||'').toUpperCase()!=='PLAYERS')} tr={tr}/>
               )}
 
               {tab === "report" && (
@@ -422,7 +427,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                   </label>
                   {draft.reportUrl && (
                     <div className="flex gap-2 mt-3 flex-wrap">
-                      <a href={draft.reportUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/15 transition-all">
+                      <a href="#" onClick={e => { e.preventDefault(); openStored(draft.reportUrl) }} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/15 transition-all">
                         <Download size={12}/> {tr.stages.openReport}
                       </a>
                       <button onClick={() => setDraft({ ...draft, reportUrl: "", reportName: "" })} className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--acc-red)] text-[9px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all">
@@ -445,7 +450,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {(draft.images || []).map((img, i) => (
                       <div key={img + i} className="group relative rounded-xl overflow-hidden border border-[rgba(var(--line-rgb),.16)]">
-                        <img src={img} alt={`photo ${i+1}`} className="w-full h-32 object-cover"/>
+                        <StoredImg url={img} alt={`photo ${i+1}`} className="w-full h-32 object-cover"/>
                         <button onClick={() => setDraft(d => ({ ...d, images: (d.images || []).filter((_, j) => j !== i) }))} className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/70 text-white opacity-0 group-hover:opacity-100 hover:bg-[#E30613] transition-all" title={tr.common.remove}>
                           <Trash2 size={12}/>
                         </button>
@@ -776,7 +781,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
                     <p className="mt-1.5 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)] truncate">{stage.reportName || tr.stages.reportFallbackName}</p>
                     <p className="mt-1 text-[9px] font-bold text-[var(--c-textDim)]">{tr.stages.reportDepositedNote}</p>
                   </div>
-                  <a href={stage.reportUrl} target="_blank" rel="noreferrer" className="shrink-0 flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/25 transition-all">
+                  <a href="#" onClick={e => { e.preventDefault(); openStored(stage.reportUrl) }} className="shrink-0 flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/25 transition-all">
                     <Download size={14}/> {tr.stages.openPdf}
                   </a>
                 </div>
@@ -804,8 +809,8 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
                 {(stage.images || []).map((img, i) => {
                   const span = i % 4 === 0
                   return (
-                    <a key={img + i} href={img} target="_blank" rel="noreferrer" className={`group relative rounded-2xl overflow-hidden border border-[rgba(var(--line-rgb),.14)] ${span ? 'col-span-2 row-span-1' : ''}`}>
-                      <img src={img} alt={`photo ${i+1}`} className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${span ? 'h-56 sm:h-64' : 'h-40'}`}/>
+                    <a key={img + i} href="#" onClick={e => { e.preventDefault(); openStored(img) }} className={`group relative rounded-2xl overflow-hidden border border-[rgba(var(--line-rgb),.14)] ${span ? 'col-span-2 row-span-1' : ''}`}>
+                      <StoredImg url={img} alt={`photo ${i+1}`} className={`w-full object-cover group-hover:scale-105 transition-transform duration-300 ${span ? 'h-56 sm:h-64' : 'h-40'}`}/>
                       <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"/>
                       <span className="absolute bottom-2 right-2 px-2 py-1 rounded-md bg-black/60 text-white text-[7px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">{i + 1} / {(stage.images || []).length}</span>
                     </a>
@@ -884,8 +889,50 @@ function ProgramTab({ draft, setDraft, tr, members }: { draft: Stage; setDraft: 
   )
 }
 
+
+// ── Import call-ups from a PDF (players and staff are matched to member cards automatically) ──
+function CallupImport({ all, setDraft }: { all: any[]; setDraft: React.Dispatch<React.SetStateAction<Stage>> }) {
+  const [busy, setBusy] = useState(false)
+  const [msg, setMsg] = useState<{ ok: boolean; text: string; unmatched: string[] } | null>(null)
+  const run = async (f: File) => {
+    setBusy(true); setMsg(null)
+    try {
+      const { data: sess } = await supabase.auth.getSession()
+      const token = sess?.session?.access_token
+      const fd = new FormData(); fd.append('file', f, f.name)
+      const r = await fetch('/api/parse-callups', { method: 'POST', body: fd, headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) { setMsg({ ok: false, text: d.error || 'Could not read the PDF', unmatched: [] }); return }
+      const res = matchCallups(d.lines || [], all.map(m => ({ id: m.id, name: m.name, role: m.role, position: m.position })))
+      setDraft(dr => {
+        const players = Array.from(new Set([...(dr.players || []), ...res.players]))
+        const staff = Array.from(new Set([...(dr.staff || []), ...res.staff.map(s => s.id)]))
+        const have = new Set((dr.staffRoles || []).map(x => x.memberId))
+        const staffRoles = [...(dr.staffRoles || []), ...res.staff.filter(s => !have.has(s.id)).map(s => ({ memberId: s.id, role: s.role || '' }))]
+        return { ...dr, players, staff, staffRoles }
+      })
+      setMsg({ ok: true, text: `Added ${res.players.length} players and ${res.staff.length} staff from the PDF.`, unmatched: res.unmatched })
+    } catch { setMsg({ ok: false, text: 'Could not read the PDF', unmatched: [] }) }
+    finally { setBusy(false) }
+  }
+  return (
+    <div className="mb-4">
+      <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613]/10 border border-[#E30613]/40 text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider cursor-pointer hover:bg-[#E30613]/20 transition-all">
+        <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) run(f) }}/>
+        <FileText size={13}/> {busy ? 'Reading PDF…' : 'Import call-up list (PDF)'}
+      </label>
+      {msg && (
+        <div className={`mt-3 rounded-xl border p-3 text-[10px] font-bold ${msg.ok ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-500' : 'border-[#E30613]/40 bg-[#E30613]/10 text-[var(--acc-red)]'}`}>
+          <p>{msg.text}</p>
+          {msg.unmatched.length > 0 && <p className="mt-1.5 text-[var(--c-textDim)]">Not found in your members ({msg.unmatched.length}): {msg.unmatched.join(' · ')}</p>}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Convocation editor ──
-function PlayersTab({ draft, setDraft, members, tr }: { draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[]; tr: any }) {
+function PlayersTab({ all, draft, setDraft, members, tr }: { all: any[]; draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[]; tr: any }) {
   const [q, setQ] = useState("")
   const list = draft.players || []
   const pool = members
@@ -896,6 +943,7 @@ function PlayersTab({ draft, setDraft, members, tr }: { draft: Stage; setDraft: 
   const toggle = (id: number) => setDraft(d => ({ ...d, players: (d.players || []).includes(id) ? (d.players || []).filter(x => x !== id) : [...(d.players || []), id] }))
   return (
     <div>
+      <CallupImport all={all} setDraft={setDraft}/>
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} {tr.stages.callupsCountLabel}</p>
         <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr.stages.searchPlaceholder} className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
@@ -934,7 +982,7 @@ function PlayersTab({ draft, setDraft, members, tr }: { draft: Stage; setDraft: 
 }
 
 // ── Staff editor ──
-function StaffTab({ draft, setDraft, members, tr }: { draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[]; tr: any }) {
+function StaffTab({ all, draft, setDraft, members, tr }: { all: any[]; draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[]; tr: any }) {
   const [q, setQ] = useState("")
   const list = draft.staff || []
   const pool = members
@@ -949,6 +997,7 @@ function StaffTab({ draft, setDraft, members, tr }: { draft: Stage; setDraft: Re
   }))
   return (
     <div>
+      <CallupImport all={all} setDraft={setDraft}/>
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
         <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} {tr.stages.staffCountLabel}</p>
         <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr.stages.searchPlaceholder} className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
