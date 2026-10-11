@@ -4,6 +4,7 @@ import { usePlayers } from "@/lib/players-context"
 import { useTranslate } from "@/lib/language-context"
 import { X, ShieldCheck, Camera, Upload } from "lucide-react"
 import { Select } from "@/components/pickers"
+import { useFileDrop, isImageFile } from "@/lib/use-file-drop"
 
 export function CoachDialog({ open, onOpenChange, coach }: any) {
   const { tr } = useTranslate()
@@ -23,16 +24,18 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
     else setFormData({ name: "", role: "HEAD COACH", license: "UEFA PRO", nationality: "TUNISIA", formation: "", image: "" })
   }, [coach, open])
 
+  const handleFile = (file: File) => {
+    const reader = new FileReader()
+    reader.onloadend = () => {
+      setFormData({ ...formData, image: reader.result as string })
+    }
+    reader.readAsDataURL(file)
+  }
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setFormData({ ...formData, image: reader.result as string })
-      }
-      reader.readAsDataURL(file)
-    }
+    if (file) handleFile(file)
   }
+  const photoDrop = useFileDrop(files => handleFile(files[0]), isImageFile)
 
   if (!open) return null
 
@@ -61,7 +64,7 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
           <div className="mb-6">
             <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-2 block">{tr.coach.staffPhoto}</label>
             <div className="flex gap-4 items-center">
-              <div className="w-24 h-24 bg-zinc-100 rounded-3xl border-2 border-dashed border-zinc-200 flex items-center justify-center overflow-hidden">
+              <div {...photoDrop.dropProps} className={`w-24 h-24 bg-zinc-100 rounded-3xl border-2 border-dashed flex items-center justify-center overflow-hidden transition-all ${photoDrop.isDragging ? 'border-[#f6c744] bg-[#f6c744]/10 scale-105' : 'border-zinc-200'}`}>
                 {formData.image ? (
                   <img src={formData.image} className="w-full h-full object-cover" alt="Preview" />
                 ) : (

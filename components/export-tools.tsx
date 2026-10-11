@@ -3,6 +3,7 @@ import React, { useState } from "react"
 import { createPortal } from "react-dom"
 import { Download, Upload, Printer, FileSpreadsheet, FileJson, X, FileText, Check } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
+import { useFileDrop, isPdfFile } from "@/lib/use-file-drop"
 
 type Props = {
   members: any[]
@@ -106,10 +107,8 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
 
   const openPdf = () => { setPdfOpen(true); setRows([]); setFileName(""); setPdfError(""); setBusy(false) }
 
-  const onFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
-    e.target.value = ""
-    if (!f) return
+  const handlePdfFile = async (f: File) => {
+    if (!isPdfFile(f)) { setPdfError(tr.importPlayers.couldNotProcess + 'not a PDF'); return }
     setBusy(true); setPdfError(""); setFileName(f.name); setRows([])
     try {
       const fd = new FormData()
@@ -128,6 +127,12 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
     }
     setBusy(false)
   }
+  const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
+    e.target.value = ""
+    if (f) handlePdfFile(f)
+  }
+  const pdfDrop = useFileDrop(files => handlePdfFile(files[0]), isPdfFile)
 
   const updateRow = (i: number, key: 'name' | 'team' | 'camp', val: string) => {
     setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [key]: val } : r))
@@ -222,7 +227,7 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
               <button onClick={() => setPdfOpen(false)} className="p-2 hover:bg-red-500/10 rounded-xl"><X size={20} /></button>
             </div>
 
-            <label className={`shrink-0 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 cursor-pointer transition-all ${fileName ? 'border-green-400 bg-green-50' : 'border-zinc-300 bg-zinc-50 hover:border-red-400'}`}>
+            <label {...pdfDrop.dropProps} className={`shrink-0 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 cursor-pointer transition-all ${pdfDrop.isDragging ? 'border-red-400 bg-red-50 scale-[1.01]' : fileName ? 'border-green-400 bg-green-50' : 'border-zinc-300 bg-zinc-50 hover:border-red-400'}`}>
               <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={onFile} />
               <FileText size={24} className={fileName ? 'text-green-500' : 'text-zinc-400'} />
               <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">{busy ? tr.importPlayers.readingPdf : fileName ? fileName : tr.importPlayers.clickToChoosePdf}</span>

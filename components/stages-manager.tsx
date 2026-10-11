@@ -5,6 +5,7 @@ import ThemeToggle from "@/components/theme-toggle"
 import { useTheme } from "@/lib/theme-context"
 import { useTranslate } from "@/lib/language-context"
 import { DatePicker, Select } from "@/components/pickers"
+import { useFileDrop, isPdfFile } from "@/lib/use-file-drop"
 
 type Stage = {
   id?: number
@@ -141,20 +142,22 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
     } catch { return null }
   }
 
-  const onReportFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
-    e.target.value = ""
-    if (!f || f.type !== 'application/pdf') return
+  const handleReportFile = async (f: File) => {
+    if (!isPdfFile(f)) { show(tr.stages.uploadError); return }
     setBusy(true)
     const url = await upload(f, 'camps-reports')
     setBusy(false)
     if (url) setDraft(d => ({ ...d, reportUrl: url, reportName: f.name }))
     else show(tr.stages.uploadError)
   }
-
-  const onPhotos = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
+  const onReportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
     e.target.value = ""
+    if (f) handleReportFile(f)
+  }
+  const reportDrop = useFileDrop(files => handleReportFile(files[0]), isPdfFile)
+
+  const handlePhotoFiles = async (files: File[]) => {
     if (!files.length) return
     setBusy(true)
     const urls: string[] = []
@@ -166,6 +169,12 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
     if (urls.length) setDraft(d => ({ ...d, images: [...(d.images || []), ...urls] }))
     else show(tr.stages.uploadError)
   }
+  const onPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+    e.target.value = ""
+    handlePhotoFiles(files)
+  }
+  const photosDrop = useFileDrop(handlePhotoFiles, f => f.type.startsWith('image/'))
 
   const allCandidates = members.filter(m => m.name && m.role)
   const availablePlayers = allCandidates.filter(m => (m.role || '').toUpperCase() === 'PLAYERS')
@@ -405,7 +414,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
               {tab === "report" && (
                 <div>
                   <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">{tr.stages.reportSectionTitle}</p>
-                  <label className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-9 cursor-pointer transition-all ${draft.reportUrl ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#E30613]/50'}`}>
+                  <label {...reportDrop.dropProps} className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-9 cursor-pointer transition-all ${reportDrop.isDragging ? 'border-[#E30613] bg-[#E30613]/10 scale-[1.01]' : draft.reportUrl ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#E30613]/50'}`}>
                     <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={onReportFile}/>
                     <FileText size={30} className={draft.reportUrl ? 'text-emerald-500' : 'text-[var(--c-textDim)]'}/>
                     <span className="text-[11px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? tr.stages.uploading : draft.reportUrl ? draft.reportName || tr.stages.reportAttached : tr.stages.dropReportHere}</span>
@@ -427,7 +436,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
               {tab === "photos" && (
                 <div>
                   <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">{tr.stages.photosSectionTitle}</p>
-                  <label className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-7 cursor-pointer transition-all mb-4 ${'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#f6c744]/50'}`}>
+                  <label {...photosDrop.dropProps} className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-7 cursor-pointer transition-all mb-4 ${photosDrop.isDragging ? 'border-[#f6c744] bg-[#f6c744]/10 scale-[1.01]' : 'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#f6c744]/50'}`}>
                     <input type="file" accept="image/*" multiple className="hidden" onChange={onPhotos}/>
                     <ImageIcon size={26} className="text-[var(--c-textDim)]"/>
                     <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? tr.stages.uploading : tr.stages.addPhotos}</span>
