@@ -10,6 +10,8 @@ import { supabase } from "@/lib/supabase"
 import { matchCallups } from "@/lib/callups"
 import { StoredImg, openStored } from "@/components/stored-file"
 
+type CampReport = { id: string; url: string; name: string; staffId: number | null; staffName: string; role: string; addedAt: string }
+
 type Stage = {
   id?: number
   name: string
@@ -23,6 +25,7 @@ type Stage = {
   staffRoles: { memberId: number; role: string }[]
   reportUrl: string
   reportName: string
+  reports?: CampReport[]
   images: string[]
   createdByUsername?: string
 }
@@ -161,6 +164,40 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
     if (f) handleReportFile(f)
   }
   const reportDrop = useFileDrop(files => handleReportFile(files[0]), isPdfFile)
+
+  // Several staff members each file their own report: one entry per PDF, attributed to a staff member.
+  const staffOf = (s: Stage) => (s.staff || []).map(id => {
+    const m: any = members.find(x => x.id === id)
+    return { id, name: m?.name || `#${id}`, role: (s.staffRoles || []).find(r => r.memberId === id)?.role || m?.position || '' }
+  })
+  const makeReport = async (f: File, byId: string, s: Stage): Promise<CampReport | null> => {
+    if (!isPdfFile(f)) { show('Please choose a PDF file'); return null }
+    setBusy(true)
+    const url = await upload(f, 'camps-reports')
+    setBusy(false)
+    if (!url) { show(tr.stages.uploadError); return null }
+    const who = staffOf(s).find(x => String(x.id) === byId)
+    return { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 5), url, name: f.name, staffId: who ? who.id : null, staffName: who?.name || '', role: who?.role || '', addedAt: new Date().toISOString().slice(0, 10) }
+  }
+  const current: Stage | null = editing ? (stages.find(x => x.id === editing.id) || editing) : null
+  const detailAddReport = async (f: File, byId: string) => {
+    if (!current) return
+    const r = await makeReport(f, byId, current)
+    if (!r) return
+    const ok = await onSave({ ...current, reports: [...(current.reports || []), r] })
+    if (ok) { show('Report added'); onRefresh?.() }
+  }
+  const detailRemoveReport = async (id: string) => {
+    if (!current) return
+    const next = id === 'legacy' ? { ...current, reportUrl: '', reportName: '' } : { ...current, reports: (current.reports || []).filter(r => r.id !== id) }
+    const ok = await onSave(next)
+    if (ok) onRefresh?.()
+  }
+  const formAddReport = async (f: File, byId: string) => {
+    const r = await makeReport(f, byId, draft)
+    if (r) setDraft(d => ({ ...d, reports: [...(d.reports || []), r] }))
+  }
+  const formRemoveReport = (id: string) => setDraft(d => id === 'legacy' ? { ...d, reportUrl: '', reportName: '' } : { ...d, reports: (d.reports || []).filter(r => r.id !== id) })
 
   const [progress, setProgress] = useState('')
   // Shrink big phone photos (often 5-10 MB) so they pass the 5 MB limit and upload fast.
@@ -302,7 +339,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             <div className="mt-8 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {filtered.map((s, idx) => {
                 const hasPlayers = (s.players?.length || 0) > 0
-                const hasReport = !!s.reportUrl
+                const hasReport = !!s.reportUrl || (s.reports?.length || 0) > 0
                 const hasPhotos = (s.images?.length || 0) > 0
                 const hasProgram = (s.program?.length || 0) > 0
                 const hasStaff = (s.staff?.length || 0) > 0
@@ -362,7 +399,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
         )}
 
         {view === "detail" && editing && (
-          <StageDetail stage={editing} members={members} canManage={canManage} tr={tr}
+          <StageDetail stage={current || editing} members={members} canManage={canManage} tr={tr} staff={staffOf(current || editing)} busy={busy} onAddReport={detailAddReport} onRemoveReport={detailRemoveReport}
             onBack={() => setView("list")}
             onEdit={() => { setDraft(JSON.parse(JSON.stringify(editing))); setTab("program"); setView("edit") }}
             onDelete={() => setDeleteTarget(editing)} />
@@ -439,25 +476,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
               )}
 
               {tab === "report" && (
-                <div>
-                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">{tr.stages.reportSectionTitle}</p>
-                  <label {...reportDrop.dropProps} className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-9 cursor-pointer transition-all ${reportDrop.isDragging ? 'border-[#E30613] bg-[#E30613]/10 scale-[1.01]' : draft.reportUrl ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#E30613]/50'}`}>
-                    <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={onReportFile}/>
-                    <FileText size={30} className={draft.reportUrl ? 'text-emerald-500' : 'text-[var(--c-textDim)]'}/>
-                    <span className="text-[11px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? tr.stages.uploading : draft.reportUrl ? draft.reportName || tr.stages.reportAttached : tr.stages.dropReportHere}</span>
-                    <span className="text-[8px] text-[var(--c-textDim)]">{tr.stages.dropHintPdf}</span>
-                  </label>
-                  {draft.reportUrl && (
-                    <div className="flex gap-2 mt-3 flex-wrap">
-                      <a href="#" onClick={e => { e.preventDefault(); openStored(draft.reportUrl) }} className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/15 transition-all">
-                        <Download size={12}/> {tr.stages.openReport}
-                      </a>
-                      <button onClick={() => setDraft({ ...draft, reportUrl: "", reportName: "" })} className="flex items-center gap-1.5 px-4 py-2 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--acc-red)] text-[9px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all">
-                        <Trash2 size={12}/> {tr.common.remove}
-                      </button>
-                    </div>
-                  )}
-                </div>
+                <ReportsPanel reports={draft.reports || []} legacy={draft.reportUrl ? { url: draft.reportUrl, name: draft.reportName } : null} staff={staffOf(draft)} canManage busy={busy} onAdd={formAddReport} onRemove={formRemoveReport}/>
               )}
 
               {tab === "photos" && (
@@ -508,16 +527,19 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
   )
 }
 
-function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }: {
+function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, staff: staffOpts, busy, onAddReport, onRemoveReport }: {
   stage: Stage
   members: any[]
   canManage: boolean
+  staff: { id: number; name: string; role: string }[]
+  busy: boolean
+  onAddReport: (f: File, byId: string) => Promise<void>
+  onRemoveReport: (id: string) => Promise<void>
   onBack: () => void
   onEdit: () => void
   onDelete?: () => void
   tr: any
 }) {
-  const [tab, setTab] = useState<TabKey>("program")
   const [viewer, setViewer] = useState<number | null>(null)
   const memberById = (id: number) => members.find(m => m.id === id)
   const dur = durDays(stage)
@@ -551,13 +573,17 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
     else groupedDays.push({ label, items: [p] })
   }
 
-  const tabs: [TabKey, string, number][] = [
+  const reportCount = (stage.reports || []).length + (stage.reportUrl ? 1 : 0)
+  const cover = (stage.images || [])[0]
+  const sections: [string, string, number][] = [
     ["program", tr.stages.programTab, sessions],
     ["players", tr.stages.playersLabel, players.length],
     ["staff", tr.common.staff, staff.length],
-    ["report", tr.stages.report, stage.reportUrl ? 1 : 0],
+    ["report", tr.stages.report, reportCount],
     ["photos", tr.stages.photosTab, photos],
   ]
+  const [active, setActive] = useState("program")
+  const jump = (k: string) => { setActive(k); document.getElementById("sec-" + k)?.scrollIntoView({ behavior: "smooth", block: "start" }) }
 
   return (
     <>
@@ -582,6 +608,12 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
       <div className={`relative overflow-hidden rounded-[28px] mt-5 ${light
         ? 'bg-gradient-to-br from-white via-[#f1f6fc] to-[#fdeeef] text-[#0c1f3d] border border-[rgba(15,23,42,.09)] shadow-xl shadow-[#0c1f3d]/10'
         : 'bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white'}`}>
+        {cover && (
+          <>
+            <StoredImg url={cover} alt="" className="absolute inset-0 w-full h-full object-cover object-center opacity-35"/>
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0b1322] via-[#0b1322]/55 to-transparent"/>
+          </>
+        )}
         <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#E30613] via-[#f6c744] to-[#E30613]"/>
         <div className={`absolute -right-4 -top-10 text-[110px] font-black italic uppercase tracking-tighter select-none pointer-events-none ${light ? 'text-[#0c1f3d]/[0.06]' : 'text-white/[0.05]'}`}>{stage.name.slice(0, 14)}</div>
 
@@ -657,22 +689,23 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
         </div>
       </div>
 
-      {/* ─── TABS (segmented) ─── */}
-      <div className="mt-7 flex flex-wrap gap-1.5">
-        {tabs.map(([k, label, n]) => (
-          <button key={k} onClick={() => setTab(k)}
-            className={`relative flex items-center gap-2 px-5 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${tab === k
+      {/* ─── JUMP NAV ─── */}
+      <div className="sticky top-16 z-[90] mt-7 -mx-1 px-1 py-2 bg-[var(--c-bg)]/95 backdrop-blur border-b border-[rgba(var(--line-rgb),.12)] flex flex-wrap gap-1.5">
+        {sections.map(([k, label, n]) => (
+          <button key={k} onClick={() => jump(k)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${active === k
               ? 'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/25'
               : 'bg-[var(--c-panel3)] text-[var(--c-textMid)] border border-[rgba(var(--line-rgb),.16)] hover:text-[var(--c-text)] hover:border-[#f6c744]/30'}`}>
             {label}
-            <span className={`px-1.5 py-0.5 rounded-md text-[7px] font-black ${tab === k ? 'bg-[rgba(255,255,255,0.18)] text-white' : 'bg-[var(--c-panel2)] text-[var(--c-textDim)]'}`}>{n}</span>
+            <span className={`px-1.5 py-0.5 rounded-md text-[7px] font-black ${active === k ? 'bg-[rgba(255,255,255,0.18)] text-white' : 'bg-[var(--c-panel2)] text-[var(--c-textDim)]'}`}>{n}</span>
           </button>
         ))}
       </div>
 
-      <div className="mt-5">
+      <div className="mt-8 space-y-14">
         {/* ── PROGRAMME ── */}
-        {tab === "program" && (
+        <section id="sec-program" className="scroll-mt-32">
+          <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{tr.stages.programTab}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
           <div>
             {(stage.program || []).length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
@@ -716,10 +749,11 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
               </div>
             )}
           </div>
-        )}
+        </section>
 
         {/* ── JOUEURS ── */}
-        {tab === "players" && (
+        <section id="sec-players" className="scroll-mt-32">
+          <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{tr.stages.playersLabel}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
           <div>
             {(stage.players || []).length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
@@ -728,41 +762,40 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
               </div>
             )}
             {(stage.players || []).length > 0 && (
-              <div className="rounded-2xl border border-[rgba(var(--line-rgb),.12)] bg-[var(--c-panel2)]/40 overflow-hidden">
-                <div className="hidden sm:grid grid-cols-[56px_1fr_140px_100px] gap-3 px-5 py-3 text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)] border-b border-[rgba(var(--line-rgb),.12)]">
-                  <span>{tr.stages.numberHeader}</span><span>{tr.stages.playerHeader}</span><span>{tr.stages.positionHeader}</span><span>{tr.stages.clubHeader}</span>
-                </div>
-                <div className="divide-y divide-[rgba(var(--line-rgb),.1)]">
-                  {(stage.players || []).map((id, idx) => {
-                    const m: any = memberById(id)
-                    const num = m?.jerseyNumber
-                    return (
-                      <div key={id} className="grid grid-cols-[44px_1fr] sm:grid-cols-[56px_1fr_140px_100px] gap-3 items-center px-5 py-3 hover:bg-[var(--c-panel3)]/50 transition-colors">
-                        <div className="flex items-center justify-center">
-                          {num ? (
-                            <span className="w-8 h-8 rounded-lg bg-[#E30613]/15 border border-[#E30613]/40 text-[var(--acc-red)] text-[11px] font-black italic flex items-center justify-center">{num}</span>
-                          ) : (
-                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[var(--acc-gold)] uppercase">{(m?.name || "?")[0]}</div>
-                          )}
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
-                          <p className="sm:hidden text-[8px] font-bold text-[var(--c-textDim)] uppercase">{m?.position || "—"}</p>
-                        </div>
-                        <div className="hidden sm:block text-[9px] font-bold uppercase text-[var(--c-textMid)] truncate">{m?.position || "—"}</div>
-                        <div className="hidden sm:block text-[9px] font-bold uppercase text-[var(--c-textMid)] truncate">{m?.club || "—"}</div>
-                        
-                        </div>
-                    )
-                  })}
-                </div>
+              <div className="space-y-7">
+                {[["GOALKEEPER", "Goalkeepers"], ["DEFENDER", "Defenders"], ["MIDFIELDER", "Midfielders"], ["FORWARD", "Forwards"], ["", "Other"]].map(([pos, label]) => {
+                  const grp = (stage.players || []).map(id => memberById(id) as any).filter(m => m && ((m.position || "").toUpperCase() === pos || (!pos && !["GOALKEEPER", "DEFENDER", "MIDFIELDER", "FORWARD"].includes((m.position || "").toUpperCase()))))
+                  if (!grp.length) return null
+                  return (
+                    <div key={pos || "other"}>
+                      <p className="mb-3 text-[9px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{label} · {grp.length}</p>
+                      <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
+                        {grp.map((m: any) => (
+                          <div key={m.id} className="group">
+                            <div className="relative aspect-[3/4] rounded-xl overflow-hidden border border-[rgba(var(--line-rgb),.16)] bg-gradient-to-br from-[#f6c744]/15 to-[#E30613]/20">
+                              {m.imagePath ? (
+                                <StoredImg url={`/api/image?path=${encodeURIComponent(m.imagePath)}`} alt={m.name} className="absolute inset-0 w-full h-full object-cover object-top"/>
+                              ) : (
+                                <div className="absolute inset-0 flex items-center justify-center text-[26px] font-black text-[var(--acc-gold)] uppercase">{(m.name || "?")[0]}</div>
+                              )}
+                              {m.jerseyNumber ? <span className="absolute top-1.5 left-1.5 min-w-[22px] h-[22px] px-1 rounded-md bg-[#E30613] text-white text-[10px] font-black italic flex items-center justify-center">{m.jerseyNumber}</span> : null}
+                            </div>
+                            <p className="mt-1.5 text-[10px] font-black uppercase text-[var(--c-text)] leading-tight">{m.name}</p>
+                            {m.club && <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase truncate">{m.club}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
               </div>
             )}
           </div>
-        )}
+        </section>
 
         {/* ── STAFF ── */}
-        {tab === "staff" && (
+        <section id="sec-staff" className="scroll-mt-32">
+          <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{tr.common.staff}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
           <div>
             {(stage.staff || []).length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
@@ -787,39 +820,17 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
               })}
             </div>
           </div>
-        )}
+        </section>
 
         {/* ── RAPPORT ── */}
-        {tab === "report" && (
-          <div>
-            {stage.reportUrl ? (
-              <div className="rounded-3xl border border-emerald-500/30 bg-emerald-500/5 overflow-hidden">
-                <div className="h-1 bg-gradient-to-r from-emerald-500/70 to-transparent"/>
-                <div className="flex flex-col sm:flex-row items-center gap-6 p-10 text-center sm:text-left">
-                  <div className="w-16 h-16 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                    <FileText size={30} className="text-emerald-500"/>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[8px] font-black uppercase tracking-widest text-emerald-500/80">{tr.stages.officialReport}</p>
-                    <p className="mt-1.5 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)] truncate">{stage.reportName || tr.stages.reportFallbackName}</p>
-                    <p className="mt-1 text-[9px] font-bold text-[var(--c-textDim)]">{tr.stages.reportDepositedNote}</p>
-                  </div>
-                  <a href="#" onClick={e => { e.preventDefault(); openStored(stage.reportUrl) }} className="shrink-0 flex items-center gap-2 px-6 py-3 rounded-xl bg-emerald-500/15 border border-emerald-500/40 text-emerald-500 text-[9px] font-black uppercase tracking-wider hover:bg-emerald-500/25 transition-all">
-                    <Download size={14}/> {tr.stages.openPdf}
-                  </a>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
-                <FileText size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noReportDeposited}</p>
-              </div>
-            )}
-          </div>
-        )}
+        <section id="sec-report" className="scroll-mt-32">
+          <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{"Reports"}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
+          <ReportsPanel reports={stage.reports || []} legacy={stage.reportUrl ? { url: stage.reportUrl, name: stage.reportName } : null} staff={staffOpts} canManage={canManage} busy={busy} onAdd={onAddReport} onRemove={onRemoveReport}/>
+        </section>
 
         {/* ── PHOTOS ── */}
-        {tab === "photos" && (
+        <section id="sec-photos" className="scroll-mt-32">
+          <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{tr.stages.photosTab}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
           <div>
             {(stage.images || []).length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
@@ -863,9 +874,70 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr }
               </>
             )}
           </div>
-        )}
+        </section>
       </div>
     </>
+  )
+}
+
+// ── Reports: one PDF per staff member ──
+function ReportsPanel({ reports, legacy, staff, canManage, busy, onAdd, onRemove }: {
+  reports: CampReport[]
+  legacy: { url: string; name: string } | null
+  staff: { id: number; name: string; role: string }[]
+  canManage: boolean
+  busy: boolean
+  onAdd: (f: File, byId: string) => Promise<void> | void
+  onRemove: (id: string) => Promise<void> | void
+}) {
+  const [by, setBy] = useState("")
+  const drop = useFileDrop(files => { if (files[0]) onAdd(files[0], by) }, isPdfFile)
+  const items: { id: string; url: string; name: string; staffName: string; role: string; addedAt: string }[] = [
+    ...(legacy ? [{ id: "legacy", url: legacy.url, name: legacy.name || "Camp report", staffName: "", role: "", addedAt: "" }] : []),
+    ...reports,
+  ]
+  return (
+    <div className="space-y-5">
+      {items.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-12 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+          <FileText size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">No report yet</p>
+        </div>
+      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {items.map(r => (
+          <div key={r.id} className="flex items-center gap-3.5 rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-4">
+            <div className="w-11 h-14 rounded-lg bg-[#E30613] text-white text-[10px] font-black flex items-center justify-center shrink-0">PDF</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{r.staffName || "Camp report"}</p>
+              <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase tracking-wider truncate">{[r.role, r.addedAt].filter(Boolean).join(" · ") || r.name}</p>
+              <p className="text-[9px] text-[var(--c-textDim)] truncate">{r.name}</p>
+            </div>
+            <div className="flex flex-col gap-1.5 shrink-0">
+              <button onClick={() => openStored(r.url)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/35 text-emerald-500 text-[8px] font-black uppercase tracking-wider hover:bg-emerald-500/25 transition-all"><Download size={11}/> Open</button>
+              {canManage && <button onClick={() => onRemove(r.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(var(--line-rgb),.2)] text-[var(--acc-red)] text-[8px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all"><Trash2 size={11}/> Remove</button>}
+            </div>
+          </div>
+        ))}
+      </div>
+      {canManage && (
+        <div className="rounded-2xl border border-[rgba(var(--line-rgb),.16)] bg-[var(--c-panel3)]/40 p-4 space-y-3">
+          <div className="flex items-center gap-3 flex-wrap">
+            <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Report by</span>
+            <select value={by} onChange={e => setBy(e.target.value)} className="px-3 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[10px] font-bold outline-none">
+              <option value="">Camp report (no name)</option>
+              {staff.map(x => <option key={x.id} value={String(x.id)}>{x.name}{x.role ? ` · ${x.role}` : ""}</option>)}
+            </select>
+          </div>
+          <label {...drop.dropProps} className={`flex items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-all ${drop.isDragging ? 'border-[#E30613] bg-[#E30613]/10' : 'border-[rgba(var(--line-rgb),.25)] hover:border-[#E30613]/50'}`}>
+            <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onAdd(f, by) }}/>
+            <FileText size={18} className="text-[var(--c-textDim)]"/>
+            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? "Uploading…" : "Drop a PDF report here or click to choose"}</span>
+          </label>
+          {staff.length === 0 && <p className="text-[9px] font-bold text-[var(--c-textDim)]">Tip: add the camp's staff first to attribute each report to a staff member.</p>}
+        </div>
+      )}
+    </div>
   )
 }
 

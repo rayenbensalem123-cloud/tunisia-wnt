@@ -152,6 +152,7 @@ export const campFromDb = (r: any) => ({
   staffRoles: Array.isArray(r.staff_roles) ? r.staff_roles : [],
   reportUrl: r.report_url || '',
   reportName: r.report_name || '',
+  ...(r.reports !== undefined ? { reports: Array.isArray(r.reports) ? r.reports : [] } : {}),
   images: Array.isArray(r.images) ? r.images : [],
   createdByUsername: r.created_by_username || '',
   updatedAt: r.updated_at ? new Date(r.updated_at).getTime() : Date.now(),
@@ -170,6 +171,7 @@ export const campToDb = (c: any) => ({
   staff_roles: Array.isArray(c.staffRoles) ? c.staffRoles : [],
   report_url: c.reportUrl || '',
   report_name: c.reportName || '',
+  ...(c.reports !== undefined ? { reports: Array.isArray(c.reports) ? c.reports : [] } : {}),
   images: Array.isArray(c.images) ? c.images : [],
   created_by_username: c.createdByUsername || null,
 })
