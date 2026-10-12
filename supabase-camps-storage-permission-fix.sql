@@ -16,6 +16,7 @@
 -- instead, and leaves every other folder (player portraits, passports, etc.)
 -- gated on addPlayer/editPlayer/deletePlayer exactly as before.
 
+DROP POLICY IF EXISTS "members_storage_write" ON storage.objects;
 DROP POLICY IF EXISTS "members_storage_insert" ON storage.objects;
 DROP POLICY IF EXISTS "members_storage_update" ON storage.objects;
 DROP POLICY IF EXISTS "members_storage_delete" ON storage.objects;
