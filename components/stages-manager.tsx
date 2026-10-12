@@ -565,7 +565,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
               )}
 
               {tab === "report" && (
-                <ReportsPanel reports={draft.reports || []} legacy={draft.reportUrl ? { url: draft.reportUrl, name: draft.reportName } : null} staff={staffOf(draft)} canManage busy={busy} onAdd={formAddReport} onRemove={formRemoveReport}/>
+                <ReportsPanel reports={draft.reports || []} legacy={draft.reportUrl ? { url: draft.reportUrl, name: draft.reportName } : null} staff={staffOf(draft)} canManage edit busy={busy} onAdd={formAddReport} onRemove={formRemoveReport}/>
               )}
 
               {tab === "photos" && (
@@ -982,12 +982,13 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
 }
 
 // ── Reports: one PDF per staff member ──
-function ReportsPanel({ reports, legacy, staff, waiting, canManage, busy, onAdd, onRemove }: {
+function ReportsPanel({ reports, legacy, staff, waiting, canManage, edit, busy, onAdd, onRemove }: {
   reports: CampReport[]
   legacy: { url: string; name: string } | null
   staff: { id: number; name: string; role: string }[]
   waiting?: { id: number; name: string; role: string }[]
   canManage: boolean
+  edit?: boolean
   busy: boolean
   onAdd: (f: File, byId: string) => Promise<void> | void
   onRemove: (id: string) => Promise<void> | void
@@ -1007,34 +1008,34 @@ function ReportsPanel({ reports, legacy, staff, waiting, canManage, busy, onAdd,
           <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{cs("noReportYet")}</p>
         </div>
       )}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="flex flex-col gap-2">
         {items.map(r => (
-          <div key={r.id} className="flex items-center gap-3.5 rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-4">
-            <div className="w-11 h-14 rounded-lg bg-[#E30613] text-white text-[10px] font-black flex items-center justify-center shrink-0">PDF</div>
+          <div key={r.id} className="flex items-center gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/5 px-3.5 py-2.5">
+            <div className="w-8 h-10 rounded-md bg-[#E30613] text-white text-[10px] font-black flex items-center justify-center shrink-0">PDF</div>
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{r.staffName || cs("campReport")}</p>
               <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase tracking-wider truncate">{[r.role, r.addedAt].filter(Boolean).join(" · ") || r.name}</p>
               <p className="text-[9px] text-[var(--c-textDim)] truncate">{r.name}</p>
             </div>
-            <div className="flex flex-col gap-1.5 shrink-0">
+            <div className="flex items-center gap-1.5 shrink-0">
               <button onClick={() => openStored(r.url)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/35 text-emerald-500 text-[8px] font-black uppercase tracking-wider hover:bg-emerald-500/25 transition-all"><Download size={11}/> {cs("open")}</button>
-              {canManage && <button onClick={() => onRemove(r.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(var(--line-rgb),.2)] text-[var(--acc-red)] text-[8px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all"><Trash2 size={11}/> {cs("remove")}</button>}
+              {canManage && edit && <button onClick={() => onRemove(r.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(var(--line-rgb),.2)] text-[var(--acc-red)] text-[8px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all"><Trash2 size={11}/> {cs("remove")}</button>}
             </div>
           </div>
         ))}
         {(waiting || []).map(w => (
-          <label key={"w" + w.id} className={`flex items-center gap-3.5 rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.28)] p-4 ${canManage ? "cursor-pointer hover:border-[#E30613]/50" : ""}`}>
-            {canManage && <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onAdd(f, String(w.id)) }}/>}
-            <div className="w-11 h-14 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.35)] shrink-0"/>
+          <label key={"w" + w.id} className={`flex items-center gap-3 rounded-xl border border-dashed border-[rgba(var(--line-rgb),.28)] px-3.5 py-2.5 ${canManage && edit ? "cursor-pointer hover:border-[#E30613]/50" : ""}`}>
+            {canManage && edit && <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onAdd(f, String(w.id)) }}/>}
+            <div className="w-8 h-10 rounded-md border border-dashed border-[rgba(var(--line-rgb),.35)] shrink-0"/>
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{w.name}</p>
               <p className="text-[8px] font-bold uppercase tracking-wider text-[var(--acc-red)]">{w.role ? w.role + " · " : ""}{cs("waiting")}</p>
             </div>
-            {canManage && <span className="shrink-0 text-[8px] font-black uppercase tracking-wider text-[var(--acc-gold)]">{cs("upload")}</span>}
+            {canManage && edit && <span className="shrink-0 text-[8px] font-black uppercase tracking-wider text-[var(--acc-gold)]">{cs("upload")}</span>}
           </label>
         ))}
       </div>
-      {canManage && (
+      {canManage && edit && (
         <div className="rounded-2xl border border-[rgba(var(--line-rgb),.16)] bg-[var(--c-panel3)]/40 p-4 space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
             <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{cs("reportBy")}</span>
