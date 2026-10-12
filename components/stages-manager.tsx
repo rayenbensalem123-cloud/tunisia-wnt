@@ -707,121 +707,63 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
 
   return (
     <>
-      {/* Breadcrumb */}
-      <div className="mt-6 flex items-center justify-between gap-3 flex-wrap">
-        <button onClick={onBack} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-panel3)]/70 text-[var(--c-textMid)] hover:text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider transition-all">
-          <ArrowLeft size={13}/> {tr.stages.allCamps}
-        </button>
-        <div className="flex gap-2">
-          <button onClick={() => window.print()} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-panel3)]/70 text-[var(--c-textMid)] hover:text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider transition-all"><Download size={13}/> {cs("print")}</button>
-        {canManage && (
-          <>
-            <button onClick={onEdit} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 shadow-md shadow-[#E30613]/20 transition-all">
-              <Pencil size={13}/> {tr.common.edit}
-            </button>
-            <button onClick={onDelete} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#ff4f66]/30 bg-[#E30613]/10 text-[var(--acc-red)] hover:bg-[#E30613]/20 text-[9px] font-black uppercase tracking-wider transition-all">
-              <Trash2 size={13}/> {tr.common.delete}
-            </button>
-          </>
-        )}
-        </div>
-      </div>
-
-      {/* ─── DETAIL HERO ─── */}
-      <div className={`relative overflow-hidden rounded-[28px] mt-5 ${light
-        ? 'bg-gradient-to-br from-white via-[#f1f6fc] to-[#fdeeef] text-[#0c1f3d] border border-[rgba(15,23,42,.09)] shadow-xl shadow-[#0c1f3d]/10'
-        : 'bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white'}`}>
-        {cover && (
-          <>
-            <StoredImg url={cover} alt="" className="absolute inset-0 w-full h-full object-cover object-center opacity-35"/>
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0b1322] via-[#0b1322]/55 to-transparent"/>
-          </>
-        )}
+      {/* ─── COVER HERO ─── */}
+      <div className="relative overflow-hidden rounded-[28px] mt-6 bg-gradient-to-br from-[#1b3a6b] via-[#0b1730] to-[#5a0f1a] text-white">
+        {cover && (<StoredImg url={cover} alt="" className="absolute inset-0 w-full h-full object-cover object-center opacity-40"/>)}
+        <div className="absolute inset-0 bg-gradient-to-t from-[#0b1322] via-[#0b1322]/45 to-transparent"/>
         <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#E30613] via-[#f6c744] to-[#E30613]"/>
-        <div className={`absolute -right-4 -top-10 text-[110px] font-black italic uppercase tracking-tighter select-none pointer-events-none ${light ? 'text-[#0c1f3d]/[0.06]' : 'text-white/[0.05]'}`}>{stage.name.slice(0, 14)}</div>
-
-        <div className="relative px-7 sm:px-10 py-9 flex flex-col lg:flex-row lg:items-start gap-7">
-          {/* Date block */}
-          {d && (
-            <div className="shrink-0 flex flex-row lg:flex-col items-center gap-3 lg:gap-0 lg:items-stretch">
-              <div className={`rounded-2xl text-center min-w-[96px] ${light
-                ? 'bg-white px-6 py-4 border border-[#0c1f3d]/15 shadow-lg shadow-[#0c1f3d]/10'
-                : 'bg-white/[0.08] border border-white/20 px-6 py-4'}`}>
-                <p className={`text-[40px] font-black italic leading-none ${light ? 'text-[#E30613]' : 'text-[#f6c744]'}`}>{String(d.getDate()).padStart(2, "0")}</p>
-                <p className={`mt-1.5 text-[9px] font-black uppercase tracking-widest ${light ? 'text-[#0c1f3d]/55' : 'text-white/70'}`}>{MONTHS[d.getMonth()]} {d.getFullYear()}</p>
-              </div>
-              <div className={`lg:mt-4 h-8 lg:h-0 w-px lg:w-full ${light ? 'bg-[#0c1f3d]/15' : 'bg-white/15'}`}/>
-              {dur !== null && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-x-4 lg:gap-x-0">
-                  {[...Array(Math.min(dur, 14))].map((_, i) => (
-                    <span key={i} className={`w-1 h-1 rounded-full ${light ? 'bg-[#E30613]/60' : 'bg-[#f6c744]/70'}`}/>
-                  ))}
-                  <span className={`hidden lg:block col-span-full mt-1.5 text-[7px] font-black uppercase tracking-widest text-center ${light ? 'text-[#0c1f3d]/45' : 'text-white/50'}`}>{dur} {tr.stages.daysWord}</span>
-                </div>
+        <div className="relative px-6 sm:px-10 pt-6 pb-8 min-h-[320px] flex flex-col justify-between gap-10">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <button onClick={onBack} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0b1322]/70 border border-white/15 text-white/90 text-[9px] font-black uppercase tracking-wider hover:bg-[#0b1322] transition-all">
+              <ArrowLeft size={13}/> {tr.stages.allCamps}
+            </button>
+            <div className="flex gap-2">
+              <button onClick={() => window.print()} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0b1322]/70 border border-white/15 text-white/90 text-[9px] font-black uppercase tracking-wider hover:bg-[#0b1322] transition-all"><Download size={13}/> {cs("print")}</button>
+              {canManage && (
+                <>
+                  <button onClick={onEdit} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all"><Pencil size={13}/> {tr.common.edit}</button>
+                  <button onClick={onDelete} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0b1322]/70 border border-[#ff4f66]/40 text-[#ff8a94] text-[9px] font-black uppercase tracking-wider hover:bg-[#E30613]/30 transition-all"><Trash2 size={13}/> {tr.common.delete}</button>
+                </>
               )}
             </div>
-          )}
-
-          {/* Identity */}
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[7px] font-black uppercase tracking-widest ${light
-                ? 'bg-[#fff0f2] border border-[#ff5f72]/45 text-[#c2253c]'
-                : 'bg-[#E30613]/45 border border-[#ff5f72]/55 text-[#ffd0d7]'}`}>
-                {CATS.find(c => c.value === stage.teamCategory)?.label || stage.teamCategory}
-              </span>
-              <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md border text-[7px] font-black uppercase tracking-widest ${statusStyles[status.key]}`}>
-                <span className={`w-1.5 h-1.5 rounded-full ${statusDot[status.key]}`}/>
-                {status.label}
-              </span>
-              <span className={`text-[9px] font-black italic uppercase tracking-[0.2em] ${light ? 'text-[#0c1f3d]/40' : 'text-white/40'}`}>{tr.stages.campHash} #{stage.id}</span>
+          </div>
+          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="px-3 py-1 rounded-full bg-[#E30613] text-[8px] font-black uppercase tracking-widest">{CATS.find(c => c.value === stage.teamCategory)?.label || stage.teamCategory}</span>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${status.key === "live" ? "bg-[#f6c744] text-[#0b1322]" : status.key === "upcoming" ? "bg-[#7ec3ff] text-[#0b1322]" : "bg-white/20"}`}>{status.label}{status.key === "live" && dur ? ` · ${cs("dayOf", { a: Math.max(1, Math.round((Date.now() - new Date(stage.startDate + "T00:00:00").getTime()) / 86400000) + 1), b: dur })}` : ""}</span>
+              </div>
+              <h2 className="mt-3 text-4xl sm:text-6xl font-black italic uppercase tracking-tighter leading-[0.98]">{stage.name}</h2>
+              <p className="mt-3 flex items-center gap-4 flex-wrap text-[11px] font-bold text-white/75">
+                <span className="flex items-center gap-1.5"><MapPin size={12}/>{stage.location || tr.stages.venueDash}</span>
+                <span className="flex items-center gap-1.5"><Calendar size={12}/>{fmtDate(stage.startDate)} → {fmtDate(stage.endDate)}</span>
+                {dur !== null && <span className="flex items-center gap-1.5"><Clock size={12}/>{dur} {tr.stages.daysWord}</span>}
+              </p>
             </div>
-
-            <h2 className="mt-4 text-3xl sm:text-[42px] font-black italic uppercase tracking-tighter leading-[0.98]">{stage.name}</h2>
-
-            <div className={`mt-4 flex items-center gap-3 text-[9px] font-bold flex-wrap ${light ? 'text-[#0c1f3d]/60' : 'text-white/60'}`}>
-              <span className="flex items-center gap-1.5"><MapPin size={11}/>{stage.location || tr.stages.venueDash}</span>
-              <span className="flex items-center gap-1.5"><Calendar size={11}/>{fmtDate(stage.startDate)} → {fmtDate(stage.endDate)}</span>
-              <span className="flex items-center gap-1.5"><Clock size={11}/>{dur !== null ? `${dur} ${tr.stages.daysWord}` : tr.stages.durationDash}</span>
-              <span className="flex items-center gap-1.5"><CalendarDays size={11}/>{sessions} {sessions > 1 ? tr.stages.sessionsWord : tr.stages.sessionWord}</span>
-            </div>
-
-            {/* Quick stats strip */}
-            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl">
+            <div className="grid grid-cols-4 gap-2.5 shrink-0">
               {[
-                { label: tr.stages.playersLabel, value: String(players.length), icon: <Users size={14}/> },
-                { label: tr.common.staff, value: String(staff.length), icon: <Briefcase size={14}/> },
-                { label: cs("attendance"), value: attRate === null ? "—" : attRate + "%", icon: <Check size={14}/> },
-                { label: cs("reportsInShort"), value: staff.length ? `${staff.length - waitingStaff.length}/${staff.length}` : String(reportCount), icon: <FileText size={14}/> },
-              ].map(x => light ? (
-                <div key={x.label} className="rounded-xl bg-[#0c1f3d] border border-[#ff5f72]/25 px-4 py-3 shadow-md shadow-[#0c1f3d]/15">
-                  <div className="flex items-center gap-1.5 text-white/55">{x.icon}<span className="text-[7px] font-black uppercase tracking-widest">{x.label}</span></div>
-                  <p className="mt-1 text-xl font-black italic leading-none text-[#f6c744]">{x.value}</p>
-                </div>
-              ) : (
-                <div key={x.label} className="rounded-xl bg-white/[0.07] border border-white/15 px-4 py-3">
-                  <div className="flex items-center gap-1.5 text-white/55">{x.icon}<span className="text-[7px] font-black uppercase tracking-widest">{x.label}</span></div>
-                  <p className="mt-1 text-xl font-black italic leading-none text-[#f6c744]">{x.value}</p>
+                { label: tr.stages.playersLabel, value: String(players.length) },
+                { label: tr.common.staff, value: String(staff.length) },
+                { label: cs("attendance"), value: attRate === null ? "—" : attRate + "%" },
+                { label: cs("reportsInShort"), value: staff.length ? `${staff.length - waitingStaff.length}/${staff.length}` : String(reportCount) },
+              ].map(x => (
+                <div key={x.label} className="rounded-2xl bg-[#0b1322]/70 border border-white/10 px-4 py-3 text-center min-w-[74px]">
+                  <p className="text-2xl sm:text-3xl font-black italic leading-none text-[#f6c744]">{x.value}</p>
+                  <p className="mt-1.5 text-[7px] font-black uppercase tracking-widest text-white/60">{x.label}</p>
                 </div>
               ))}
             </div>
-
-            {stage.createdByUsername && (
-              <p className={`mt-4 text-[8px] font-bold uppercase tracking-widest ${light ? 'text-[#0c1f3d]/45' : 'text-white/40'}`}>{tr.stages.createdBy} {stage.createdByUsername}</p>
-            )}
           </div>
         </div>
       </div>
 
       {/* ─── JUMP NAV ─── */}
-      <div className="sticky top-16 z-[90] mt-7 -mx-1 px-1 py-2 bg-[var(--c-bg)]/95 backdrop-blur border-b border-[rgba(var(--line-rgb),.12)] flex flex-wrap gap-1.5">
+      <div className="sticky top-16 z-[90] mt-4 flex gap-1 overflow-x-auto px-2 bg-[var(--c-bg)]/95 backdrop-blur border-b border-[rgba(var(--line-rgb),.14)]">
         {sections.map(([k, label, n]) => (
           <button key={k} onClick={() => jump(k)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider transition-all ${active === k
-              ? 'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/25'
-              : 'bg-[var(--c-panel3)] text-[var(--c-textMid)] border border-[rgba(var(--line-rgb),.16)] hover:text-[var(--c-text)] hover:border-[#f6c744]/30'}`}>
+            className={`shrink-0 flex items-center gap-2 px-4 py-3.5 text-[10px] font-black uppercase tracking-wider border-b-[3px] transition-all ${active === k ? 'border-[#f6c744] text-[var(--acc-gold)]' : 'border-transparent text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>
             {label}
-            <span className={`px-1.5 py-0.5 rounded-md text-[7px] font-black ${active === k ? 'bg-[rgba(255,255,255,0.18)] text-white' : 'bg-[var(--c-panel2)] text-[var(--c-textDim)]'}`}>{n}</span>
+            <span className="px-1.5 py-0.5 rounded-md bg-[var(--c-panel2)] text-[7px] font-black text-[var(--c-textDim)]">{n}</span>
           </button>
         ))}
       </div>
@@ -830,49 +772,34 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
         {/* ── PROGRAMME ── */}
         <section id="sec-program" className="scroll-mt-32">
           <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{tr.stages.programTab}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
-          <div>
-            {(stage.program || []).length === 0 && (
-              <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
-                <Calendar size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noProgramSaved}</p>
-              </div>
-            )}
-            {groupedDays.length > 0 && (
-              <div className="space-y-6">
-                {groupedDays.map((g, gi) => (
-                  <div key={gi}>
-                    <div className="flex items-center gap-3 mb-3">
-                      <span className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-gradient-to-r from-[#E30613] to-[#ff2b3a] text-white text-[8px] font-black uppercase tracking-widest shadow-md shadow-[#E30613]/20">
-                        <Activity size={11}/> {g.label}
-                      </span>
-                      <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{g.items.length} {g.items.length > 1 ? tr.stages.sessionsWord : tr.stages.sessionWord}</span>
-                      <div className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      {g.items.map((p, i) => (
-                        <div key={i} className="group rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 hover:border-[#f6c744]/35 hover:bg-[var(--c-panel3)]/80 transition-all overflow-hidden">
-                          <div className="h-0.5 bg-gradient-to-r from-[#f6c744]/70 to-transparent"/>
-                          <div className="p-4 sm:p-5">
-                            <div className="flex items-center gap-2 flex-wrap text-[9px] font-bold text-[var(--c-textDim)]">
-                              {p.time && <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#E30613]/10 border border-[#E30613]/25 text-[var(--acc-red)]"><Clock size={10}/>{p.time}</span>}
-                              <span className="text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.sessionNumber} {i + 1}</span>
-                            </div>
-                            <p className="mt-2.5 text-[13px] font-black uppercase tracking-wide text-[var(--c-text)]">{p.activity || tr.stages.sessionWord}</p>
-                            {p.details && <p className="mt-1.5 text-[10px] font-bold text-[var(--c-textDim)] leading-relaxed">{p.details}</p>}
-                            {(p.attendance?.length || 0) > 0 && (
-                              <p className="mt-2 flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-emerald-500">
-                                <Users size={10}/> {p.attendance!.length} {tr.stages.presentCount}
-                              </p>
-                            )}
-                          </div>
+          {(stage.program || []).length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-14 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+              <Calendar size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noProgramSaved}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              {groupedDays.map((g, gi) => {
+                const dayDate = stage.startDate ? new Date(new Date(stage.startDate + "T00:00:00").getTime() + gi * 86400000).toISOString().slice(0, 10) : ""
+                const isToday = dayDate === new Date().toISOString().slice(0, 10)
+                const marks = g.items.map(it => (it.attendance || []).length).filter(n => n > 0)
+                return (
+                  <div key={gi} className={`rounded-2xl p-4 ${isToday ? "bg-[#E30613] text-white" : "bg-[var(--c-panel3)]/55 border border-[rgba(var(--line-rgb),.14)]"}`}>
+                    <p className={`text-[9px] font-black uppercase tracking-widest ${isToday ? "text-white" : "text-[var(--acc-gold)]"}`}>{g.label}{isToday ? " · " + tr.stages.liveStatus : ""}</p>
+                    <div className="mt-3 space-y-2.5">
+                      {g.items.map((it, ii) => (
+                        <div key={ii}>
+                          <p className={`text-[11px] font-black uppercase leading-tight ${isToday ? "text-white" : "text-[var(--c-text)]"}`}>{it.time && <span className={`mr-1.5 ${isToday ? "text-white/80" : "text-[var(--acc-red)]"}`}>{it.time}</span>}{it.activity || tr.stages.sessionWord}</p>
+                          {it.details && <p className={`mt-0.5 text-[9px] font-bold leading-snug ${isToday ? "text-white/80" : "text-[var(--c-textDim)]"}`}>{it.details}</p>}
                         </div>
                       ))}
                     </div>
+                    {marks.length > 0 && <p className={`mt-3 text-[8px] font-black uppercase tracking-wider ${isToday ? "text-white" : "text-emerald-500"}`}>{Math.max(...marks)} {tr.stages.presentCount}</p>}
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
+                )
+              })}
+            </div>
+          )}
         </section>
 
         {/* ── ATTENDANCE ── */}
