@@ -9,6 +9,7 @@ import { useFileDrop, isPdfFile } from "@/lib/use-file-drop"
 import { supabase } from "@/lib/supabase"
 import { matchCallups } from "@/lib/callups"
 import { StoredImg, openStored } from "@/components/stored-file"
+import { useCS } from "@/lib/camp-strings"
 
 type CampReport = { id: string; url: string; name: string; staffId: number | null; staffName: string; role: string; addedAt: string }
 
@@ -92,6 +93,7 @@ function useToast() {
 
 export function StagesManager({ open, onClose, stages, members, teamCat, canManage, onSave, onDelete, onRefresh, user }: Props) {
   const { tr } = useTranslate()
+  const cs = useCS()
   const [view, setView] = useState<"list" | "edit" | "detail">("list")
   const [editing, setEditing] = useState<Stage | null>(null)
   const [tab, setTab] = useState<TabKey>("program")
@@ -101,8 +103,29 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
   const [filtCat, setFiltCat] = useState<string>("ALL")
   const { msg, show } = useToast()
 
+  const [q, setQ] = useState("")
+  const [year, setYear] = useState<string>("ALL")
   const sorted = [...stages].sort((a, b) => (b.startDate || "").localeCompare(a.startDate || ""))
-  const filtered = filtCat === "ALL" ? sorted : sorted.filter(s => s.teamCategory === filtCat)
+  const years = Array.from(new Set(sorted.map(x => (x.startDate || "").slice(0, 4)).filter(Boolean)))
+  const filtered = sorted
+    .filter(x => filtCat === "ALL" || x.teamCategory === filtCat)
+    .filter(x => year === "ALL" || (x.startDate || "").startsWith(year))
+    .filter(x => !q.trim() || `${x.name} ${x.location}`.toLowerCase().includes(q.trim().toLowerCase()))
+  const todayStr = new Date().toISOString().slice(0, 10)
+  const dayDiff = (a: string, b: string) => Math.round((new Date(b + "T00:00:00").getTime() - new Date(a + "T00:00:00").getTime()) / 86400000)
+  const featured = filtered.find(x => stageStatus(x, tr).key === "live")
+    || [...filtered].filter(x => x.startDate > todayStr).sort((a, b) => a.startDate.localeCompare(b.startDate))[0]
+    || filtered[0]
+  const tlYear = year !== "ALL" ? Number(year) : new Date().getFullYear()
+  const yStart = new Date(tlYear, 0, 1).getTime()
+  const yDays = (new Date(tlYear + 1, 0, 1).getTime() - yStart) / 86400000
+  const statusLine = (x: Stage): string => {
+    const st = stageStatus(x, tr).key
+    if (st === "live") return cs("dayOf", { a: Math.max(1, dayDiff(x.startDate, todayStr) + 1), b: durDays(x) ?? "?" })
+    if (st === "upcoming") { const n = dayDiff(todayStr, x.startDate); return n <= 1 ? cs("startsTomorrow") : cs("startsIn", { n }) }
+    return cs("finished")
+  }
+  const reportsOf = (x: Stage) => (x.reports || []).length + (x.reportUrl ? 1 : 0)
 
   const startCreate = () => {
     const base = emptyStage(teamCat)
@@ -171,7 +194,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
     return { id, name: m?.name || `#${id}`, role: (s.staffRoles || []).find(r => r.memberId === id)?.role || m?.position || '' }
   })
   const makeReport = async (f: File, byId: string, s: Stage): Promise<CampReport | null> => {
-    if (!isPdfFile(f)) { show('Please choose a PDF file'); return null }
+    if (!isPdfFile(f)) { show(cs("pdfOnly")); return null }
     setBusy(true)
     const url = await upload(f, 'camps-reports')
     setBusy(false)
@@ -185,7 +208,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
     const r = await makeReport(f, byId, current)
     if (!r) return
     const ok = await onSave({ ...current, reports: [...(current.reports || []), r] })
-    if (ok) { show('Report added'); onRefresh?.() }
+    if (ok) { show(cs("reportAdded")); onRefresh?.() }
   }
   const detailRemoveReport = async (id: string) => {
     if (!current) return
@@ -236,7 +259,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
     setBusy(false); setProgress('')
     const ok = urls.filter((u): u is string => !!u)
     if (ok.length) setDraft(d => ({ ...d, images: [...(d.images || []), ...ok] }))
-    if (ok.length < files.length) show(`${files.length - ok.length} photo(s) could not be uploaded`)
+    if (ok.length < files.length) show(cs("photosFailed", { n: files.length - ok.length }))
   }
   const onPhotos = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
@@ -288,18 +311,47 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
         {view === "list" && (
           <>
 
-            {/* ─── HERO ─── */}
-            <div className="relative overflow-hidden rounded-[28px] mt-6 px-7 sm:px-10 py-10 sm:py-12 bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white">
-              <div className="absolute -right-4 -top-8 text-[110px] sm:text-[150px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">{tr.stages.heroTitle1}</div>
-              <div className="relative">
-                <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f6c744]/15 border border-[#f6c744]/40 text-[#f6c744] text-[8px] font-black uppercase tracking-[0.25em]">
-                  <CalendarRange size={12}/> {tr.stages.portalBadge}
-                </span>
-                <h2 className="mt-5 text-4xl sm:text-5xl font-black italic uppercase tracking-tighter leading-[0.95]">
-                  {tr.stages.heroTitle1} <span className="text-[#f6c744]">{tr.stages.heroTitle2}</span>
-                </h2>
+            {/* ─── FEATURED CAMP ─── */}
+            {featured ? (() => {
+              const st = stageStatus(featured, tr).key
+              const dur = durDays(featured) ?? 0
+              const pct = st === "live" && dur ? Math.min(100, Math.round(100 * (dayDiff(featured.startDate, todayStr) + 1) / dur)) : st === "done" ? 100 : 0
+              const cover = (featured.images || [])[0]
+              return (
+                <div className="relative overflow-hidden rounded-[28px] mt-6 px-7 sm:px-10 py-9 bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white">
+                  {cover && (<><StoredImg url={cover} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30"/><div className="absolute inset-0 bg-gradient-to-r from-[#0b1322] via-[#0b1322]/60 to-transparent"/></>)}
+                  <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                    <div className="min-w-0">
+                      <span className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${st === "live" ? "bg-[#E30613]" : st === "upcoming" ? "bg-[#7ec3ff] text-[#0b1322]" : "bg-white/20"}`}>
+                        {st === "live" && <span className="w-1.5 h-1.5 rounded-full bg-white"/>}
+                        {st === "live" ? cs("liveNow") + " · " : st === "upcoming" ? cs("nextCamp") + " · " : cs("lastCamp") + " · "}{statusLine(featured)}
+                      </span>
+                      <h2 className="mt-4 text-4xl sm:text-5xl font-black italic uppercase tracking-tighter leading-[0.98]">{featured.name}</h2>
+                      <p className="mt-3 text-[12px] font-bold text-white/70">{catName(featured.teamCategory)} · {featured.location || tr.stages.venueDash} · {fmtDate(featured.startDate)} → {fmtDate(featured.endDate)}</p>
+                      <div className="mt-5 flex gap-2.5 flex-wrap">
+                        <button onClick={() => featured.id && openDetail(featured)} className="px-6 py-3 rounded-xl bg-[#f6c744] text-[#0b1322] text-[10px] font-black uppercase tracking-wider hover:brightness-110 transition-all">{cs("openCamp")}</button>
+                      </div>
+                    </div>
+                    <div className="w-full lg:w-72 shrink-0 rounded-2xl bg-[#0b1322]/60 border border-white/10 p-5">
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div><p className="text-2xl font-black italic text-[#f6c744] leading-none">{(featured.players || []).length}</p><p className="mt-1 text-[7px] font-black uppercase tracking-widest text-white/60">{tr.stages.playersLabel}</p></div>
+                        <div><p className="text-2xl font-black italic text-[#f6c744] leading-none">{(featured.staff || []).length}</p><p className="mt-1 text-[7px] font-black uppercase tracking-widest text-white/60">{tr.common.staff}</p></div>
+                        <div><p className="text-2xl font-black italic text-[#f6c744] leading-none">{reportsOf(featured)}</p><p className="mt-1 text-[7px] font-black uppercase tracking-widest text-white/60">{cs("reports")}</p></div>
+                      </div>
+                      <div className="mt-4 h-1.5 rounded-full bg-white/15"><div className="h-full rounded-full bg-[#f6c744]" style={{ width: pct + "%" }}/></div>
+                    </div>
+                  </div>
+                </div>
+              )
+            })() : (
+              <div className="relative overflow-hidden rounded-[28px] mt-6 px-7 sm:px-10 py-10 sm:py-12 bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white">
+                <div className="absolute -right-4 -top-8 text-[110px] sm:text-[150px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">{tr.stages.heroTitle1}</div>
+                <div className="relative">
+                  <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f6c744]/15 border border-[#f6c744]/40 text-[#f6c744] text-[8px] font-black uppercase tracking-[0.25em]"><CalendarRange size={12}/> {tr.stages.portalBadge}</span>
+                  <h2 className="mt-5 text-4xl sm:text-5xl font-black italic uppercase tracking-tighter leading-[0.95]">{tr.stages.heroTitle1} <span className="text-[#f6c744]">{tr.stages.heroTitle2}</span></h2>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* ─── FILTER + CREATE ─── */}
             <div className="mt-8 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
@@ -309,8 +361,32 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                   <button key={c.value} onClick={() => setFiltCat(c.value)} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filtCat === c.value ? 'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25' : 'text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{c.label}</button>
                 ))}
               </div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{filtered.length} {filtered.length > 1 ? tr.stages.campWordPlural : tr.stages.campWord}</p>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <input value={q} onChange={e => setQ(e.target.value)} placeholder={cs("search")} className="w-56 sm:w-64 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+                <select value={year} onChange={e => setYear(e.target.value)} className="px-3 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[10px] font-bold outline-none">
+                  <option value="ALL">{cs("allYears")}</option>
+                  {years.map(y => <option key={y} value={y}>{y}</option>)}
+                </select>
+                <p className="text-[9px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{filtered.length} {filtered.length > 1 ? tr.stages.campWordPlural : tr.stages.campWord}</p>
+              </div>
             </div>
+
+            {/* ─── SEASON TIMELINE ─── */}
+            {filtered.length > 0 && (
+              <div className="mt-5 rounded-2xl bg-[var(--c-panel2)]/55 border border-[rgba(var(--line-rgb),.14)] px-5 py-4">
+                <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">{cs("season")} {tlYear}</p>
+                <div className="relative h-7">
+                  <div className="absolute left-0 right-0 top-3 h-1.5 rounded-full bg-[rgba(var(--line-rgb),.14)]"/>
+                  {filtered.filter(x => x.startDate && (x.startDate.startsWith(String(tlYear)) || (x.endDate || "").startsWith(String(tlYear)))).map(x => {
+                    const l = Math.max(0, (new Date(x.startDate + "T00:00:00").getTime() - yStart) / 86400000 / yDays * 100)
+                    const w = Math.max(1.4, (durDays(x) ?? 1) / yDays * 100)
+                    const st = stageStatus(x, tr).key
+                    return <button key={x.id ?? x.name} title={x.name} onClick={() => x.id && openDetail(x)} className={`absolute top-1.5 h-4 rounded-full hover:scale-y-125 transition-transform ${st === "live" ? "bg-[#E30613]" : st === "upcoming" ? "bg-[#7ec3ff]" : "bg-[#5a6b8c]"}`} style={{ left: l + "%", width: Math.min(w, 100 - l) + "%" }}/>
+                  })}
+                </div>
+                <div className="mt-1 flex justify-between text-[8px] font-bold text-[var(--c-textDim)]">{["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"].map((m, i) => <span key={i}>{m}</span>)}</div>
+              </div>
+            )}
 
             {/* ─── CREATE CTA ─── */}
             {canManage && (
@@ -352,7 +428,13 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                 const d = s.startDate ? new Date(s.startDate + "T00:00:00") : null
                 return (
                   <div key={s.id ?? s.name} className="group rounded-3xl border border-[rgba(var(--line-rgb),.16)] bg-[var(--c-panel2)]/55 hover:bg-[var(--c-panel2)] hover:border-[#f6c744]/35 hover:-translate-y-1.5 transition-all duration-300 overflow-hidden shadow-none hover:shadow-2xl hover:shadow-black/10">
-                    <div className="h-1.5 bg-gradient-to-r from-[#E30613] via-[#f6c744] to-[#E30613]"/>
+                    <div className="relative h-32 bg-gradient-to-br from-[#1b3a6b] via-[#0e2347] to-[#3a0d16] overflow-hidden">
+                      {(s.images || [])[0] && <StoredImg url={s.images[0]} alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-80"/>}
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"/>
+                      {(() => { const stt = stageStatus(s, tr).key; return (
+                        <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-wider ${stt === "live" ? "bg-[#E30613] text-white" : stt === "upcoming" ? "bg-[#7ec3ff] text-[#0b1322]" : "bg-black/50 text-white"}`}>{statusLine(s)}</span>
+                      ) })()}
+                    </div>
                     <div className="p-6">
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
@@ -380,7 +462,9 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                         {hasProgram && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">{tr.stages.program}</span>}
                         {hasPlayers && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">{s.players.length} {tr.stages.playersWord}</span>}
                         {hasStaff && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">{tr.common.staff}</span>}
-                        {hasReport && <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[7px] font-black uppercase tracking-wider">{tr.stages.report}</span>}
+                        {hasReport
+                          ? <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[7px] font-black uppercase tracking-wider">{(s.staff || []).length ? cs("reportsOf", { a: reportsOf(s), b: (s.staff || []).length }) : cs("reportsN", { a: reportsOf(s) })}</span>
+                          : stageStatus(s, tr).key === "done" && <span className="px-2 py-0.5 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[var(--acc-red)] text-[7px] font-black uppercase tracking-wider">{cs("noReport")}</span>}
                         {hasPhotos && <span className="px-2 py-0.5 rounded-md bg-[#7ec3ff]/10 border border-[#7ec3ff]/30 text-[var(--acc-blue)] text-[7px] font-black uppercase tracking-wider">{s.images.length} {tr.stages.photosWord}</span>}
                       </div>
 
@@ -546,6 +630,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
   onDelete?: () => void
   tr: any
 }) {
+  const cs = useCS()
   const [viewer, setViewer] = useState<number | null>(null)
   const memberById = (id: number) => members.find(m => m.id === id)
   const dur = durDays(stage)
@@ -584,7 +669,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
   const takenSessionsCount = (stage.program || []).filter(p => (p.attendance || []).length > 0).length
   const sections: [string, string, number][] = [
     ["program", tr.stages.programTab, sessions],
-    ["attendance", "Attendance", takenSessionsCount],
+    ["attendance", cs("attendance"), takenSessionsCount],
     ["players", tr.stages.playersLabel, players.length],
     ["staff", tr.common.staff, staff.length],
     ["report", tr.stages.report, reportCount],
@@ -628,7 +713,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
           <ArrowLeft size={13}/> {tr.stages.allCamps}
         </button>
         <div className="flex gap-2">
-          <button onClick={() => window.print()} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-panel3)]/70 text-[var(--c-textMid)] hover:text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider transition-all"><Download size={13}/> Print</button>
+          <button onClick={() => window.print()} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-panel3)]/70 text-[var(--c-textMid)] hover:text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider transition-all"><Download size={13}/> {cs("print")}</button>
         {canManage && (
           <>
             <button onClick={onEdit} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 shadow-md shadow-[#E30613]/20 transition-all">
@@ -706,8 +791,8 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
               {[
                 { label: tr.stages.playersLabel, value: String(players.length), icon: <Users size={14}/> },
                 { label: tr.common.staff, value: String(staff.length), icon: <Briefcase size={14}/> },
-                { label: "Attendance", value: attRate === null ? "—" : attRate + "%", icon: <Check size={14}/> },
-                { label: "Reports in", value: staff.length ? `${staff.length - waitingStaff.length}/${staff.length}` : String(reportCount), icon: <FileText size={14}/> },
+                { label: cs("attendance"), value: attRate === null ? "—" : attRate + "%", icon: <Check size={14}/> },
+                { label: cs("reportsInShort"), value: staff.length ? `${staff.length - waitingStaff.length}/${staff.length}` : String(reportCount), icon: <FileText size={14}/> },
               ].map(x => light ? (
                 <div key={x.label} className="rounded-xl bg-[#0c1f3d] border border-[#ff5f72]/25 px-4 py-3 shadow-md shadow-[#0c1f3d]/15">
                   <div className="flex items-center gap-1.5 text-white/55">{x.icon}<span className="text-[7px] font-black uppercase tracking-widest">{x.label}</span></div>
@@ -792,24 +877,24 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
 
         {/* ── ATTENDANCE ── */}
         <section id="sec-attendance" className="scroll-mt-32">
-          <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">Attendance<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/>{canManage && <span className="text-[8px] font-bold normal-case tracking-normal not-italic text-[var(--c-textDim)]">Tap a dot to mark present or absent</span>}</h3>
+          <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{cs("attendance")}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/>{canManage && <span className="text-[8px] font-bold normal-case tracking-normal not-italic text-[var(--c-textDim)]">{cs("tapDot")}</span>}</h3>
           {(prog || []).length === 0 || players.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
               <Users size={28} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Add sessions and called-up players to take attendance</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{cs("addSessions")}</p>
             </div>
           ) : (
             <div className="rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel2)]/40 overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="border-b border-[rgba(var(--line-rgb),.14)]">
-                    <th className="sticky left-0 z-10 bg-[var(--c-panel2)] px-4 py-3 text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] min-w-[190px]">Player</th>
+                    <th className="sticky left-0 z-10 bg-[var(--c-panel2)] px-4 py-3 text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] min-w-[190px]">{cs("player")}</th>
                     {(prog || []).map((p, si) => (
                       <th key={si} className="px-2 py-3 text-center text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] min-w-[64px]">
                         <div>{p.day || "—"}</div><div className="font-bold normal-case tracking-normal opacity-70">{p.time || ""}</div>
                       </th>
                     ))}
-                    <th className="px-3 py-3 text-center text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] min-w-[64px]">Rate</th>
+                    <th className="px-3 py-3 text-center text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] min-w-[64px]">{cs("rate")}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -913,7 +998,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
 
         {/* ── RAPPORT ── */}
         <section id="sec-report" className="scroll-mt-32">
-          <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{"Reports"}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
+          <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{cs("reports")}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
           <ReportsPanel reports={stage.reports || []} legacy={stage.reportUrl ? { url: stage.reportUrl, name: stage.reportName } : null} staff={staffOpts} waiting={waitingStaff} canManage={canManage} busy={busy} onAdd={onAddReport} onRemove={onRemoveReport}/>
         </section>
 
@@ -980,10 +1065,11 @@ function ReportsPanel({ reports, legacy, staff, waiting, canManage, busy, onAdd,
   onAdd: (f: File, byId: string) => Promise<void> | void
   onRemove: (id: string) => Promise<void> | void
 }) {
+  const cs = useCS()
   const [by, setBy] = useState("")
   const drop = useFileDrop(files => { if (files[0]) onAdd(files[0], by) }, isPdfFile)
   const items: { id: string; url: string; name: string; staffName: string; role: string; addedAt: string }[] = [
-    ...(legacy ? [{ id: "legacy", url: legacy.url, name: legacy.name || "Camp report", staffName: "", role: "", addedAt: "" }] : []),
+    ...(legacy ? [{ id: "legacy", url: legacy.url, name: legacy.name || cs("campReport"), staffName: "", role: "", addedAt: "" }] : []),
     ...reports,
   ]
   return (
@@ -991,7 +1077,7 @@ function ReportsPanel({ reports, legacy, staff, waiting, canManage, busy, onAdd,
       {items.length === 0 && !(waiting && waiting.length) && (
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
           <FileText size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">No report yet</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{cs("noReportYet")}</p>
         </div>
       )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -999,13 +1085,13 @@ function ReportsPanel({ reports, legacy, staff, waiting, canManage, busy, onAdd,
           <div key={r.id} className="flex items-center gap-3.5 rounded-2xl border border-emerald-500/25 bg-emerald-500/5 p-4">
             <div className="w-11 h-14 rounded-lg bg-[#E30613] text-white text-[10px] font-black flex items-center justify-center shrink-0">PDF</div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{r.staffName || "Camp report"}</p>
+              <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{r.staffName || cs("campReport")}</p>
               <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase tracking-wider truncate">{[r.role, r.addedAt].filter(Boolean).join(" · ") || r.name}</p>
               <p className="text-[9px] text-[var(--c-textDim)] truncate">{r.name}</p>
             </div>
             <div className="flex flex-col gap-1.5 shrink-0">
-              <button onClick={() => openStored(r.url)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/35 text-emerald-500 text-[8px] font-black uppercase tracking-wider hover:bg-emerald-500/25 transition-all"><Download size={11}/> Open</button>
-              {canManage && <button onClick={() => onRemove(r.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(var(--line-rgb),.2)] text-[var(--acc-red)] text-[8px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all"><Trash2 size={11}/> Remove</button>}
+              <button onClick={() => openStored(r.url)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/35 text-emerald-500 text-[8px] font-black uppercase tracking-wider hover:bg-emerald-500/25 transition-all"><Download size={11}/> {cs("open")}</button>
+              {canManage && <button onClick={() => onRemove(r.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(var(--line-rgb),.2)] text-[var(--acc-red)] text-[8px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all"><Trash2 size={11}/> {cs("remove")}</button>}
             </div>
           </div>
         ))}
@@ -1015,27 +1101,27 @@ function ReportsPanel({ reports, legacy, staff, waiting, canManage, busy, onAdd,
             <div className="w-11 h-14 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.35)] shrink-0"/>
             <div className="flex-1 min-w-0">
               <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{w.name}</p>
-              <p className="text-[8px] font-bold uppercase tracking-wider text-[var(--acc-red)]">{w.role ? w.role + " · " : ""}waiting for report</p>
+              <p className="text-[8px] font-bold uppercase tracking-wider text-[var(--acc-red)]">{w.role ? w.role + " · " : ""}{cs("waiting")}</p>
             </div>
-            {canManage && <span className="shrink-0 text-[8px] font-black uppercase tracking-wider text-[var(--acc-gold)]">Upload</span>}
+            {canManage && <span className="shrink-0 text-[8px] font-black uppercase tracking-wider text-[var(--acc-gold)]">{cs("upload")}</span>}
           </label>
         ))}
       </div>
       {canManage && (
         <div className="rounded-2xl border border-[rgba(var(--line-rgb),.16)] bg-[var(--c-panel3)]/40 p-4 space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Report by</span>
+            <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{cs("reportBy")}</span>
             <select value={by} onChange={e => setBy(e.target.value)} className="px-3 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[10px] font-bold outline-none">
-              <option value="">Camp report (no name)</option>
+              <option value="">{cs("campReportNoName")}</option>
               {staff.map(x => <option key={x.id} value={String(x.id)}>{x.name}{x.role ? ` · ${x.role}` : ""}</option>)}
             </select>
           </div>
           <label {...drop.dropProps} className={`flex items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-all ${drop.isDragging ? 'border-[#E30613] bg-[#E30613]/10' : 'border-[rgba(var(--line-rgb),.25)] hover:border-[#E30613]/50'}`}>
             <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onAdd(f, by) }}/>
             <FileText size={18} className="text-[var(--c-textDim)]"/>
-            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? "Uploading…" : "Drop a PDF report here or click to choose"}</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? cs("uploading") : cs("dropPdf")}</span>
           </label>
-          {staff.length === 0 && <p className="text-[9px] font-bold text-[var(--c-textDim)]">Tip: add the camp's staff first to attribute each report to a staff member.</p>}
+          {staff.length === 0 && <p className="text-[9px] font-bold text-[var(--c-textDim)]">{cs("tipStaff")}</p>}
         </div>
       )}
     </div>
@@ -1109,10 +1195,11 @@ function ProgramTab({ draft, setDraft, tr, members }: { draft: Stage; setDraft: 
 
 // ── Import call-ups from a PDF (players and staff are matched to member cards automatically) ──
 function CallupImport({ all, setDraft }: { all: any[]; setDraft: React.Dispatch<React.SetStateAction<Stage>> }) {
+  const cs = useCS()
   const [busy, setBusy] = useState(false)
   const [msg, setMsg] = useState<{ ok: boolean; text: string; unmatched: string[]; sample?: string[] } | null>(null)
   const run = async (f: File) => {
-    if (!isPdfFile(f)) { setMsg({ ok: false, text: 'Please choose a PDF file.', unmatched: [] }); return }
+    if (!isPdfFile(f)) { setMsg({ ok: false, text: cs("pdfOnly"), unmatched: [] }); return }
     setBusy(true); setMsg(null)
     try {
       const { data: sess } = await supabase.auth.getSession()
@@ -1120,7 +1207,7 @@ function CallupImport({ all, setDraft }: { all: any[]; setDraft: React.Dispatch<
       const fd = new FormData(); fd.append('file', f, f.name)
       const r = await fetch('/api/parse-callups', { method: 'POST', body: fd, headers: token ? { Authorization: `Bearer ${token}` } : {} })
       const d = await r.json().catch(() => ({}))
-      if (!r.ok) { setMsg({ ok: false, text: d.error || 'Could not read the PDF', unmatched: [] }); return }
+      if (!r.ok) { setMsg({ ok: false, text: d.error || cs("readFail"), unmatched: [] }); return }
       const lines: string[] = d.lines || []
       const people = all.map(m => ({ id: m.id, name: m.name, role: m.role, position: m.position }))
       const res = matchCallups(lines, people)
@@ -1137,11 +1224,11 @@ function CallupImport({ all, setDraft }: { all: any[]; setDraft: React.Dispatch<
         return { ...dr, players, staff, staffRoles }
       })
       if (res.players.length + res.staff.length === 0) {
-        setMsg({ ok: false, text: `Read ${lines.length} lines from the PDF but no name matched a member card. Names in the PDF must match the names on the cards.`, unmatched: [], sample: lines.slice(0, 6) })
+        setMsg({ ok: false, text: cs("importNone", { l: lines.length }), unmatched: [], sample: lines.slice(0, 6) })
       } else {
-        setMsg({ ok: true, text: `Read ${lines.length} lines. Added ${res.players.length} players and ${res.staff.length} staff. Press Save to keep them.`, unmatched: res.unmatched })
+        setMsg({ ok: true, text: cs("importOk", { l: lines.length, p: res.players.length, s: res.staff.length }), unmatched: res.unmatched })
       }
-    } catch { setMsg({ ok: false, text: 'Could not read the PDF', unmatched: [] }) }
+    } catch { setMsg({ ok: false, text: cs("readFail"), unmatched: [] }) }
     finally { setBusy(false) }
   }
   const drop = useFileDrop(files => run(files[0]), isPdfFile)
@@ -1149,13 +1236,13 @@ function CallupImport({ all, setDraft }: { all: any[]; setDraft: React.Dispatch<
     <div className="mb-4">
       <label {...drop.dropProps} className={`flex items-center justify-center gap-2 px-4 py-5 rounded-xl border-2 border-dashed text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider cursor-pointer transition-all ${drop.isDragging ? 'border-[#E30613] bg-[#E30613]/20' : 'border-[#E30613]/40 bg-[#E30613]/10 hover:bg-[#E30613]/20'}`}>
         <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) run(f) }}/>
-        <FileText size={13}/> {busy ? 'Reading PDF…' : 'Drop the call-up PDF here or click to choose'}
+        <FileText size={13}/> {busy ? cs("reading") : cs("importBtn")}
       </label>
       {msg && (
         <div className={`mt-3 rounded-xl border p-3 text-[10px] font-bold ${msg.ok ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-500' : 'border-[#E30613]/40 bg-[#E30613]/10 text-[var(--acc-red)]'}`}>
           <p>{msg.text}</p>
-          {msg.sample && msg.sample.length > 0 && <p className="mt-1.5 text-[var(--c-textDim)]">First lines read: {msg.sample.join(' | ')}</p>}
-          {msg.unmatched.length > 0 && <p className="mt-1.5 text-[var(--c-textDim)]">Not found in your members ({msg.unmatched.length}): {msg.unmatched.join(' · ')}</p>}
+          {msg.sample && msg.sample.length > 0 && <p className="mt-1.5 text-[var(--c-textDim)]">{cs("firstLines")} {msg.sample.join(' | ')}</p>}
+          {msg.unmatched.length > 0 && <p className="mt-1.5 text-[var(--c-textDim)]">{cs("notFound", { n: msg.unmatched.length })} {msg.unmatched.join(' · ')}</p>}
         </div>
       )}
     </div>
