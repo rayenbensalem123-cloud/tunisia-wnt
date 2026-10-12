@@ -589,6 +589,13 @@ export async function saveCampRow(c: any, isNew: boolean): Promise<{ error: stri
   return { error: null }
 }
 
+export async function deleteCampRow(id: number): Promise<{ error: string | null }> {
+  const { data, error } = await supabase.from('camps').delete().eq('id', id).select('id')
+  if (error) return { error: error.message }
+  if (!data || data.length === 0) return { error: 'Nothing was deleted (you may not have permission)' }
+  return { error: null }
+}
+
 async function diffSync(
   table: 'members' | 'matches' | 'camps',
   prevMap: Map<any, any>,
