@@ -432,19 +432,49 @@ CREATE POLICY "members_storage_read" ON storage.objects
 -- Write operations are split per flag. A single FOR ALL policy would let a
 -- user holding only "Add Player" overwrite or delete other people's photos
 -- and passports.
+--
+-- Uploads under camps-reports/ and camps-photos/ are gated on 'addCamps'
+-- instead of 'addPlayer': the UI already lets anyone with addCamps open the
+-- camp editor and its report/photo upload boxes (app/page.tsx passes
+-- canManage={canManageUsers||p.addCamps} into StagesManager), but every
+-- storage write used to require addPlayer regardless of folder. A coach or
+-- camp-manager account with addCamps but not addPlayer could open the
+-- upload box, drop a file, and get a permission-denied error from the
+-- database with nothing in the UI explaining why - the upload was blocked
+-- on a permission that has nothing to do with managing camps.
 CREATE POLICY "members_storage_insert" ON storage.objects
   FOR INSERT WITH CHECK (
-    bucket_id = 'members' AND public.has_permission('addPlayer')
+    bucket_id = 'members' AND (
+      CASE
+        WHEN name LIKE 'camps-reports/%' OR name LIKE 'camps-photos/%' THEN public.has_permission('addCamps')
+        ELSE public.has_permission('addPlayer')
+      END
+    )
   );
 CREATE POLICY "members_storage_update" ON storage.objects
   FOR UPDATE USING (
-    bucket_id = 'members' AND public.has_permission('editPlayer')
+    bucket_id = 'members' AND (
+      CASE
+        WHEN name LIKE 'camps-reports/%' OR name LIKE 'camps-photos/%' THEN public.has_permission('addCamps')
+        ELSE public.has_permission('editPlayer')
+      END
+    )
   ) WITH CHECK (
-    bucket_id = 'members' AND public.has_permission('editPlayer')
+    bucket_id = 'members' AND (
+      CASE
+        WHEN name LIKE 'camps-reports/%' OR name LIKE 'camps-photos/%' THEN public.has_permission('addCamps')
+        ELSE public.has_permission('editPlayer')
+      END
+    )
   );
 CREATE POLICY "members_storage_delete" ON storage.objects
   FOR DELETE USING (
-    bucket_id = 'members' AND public.has_permission('deletePlayer')
+    bucket_id = 'members' AND (
+      CASE
+        WHEN name LIKE 'camps-reports/%' OR name LIKE 'camps-photos/%' THEN public.has_permission('addCamps')
+        ELSE public.has_permission('deletePlayer')
+      END
+    )
   );
 
 -- ------------------------------------------------------------
