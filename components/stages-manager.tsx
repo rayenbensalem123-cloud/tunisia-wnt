@@ -1,5 +1,5 @@
 "use client"
-import React, { useState } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import { ChevronLeft, X, Plus, ArrowLeft, Calendar, CalendarDays, MapPin, Users, FileText, Image as ImageIcon, Trash2, Save, Pencil, Download, Check, Briefcase, CalendarRange, Clock, Activity } from "lucide-react"
 import ThemeToggle from "@/components/theme-toggle"
 import { useTheme } from "@/lib/theme-context"
@@ -191,6 +191,11 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
     if (!current) return
     const next = id === 'legacy' ? { ...current, reportUrl: '', reportName: '' } : { ...current, reports: (current.reports || []).filter(r => r.id !== id) }
     const ok = await onSave(next)
+    if (ok) onRefresh?.()
+  }
+  const detailSaveProgram = async (program: Stage["program"]) => {
+    if (!current) return
+    const ok = await onSave({ ...current, program })
     if (ok) onRefresh?.()
   }
   const formAddReport = async (f: File, byId: string) => {
@@ -399,7 +404,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
         )}
 
         {view === "detail" && editing && (
-          <StageDetail stage={current || editing} members={members} canManage={canManage} tr={tr} staff={staffOf(current || editing)} busy={busy} onAddReport={detailAddReport} onRemoveReport={detailRemoveReport}
+          <StageDetail stage={current || editing} members={members} canManage={canManage} tr={tr} staff={staffOf(current || editing)} busy={busy} onAddReport={detailAddReport} onRemoveReport={detailRemoveReport} onSaveProgram={detailSaveProgram}
             onBack={() => setView("list")}
             onEdit={() => { setDraft(JSON.parse(JSON.stringify(editing))); setTab("program"); setView("edit") }}
             onDelete={() => setDeleteTarget(editing)} />
@@ -527,7 +532,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
   )
 }
 
-function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, staff: staffOpts, busy, onAddReport, onRemoveReport }: {
+function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, staff: staffOpts, busy, onAddReport, onRemoveReport, onSaveProgram }: {
   stage: Stage
   members: any[]
   canManage: boolean
@@ -535,6 +540,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
   busy: boolean
   onAddReport: (f: File, byId: string) => Promise<void>
   onRemoveReport: (id: string) => Promise<void>
+  onSaveProgram: (program: Stage["program"]) => Promise<void>
   onBack: () => void
   onEdit: () => void
   onDelete?: () => void
@@ -575,8 +581,10 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
 
   const reportCount = (stage.reports || []).length + (stage.reportUrl ? 1 : 0)
   const cover = (stage.images || [])[0]
+  const takenSessionsCount = (stage.program || []).filter(p => (p.attendance || []).length > 0).length
   const sections: [string, string, number][] = [
     ["program", tr.stages.programTab, sessions],
+    ["attendance", "Attendance", takenSessionsCount],
     ["players", tr.stages.playersLabel, players.length],
     ["staff", tr.common.staff, staff.length],
     ["report", tr.stages.report, reportCount],
@@ -585,6 +593,33 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
   const [active, setActive] = useState("program")
   const jump = (k: string) => { setActive(k); document.getElementById("sec-" + k)?.scrollIntoView({ behavior: "smooth", block: "start" }) }
 
+  // Attendance: a local copy of the programme so ticks feel instant, saved a moment after the last tap.
+  const [prog, setProg] = useState<Stage["program"]>(stage.program || [])
+  const dirty = useRef(false)
+  const saveTimer = useRef<any>(null)
+  const progKey = JSON.stringify(stage.program || [])
+  useEffect(() => { if (!dirty.current) setProg(JSON.parse(progKey)) }, [progKey])
+  const toggleAtt = (si: number, memberId: number) => {
+    if (!canManage) return
+    dirty.current = true
+    setProg(cur => {
+      const next = (cur || []).map((p, j) => {
+        if (j !== si) return p
+        const a = p.attendance || []
+        return { ...p, attendance: a.includes(memberId) ? a.filter(x => x !== memberId) : [...a, memberId] }
+      })
+      clearTimeout(saveTimer.current)
+      saveTimer.current = setTimeout(async () => { await onSaveProgram(next); dirty.current = false }, 900)
+      return next
+    })
+  }
+  const takenSessions = (prog || []).filter(p => (p.attendance || []).length > 0)
+  const attRate = (players.length && takenSessions.length)
+    ? Math.round(100 * takenSessions.reduce((n, p) => n + (p.attendance || []).filter(id => players.includes(id)).length, 0) / (takenSessions.length * players.length))
+    : null
+  const staffWithReport = new Set((stage.reports || []).map(r => r.staffId).filter(x => x != null))
+  const waitingStaff = staffOpts.filter(x => !staffWithReport.has(x.id))
+
   return (
     <>
       {/* Breadcrumb */}
@@ -592,16 +627,19 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
         <button onClick={onBack} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-panel3)]/70 text-[var(--c-textMid)] hover:text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider transition-all">
           <ArrowLeft size={13}/> {tr.stages.allCamps}
         </button>
+        <div className="flex gap-2">
+          <button onClick={() => window.print()} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-panel3)]/70 text-[var(--c-textMid)] hover:text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider transition-all"><Download size={13}/> Print</button>
         {canManage && (
-          <div className="flex gap-2">
+          <>
             <button onClick={onEdit} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 shadow-md shadow-[#E30613]/20 transition-all">
               <Pencil size={13}/> {tr.common.edit}
             </button>
             <button onClick={onDelete} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-[#ff4f66]/30 bg-[#E30613]/10 text-[var(--acc-red)] hover:bg-[#E30613]/20 text-[9px] font-black uppercase tracking-wider transition-all">
               <Trash2 size={13}/> {tr.common.delete}
             </button>
-          </div>
+          </>
         )}
+        </div>
       </div>
 
       {/* ─── DETAIL HERO ─── */}
@@ -664,11 +702,12 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
             </div>
 
             {/* Quick stats strip */}
-            <div className="mt-6 grid grid-cols-3 gap-3 max-w-md">
+            <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl">
               {[
-                { label: tr.stages.playersLabel, value: players.length, icon: <Users size={14}/> },
-                { label: tr.common.staff, value: staff.length, icon: <Briefcase size={14}/> },
-                { label: tr.stages.photosLabel, value: photos, icon: <ImageIcon size={14}/> },
+                { label: tr.stages.playersLabel, value: String(players.length), icon: <Users size={14}/> },
+                { label: tr.common.staff, value: String(staff.length), icon: <Briefcase size={14}/> },
+                { label: "Attendance", value: attRate === null ? "—" : attRate + "%", icon: <Check size={14}/> },
+                { label: "Reports in", value: staff.length ? `${staff.length - waitingStaff.length}/${staff.length}` : String(reportCount), icon: <FileText size={14}/> },
               ].map(x => light ? (
                 <div key={x.label} className="rounded-xl bg-[#0c1f3d] border border-[#ff5f72]/25 px-4 py-3 shadow-md shadow-[#0c1f3d]/15">
                   <div className="flex items-center gap-1.5 text-white/55">{x.icon}<span className="text-[7px] font-black uppercase tracking-widest">{x.label}</span></div>
@@ -751,6 +790,56 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
           </div>
         </section>
 
+        {/* ── ATTENDANCE ── */}
+        <section id="sec-attendance" className="scroll-mt-32">
+          <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">Attendance<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/>{canManage && <span className="text-[8px] font-bold normal-case tracking-normal not-italic text-[var(--c-textDim)]">Tap a dot to mark present or absent</span>}</h3>
+          {(prog || []).length === 0 || players.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
+              <Users size={28} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
+              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Add sessions and called-up players to take attendance</p>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel2)]/40 overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-[rgba(var(--line-rgb),.14)]">
+                    <th className="sticky left-0 z-10 bg-[var(--c-panel2)] px-4 py-3 text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] min-w-[190px]">Player</th>
+                    {(prog || []).map((p, si) => (
+                      <th key={si} className="px-2 py-3 text-center text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] min-w-[64px]">
+                        <div>{p.day || "—"}</div><div className="font-bold normal-case tracking-normal opacity-70">{p.time || ""}</div>
+                      </th>
+                    ))}
+                    <th className="px-3 py-3 text-center text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] min-w-[64px]">Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {players.map(id => {
+                    const m: any = memberById(id)
+                    const got = takenSessions.filter(p => (p.attendance || []).includes(id)).length
+                    const rate = takenSessions.length ? Math.round(100 * got / takenSessions.length) : null
+                    return (
+                      <tr key={id} className="border-b border-[rgba(var(--line-rgb),.07)] last:border-0">
+                        <td className="sticky left-0 z-10 bg-[var(--c-panel2)] px-4 py-2 text-[10px] font-black uppercase text-[var(--c-text)] whitespace-nowrap">{m?.name || `#${id}`}</td>
+                        {(prog || []).map((p, si) => {
+                          const on = (p.attendance || []).includes(id)
+                          const taken = (p.attendance || []).length > 0
+                          return (
+                            <td key={si} className="px-2 py-2 text-center">
+                              <button disabled={!canManage} onClick={() => toggleAtt(si, id)} aria-label={`${m?.name || id} ${on ? "present" : "absent"}`}
+                                className={`w-[18px] h-[18px] rounded-full align-middle transition-all ${on ? "bg-emerald-500" : taken ? "bg-[#E30613]" : "border-2 border-[rgba(var(--line-rgb),.35)]"} ${canManage ? "hover:scale-125 cursor-pointer" : "cursor-default"}`}/>
+                            </td>
+                          )
+                        })}
+                        <td className={`px-3 py-2 text-center text-[10px] font-black ${rate === null ? "text-[var(--c-textDim)]" : rate >= 85 ? "text-emerald-500" : rate >= 60 ? "text-[var(--acc-gold)]" : "text-[var(--acc-red)]"}`}>{rate === null ? "—" : rate + "%"}</td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
+
         {/* ── JOUEURS ── */}
         <section id="sec-players" className="scroll-mt-32">
           <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{tr.stages.playersLabel}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
@@ -825,7 +914,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
         {/* ── RAPPORT ── */}
         <section id="sec-report" className="scroll-mt-32">
           <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{"Reports"}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
-          <ReportsPanel reports={stage.reports || []} legacy={stage.reportUrl ? { url: stage.reportUrl, name: stage.reportName } : null} staff={staffOpts} canManage={canManage} busy={busy} onAdd={onAddReport} onRemove={onRemoveReport}/>
+          <ReportsPanel reports={stage.reports || []} legacy={stage.reportUrl ? { url: stage.reportUrl, name: stage.reportName } : null} staff={staffOpts} waiting={waitingStaff} canManage={canManage} busy={busy} onAdd={onAddReport} onRemove={onRemoveReport}/>
         </section>
 
         {/* ── PHOTOS ── */}
@@ -881,10 +970,11 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
 }
 
 // ── Reports: one PDF per staff member ──
-function ReportsPanel({ reports, legacy, staff, canManage, busy, onAdd, onRemove }: {
+function ReportsPanel({ reports, legacy, staff, waiting, canManage, busy, onAdd, onRemove }: {
   reports: CampReport[]
   legacy: { url: string; name: string } | null
   staff: { id: number; name: string; role: string }[]
+  waiting?: { id: number; name: string; role: string }[]
   canManage: boolean
   busy: boolean
   onAdd: (f: File, byId: string) => Promise<void> | void
@@ -898,7 +988,7 @@ function ReportsPanel({ reports, legacy, staff, canManage, busy, onAdd, onRemove
   ]
   return (
     <div className="space-y-5">
-      {items.length === 0 && (
+      {items.length === 0 && !(waiting && waiting.length) && (
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
           <FileText size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
           <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">No report yet</p>
@@ -918,6 +1008,17 @@ function ReportsPanel({ reports, legacy, staff, canManage, busy, onAdd, onRemove
               {canManage && <button onClick={() => onRemove(r.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(var(--line-rgb),.2)] text-[var(--acc-red)] text-[8px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all"><Trash2 size={11}/> Remove</button>}
             </div>
           </div>
+        ))}
+        {(waiting || []).map(w => (
+          <label key={"w" + w.id} className={`flex items-center gap-3.5 rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.28)] p-4 ${canManage ? "cursor-pointer hover:border-[#E30613]/50" : ""}`}>
+            {canManage && <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onAdd(f, String(w.id)) }}/>}
+            <div className="w-11 h-14 rounded-lg border border-dashed border-[rgba(var(--line-rgb),.35)] shrink-0"/>
+            <div className="flex-1 min-w-0">
+              <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{w.name}</p>
+              <p className="text-[8px] font-bold uppercase tracking-wider text-[var(--acc-red)]">{w.role ? w.role + " · " : ""}waiting for report</p>
+            </div>
+            {canManage && <span className="shrink-0 text-[8px] font-black uppercase tracking-wider text-[var(--acc-gold)]">Upload</span>}
+          </label>
         ))}
       </div>
       {canManage && (
