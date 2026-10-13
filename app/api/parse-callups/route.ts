@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { pathToFileURL } from 'url'
 import path from 'path'
-import { requireActiveUser, safeError } from '@/lib/api-auth'
+import { requireActiveUser, can, safeError } from '@/lib/api-auth'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -14,6 +15,14 @@ export async function POST(req: Request) {
   try {
     const auth = await requireActiveUser(req)
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
+    if (!can(auth.caller, 'addCamps')) {
+      return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
+    }
+
+    const rl = await checkRateLimit(`parse-callups:${auth.caller.id}`, { limit: 20, windowSeconds: 300 })
+    if (!rl.ok) {
+      return NextResponse.json({ error: 'Too many requests, please try again shortly' }, { status: 429 })
+    }
 
     const len = Number(req.headers.get('content-length') || '0')
     if (len > MAX_BYTES) return NextResponse.json({ error: 'File too large (max 8 MB)' }, { status: 413 })

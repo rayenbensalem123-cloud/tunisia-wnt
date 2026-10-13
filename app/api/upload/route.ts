@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { requireActiveUser, safeError, userClient } from '@/lib/api-auth'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const MAX_BYTES = 5 * 1024 * 1024 // 5 MB
 const ALLOWED_FOLDERS = ['passports', 'images', 'camps', 'camps-reports', 'camps-photos']
@@ -25,6 +26,11 @@ export async function POST(req: Request) {
   try {
     const auth = await requireActiveUser(req)
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
+
+    const rl = await checkRateLimit(`upload:${auth.caller.id}`, { limit: 20, windowSeconds: 300 })
+    if (!rl.ok) {
+      return NextResponse.json({ error: 'Too many requests, please try again shortly' }, { status: 429 })
+    }
 
     const len = Number(req.headers.get('content-length') || '0')
     if (len > MAX_BYTES) {

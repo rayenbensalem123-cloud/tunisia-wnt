@@ -18,6 +18,7 @@ import { FormationPitch, FORMATIONS } from "@/components/formation-pitch"
 import ThemeToggle from "@/components/theme-toggle"
 import LanguageToggle from "@/components/language-toggle"
 import { supabase } from "@/lib/supabase"
+import { authHeaders } from "@/lib/auth-headers"
 import JSZip from "jszip"
 import {
   signInUsername, fetchMyProfile, registerUser,
@@ -64,13 +65,6 @@ const YELLOW_SUSPENSION = 2
 const REAL_TUNISIA_SENIORS: any[] = []
 
 const titleCase=(s:string)=>s.toLowerCase().replace(/\b\w/g,c=>c.toUpperCase())
-// API routes run under the caller's own session, so every call carries the JWT.
-// The database then decides what this user may actually do.
-const authHeaders=async():Promise<Record<string,string>>=>{
-  const {data}=await supabase.auth.getSession()
-  const t=data.session?.access_token
-  return t?{Authorization:`Bearer ${t}`}:{}
-}
 // Storage objects live in a private bucket, so `imgUrls` holds short-lived
 // signed URLs minted with the signed-in user's own session (see signedImageUrls).
 // Never build a public storage URL here.

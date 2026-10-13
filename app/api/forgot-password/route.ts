@@ -2,12 +2,19 @@ import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase-admin'
 import { sendEmail, mailerConfigured } from '@/lib/mailer'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 // Public route — the whole point is that a logged-out user can reach it.
 // No Authorization header to check here, unlike every other API route in
 // this app.
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const rl = await checkRateLimit(`forgot-password:${ip}`, { limit: 5, windowSeconds: 600 })
+    if (!rl.ok) {
+      return NextResponse.json({ error: 'Too many requests, please try again shortly' }, { status: 429 })
+    }
+
     if (!mailerConfigured()) {
       return NextResponse.json(
         { error: "Email delivery isn't configured yet — ask an admin to reset your password" },
