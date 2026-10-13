@@ -112,7 +112,7 @@ export const memberToDb = (m: any) => ({
   // selection was silently discarded. Both are now in place.
   formation: m.formation || null,
   // Celebration photo. Only sent once a member carries the field, so a database that has
-  // not had supabase-celebration-photo.sql yet never sees an unknown column (PGRST204).
+  // not had migrations/0007_celebration_photo.sql yet never sees an unknown column (PGRST204).
   ...(m.image2 !== undefined || m.image2Path !== undefined
     ? { image2_url: m.image2 || null, image2_path: m.image2Path || null }
     : {}),

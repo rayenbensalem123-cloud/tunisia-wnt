@@ -34,6 +34,11 @@ Run [`supabase-setup.sql`](./supabase-setup.sql) once in the Supabase SQL editor
 It creates the tables, enables RLS, installs the privilege-guard trigger, and
 seeds demo data.
 
+After that baseline, apply the numbered incremental migrations in
+[`migrations/`](./migrations) in order — see [`migrations/README.md`](./migrations/README.md)
+for the convention and `pnpm db:migrate` for a script that applies whichever
+of them haven't been run yet and tracks which have.
+
 After registering your first account through the portal, promote it to admin:
 
 ```sql

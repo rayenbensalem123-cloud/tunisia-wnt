@@ -382,7 +382,7 @@ CREATE OR REPLACE VIEW public.squad_public AS
 -- re-applied through it — granting it to `authenticated` would publish the
 -- entire roster to every logged-in account, including 'player' accounts that
 -- are only supposed to see their own card. Signed-in callers read `members`,
--- where RLS does apply. See supabase-player-accounts.sql.
+-- where RLS does apply. See migrations/0002_player_accounts.sql.
 REVOKE ALL ON public.squad_public FROM anon, authenticated;
 GRANT SELECT ON public.squad_public TO anon;
 

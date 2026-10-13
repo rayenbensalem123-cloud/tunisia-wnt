@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server'
-import { pathToFileURL } from 'url'
-import path from 'path'
 import { requireActiveUser, can, safeError } from '@/lib/api-auth'
+import { extractPdfLines } from '@/lib/pdf-text'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -36,55 +35,20 @@ export async function POST(req: Request) {
     }
 
     const buf = Buffer.from(await file.arrayBuffer())
-  let rows: any[] = []
+  let rows: { text: string; page: number }[] = []
   let scannedPages = 0
 
   try {
-    // Dynamic import so the heavy pdfjs module isn't bundled into the main route graph eagerly
-    const pdfjs = await import('pdfjs-dist/legacy/build/pdf.mjs')
-    // pdfjs-dist is external (serverExternalPackages), so the real filesystem files exist at runtime
-    pdfjs.GlobalWorkerOptions.workerSrc = pathToFileURL(path.join(process.cwd(), 'node_modules/pdfjs-dist/legacy/build/pdf.worker.mjs')).href
-    // isEvalSupported was removed in pdfjs-dist v6 (eval is no longer used for
-    // this feature internally), so there's nothing to disable here anymore.
-    const doc = await pdfjs.getDocument({ data: new Uint8Array(buf), useWorkerFetch: false }).promise
-
-    if (doc.numPages > MAX_PAGES) {
-      return NextResponse.json({ error: `PDF too long (max ${MAX_PAGES} pages)` }, { status: 413 })
-    }
-
-    for (let i = 1; i <= doc.numPages; i++) {
-      const page = await doc.getPage(i)
-      const textContent = await page.getTextContent()
-      const items = (textContent.items as any[])
-        .filter((it: any) => it.str && it.str.trim())
-        .map((it: any) => ({
-          str: String(it.str).replace(/\s+/g, ' ').trim(),
-          x: it.transform?.[4] ?? 0,
-          y: it.transform?.[5] ?? 0,
-        }))
-        .filter((it) => it.str.length > 0)
-
-      if (items.length === 0) {
-        scannedPages++
-        continue
-      }
-
-      // Group items into visual lines by Y coordinate (tolerant to rounding)
-      const lines: { y: number; items: { str: string; x: number }[] }[] = []
-      for (const it of items) {
-        const match = lines.find((l) => Math.abs(l.y - it.y) < 3)
-        if (match) match.items.push(it)
-        else lines.push({ y: it.y, items: [it] })
-      }
-      lines.sort((a, b) => b.y - a.y) // PDF y grows upward
-      for (const line of lines) {
-        // sort items left to right
-        line.items.sort((a, b) => a.x - b.x)
-        const text = line.items.map((i) => i.str).join(' ')
-        if (text.trim()) rows.push({ text: text.trim(), page: i })
-      }
-    }
+    // Dynamic import (inside extractPdfLines) so the heavy pdfjs module
+    // isn't bundled into the main route graph eagerly.
+    const extracted = await extractPdfLines(buf, { maxPages: MAX_PAGES })
+    rows = extracted.lines
+    scannedPages = extracted.scannedPages
   } catch (e: any) {
+    const message = typeof e?.message === 'string' ? e.message : ''
+    if (message.startsWith('PDF too long')) {
+      return NextResponse.json({ error: message }, { status: 413 })
+    }
     return NextResponse.json({ error: 'Could not read PDF: ' + safeError(e, 'unknown') }, { status: 400 })
   }
 
