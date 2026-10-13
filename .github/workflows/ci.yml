@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          # No .nvmrc in this repo; 22 is the current LTS and is required for
+          # the unflagged TypeScript stripping our plain-`node` test scripts
+          # rely on (added in Node 22.18+).
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Bingo logic tests
+        run: node --import ./scripts/register-alias-loader.mjs scripts/bingo-logic.test.ts
+
+      - name: Stats logic tests
+        run: node scripts/stats-logic.test.mjs
+
+      - name: Callups matching tests
+        run: node scripts/test-callups.mjs
+
+      - name: Translation parity check
+        run: npm run check-translations
+
+      - name: API route tests
+        run: npm run test:routes
