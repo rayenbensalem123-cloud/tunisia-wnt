@@ -4,16 +4,7 @@ import { createPortal } from "react-dom"
 import { Download, Upload, Printer, FileSpreadsheet, FileJson, X, FileText, Check } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
 import { useFileDrop, isPdfFile } from "@/lib/use-file-drop"
-import { supabase } from "@/lib/supabase"
-
-// /api/import-players requires a Bearer token (requireActiveUser), but this
-// call never sent one - every upload here was failing with a silent 401
-// before the request even reached the PDF-parsing logic.
-const authHeaders = async (): Promise<Record<string, string>> => {
-  const { data } = await supabase.auth.getSession()
-  const t = data.session?.access_token
-  return t ? { Authorization: `Bearer ${t}` } : {}
-}
+import { authHeaders } from "@/lib/auth-headers"
 
 type Props = {
   members: any[]

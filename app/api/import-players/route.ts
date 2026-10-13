@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { pathToFileURL } from 'url'
 import path from 'path'
 import { requireActiveUser, can, safeError } from '@/lib/api-auth'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 export const runtime = 'nodejs'
 export const maxDuration = 60
@@ -18,6 +19,11 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     caller = auth.caller
+
+    const rl = await checkRateLimit(`import-players:${auth.caller.id}`, { limit: 20, windowSeconds: 300 })
+    if (!rl.ok) {
+      return NextResponse.json({ error: 'Too many requests, please try again shortly' }, { status: 429 })
+    }
   } catch (e) {
     return NextResponse.json({ error: safeError(e) }, { status: 500 })
   }

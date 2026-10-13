@@ -1,11 +1,18 @@
 import { NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { supabaseAdmin } from '@/lib/supabase-admin'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 // Public route — reached from the emailed link while the user is signed
 // out, so auth is the token itself, not a session.
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
+    const rl = await checkRateLimit(`reset-password:${ip}`, { limit: 5, windowSeconds: 600 })
+    if (!rl.ok) {
+      return NextResponse.json({ error: 'Too many requests, please try again shortly' }, { status: 429 })
+    }
+
     if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
       return NextResponse.json({ error: 'Password reset is unavailable: SUPABASE_SERVICE_ROLE_KEY is not configured' }, { status: 501 })
     }
