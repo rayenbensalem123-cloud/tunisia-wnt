@@ -287,12 +287,6 @@ const t = {
       invalidLink: "This reset link is invalid or has expired. Request a new one from the login screen.",
       success: "Your password has been reset. You can now sign in with it.", goToLogin: "Go to login",
     },
-    calendarModal: {
-      title: "My Camp Calendar", menuLabel: "My Camp Calendar", copy: "Copy link", copied: "Copied ✓", subscribe: "Add to calendar",
-      hint: "Subscribe in your phone's calendar app and the camps you are called up to appear automatically, and update if dates change. Camps you are not part of never appear.",
-      private: "This link is personal. Anyone who has it can see your camp dates, so don't share it.",
-      regen: "Reset link", regenConfirm: "Reset your link? The old one will stop working and you will need to subscribe again.",
-    },
     emailModal: {
       title: "Recovery Email", menuLabel: "Recovery Email", emailLabel: "Email address",
       hint: "Set an email so you can reset your password yourself if you forget it. This is separate from your username and is never shown to other users.",
@@ -616,12 +610,6 @@ const t = {
       invalidLink: "Ce lien de réinitialisation est invalide ou a expiré. Demandez-en un nouveau depuis l'écran de connexion.",
       success: "Votre mot de passe a été réinitialisé. Vous pouvez maintenant vous connecter avec.", goToLogin: "Aller à la connexion",
     },
-    calendarModal: {
-      title: "Mon calendrier de stages", menuLabel: "Mon calendrier de stages", copy: "Copier le lien", copied: "Copié ✓", subscribe: "Ajouter au calendrier",
-      hint: "Abonnez-vous dans l'application calendrier de votre téléphone : les stages pour lesquels vous êtes convoquée apparaissent automatiquement et se mettent à jour si les dates changent. Les stages auxquels vous ne participez pas n'apparaissent jamais.",
-      private: "Ce lien est personnel. Toute personne qui le possède peut voir vos dates de stage, ne le partagez pas.",
-      regen: "Réinitialiser le lien", regenConfirm: "Réinitialiser votre lien ? L'ancien ne fonctionnera plus et vous devrez vous réabonner.",
-    },
     emailModal: {
       title: "E-mail de récupération", menuLabel: "E-mail de récupération", emailLabel: "Adresse e-mail",
       hint: "Définissez un e-mail pour pouvoir réinitialiser votre mot de passe vous-même en cas d'oubli. Ceci est distinct de votre nom d'utilisateur et n'est jamais visible par les autres utilisateurs.",
@@ -944,12 +932,6 @@ const t = {
       title: "إعادة تعيين كلمة المرور", newPassword: "كلمة مرور جديدة", save: "تعيين كلمة المرور الجديدة",
       invalidLink: "رابط إعادة التعيين هذا غير صالح أو منتهي الصلاحية. اطلب رابطًا جديدًا من شاشة تسجيل الدخول.",
       success: "تمت إعادة تعيين كلمة المرور الخاصة بك. يمكنك الآن تسجيل الدخول بها.", goToLogin: "الذهاب لتسجيل الدخول",
-    },
-    calendarModal: {
-      title: "تقويم معسكراتي", menuLabel: "تقويم معسكراتي", copy: "نسخ الرابط", copied: "تم النسخ ✓", subscribe: "إضافة إلى التقويم",
-      hint: "اشترك في تطبيق التقويم على هاتفك لتظهر المعسكرات التي تم استدعاؤك إليها تلقائيًا وتتحدث إذا تغيرت التواريخ. المعسكرات التي لست جزءًا منها لا تظهر أبدًا.",
-      private: "هذا الرابط شخصي. أي شخص يملكه يمكنه رؤية تواريخ معسكراتك، فلا تشاركه.",
-      regen: "إعادة تعيين الرابط", regenConfirm: "هل تريد إعادة تعيين الرابط؟ سيتوقف القديم عن العمل وستحتاج إلى الاشتراك من جديد.",
     },
     emailModal: {
       title: "بريد الاسترداد", menuLabel: "بريد الاسترداد", emailLabel: "البريد الإلكتروني",

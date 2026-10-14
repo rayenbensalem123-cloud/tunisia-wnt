@@ -11,7 +11,6 @@ import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
 import { PasswordModal, type PasswordTarget } from "@/components/password-modal"
 import { EmailModal } from "@/components/email-modal"
-import { CalendarModal } from "@/components/calendar-modal"
 import { ExportTools } from "@/components/export-tools"
 import { PlayerCard } from "@/components/player-card"
 import { CountryFlag } from "@/components/country-flag"
@@ -507,7 +506,6 @@ export default function EliteSquadApp() {
   }
   const handleChangePassword=()=>openPw('self')
   const [emailModalOpen,setEmailModalOpen]=useState(false)
-  const [calendarOpen,setCalendarOpen]=useState(false)
   const submitEmail=async(email:string)=>{
     const {error}=await updateMyEmail(email)
     if(!error) setUser(u=>u?{...u,email}:u)
@@ -1265,9 +1263,6 @@ export default function EliteSquadApp() {
               </button>
               <button onClick={()=>setEmailModalOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Mail size={14} className="text-[#a9822e]"/>{tr.emailModal.menuLabel}
-              </button>
-              <button onClick={()=>setCalendarOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
-                <Calendar size={14} className="text-[#a9822e]"/>{tr.calendarModal.menuLabel}
               </button>
               <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all text-left">
                 <LogOut size={14}/>Log Out
@@ -3075,7 +3070,6 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
           MATCH HISTORY MODAL
       ═══════════════════════════════════════════ */}
       <PasswordModal target={pwTarget} onClose={closePw} onSubmit={submitPw}/>
-      <CalendarModal open={calendarOpen} onClose={()=>setCalendarOpen(false)}/>
       <EmailModal open={emailModalOpen} currentEmail={user?.email??null} onClose={()=>setEmailModalOpen(false)} onSubmit={submitEmail}/>
       {isHistoryOpen&&(()=>{
         const uniqueOpponents=[...new Set(catMatches.map((m:any)=>m.opponent).filter(Boolean))].sort()
