@@ -1,6 +1,6 @@
 -- Self-service password reset. Applied directly via the Supabase MCP on
 -- 2026-10-08 — this file documents what's actually live, same convention as
--- supabase-meetings.sql.
+-- 0004_meetings.sql.
 --
 -- The app's Supabase Auth users log in with a synthetic placeholder email
 -- (`<username>@placeholder.tunisia-wnt.local>`), not a real address — see

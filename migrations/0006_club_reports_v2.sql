@@ -1,7 +1,7 @@
 -- Extends the club-match self-report form (club_match_reports, created in
 -- an earlier migration — see the "Club" tab on a player's card). Applied
 -- directly via the Supabase MCP on 2026-10-08/09; this file documents what's
--- actually live, same convention as supabase-meetings.sql.
+-- actually live, same convention as 0004_meetings.sql.
 
 -- Position played, a staff "verified" trust marker, an injury flag separate
 -- from the main injuries module, and the ability to record that she simply

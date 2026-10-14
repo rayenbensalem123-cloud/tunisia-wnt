@@ -1,7 +1,7 @@
 -- Meetings feature (Zoom-backed): schedule a meeting, store the join link,
 -- and later the recording link, so it stays rewatchable after the call ends.
 -- Applied directly via the Supabase MCP on 2026-10-06 — this file documents
--- what's actually live, same convention as supabase-activity-log-triggers.sql.
+-- what's actually live, same convention as 0003_activity_log_triggers.sql.
 
 create table if not exists public.meetings (
   id bigint generated always as identity primary key,

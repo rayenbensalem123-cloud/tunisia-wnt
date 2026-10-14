@@ -14,7 +14,7 @@ export async function POST(req: Request) {
 
     if (!zoomConfigured()) {
       return NextResponse.json(
-        { error: 'Zoom integration not configured. Set ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET (see supabase-meetings.sql for how to get them).' },
+        { error: 'Zoom integration not configured. Set ZOOM_ACCOUNT_ID, ZOOM_CLIENT_ID and ZOOM_CLIENT_SECRET (see migrations/0004_meetings.sql for how to get them).' },
         { status: 503 }
       )
     }

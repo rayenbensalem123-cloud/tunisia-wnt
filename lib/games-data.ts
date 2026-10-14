@@ -1,6 +1,6 @@
 // Storage for the staff games (Match-day Bingo picks + game scores).
 //
-// Shared storage lives in two Supabase tables created by supabase-games.sql. Until that script has
+// Shared storage lives in two Supabase tables created by migrations/0001_games.sql. Until that script has
 // been run (or if the network/permissions fail) everything transparently falls back to this
 // device's localStorage, so the games always work — the result just isn't shared with other staff.
 import { supabase } from "@/lib/supabase"

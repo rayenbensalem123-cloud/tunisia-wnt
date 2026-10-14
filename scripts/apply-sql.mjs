@@ -2,6 +2,12 @@
  * Applies supabase-setup.sql to the Supabase project and then verifies the
  * security posture with the PUBLIC anon key.
  *
+ * This only ever applies the baseline — it does not know about, or apply,
+ * anything in migrations/. For that (and for a record of which migrations
+ * have actually been run against this database), use `pnpm db:migrate`
+ * (scripts/db-migrate.mjs) instead. This script is kept for the anon-key
+ * leak check at the bottom, which db-migrate.mjs does not duplicate.
+ *
  * Requires DATABASE_URL in .env.local, e.g.
  *   DATABASE_URL=postgresql://postgres.PROJECTREF:PASSWORD@aws-0-REGION.pooler.supabase.com:5432/postgres
  *
