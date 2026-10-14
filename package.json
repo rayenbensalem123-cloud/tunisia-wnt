@@ -10,7 +10,6 @@
     "db:apply": "node scripts/apply-sql.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "check-translations": "node scripts/check-translations.mjs",
-    "test:ics": "node --experimental-strip-types scripts/test-ics.mjs",
     "test:routes": "node --import ./scripts/register-alias-loader.mjs scripts/test-api-routes.mjs"
   },
   "dependencies": {
