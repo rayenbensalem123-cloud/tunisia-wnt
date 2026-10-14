@@ -50,3 +50,6 @@ jobs:
 
       - name: API route tests
         run: npm run test:routes
+
+      - name: ICS scoping tests
+        run: npm run test:ics

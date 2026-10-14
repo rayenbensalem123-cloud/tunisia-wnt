@@ -690,3 +690,20 @@ export async function subscribeRealtime(handlers: {
     .subscribe()
   return () => { supabase.removeChannel(channel) }
 }
+
+// Personal calendar feed: returns the caller's secret token (creating one on
+// first use). `regenerate` rotates it, which invalidates the old subscription URL.
+export async function getMyCalendarToken(regenerate = false): Promise<{ token: string | null; error: string | null }> {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const uid = sessionData.session?.user.id
+  if (!uid) return { token: null, error: 'Not signed in' }
+  if (!regenerate) {
+    const { data, error } = await supabase.from('profiles').select('calendar_token').eq('id', uid).maybeSingle()
+    if (error) return { token: null, error: error.message }
+    if (data?.calendar_token) return { token: data.calendar_token as string, error: null }
+  }
+  const bytes = crypto.getRandomValues(new Uint8Array(24))
+  const token = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('')
+  const { error } = await supabase.from('profiles').update({ calendar_token: token }).eq('id', uid)
+  return error ? { token: null, error: error.message } : { token, error: null }
+}
