@@ -172,7 +172,7 @@ async function run() {
   })
 
   await t('parse-callups: non-PDF file -> 415', async () => {
-    installAuthStub()
+    installAuthStub({ permissions: { addCamps: true } })
     try {
       const form = new FormData()
       form.set('file', fakeFile('callups.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 10))
@@ -189,7 +189,7 @@ async function run() {
   })
 
   await t('parse-callups: oversized file -> 413', async () => {
-    installAuthStub()
+    installAuthStub({ permissions: { addCamps: true } })
     try {
       const big = fakeFile('callups.pdf', 'application/pdf', 9 * 1024 * 1024) // > 8 MB MAX_BYTES
       const form = new FormData()
