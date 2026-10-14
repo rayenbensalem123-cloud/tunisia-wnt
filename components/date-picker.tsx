@@ -208,7 +208,7 @@ export default function DatePicker({
                   </button>
                 ))}
                 <button type="button" onClick={() => { setView({ y: today.getFullYear(), m: today.getMonth() }); setYearMode(false) }} className="ms-auto px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-[#E30613] hover:bg-[#E30613]/10 transition-all">
-                  Aujourd'hui
+                  Aujourd&apos;hui
                 </button>
               </div>
             </div>
@@ -271,7 +271,7 @@ export default function DatePicker({
                   onClick={() => { onChange(todayYMD); setOpen(false) }}
                   className="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-[#E30613] hover:bg-[#E30613]/10 transition-all"
                 >
-                  Aujourd'hui
+                  Aujourd&apos;hui
                 </button>
                 <button
                   type="button"

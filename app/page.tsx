@@ -232,7 +232,7 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
               <input type="password" placeholder={tr.login.password} value={p} onChange={e=>setP(e.target.value)} className={`${B_FIELD_KEY} tracking-[.25em]`}/>
             </div>
             <div>
-              <div className="text-[8px] font-black uppercase tracking-widest text-white/45">I'm joining as</div>
+              <div className="text-[8px] font-black uppercase tracking-widest text-white/45">I&apos;m joining as</div>
               <div className="mt-1.5 grid grid-cols-2 gap-2">
                 <button type="button" onClick={()=>setRole("staff")} className={`relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all ${role==="staff"?"border-[#f6c744] bg-[#f6c744] text-[#0c1f3d] shadow-[0_0_16px_rgba(246,199,68,.25)]":"border-white/15 bg-white/5 text-white/55 hover:border-white/35 hover:text-white"}`}>
                   <BriefcaseBusiness size={13}/>Staff
@@ -1241,7 +1241,7 @@ export default function EliteSquadApp() {
                 <Video size={14} className="text-[#a9822e]"/>{tr.meetings.title}
               </button>
               <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
-                <Newspaper size={14} className="text-[#a9822e]"/>Women's Football News
+                <Newspaper size={14} className="text-[#a9822e]"/>Women&apos;s Football News
               </button>
               {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <ListChecks size={14} className="text-[#a9822e]"/>Select Players (Passports)
@@ -1764,7 +1764,7 @@ export default function EliteSquadApp() {
                 return(
                 <div className="space-y-3">
                   {selMember.bioQuote?(
-                    <p className="text-[12px] italic text-[var(--c-textBlue)] text-center px-2 leading-snug">"{selMember.bioQuote}"</p>
+                    <p className="text-[12px] italic text-[var(--c-textBlue)] text-center px-2 leading-snug">&quot;{selMember.bioQuote}&quot;</p>
                   ):(
                     <p className="text-[11px] text-[var(--c-textDim)] text-center px-2 italic">No coaching philosophy added yet</p>
                   )}
@@ -2340,12 +2340,12 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 const buildSentence=()=>{
                   if(a.entity_type==="injuries"){
                     const playerName=(a.entity_label||"").split(" — ")[0]
-                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> <span className="font-bold text-zinc-800">{playerName}</span><span className="text-zinc-500">'s injury record</span></>
+                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> <span className="font-bold text-zinc-800">{playerName}</span><span className="text-zinc-500">&apos;s injury record</span></>
                   }
                   if(a.entity_type==="members"){
                     if(a.action==="insert")return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-[#7fd6a8]">added a new player/staff</span>: <span className="font-bold text-zinc-800">{a.entity_label}</span></>
                     if(a.action==="delete")return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-[#ff4f66]">removed</span> <span className="font-bold text-zinc-800">{a.entity_label}</span></>
-                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-[#7ec3ff]">updated</span> <span className="font-bold text-zinc-800">{a.entity_label}</span>'s profile</>
+                    return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className="font-bold text-[#7ec3ff]">updated</span> <span className="font-bold text-zinc-800">{a.entity_label}</span>&apos;s profile</>
                   }
                   if(a.entity_type==="matches"){
                     return <><span className="font-black">{a.actor_username||"unknown user"}</span> <span className={`font-bold ${actionColor}`}>{actionVerb}</span> the match vs <span className="font-bold text-zinc-800">{a.entity_label}</span></>
@@ -2546,7 +2546,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
         <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 bg-black/80">
           <div className="w-full max-w-lg rounded-2xl bg-[var(--c-cream2)] text-zinc-900 shadow-2xl flex flex-col max-h-[88vh]">
             <div className="px-6 pt-5 pb-4 border-b border-zinc-100 shrink-0 flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase tracking-tight flex items-center gap-2"><Newspaper size={16}/>Women's Football News</h2>
+              <h2 className="text-sm font-black uppercase tracking-tight flex items-center gap-2"><Newspaper size={16}/>Women&apos;s Football News</h2>
               <button onClick={()=>setNewsOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
             </div>
             <div className="p-5 overflow-y-auto space-y-2">
