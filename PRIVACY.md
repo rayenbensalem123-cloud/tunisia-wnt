@@ -55,6 +55,21 @@ reports are included in that export only if the account can already see
 that data under the rules above — exporting never reveals more than the
 account could already see on screen.
 
+## For admins day to day
+
+- **Granting `viewMedical` to a staff account is a real decision, not a
+  convenience toggle** — combined with roster access, it effectively gives
+  that account every player's injury history and passport document. Grant it
+  only to people who actually need it (team doctor, physio, senior staff),
+  and review who holds it periodically.
+- **Removing a player or staff member from the roster does not auto-delete
+  their historical records or files** — injuries, match history, and
+  documents persist for the team's own record-keeping unless an admin
+  deletes them explicitly. If the federation needs a formal data-retention
+  or right-to-erasure process (e.g. a departed player asking for her data
+  removed), that's a decision for admins to make and carry out by hand —
+  the app doesn't automate it.
+
 ## What this intentionally does not cover
 
 - **FIFA Connect ID** is stored as a roster field like any other; it carries
