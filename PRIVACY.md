@@ -72,7 +72,9 @@ account could already see on screen.
   deletes them explicitly. If the federation needs a formal data-retention
   or right-to-erasure process (e.g. a departed player asking for her data
   removed), that's a decision for admins to make and carry out by hand —
-  the app doesn't automate it.
+  the app doesn't automate it. (Any signed-in person can already download their
+  own data as a JSON file from the account menu — "Download my data" — which
+  only ever contains rows they are allowed to see.)
 
 ## What this intentionally does not cover
 

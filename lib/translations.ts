@@ -314,6 +314,9 @@ const t = {
       chartTitle: "Goals scored and conceded per match", showTable: "Table", showChart: "Chart", noData: "No finished matches for this selection.",
       date: "Date", opponent: "Opponent", result: "Result", last: "Last {n} matches",
     },
+    account: {
+      downloadData: "Download my data", downloadFailed: "Could not prepare your data. Please try again.",
+    },
     emailModal: {
       title: "Recovery Email", menuLabel: "Recovery Email", emailLabel: "Email address",
       hint: "Set an email so you can reset your password yourself if you forget it. This is separate from your username and is never shown to other users.",
@@ -664,6 +667,9 @@ const t = {
       chartTitle: "Buts marqués et encaissés par match", showTable: "Tableau", showChart: "Graphique", noData: "Aucun match terminé pour cette sélection.",
       date: "Date", opponent: "Adversaire", result: "Résultat", last: "{n} derniers matchs",
     },
+    account: {
+      downloadData: "Télécharger mes données", downloadFailed: "Impossible de préparer vos données. Réessayez.",
+    },
     emailModal: {
       title: "E-mail de récupération", menuLabel: "E-mail de récupération", emailLabel: "Adresse e-mail",
       hint: "Définissez un e-mail pour pouvoir réinitialiser votre mot de passe vous-même en cas d'oubli. Ceci est distinct de votre nom d'utilisateur et n'est jamais visible par les autres utilisateurs.",
@@ -1013,6 +1019,9 @@ const t = {
       played: "لُعبت", wins: "فوز", draws: "تعادل", losses: "خسارة", goalsFor: "سُجلت", goalsAgainst: "استُقبلت", winRate: "نسبة الفوز",
       chartTitle: "الأهداف المسجلة والمستقبلة في كل مباراة", showTable: "جدول", showChart: "رسم", noData: "لا توجد مباريات منتهية لهذا الاختيار.",
       date: "التاريخ", opponent: "المنافس", result: "النتيجة", last: "آخر {n} مباريات",
+    },
+    account: {
+      downloadData: "تنزيل بياناتي", downloadFailed: "تعذر تجهيز بياناتك. يرجى المحاولة مرة أخرى.",
     },
     emailModal: {
       title: "بريد الاسترداد", menuLabel: "بريد الاسترداد", emailLabel: "البريد الإلكتروني",

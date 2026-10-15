@@ -28,7 +28,7 @@ import {
   fetchInjuries, addInjury, updateInjuryStatus,
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl,
   fetchClubReports, addClubReport, deleteClubReport, linkProfileToMember,
-  fetchAllInjuries, fetchAllClubReports, fetchPassportExpiries,
+  fetchAllInjuries, fetchAllClubReports, fetchPassportExpiries, exportMyData,
   fetchMeetings, deleteMeeting, scheduleMeeting, checkMeetingRecording,
   updateMyEmail, requestPasswordReset, verifyClubReport
 } from "@/lib/app-data"
@@ -1278,6 +1278,9 @@ export default function EliteSquadApp() {
               </button>
               <button onClick={()=>setEmailModalOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Mail size={14} className="text-[#a9822e]"/>{tr.emailModal.menuLabel}
+              </button>
+              <button onClick={async()=>{const d=await exportMyData();if(!d){alert(tr.account.downloadFailed);return}const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:"application/json"}));a.download=`my-data-${user?.username||"account"}.json`;a.click();URL.revokeObjectURL(a.href)}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <Download size={14} className="text-[#a9822e]"/>{tr.account.downloadData}
               </button>
               <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all text-left">
                 <LogOut size={14}/>Log Out

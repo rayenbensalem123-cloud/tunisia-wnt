@@ -748,3 +748,29 @@ export async function saveTripMember(type: TripEvent, eventId: number, m: TripMe
   const { error } = await supabase.from('trip_members').upsert(row, { onConflict: 'event_type,event_id,member_id' })
   return { error: error?.message || null }
 }
+
+// "Download my data": everything the database holds about the signed-in person,
+// gathered with their OWN session, so row-level security guarantees it can only
+// ever contain their own rows. Image/document files are listed by path, not embedded.
+export async function exportMyData() {
+  const profile = await fetchMyProfile()
+  if (!profile) return null
+  const mid = profile.member_id as number | null
+  const { calendar_token: _omit, ...profileSafe } = profile as any
+  const out: Record<string, any> = { exportedAt: new Date().toISOString(), account: profileSafe }
+  if (mid != null) {
+    const [member, injuries, reports, docs, trips] = await Promise.all([
+      supabase.from('members').select('*').eq('id', mid).maybeSingle(),
+      supabase.from('injuries').select('*').eq('member_id', mid),
+      supabase.from('club_match_reports').select('*').eq('member_id', mid),
+      supabase.from('member_documents').select('*').eq('member_id', mid),
+      supabase.from('trip_members').select('*').eq('member_id', mid),
+    ])
+    out.rosterCard = member.data || null
+    out.injuries = injuries.data || []
+    out.clubMatchReports = reports.data || []
+    out.travelDocuments = docs.data || []
+    out.tripDetails = trips.data || []
+  }
+  return out
+}
