@@ -13,6 +13,7 @@ import { useCS } from "@/lib/camp-strings"
 import { TripPanel } from "@/components/travel"
 import { eligibilityFor } from "@/lib/eligibility"
 import { passportStatus } from "@/lib/documents"
+import { clashingCamps } from "@/lib/clash"
 
 type CampReport = { id: string; url: string; name: string; staffId: number | null; staffName: string; role: string; addedAt: string }
 
@@ -562,7 +563,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
               )}
 
               {tab === "players" && (
-                <PlayersTab travel={travel} all={allCandidates} draft={draft} setDraft={setDraft} members={availablePlayers.length ? availablePlayers : allCandidates.filter(m => (m.role||'').toUpperCase()==='PLAYERS')} tr={tr}/>
+                <PlayersTab travel={travel} otherCamps={stages} all={allCandidates} draft={draft} setDraft={setDraft} members={availablePlayers.length ? availablePlayers : allCandidates.filter(m => (m.role||'').toUpperCase()==='PLAYERS')} tr={tr}/>
               )}
 
               {tab === "staff" && (
@@ -1195,7 +1196,7 @@ function CallupImport({ all, setDraft }: { all: any[]; setDraft: React.Dispatch<
 }
 
 // ── Convocation editor ──
-function PlayersTab({ all, draft, setDraft, members, tr, travel }: { travel?: Props["travel"]; all: any[]; draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[]; tr: any }) {
+function PlayersTab({ all, draft, setDraft, members, tr, travel, otherCamps }: { travel?: Props["travel"]; otherCamps?: Stage[]; all: any[]; draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[]; tr: any }) {
   const [q, setQ] = useState("")
   const list = draft.players || []
   const pool = members
@@ -1216,14 +1217,17 @@ function PlayersTab({ all, draft, setDraft, members, tr, travel }: { travel?: Pr
       const ps = passportStatus(travel.expiries[m.id], draft.endDate || draft.startDate)
       if (ps.status === 'expired' || ps.status === 'short') out.push(tr.travel.warnPassport)
     }
+    const clash = clashingCamps(draft, otherCamps || [], m.id)
+    if (clash.length) out.push(tr.travel.warnClash.replace('{name}', clash.map(c => c.name || '—').join(', ')))
     return out
   }
+  const flagged = list.filter(id => warnings(members.find(x => x.id === id) || all.find(x => x.id === id)).length > 0).length
   const toggle = (id: number) => setDraft(d => ({ ...d, players: (d.players || []).includes(id) ? (d.players || []).filter(x => x !== id) : [...(d.players || []), id] }))
   return (
     <div>
       <CallupImport all={all} setDraft={setDraft}/>
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} {tr.stages.callupsCountLabel}</p>
+        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} {tr.stages.callupsCountLabel}{flagged > 0 && <span className="ml-2 text-[#f6c744]">⚠ {tr.travel.needAttention.replace('{n}', String(flagged))}</span>}</p>
         <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr.stages.searchPlaceholder} className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
