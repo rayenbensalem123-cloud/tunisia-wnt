@@ -10,6 +10,9 @@ import { supabase } from "@/lib/supabase"
 import { matchCallups } from "@/lib/callups"
 import { StoredImg, openStored } from "@/components/stored-file"
 import { useCS } from "@/lib/camp-strings"
+import { TripPanel } from "@/components/travel"
+import { eligibilityFor } from "@/lib/eligibility"
+import { passportStatus } from "@/lib/documents"
 
 type CampReport = { id: string; url: string; name: string; staffId: number | null; staffName: string; role: string; addedAt: string }
 
@@ -42,6 +45,8 @@ type Props = {
   onDelete?: (id: number) => Promise<boolean> | boolean
   onRefresh?: () => void
   user?: { username?: string } | null
+  /** travel & documents: who may manage them, and the passport expiries the viewer may see */
+  travel?: { canManage: boolean; expiries?: Record<number, string> }
 }
 
 const emptyStage = (cat: string | null): Stage => ({
@@ -91,7 +96,7 @@ function useToast() {
   return { msg, show }
 }
 
-export function StagesManager({ open, onClose, stages, members, teamCat, canManage, onSave, onDelete, onRefresh, user }: Props) {
+export function StagesManager({ open, onClose, stages, members, teamCat, canManage, onSave, onDelete, onRefresh, user, travel }: Props) {
   const { tr } = useTranslate()
   const cs = useCS()
   const [view, setView] = useState<"list" | "edit" | "detail">("list")
@@ -488,7 +493,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
         )}
 
         {view === "detail" && editing && (
-          <StageDetail stage={current || editing} members={members} canManage={canManage} tr={tr} staff={staffOf(current || editing)} busy={busy} onAddReport={detailAddReport} onRemoveReport={detailRemoveReport} onSaveProgram={detailSaveProgram}
+          <StageDetail travel={travel} stage={current || editing} members={members} canManage={canManage} tr={tr} staff={staffOf(current || editing)} busy={busy} onAddReport={detailAddReport} onRemoveReport={detailRemoveReport} onSaveProgram={detailSaveProgram}
             onBack={() => setView("list")}
             onEdit={() => { setDraft(JSON.parse(JSON.stringify(editing))); setTab("program"); setView("edit") }}
             onDelete={() => setDeleteTarget(editing)} />
@@ -557,7 +562,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
               )}
 
               {tab === "players" && (
-                <PlayersTab all={allCandidates} draft={draft} setDraft={setDraft} members={availablePlayers.length ? availablePlayers : allCandidates.filter(m => (m.role||'').toUpperCase()==='PLAYERS')} tr={tr}/>
+                <PlayersTab travel={travel} all={allCandidates} draft={draft} setDraft={setDraft} members={availablePlayers.length ? availablePlayers : allCandidates.filter(m => (m.role||'').toUpperCase()==='PLAYERS')} tr={tr}/>
               )}
 
               {tab === "staff" && (
@@ -616,7 +621,8 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
   )
 }
 
-function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, staff: staffOpts, busy, onAddReport, onRemoveReport, onSaveProgram }: {
+function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, staff: staffOpts, busy, onAddReport, onRemoveReport, onSaveProgram, travel }: {
+  travel?: Props["travel"]
   stage: Stage
   members: any[]
   canManage: boolean
@@ -674,6 +680,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
     ["staff", tr.common.staff, staff.length],
     ["report", tr.stages.report, reportCount],
     ["photos", tr.stages.photosTab, photos],
+    ...((travel && stage.id != null) ? [["travel", tr.travel.tripTitle, 0] as [string, string, number]] : []),
   ]
   const [active, setActive] = useState("program")
   const jump = (k: string) => { setActive(k); document.getElementById("sec-" + k)?.scrollIntoView({ behavior: "smooth", block: "start" }) }
@@ -929,6 +936,16 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
           <ReportsPanel reports={stage.reports || []} legacy={stage.reportUrl ? { url: stage.reportUrl, name: stage.reportName } : null} staff={staffOpts} waiting={waitingStaff} canManage={canManage} busy={busy} onAdd={onAddReport} onRemove={onRemoveReport}/>
         </section>
 
+        {/* ── TRAVEL ── */}
+        {travel && stage.id != null && (
+          <section id="sec-travel" className="scroll-mt-32">
+            <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{tr.travel.tripTitle}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
+            <TripPanel type="camp" eventId={stage.id} startIso={stage.startDate} endIso={stage.endDate}
+              people={[...players, ...staff].map(id => memberById(id)).filter(Boolean).map((m: any) => ({ id: m.id, name: m.name }))}
+              canManage={travel.canManage} expiries={travel.expiries} />
+          </section>
+        )}
+
         {/* ── PHOTOS ── */}
         <section id="sec-photos" className="scroll-mt-32">
           <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{tr.stages.photosTab}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
@@ -1178,7 +1195,7 @@ function CallupImport({ all, setDraft }: { all: any[]; setDraft: React.Dispatch<
 }
 
 // ── Convocation editor ──
-function PlayersTab({ all, draft, setDraft, members, tr }: { all: any[]; draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[]; tr: any }) {
+function PlayersTab({ all, draft, setDraft, members, tr, travel }: { travel?: Props["travel"]; all: any[]; draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[]; tr: any }) {
   const [q, setQ] = useState("")
   const list = draft.players || []
   const pool = members
@@ -1186,6 +1203,21 @@ function PlayersTab({ all, draft, setDraft, members, tr }: { all: any[]; draft: 
     .filter(m => list.indexOf(m.id) < 0)
     .filter(m => !q.trim() || m.name.toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
+  // Problems worth knowing about before calling someone up: over the category's age limit,
+  // no birthdate for a youth category, or a passport that won't cover the trip.
+  const warnings = (m: any): string[] => {
+    if (!m) return []
+    const out: string[] = []
+    const year = /^\d{4}/.test(draft.startDate) ? Number(draft.startDate.slice(0, 4)) : new Date().getFullYear()
+    const e = eligibilityFor(m.birthdate, draft.teamCategory, year)
+    if (e.status === 'over') out.push(tr.travel.warnOverAge)
+    if (e.status === 'unknown') out.push(tr.travel.warnNoBirthdate)
+    if (travel?.expiries) {
+      const ps = passportStatus(travel.expiries[m.id], draft.endDate || draft.startDate)
+      if (ps.status === 'expired' || ps.status === 'short') out.push(tr.travel.warnPassport)
+    }
+    return out
+  }
   const toggle = (id: number) => setDraft(d => ({ ...d, players: (d.players || []).includes(id) ? (d.players || []).filter(x => x !== id) : [...(d.players || []), id] }))
   return (
     <div>
@@ -1199,7 +1231,7 @@ function PlayersTab({ all, draft, setDraft, members, tr }: { all: any[]; draft: 
           <button key={m.id} onClick={() => toggle(m.id)} className="flex items-center gap-2.5 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-2.5 text-left hover:border-[#f6c744]/40 hover:bg-[var(--c-panel3)]/70 transition-all">
             <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[var(--acc-gold)] uppercase shrink-0">{(m.name||"?")[0]}</div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m.name}</p>
+              <p className="text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m.name}{warnings(m).length > 0 && <span title={warnings(m).join(' · ')} className="ml-1 text-[#f6c744]">⚠</span>}</p>
               <p className="text-[7px] font-bold text-[var(--c-textDim)] uppercase">{m.position || "—"}</p>
             </div>
             <span className="w-6 h-6 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[var(--acc-gold)]"><Plus size={11}/></span>
@@ -1216,6 +1248,7 @@ function PlayersTab({ all, draft, setDraft, members, tr }: { all: any[]; draft: 
               return (
                 <span key={id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E30613]/12 border border-[#E30613]/40 text-[var(--c-text)] text-[9px] font-black uppercase tracking-wide">
                   {m?.name || `#${id}`}
+                  {warnings(m).length > 0 && <span title={warnings(m).join(' · ')} className="text-[#f6c744]">⚠</span>}
                   <button onClick={() => toggle(id)} className="hover:text-white transition-all"><X size={11}/></button>
                 </span>
               )

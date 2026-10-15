@@ -28,11 +28,12 @@ import {
   fetchInjuries, addInjury, updateInjuryStatus,
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl,
   fetchClubReports, addClubReport, deleteClubReport, linkProfileToMember,
-  fetchAllInjuries, fetchAllClubReports,
+  fetchAllInjuries, fetchAllClubReports, fetchPassportExpiries,
   fetchMeetings, deleteMeeting, scheduleMeeting, checkMeetingRecording,
   updateMyEmail, requestPasswordReset, verifyClubReport
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
+import { PassportCard, TravelAlertsCard, BirthdaysEligibilityCard, TripPanel } from "@/components/travel"
 import { MeetingsPanel } from "@/components/meetings-panel"
 import { ClubReportsPanel } from "@/components/club-reports-panel"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
@@ -118,6 +119,7 @@ interface UserPerms {
   addCamps: boolean
   viewClubReports: boolean
   manageMeetings: boolean
+  manageTravel: boolean
 }
 interface AppUser {
   username: string; firstName: string; lastName: string; status: "active" | "pending"
@@ -126,8 +128,8 @@ interface AppUser {
   perms: UserPerms
 }
 
-const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false, addCamps:false, viewClubReports:false, manageMeetings:false }
-const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true, viewClubReports:true, manageMeetings:true }
+const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false, addCamps:false, viewClubReports:false, manageMeetings:false, manageTravel:false }
+const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true, viewClubReports:true, manageMeetings:true, manageTravel:true }
 
 // Maps a DB profiles row -> the shape the UI already expects
 const profileToAppUser = (p: any): AppUser => ({
@@ -472,7 +474,7 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
 // Just the keys — the display label is looked up from tr.perms at render time
 // (this array lives outside the component, so it can't call useTranslate()).
 const PERM_KEYS: (keyof UserPerms)[] = [
-  "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps","viewClubReports","manageMeetings",
+  "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps","viewClubReports","manageMeetings","manageTravel",
 ]
 
 // ═════════════════════════════════════════════
@@ -530,6 +532,11 @@ export default function EliteSquadApp() {
   const [selMember,setSelMember]=useState<any>(null)
   const [profileTab,setProfileTab]=useState<"profile"|"medical"|"passport"|"club">("profile")
   const [injuries,setInjuries]=useState<any[]>([])
+  const [passportExpiries,setPassportExpiries]=useState<Record<number,string>>({})
+  useEffect(()=>{
+    if(user) fetchPassportExpiries().then(setPassportExpiries)
+    else setPassportExpiries({})
+  },[user?.username])
   const [addInjuryOpen,setAddInjuryOpen]=useState(false)
   const [injForm,setInjForm]=useState({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""})
   // Club match reports — a player's own self-logged stats from matches
@@ -969,6 +976,10 @@ export default function EliteSquadApp() {
   const p = user?.perms || DEFAULT_PERMS
   const canManageUsers = user?.role === "admin"
   const canSeeWelfare = p.viewMedical||canManageUsers
+  // Passport expiry dates: RLS returns everything to admins / travel managers / medical staff,
+  // and only her own row to a player. The UI just asks; the database decides.
+  const canManageTravel = !!(canManageUsers||p.manageTravel)
+  const canSeeExpiries = canManageTravel||p.viewMedical
 
   // Loaded only when the Stats tab is open and the viewer can see medical
   // data — the welfare card below reads from this, nowhere else does.
@@ -998,6 +1009,8 @@ export default function EliteSquadApp() {
           {Object.entries(posCount).map(([pos,count])=>(<div key={pos} className="bg-white rounded-xl border border-zinc-100 p-3 text-center shadow-sm hover:shadow-md hover:border-[#E30613]/20 transition-all duration-300 hover:-translate-y-0.5"><p className="text-[18px] font-black text-zinc-800">{count}</p><p className="text-[7px] font-black uppercase tracking-wider text-zinc-400">{pos==='GOALKEEPER'?'GK':pos==='DEFENDER'?'DEF':pos==='MIDFIELDER'?'MID':'FWD'}</p></div>))}
         </div>
         {recent.length>0&&<div className="bg-white rounded-xl border border-zinc-100 p-3 shadow-sm hover:shadow-md transition-all duration-300"><p className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mb-2">Recent Form</p><div className="flex gap-1.5">{recent.map((r,i)=><div key={i} className={`w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-black ${r==='W'?'bg-[#f6c744] text-[var(--c-bg)] shadow-[0_0_14px_rgba(246,199,68,.25)]':r==='D'?'bg-white/5 text-[var(--c-cream4)] border border-[rgba(213,200,174,.22)]':'bg-[#e3062c] text-white shadow-[0_0_12px_rgba(227,6,44,.25)]'} hover:scale-110 transition-transform`}>{r}</div>)}</div></div>}
+        <BirthdaysEligibilityCard people={squad.map((m:any)=>({id:m.id,name:m.name,birthdate:m.birthdate}))} category={teamCat||""}/>
+        {canSeeExpiries&&<TravelAlertsCard people={squad.map((m:any)=>({id:m.id,name:m.name}))} expiries={passportExpiries}/>}
         {canSeeWelfare&&(
           <div className="bg-white rounded-xl border border-zinc-100 p-3 shadow-sm">
             <div className="flex items-center justify-between mb-2">
@@ -1129,7 +1142,7 @@ export default function EliteSquadApp() {
       </div>
 
       {stagesOpen ? (
-        <StagesManager open onClose={()=>setStagesOpen(false)} stages={camps} members={members} teamCat={teamCat} canManage={!!(canManageUsers||p.addCamps)} onSave={async(stage)=>{const isNew=!(camps||[]).some((c:any)=>(c.id||0)===stage.id);const payload=isNew?{...stage,createdByUsername:user?.username}:stage;const res=await saveCampRow(payload,isNew);if(res.error){alert('Could not save the camp: '+res.error);return false}await reloadCamps();return true}} onDelete={async(id)=>{const res=await deleteCampRow(id);if(res.error){alert('Could not delete the camp: '+res.error);return false}await reloadCamps();return true}} onRefresh={reloadCamps} user={user}/>
+        <StagesManager open onClose={()=>setStagesOpen(false)} stages={camps} members={members} teamCat={teamCat} canManage={!!(canManageUsers||p.addCamps)} travel={{canManage:canManageTravel,expiries:canSeeExpiries?passportExpiries:undefined}} onSave={async(stage)=>{const isNew=!(camps||[]).some((c:any)=>(c.id||0)===stage.id);const payload=isNew?{...stage,createdByUsername:user?.username}:stage;const res=await saveCampRow(payload,isNew);if(res.error){alert('Could not save the camp: '+res.error);return false}await reloadCamps();return true}} onDelete={async(id)=>{const res=await deleteCampRow(id);if(res.error){alert('Could not delete the camp: '+res.error);return false}await reloadCamps();return true}} onRefresh={reloadCamps} user={user}/>
       ) : meetingsOpen ? (
         <MeetingsPanel open onClose={()=>setMeetingsOpen(false)} meetings={meetings} canManage={!!(canManageUsers||p.manageMeetings)} teamCat={teamCat}
           onSchedule={async(payload)=>{const res=await scheduleMeeting(payload);await reloadMeetings();return res}}
@@ -1479,7 +1492,7 @@ export default function EliteSquadApp() {
                       <button onClick={()=>setProfileTab("profile")} className={`pm-chip flex-1 justify-center ${profileTab==="profile"?'pm-chip-on':''}`}>Profile</button>
                       {canSeePrivate(selMember)&&<button onClick={()=>setProfileTab("medical")} className={`pm-chip flex-1 justify-center ${profileTab==="medical"?'pm-chip-on':''}`}>Medical</button>}
                       {canSeeClubReports(selMember)&&<button onClick={()=>setProfileTab("club")} className={`pm-chip flex-1 justify-center ${profileTab==="club"?'pm-chip-on':''}`}>{tr.clubReports.tab}</button>}
-                      {canSeePrivate(selMember)&&<button onClick={()=>setProfileTab("passport")} className={`pm-chip flex-1 justify-center ${profileTab==="passport"?'pm-chip-on':''}`}>{tr.profile.passport}</button>}
+                      {(canSeePrivate(selMember)||(isPlayer&&!!user?.perms?.manageTravel))&&<button onClick={()=>setProfileTab("passport")} className={`pm-chip flex-1 justify-center ${profileTab==="passport"?'pm-chip-on':''}`}>{tr.profile.passport}</button>}
                     </div>
                   )
                 ):(
@@ -1668,6 +1681,11 @@ export default function EliteSquadApp() {
                     </div>
                   ))}
                 </div>
+              )}
+
+              {profileTab==="passport"&&isPlayer&&(canSeePrivate(selMember)||canManageTravel)&&(
+                <PassportCard memberId={selMember.id} expiry={passportExpiries[selMember.id]||""} canEdit={canManageTravel}
+                  onSaved={v=>setPassportExpiries(e=>({...e,[selMember.id]:v}))}/>
               )}
 
               {profileTab==="passport"&&isPlayer&&canSeePrivate(selMember)&&(
@@ -3293,6 +3311,16 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           <span className="text-right text-zinc-700">{match.tunisiaFouls||"0"}</span><span className="text-[7px] font-black text-zinc-400">Fouls</span><span className="text-zinc-500">{match.opponentFouls||"0"}</span>
                         </div>
                       </div>}
+
+                      {/* Travel & logistics (only for saved matches; players see only what concerns them) */}
+                      {typeof match.id==="number"&&match.id<2147483647&&(
+                        <div className="bg-[var(--c-deep)] rounded-lg border border-[rgba(var(--line-rgb),.14)] p-3">
+                          <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-2">{tr.travel.tripTitle}</p>
+                          <TripPanel type="match" eventId={match.id} startIso={match.date||""} endIso={match.date||""} hideWhenEmpty
+                            people={(Array.isArray(match.squad)?match.squad:[]).map((id:number)=>members.find((m:any)=>m.id===id)).filter(Boolean).map((m:any)=>({id:m.id,name:m.name}))}
+                            canManage={canManageTravel} expiries={canSeeExpiries?passportExpiries:undefined}/>
+                        </div>
+                      )}
 
                       {/* Post-match video library */}
                       <div className="bg-[var(--c-deep)] rounded-lg border border-[rgba(var(--line-rgb),.14)] p-3">

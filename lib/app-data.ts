@@ -690,3 +690,61 @@ export async function subscribeRealtime(handlers: {
     .subscribe()
   return () => { supabase.removeChannel(channel) }
 }
+
+// ── Travel documents + trip logistics ────────────────────────────────────
+// RLS decides who can read/write these (see migrations/0010). A caller without
+// access simply gets empty results, never someone else's data.
+export type TripEvent = 'camp' | 'match'
+
+export async function fetchPassportExpiries(): Promise<Record<number, string>> {
+  const { data, error } = await supabase.from('member_documents').select('member_id, passport_expiry')
+  if (error) { console.error('fetchPassportExpiries', error); return {} }
+  const out: Record<number, string> = {}
+  for (const r of data || []) if (r.passport_expiry) out[Number(r.member_id)] = r.passport_expiry as string
+  return out
+}
+
+export async function savePassportExpiry(memberId: number, expiry: string | null) {
+  const { error } = await supabase.from('member_documents')
+    .upsert({ member_id: memberId, passport_expiry: expiry || null, updated_at: new Date().toISOString() }, { onConflict: 'member_id' })
+  return { error: error?.message || null }
+}
+
+export interface TripPlan {
+  depart_date: string | null; depart_from: string; arrive_to: string; flight_info: string
+  return_date: string | null; return_info: string
+  hotel_name: string; hotel_address: string; check_in: string | null; check_out: string | null; notes: string
+}
+export const EMPTY_TRIP_PLAN: TripPlan = {
+  depart_date: null, depart_from: '', arrive_to: '', flight_info: '', return_date: null, return_info: '',
+  hotel_name: '', hotel_address: '', check_in: null, check_out: null, notes: '',
+}
+
+export async function fetchTripPlan(type: TripEvent, eventId: number): Promise<TripPlan | null> {
+  const { data, error } = await supabase.from('trip_plans').select('*').eq('event_type', type).eq('event_id', eventId).maybeSingle()
+  if (error) { console.error('fetchTripPlan', error); return null }
+  return data ? { ...EMPTY_TRIP_PLAN, ...data } : null
+}
+
+export async function saveTripPlan(type: TripEvent, eventId: number, plan: TripPlan) {
+  const row = { ...plan, event_type: type, event_id: eventId, updated_at: new Date().toISOString() }
+  const { error } = await supabase.from('trip_plans').upsert(row, { onConflict: 'event_type,event_id' })
+  return { error: error?.message || null }
+}
+
+export type VisaStatus = 'unknown' | 'not_needed' | 'to_apply' | 'applied' | 'approved' | 'refused'
+export type TicketStatus = 'pending' | 'booked'
+export interface TripMember { member_id: number; visa_status: VisaStatus; ticket_status: TicketStatus; room: string; notes: string }
+
+export async function fetchTripMembers(type: TripEvent, eventId: number): Promise<TripMember[]> {
+  const { data, error } = await supabase.from('trip_members').select('member_id, visa_status, ticket_status, room, notes')
+    .eq('event_type', type).eq('event_id', eventId)
+  if (error) { console.error('fetchTripMembers', error); return [] }
+  return (data || []).map(r => ({ ...r, member_id: Number(r.member_id) })) as TripMember[]
+}
+
+export async function saveTripMember(type: TripEvent, eventId: number, m: TripMember) {
+  const row = { ...m, event_type: type, event_id: eventId, updated_at: new Date().toISOString() }
+  const { error } = await supabase.from('trip_members').upsert(row, { onConflict: 'event_type,event_id,member_id' })
+  return { error: error?.message || null }
+}

@@ -34,6 +34,9 @@ just the UI, so it can't be bypassed by calling the API directly.
 | **Medical history / injuries** | Admins; staff with the `viewMedical` permission; a player, their own record only | RLS on `injuries` (`has_permission('viewMedical') OR member_id = current_member_id()`) |
 | **Passport / ID document scans** | Admins; staff with `viewMedical`; a player, their own document only | Enforced twice: storage-bucket RLS, *and* the `/api/image` route, which checks the caller's role/permissions/`member_id` before it will sign a URL for that specific file — a leaked file path alone isn't enough to read it |
 | **Club match self-reports** (minutes/goals/assists a player logs for their own club matches) | Admins; staff with `viewClubReports`, `addPlayer` or `editPlayer`; a player, their own reports only | RLS on `club_match_reports` |
+| **Passport expiry dates** | Admins; staff with `manageTravel` or `viewMedical`; a player, her own date only | RLS on `member_documents` (kept out of `members`, which every signed-in account can read) |
+| **Trip plans** (flights, hotel) | Every admin/staff account; a player only for camps and matches she is called up to | RLS on `trip_plans` via `can_see_trip()` |
+| **Per-person trip details** (visa, ticket, room) | Admins; staff with `manageTravel`; the person herself | RLS on `trip_members` |
 | **Account management** (approving accounts, resetting passwords, changing permissions, linking accounts to roster rows) | Admins only | RLS on `profiles` (`current_active_admin()`); the privilege-guard trigger above |
 | **Activity log** (who changed what, when) | Admins only | Same table relationships as above; written automatically by database triggers on every write to members, matches, injuries, profiles, squad templates, club match reports, and camps |
 
@@ -42,7 +45,8 @@ just the UI, so it can't be bypassed by calling the API directly.
 An admin can grant any combination of these to a staff account:
 
 `addPlayer`, `editPlayer`, `deletePlayer`, `addMatch`, `deleteMatch`,
-`exportData`, `viewMedical`, `editMedical`, `addCamps`, `viewClubReports`
+`exportData`, `viewMedical`, `editMedical`, `addCamps`, `viewClubReports`,
+`manageMeetings`, `manageTravel` (passport expiry dates and trip logistics: edit only)
 
 None of these are granted by default — a new staff account starts with no
 access to sensitive data until an admin deliberately turns a flag on.
