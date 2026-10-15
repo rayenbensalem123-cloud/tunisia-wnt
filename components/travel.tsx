@@ -82,7 +82,7 @@ export function TravelAlertsCard({ people, expiries }: { people: Person[]; expir
         <p className={LABEL}>{tr.travel.alertsTitle}</p>
         <div className="flex items-center gap-1.5">
           {chip('bg-[#e3062c]/10 text-[#E30613]', `${expired.length} ${tr.travel.expiredLabel}`)}
-          {chip('bg-[#f6c744]/15 text-[#a9822e]', `${short.length} < 6m`)}
+          {chip('bg-[#f6c744]/15 text-[#a9822e]', `${short.length} ${tr.travel.shortLabel}`)}
         </div>
       </div>
       {clean ? <p className="text-[10px] text-zinc-400 py-2 text-center">{tr.travel.alertsEmpty}</p> : (
