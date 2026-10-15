@@ -34,6 +34,7 @@ import {
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
 import { PassportCard, TravelAlertsCard, BirthdaysEligibilityCard, TripPanel } from "@/components/travel"
+import { PerformanceCard } from "@/components/performance"
 import { MeetingsPanel } from "@/components/meetings-panel"
 import { ClubReportsPanel } from "@/components/club-reports-panel"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
@@ -1009,6 +1010,7 @@ export default function EliteSquadApp() {
           {Object.entries(posCount).map(([pos,count])=>(<div key={pos} className="bg-white rounded-xl border border-zinc-100 p-3 text-center shadow-sm hover:shadow-md hover:border-[#E30613]/20 transition-all duration-300 hover:-translate-y-0.5"><p className="text-[18px] font-black text-zinc-800">{count}</p><p className="text-[7px] font-black uppercase tracking-wider text-zinc-400">{pos==='GOALKEEPER'?'GK':pos==='DEFENDER'?'DEF':pos==='MIDFIELDER'?'MID':'FWD'}</p></div>))}
         </div>
         {recent.length>0&&<div className="bg-white rounded-xl border border-zinc-100 p-3 shadow-sm hover:shadow-md transition-all duration-300"><p className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mb-2">Recent Form</p><div className="flex gap-1.5">{recent.map((r,i)=><div key={i} className={`w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-black ${r==='W'?'bg-[#f6c744] text-[var(--c-bg)] shadow-[0_0_14px_rgba(246,199,68,.25)]':r==='D'?'bg-white/5 text-[var(--c-cream4)] border border-[rgba(213,200,174,.22)]':'bg-[#e3062c] text-white shadow-[0_0_12px_rgba(227,6,44,.25)]'} hover:scale-110 transition-transform`}>{r}</div>)}</div></div>}
+        <PerformanceCard matches={catMatches}/>
         <BirthdaysEligibilityCard people={squad.map((m:any)=>({id:m.id,name:m.name,birthdate:m.birthdate}))} category={teamCat||""}/>
         {canSeeExpiries&&<TravelAlertsCard people={squad.map((m:any)=>({id:m.id,name:m.name}))} expiries={passportExpiries}/>}
         {canSeeWelfare&&(

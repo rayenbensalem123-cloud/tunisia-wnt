@@ -308,6 +308,12 @@ const t = {
       ticketPending: "Pending", ticketBooked: "Booked", readOnlyNote: "You can view the travel details but not change them.",
       myTrip: "My travel", saveError: "Could not save",
     },
+    performance: {
+      title: "Results & goals", allCompetitions: "All competitions", allYears: "All years",
+      played: "Played", wins: "Won", draws: "Drawn", losses: "Lost", goalsFor: "Scored", goalsAgainst: "Conceded", winRate: "Win rate",
+      chartTitle: "Goals scored and conceded per match", showTable: "Table", showChart: "Chart", noData: "No finished matches for this selection.",
+      date: "Date", opponent: "Opponent", result: "Result", last: "Last {n} matches",
+    },
     emailModal: {
       title: "Recovery Email", menuLabel: "Recovery Email", emailLabel: "Email address",
       hint: "Set an email so you can reset your password yourself if you forget it. This is separate from your username and is never shown to other users.",
@@ -652,6 +658,12 @@ const t = {
       ticketPending: "En attente", ticketBooked: "Réservé", readOnlyNote: "Vous pouvez consulter les détails du voyage mais pas les modifier.",
       myTrip: "Mon voyage", saveError: "Enregistrement impossible",
     },
+    performance: {
+      title: "Résultats et buts", allCompetitions: "Toutes les compétitions", allYears: "Toutes les années",
+      played: "Joués", wins: "Gagnés", draws: "Nuls", losses: "Perdus", goalsFor: "Marqués", goalsAgainst: "Encaissés", winRate: "% victoires",
+      chartTitle: "Buts marqués et encaissés par match", showTable: "Tableau", showChart: "Graphique", noData: "Aucun match terminé pour cette sélection.",
+      date: "Date", opponent: "Adversaire", result: "Résultat", last: "{n} derniers matchs",
+    },
     emailModal: {
       title: "E-mail de récupération", menuLabel: "E-mail de récupération", emailLabel: "Adresse e-mail",
       hint: "Définissez un e-mail pour pouvoir réinitialiser votre mot de passe vous-même en cas d'oubli. Ceci est distinct de votre nom d'utilisateur et n'est jamais visible par les autres utilisateurs.",
@@ -995,6 +1007,12 @@ const t = {
       visaUnknown: "غير محدد", visaNotNeeded: "غير مطلوبة", visaToApply: "للتقديم", visaApplied: "تم التقديم", visaApproved: "تمت الموافقة", visaRefused: "مرفوضة",
       ticketPending: "قيد الانتظار", ticketBooked: "تم الحجز", readOnlyNote: "يمكنك الاطلاع على تفاصيل السفر دون تعديلها.",
       myTrip: "سفري", saveError: "تعذر الحفظ",
+    },
+    performance: {
+      title: "النتائج والأهداف", allCompetitions: "كل المسابقات", allYears: "كل السنوات",
+      played: "لُعبت", wins: "فوز", draws: "تعادل", losses: "خسارة", goalsFor: "سُجلت", goalsAgainst: "استُقبلت", winRate: "نسبة الفوز",
+      chartTitle: "الأهداف المسجلة والمستقبلة في كل مباراة", showTable: "جدول", showChart: "رسم", noData: "لا توجد مباريات منتهية لهذا الاختيار.",
+      date: "التاريخ", opponent: "المنافس", result: "النتيجة", last: "آخر {n} مباريات",
     },
     emailModal: {
       title: "بريد الاسترداد", menuLabel: "بريد الاسترداد", emailLabel: "البريد الإلكتروني",
