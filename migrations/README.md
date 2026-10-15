@@ -40,6 +40,7 @@ that baseline, in order.
 | `0008_camp_reports.sql` | Yes in practice (single `add column if not exists`), though it has no explicit header note. |
 | `0009_camps_storage_permission_fix.sql` | Yes — says so in its header ("each policy is dropped and recreated"). |
 | `0010_travel_and_documents.sql` | Yes — tables are `IF NOT EXISTS`; functions, policies and triggers are dropped/replaced. |
+| `0011_activity_log_new_entities.sql` | Yes — drops and recreates the constraint. |
 
 If you add a migration whose statements genuinely can't be made re-run-safe
 (e.g. a one-off data backfill), say so loudly in its header instead of
