@@ -35,6 +35,7 @@ import {
 import { StagesManager } from "@/components/stages-manager"
 import { PassportCard, TravelAlertsCard, BirthdaysEligibilityCard, TripPanel } from "@/components/travel"
 import { CvImport } from "@/components/cv-import"
+import { LigueView } from "@/components/league"
 import { PerformanceCard } from "@/components/performance"
 import { MeetingsPanel } from "@/components/meetings-panel"
 import { ClubReportsPanel } from "@/components/club-reports-panel"
@@ -54,7 +55,7 @@ const COACH_POSITIONS = ["HEAD COACH","ASSISTANT COACH","GOALKEEPER COACH","FITN
 const CAF_LICENSES = ["CAF D","CAF C","CAF B","CAF A","CAF PRO","GOALKEEPER LEVEL 1","GOALKEEPER LEVEL 2","PRÉPARATEUR PHYSIQUE"]
 const LANGUAGES = ["ARABIC","FRENCH","ENGLISH","ITALIAN","SPANISH","GERMAN","PORTUGUESE"]
 const PLAYER_POSITIONS = ["ALL","FORWARD","MIDFIELDER","DEFENDER","GOALKEEPER"]
-type TeamCategory = "SENIORS" | "U20" | "U17"
+type TeamCategory = "SENIORS" | "U20" | "U17" | "LIGUE"
 
 // CAF/FIFA WOMEN'S RULE:
 // 2 yellow cards in separate matches → automatic 1-match suspension
@@ -409,13 +410,15 @@ const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
 // ─────────────────────────────────────────────
 // TEAM SELECTOR
 // ─────────────────────────────────────────────
-const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
+const TeamSelector=({onSelect,showLeague}:{onSelect:(c:TeamCategory)=>void;showLeague:boolean})=>{
   const { tr } = useTranslate()
-  const teams:{cat:TeamCategory;label:string;sub:string;abbr:string;bar:string;img:string;tint:string}[]=[
+  const allTeams:{cat:TeamCategory;label:string;sub:string;abbr:string;bar:string;img:string;tint:string}[]=[
     {cat:"SENIORS",label:"SENIORS",sub:"Senior National Team",abbr:"S",bar:"from-[#ff2747] to-[#a30420]",img:"/cats/seniors.jpg",tint:"rgba(227,6,44,.14)"},
     {cat:"U20",label:"U-20",sub:"Under 20 National Team",abbr:"20",bar:"from-[#ff2747] to-[#8f0319]",img:"/cats/u20.jpg",tint:"rgba(178,20,42,.2)"},
     {cat:"U17",label:"U-17",sub:"Under 17 National Team",abbr:"17",bar:"from-[#ff2747] to-[#75020f]",img:"/cats/u17.jpg",tint:"rgba(150,12,32,.26)"},
+    {cat:"LIGUE",label:"LIGUE FÉMININE",sub:tr.league.sub,abbr:"L",bar:"from-[#f6c744] to-[#a9822e]",img:"",tint:"rgba(246,199,68,.14)"},
   ]
+  const teams=allTeams.filter(x=>showLeague||x.cat!=="LIGUE")
   return(
     <div className="fed-screen min-h-screen flex flex-col relative overflow-hidden">
       {/* Page background photo — blue cast matching the loading screen */}
@@ -434,11 +437,13 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
           <p className="mt-3 text-[9px] font-bold uppercase tracking-[.5em] text-[#f6c744]">{tr.teamSelect.selectCat}</p>
         </div>
         {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 w-full max-w-5xl">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 w-full max-w-6xl">
           {teams.map((t,i)=>(
             <button key={t.cat} onClick={()=>onSelect(t.cat)} className="group relative h-[340px] rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 text-left border border-[rgba(var(--line-rgb),.18)] bg-[#101b33] hover:border-[#f6c744]/60 hover:shadow-[0_22px_60px_rgba(0,0,0,.6),0_0_28px_rgba(246,199,68,.12)] animate-[fadeUp_0.55s_ease-out_both]" style={{animationDelay:`${i*130+200}ms`}}>
               {/* Full-box background photo */}
-              <img src={t.img} alt={`${t.label} – Tunisia`} className="absolute inset-0 w-full h-full object-cover object-center grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"/>
+              {t.img
+                ?<img src={t.img} alt={`${t.label} – Tunisia`} className="absolute inset-0 w-full h-full object-cover object-center grayscale group-hover:grayscale-0 group-hover:scale-110 transition-all duration-700"/>
+                :<div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_50%_0%,rgba(246,199,68,.22),transparent_60%),linear-gradient(160deg,#16294d,#0a1322)] group-hover:scale-105 transition-transform duration-700"/>}
               {/* Readability overlays */}
               <div className={`absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r ${t.bar}`}/>
               <div className="absolute inset-0 bg-gradient-to-t from-[#070f1c] via-[#0a1322]/45 to-[#0a1322]/15 group-hover:via-[#0a1322]/55 transition-all duration-300"/>
@@ -453,7 +458,7 @@ const TeamSelector=({onSelect}:{onSelect:(c:TeamCategory)=>void})=>{
                   <span className="text-[8px] font-bold uppercase tracking-widest text-white/70 drop-shadow-[0_1px_4px_rgba(0,0,0,.7)]">TUNISIA WNT</span>
                 </div>
                 <div className="mt-auto">
-                  <h2 className="text-[30px] font-black uppercase tracking-tight text-white leading-none drop-shadow-[0_2px_12px_rgba(0,0,0,.65)]">{t.label}</h2>
+                  <h2 className={`${t.cat==="LIGUE"?"text-[24px]":"text-[30px]"} font-black uppercase tracking-tight text-white leading-none drop-shadow-[0_2px_12px_rgba(0,0,0,.65)]`}>{t.label}</h2>
                   <p className="mt-1.5 text-[9px] font-bold uppercase tracking-[.28em] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,.7)]">{t.sub}</p>
                   <div className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/25 text-[9px] font-black uppercase tracking-widest text-[#f6c744] group-hover:bg-[#e3062c] group-hover:border-[#ff5f72]/60 group-hover:text-white transition-colors duration-300">
                     {tr.teamSelect.enter} <ChevronRight size={14} className="transition-transform duration-300 group-hover:translate-x-1"/>
@@ -484,7 +489,7 @@ const PERM_KEYS: (keyof UserPerms)[] = [
 // ═════════════════════════════════════════════
 export default function EliteSquadApp() {
   const { tr, setLang, lang } = useTranslate()
-  const [user,setUser]=useState<{id:string;username:string;firstName:string;lastName:string;role:string;perms:UserPerms;memberId:number|null;email:string|null}|null>(null)
+  const [user,setUser]=useState<{id:string;username:string;firstName:string;lastName:string;role:string;perms:UserPerms;memberId:number|null;leagueTeamId:number|null;email:string|null}|null>(null)
   const [authChecked,setAuthChecked]=useState(false)
   const [buffering,setBuffering]=useState(false)
   const [leaving,setLeaving]=useState(false)
@@ -517,7 +522,7 @@ export default function EliteSquadApp() {
   const loadMyUser=async()=>{
     const profile=await fetchMyProfile()
     if(!profile||profile.status!=="active"){ setUser(null); return null }
-    const u={id:profile.id,username:profile.username,firstName:profile.first_name,lastName:profile.last_name,role:profile.role,perms:profile.permissions,memberId:profile.member_id??null,email:profile.email??null}
+    const u={id:profile.id,username:profile.username,firstName:profile.first_name,lastName:profile.last_name,role:profile.role,perms:profile.permissions,memberId:profile.member_id??null,leagueTeamId:profile.league_team_id??null,email:profile.email??null}
     setUser(u)
     return u
   }
@@ -831,7 +836,7 @@ export default function EliteSquadApp() {
   const catPlayers=useMemo(()=>members.filter(m=>m.role==="PLAYERS"&&m.teamCategory===teamCat),[members,teamCat])
   const catMatches=useMemo(()=>matches.filter(m=>m.teamCategory===teamCat&&m.status==="approved"),[matches,teamCat])
   const pendingMatches=useMemo(()=>matches.filter(m=>m.teamCategory===teamCat&&m.status==="pending"),[matches,teamCat])
-  const catLabel=(c:TeamCategory|null)=>!c?"":(c==="SENIORS"?"SENIORS":c==="U20"?"U-20":"U-17")
+  const catLabel=(c:TeamCategory|null)=>!c?"":(c==="SENIORS"?"SENIORS":c==="U20"?"U-20":c==="LIGUE"?"LIGUE FÉMININE":"U-17")
 
   const saveForm=(e:React.FormEvent)=>{
     e.preventDefault()
@@ -1084,7 +1089,7 @@ export default function EliteSquadApp() {
         <span className="hidden lg:inline px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.16)] bg-[#0d1f3c]/55 backdrop-blur-md text-[#f6c744]/90 text-[9px] font-black uppercase tracking-wider">{user?.username}</span>
         <button onClick={handleChangePassword} title="Change your password" className="p-2.5 rounded-lg border border-[rgba(148,170,210,.25)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#7ec3ff] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all"><Key size={15}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-2.5 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_16px_rgba(227,6,44,.35)] transition-all"><LogOut size={15}/></button>
       </div>
-      <TeamSelector onSelect={selectCat}/>
+      <TeamSelector onSelect={selectCat} showLeague={user?.role==="admin"}/>
     </div>
   )
   if(busy||leaving) return(
@@ -1131,6 +1136,11 @@ export default function EliteSquadApp() {
     </div>
   )
   if(authChecked&&!user) return <LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>{setBuffering(false);beginFadeIn()},1200))}}/>
+  // Ligue Féminine. A club account lives entirely inside its own team page; only an
+  // admin can open the grid of clubs. Both are separate screens, so nothing below
+  // (national-team data, medical, camps...) is ever rendered for a club login.
+  if(user?.role==="club") return <LigueView mode="club" clubTeamId={user.leagueTeamId} members={members} setMembers={setMembers} onLogout={()=>setUser(null)}/>
+  if(teamCat==="LIGUE"&&user?.role==="admin") return <LigueView mode="admin" clubTeamId={null} members={members} setMembers={setMembers} onBack={()=>{setTeamCat(null);setSearch("")}} onLogout={()=>setUser(null)}/>
   if(!teamCat) return renderTeamSelect()
 
   // ── MAIN SQUAD VIEW ──

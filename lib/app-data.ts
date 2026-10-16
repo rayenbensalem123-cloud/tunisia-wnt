@@ -1,4 +1,5 @@
 import { supabase } from './supabase'
+import { authHeaders } from './auth-headers'
 
 // ─────────────────────────────────────────────
 // PRIVATE STORAGE
@@ -63,6 +64,7 @@ export const memberFromDb = (r: any) => ({
   image2Path: r.image2_path,
   jerseyNumber: r.jersey_number != null ? r.jersey_number : null,
   fifaConnectId: r.fifa_connect_id || null,
+  leagueTeamId: r.league_team_id ?? null,
   camps: r.camps || [],
   passportImage: r.passport_image || null,
   bioQuote: r.bio_quote,
@@ -98,6 +100,9 @@ export const memberToDb = (m: any) => ({
   image_path: m.imagePath || null,
   jersey_number: m.jerseyNumber != null ? Number(m.jerseyNumber) : null,
   fifa_connect_id: m.fifaConnectId ? String(m.fifaConnectId).trim() : null,
+  // Only sent for Ligue players, so a database without the 0012 migration keeps
+  // saving every other card exactly as before.
+  ...(m.leagueTeamId != null ? { league_team_id: Number(m.leagueTeamId) } : {}),
   camps: Array.isArray(m.camps) ? m.camps : [],
   passport_image: m.passportImage || null,
   // passport_number is deliberately absent. Nothing on a squad page needs the
@@ -774,3 +779,38 @@ export async function exportMyData() {
   }
   return out
 }
+
+
+// ─────────────────────────────────────────────
+// LIGUE FEMININE (club teams)
+// ─────────────────────────────────────────────
+export interface LeagueTeam { id: number; name: string; logoPath: string | null }
+
+/** Admin sees every club, a club account sees only its own (RLS). Empty before migration 0012. */
+export async function fetchLeagueTeams(): Promise<LeagueTeam[]> {
+  const { data, error } = await supabase.from('league_teams').select('id,name,logo_path').order('name')
+  if (error) return []
+  return (data ?? []).map((r: any) => ({ id: r.id, name: r.name, logoPath: r.logo_path ?? null }))
+}
+
+async function leagueTeamsCall(method: 'POST' | 'DELETE', body: unknown): Promise<{ error: string | null; id?: number }> {
+  try {
+    const res = await fetch('/api/league-teams', {
+      method,
+      headers: { 'content-type': 'application/json', ...(await authHeaders()) },
+      body: JSON.stringify(body),
+    })
+    const json = await res.json().catch(() => ({}))
+    if (!res.ok) return { error: typeof json?.error === 'string' ? json.error : 'Request failed' }
+    return { error: null, id: json?.id }
+  } catch {
+    return { error: 'Network error' }
+  }
+}
+
+/** Admin only: creates the club, its logo reference and its login in one go. */
+export const createLeagueTeam = (p: { name: string; username: string; password: string; logoPath: string | null }) =>
+  leagueTeamsCall('POST', p)
+
+/** Admin only: refused by the server while the club still has players. */
+export const deleteLeagueTeam = (id: number) => leagueTeamsCall('DELETE', { id })

@@ -67,7 +67,7 @@ export async function POST(req: Request) {
   try {
     const auth = await requireActiveUser(req)
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
-    if (!can(auth.caller, 'addPlayer') && !can(auth.caller, 'editPlayer')) {
+    if (auth.caller.role !== 'club' && !can(auth.caller, 'addPlayer') && !can(auth.caller, 'editPlayer')) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
     if (!process.env.ANTHROPIC_API_KEY) {

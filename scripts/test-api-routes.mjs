@@ -18,6 +18,7 @@
 
 process.env.NEXT_PUBLIC_SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'http://localhost:54321'
 process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'test-anon-key'
+process.env.SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || 'test-service-key'
 
 import assert from 'node:assert/strict'
 
@@ -41,7 +42,7 @@ const t = async (name, fn) => {
 // /rest/v1/profiles calls; everything else falls through to the real fetch
 // (there shouldn't be anything else reachable before our assertions fire).
 const realFetch = globalThis.fetch
-function installAuthStub({ activeProfile = true, permissions = { addPlayer: true } } = {}) {
+function installAuthStub({ activeProfile = true, permissions = { addPlayer: true }, role = 'staff', leagueTeamId = null } = {}) {
   globalThis.fetch = async (input, init) => {
     const url = typeof input === 'string' ? input : input.url
     if (url.includes('/auth/v1/user')) {
@@ -54,14 +55,18 @@ function installAuthStub({ activeProfile = true, permissions = { addPlayer: true
       const profile = {
         id: 'test-user-id',
         username: 'tester',
-        role: 'staff',
+        role,
         status: activeProfile ? 'active' : 'suspended',
         permissions,
+        league_team_id: leagueTeamId,
       }
       return new Response(JSON.stringify(profile), {
         status: 200,
         headers: { 'content-type': 'application/vnd.pgrst.object+json' },
       })
+    }
+    if (url.includes('/storage/v1/object/members/')) {
+      return new Response(JSON.stringify({ Key: 'ok' }), { status: 200, headers: { 'content-type': 'application/json' } })
     }
     throw new Error(`Unexpected fetch in test stub: ${url}`)
   }
@@ -80,6 +85,7 @@ async function run() {
   const { POST: importPlayersPOST } = await import('../app/api/import-players/route.ts')
   const { POST: parseCallupsPOST } = await import('../app/api/parse-callups/route.ts')
   const { POST: parseCvPOST } = await import('../app/api/parse-cv/route.ts')
+  const { POST: leaguePOST, DELETE: leagueDELETE } = await import('../app/api/league-teams/route.ts')
 
   // --- /api/upload ------------------------------------------------------
   await t('upload: no Authorization header -> 401', async () => {
@@ -295,6 +301,68 @@ async function run() {
       assert.equal(res.status, 502)
       assert.ok(!JSON.stringify(await res.json()).includes('secret'))
     } finally { restoreFetch(); delete process.env.ANTHROPIC_API_KEY }
+  })
+
+  // --- /api/league-teams + league uploads ------------------------------------
+  const leagueReq = (method, body) => new Request('http://localhost/api/league-teams', { method, headers: { authorization: 'Bearer test-token', 'content-type': 'application/json' }, body: JSON.stringify(body) })
+  const leagueUpload = (extra = {}, type = 'image/png') => {
+    const form = new FormData()
+    form.set('file', new File([new Uint8Array(20)], 'p.png', { type }))
+    form.set('folder', 'league')
+    for (const [k, v] of Object.entries(extra)) form.set(k, v)
+    return new Request('http://localhost/api/upload', { method: 'POST', headers: { authorization: 'Bearer test-token' }, body: form })
+  }
+
+  await t('league-teams: no Authorization header -> 401', async () => {
+    assert.equal((await leaguePOST(new Request('http://localhost/api/league-teams', { method: 'POST', body: '{}' }))).status, 401)
+  })
+  await t('league-teams: staff cannot create a team -> 403', async () => {
+    installAuthStub({ role: 'staff', permissions: { addPlayer: true } })
+    try { assert.equal((await leaguePOST(leagueReq('POST', { name: 'ASF', username: 'asf', password: 'secret1' }))).status, 403) } finally { restoreFetch() }
+  })
+  await t('league-teams: a club account cannot create or delete teams -> 403', async () => {
+    installAuthStub({ role: 'club', permissions: {}, leagueTeamId: 7 })
+    try {
+      assert.equal((await leaguePOST(leagueReq('POST', { name: 'X team', username: 'xteam', password: 'secret1' }))).status, 403)
+      assert.equal((await leagueDELETE(leagueReq('DELETE', { id: 7 }))).status, 403)
+    } finally { restoreFetch() }
+  })
+  await t('league-teams: admin input is validated before anything is created -> 400', async () => {
+    installAuthStub({ role: 'admin', permissions: {} })
+    try {
+      assert.equal((await leaguePOST(leagueReq('POST', { name: 'A', username: 'asf', password: 'secret1' }))).status, 400)
+      assert.equal((await leaguePOST(leagueReq('POST', { name: 'ASF', username: 'Bad Name!', password: 'secret1' }))).status, 400)
+      assert.equal((await leaguePOST(leagueReq('POST', { name: 'ASF', username: 'asf', password: '123' }))).status, 400)
+      assert.equal((await leaguePOST(leagueReq('POST', { name: 'ASF', username: 'asf', password: 'secret1', logoPath: '../../etc/passwd' }))).status, 400)
+      assert.equal((await leagueDELETE(leagueReq('DELETE', { id: 'abc' }))).status, 400)
+    } finally { restoreFetch() }
+  })
+  await t('upload league: a club always lands in its OWN team folder', async () => {
+    installAuthStub({ role: 'club', permissions: {}, leagueTeamId: 7 })
+    try {
+      const res = await uploadPOST(leagueUpload({ leagueTeamId: '99' })) // a client-supplied team is ignored
+      assert.equal(res.status, 200)
+      assert.ok((await res.json()).path.startsWith('league/7/'))
+    } finally { restoreFetch() }
+  })
+  await t('upload league: a club cannot upload a logo -> 403', async () => {
+    installAuthStub({ role: 'club', permissions: {}, leagueTeamId: 7 })
+    try { assert.equal((await uploadPOST(leagueUpload({ logo: '1' }))).status, 403) } finally { restoreFetch() }
+  })
+  await t('upload league: staff are refused -> 403; admin logo and player photo get the right folders', async () => {
+    installAuthStub({ role: 'staff' })
+    try { assert.equal((await uploadPOST(leagueUpload())).status, 403) } finally { restoreFetch() }
+    installAuthStub({ role: 'admin', permissions: {} })
+    try {
+      assert.ok((await (await uploadPOST(leagueUpload({ logo: '1' }))).json()).path.startsWith('league/logos/'))
+      assert.ok((await (await uploadPOST(leagueUpload({ leagueTeamId: '12' }))).json()).path.startsWith('league/12/'))
+      assert.equal((await uploadPOST(leagueUpload())).status, 400) // no team given
+    } finally { restoreFetch() }
+  })
+  await t('parse-cv: a club account is allowed to use CV import', async () => {
+    installAuthStub({ role: 'club', permissions: {}, leagueTeamId: 7 })
+    delete process.env.ANTHROPIC_API_KEY
+    try { assert.equal((await parseCvPOST(cvReq(pdfFile()))).status, 503) } finally { restoreFetch() } // past the permission gate, stops at "no key"
   })
 
   console.log(`\n${n} tests passed${failed ? `, ${failed} FAILED` : ''}`)

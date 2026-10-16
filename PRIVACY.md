@@ -37,6 +37,7 @@ just the UI, so it can't be bypassed by calling the API directly.
 | **Passport expiry dates** | Admins; staff with `manageTravel` or `viewMedical`; a player, her own date only | RLS on `member_documents` (kept out of `members`, which every signed-in account can read) |
 | **Trip plans** (flights, hotel) | Every admin/staff account; a player only for camps and matches she is called up to | RLS on `trip_plans` via `can_see_trip()` |
 | **Per-person trip details** (visa, ticket, room) | Admins; staff with `manageTravel`; the person herself | RLS on `trip_members` |
+| **Ligue Féminine** (club teams and their players) | Admins see every club. A club account sees only its own team and its own players, and can add and edit them (not delete). Nobody else, including staff and national-team players, sees Ligue data; it is also left out of the public roster view | RLS on `league_teams` and `members` (`my_league_team_id()`); club accounts count as *not* an "active user" everywhere else, so they read none of the national-team data; storage policy limits a club to `league/<its team id>/` |
 | **Account management** (approving accounts, resetting passwords, changing permissions, linking accounts to roster rows) | Admins only | RLS on `profiles` (`current_active_admin()`); the privilege-guard trigger above |
 | **Activity log** (who changed what, when) | Admins only | Same table relationships as above; written automatically by database triggers on every write to members, matches, injuries, profiles, squad templates, club match reports, and camps |
 

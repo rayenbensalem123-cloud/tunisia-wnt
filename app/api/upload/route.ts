@@ -3,7 +3,7 @@ import { requireActiveUser, safeError, userClient } from '@/lib/api-auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 
 const MAX_BYTES = 5 * 1024 * 1024 // 5 MB
-const ALLOWED_FOLDERS = ['passports', 'images', 'camps', 'camps-reports', 'camps-photos']
+const ALLOWED_FOLDERS = ['passports', 'images', 'camps', 'camps-reports', 'camps-photos', 'league']
 
 const IMAGE_TYPES: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -17,7 +17,7 @@ const DOC_TYPES: Record<string, string> = {
 }
 
 function folderAllows(folder: string, type: string): boolean {
-  if (folder === 'images' || folder === 'camps' || folder === 'camps-photos') return type in IMAGE_TYPES
+  if (folder === 'images' || folder === 'camps' || folder === 'camps-photos' || folder === 'league') return type in IMAGE_TYPES
   if (folder === 'passports') return type in IMAGE_TYPES || type in DOC_TYPES
   return type in DOC_TYPES
 }
@@ -59,8 +59,31 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'File type not allowed in this folder' }, { status: 415 })
     }
 
+    // Ligue Féminine images live under league/<team id>/ (a club's own player photos)
+    // or league/logos/ (team logos, admin only). The server decides the prefix from
+    // WHO is calling, never from a client-supplied path.
+    let prefix = folder
+    if (folder === 'league') {
+      if (auth.caller.role === 'club') {
+        const { data: me } = await userClient(auth.token).from('profiles').select('league_team_id').eq('id', auth.caller.id).maybeSingle()
+        if (!me?.league_team_id) return NextResponse.json({ error: 'No club linked to this account' }, { status: 403 })
+        if (form.get('logo') === '1') return NextResponse.json({ error: 'Only an admin can change a logo' }, { status: 403 })
+        prefix = `league/${me.league_team_id}`
+      } else if (auth.caller.role === 'admin') {
+        if (form.get('logo') === '1') {
+          prefix = 'league/logos'
+        } else {
+          const tid = Number(form.get('leagueTeamId'))
+          if (!Number.isInteger(tid) || tid <= 0) return NextResponse.json({ error: 'Team required' }, { status: 400 })
+          prefix = `league/${tid}`
+        }
+      } else {
+        return NextResponse.json({ error: 'Not allowed' }, { status: 403 })
+      }
+    }
+
     const safeName = (file.name || 'upload').replace(/[^a-zA-Z0-9._-]/g, '_').slice(-60)
-    const path = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`
+    const path = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}-${safeName}`
 
     // Uploaded as the CALLER, so the storage RLS policy
     // (has_permission('addPlayer')) is what actually authorises this write.
