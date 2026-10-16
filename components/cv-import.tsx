@@ -58,18 +58,23 @@ export function CvImport({ role, form, setForm }: Props) {
   }
 
   return (
-    <div style={{ marginBottom: 12, padding: 10, border: '1px dashed currentColor', borderRadius: 8 }}>
-      <input
-        ref={input}
-        type="file"
-        accept="application/pdf,image/png,image/jpeg,image/webp"
-        hidden
-        onChange={e => { const f = e.target.files?.[0]; if (f) void onFile(f) }}
-      />
-      <button type="button" disabled={busy} onClick={() => input.current?.click()} style={{ fontWeight: 600 }}>
+    <div style={{ position: 'relative', marginBottom: 12, padding: 10, border: '1px dashed currentColor', borderRadius: 8 }}>
+      {/* A real <label> around the file input opens the picker natively, with no script click. */}
+      <label
+        className="cursor-pointer select-none"
+        style={{ display: 'inline-block', padding: '8px 14px', borderRadius: 8, fontWeight: 700, background: '#E30613', color: '#fff', opacity: busy ? 0.6 : 1, pointerEvents: busy ? 'none' : 'auto' }}
+      >
         {busy ? t.reading : `📄 ${t.button}`}
-      </button>
-      <label style={{ display: 'block', marginTop: 6, fontSize: 12 }}>
+        <input
+          ref={input}
+          type="file"
+          accept="application/pdf,image/png,image/jpeg,image/webp"
+          disabled={busy}
+          style={{ position: 'absolute', width: 1, height: 1, opacity: 0, overflow: 'hidden' }}
+          onChange={e => { const f = e.target.files?.[0]; if (f) void onFile(f) }}
+        />
+      </label>
+      <label className="cursor-pointer" style={{ display: 'block', marginTop: 6, fontSize: 12 }}>
         <input type="checkbox" checked={replace} onChange={e => setReplace(e.target.checked)} /> {t.replace}
       </label>
       <p style={{ margin: '6px 0 0', fontSize: 12, opacity: 0.7 }}>{t.hint}</p>
