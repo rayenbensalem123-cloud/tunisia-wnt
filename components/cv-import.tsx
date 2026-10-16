@@ -17,7 +17,6 @@ export function CvImport({ role, form, setForm }: Props) {
   const { tr } = useTranslate()
   const input = useRef<HTMLInputElement>(null)
   const [busy, setBusy] = useState(false)
-  const [replace, setReplace] = useState(false)
   const [msg, setMsg] = useState<{ text: string; bad?: boolean } | null>(null)
   const t = tr.cvImport
   const fill = (s: string, n: number) => s.replace('{n}', String(n))
@@ -39,7 +38,7 @@ export function CvImport({ role, form, setForm }: Props) {
         setMsg({ text, bad: true })
         return
       }
-      const merged = mergeCvIntoForm(form, json as CvResult, replace)
+      const merged = mergeCvIntoForm(form, json as CvResult, false)
       if (merged.filled.length === 0 && merged.historyAdded === 0) {
         setMsg({ text: t.nothing })
         return
@@ -74,10 +73,6 @@ export function CvImport({ role, form, setForm }: Props) {
           onChange={e => { const f = e.target.files?.[0]; if (f) void onFile(f) }}
         />
       </label>
-      <label className="cursor-pointer" style={{ display: 'block', marginTop: 6, fontSize: 12 }}>
-        <input type="checkbox" checked={replace} onChange={e => setReplace(e.target.checked)} /> {t.replace}
-      </label>
-      <p style={{ margin: '6px 0 0', fontSize: 12, opacity: 0.7 }}>{t.hint}</p>
       {msg && <p role="status" style={{ margin: '6px 0 0', fontSize: 13, color: msg.bad ? '#E30613' : undefined }}>{msg.text}</p>}
     </div>
   )
