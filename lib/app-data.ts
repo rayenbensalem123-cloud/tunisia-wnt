@@ -564,9 +564,9 @@ export async function fetchMembers() {
     if (error) { console.error('fetchMembers', error); return [] }
     return (data ?? []).map(memberFromDb)
   }
-  const { data, error } = await supabase.from('squad_public').select('*')
-  if (error) { console.error('fetchMembers', error); return [] }
-  return (data ?? []).map(memberFromDb)
+  // Signed out: there is no public roster. (squad_public was closed to anonymous
+  // reads in migration 0013 - it exposed every player's details without a login.)
+  return []
 }
 
 export async function fetchMatches() {

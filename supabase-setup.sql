@@ -383,8 +383,8 @@ CREATE OR REPLACE VIEW public.squad_public AS
 -- entire roster to every logged-in account, including 'player' accounts that
 -- are only supposed to see their own card. Signed-in callers read `members`,
 -- where RLS does apply. See migrations/0002_player_accounts.sql.
+-- Closed to everyone (migration 0013): a signed-out visitor must not read the roster.
 REVOKE ALL ON public.squad_public FROM anon, authenticated;
-GRANT SELECT ON public.squad_public TO anon;
 
 -- Writes are gated on the permission flags, enforced by the database.
 CREATE POLICY "members_insert" ON public.members
