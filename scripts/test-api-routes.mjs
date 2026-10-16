@@ -79,6 +79,7 @@ async function run() {
   const { POST: uploadPOST } = await import('../app/api/upload/route.ts')
   const { POST: importPlayersPOST } = await import('../app/api/import-players/route.ts')
   const { POST: parseCallupsPOST } = await import('../app/api/parse-callups/route.ts')
+  const { POST: parseCvPOST } = await import('../app/api/parse-cv/route.ts')
 
   // --- /api/upload ------------------------------------------------------
   await t('upload: no Authorization header -> 401', async () => {
@@ -204,6 +205,96 @@ async function run() {
     } finally {
       restoreFetch()
     }
+  })
+
+  // --- /api/parse-cv ----------------------------------------------------
+  const cvReq = (file, extra = {}) => {
+    const form = new FormData()
+    if (file) form.set('file', file)
+    return new Request('http://localhost/api/parse-cv', { method: 'POST', headers: { authorization: 'Bearer test-token', ...extra }, body: form })
+  }
+  const pdfFile = (extraBytes = 20) => new File([new TextEncoder().encode('%PDF-1.4 ' + 'x'.repeat(extraBytes))], 'cv.pdf', { type: 'application/pdf' })
+
+  await t('parse-cv: no Authorization header -> 401', async () => {
+    const res = await parseCvPOST(new Request('http://localhost/api/parse-cv', { method: 'POST', body: new FormData() }))
+    assert.equal(res.status, 401)
+  })
+
+  await t('parse-cv: no addPlayer/editPlayer permission -> 403', async () => {
+    installAuthStub({ permissions: { addCamps: true } })
+    try { assert.equal((await parseCvPOST(cvReq(pdfFile()))).status, 403) } finally { restoreFetch() }
+  })
+
+  await t('parse-cv: AI key not configured -> 503', async () => {
+    installAuthStub()
+    delete process.env.ANTHROPIC_API_KEY
+    try {
+      const res = await parseCvPOST(cvReq(pdfFile()))
+      assert.equal(res.status, 503)
+      assert.equal((await res.json()).code, 'not_configured')
+    } finally { restoreFetch() }
+  })
+
+  await t('parse-cv: not a PDF/image (by content, not name) -> 415', async () => {
+    installAuthStub()
+    process.env.ANTHROPIC_API_KEY = 'test-key'
+    try {
+      const fake = new File([new TextEncoder().encode('MZ this is an exe renamed cv.pdf')], 'cv.pdf', { type: 'application/pdf' })
+      assert.equal((await parseCvPOST(cvReq(fake))).status, 415)
+    } finally { restoreFetch() }
+  })
+
+  await t('parse-cv: oversized file -> 413', async () => {
+    installAuthStub()
+    process.env.ANTHROPIC_API_KEY = 'test-key'
+    try {
+      const big = new File([new Uint8Array(9 * 1024 * 1024)], 'cv.pdf', { type: 'application/pdf' })
+      assert.equal((await parseCvPOST(cvReq(big, { 'content-length': String(big.size) }))).status, 413)
+    } finally { restoreFetch() }
+  })
+
+  await t('parse-cv: success returns only sanitized, mapped fields', async () => {
+    installAuthStub()
+    process.env.ANTHROPIC_API_KEY = 'test-key'
+    const supa = globalThis.fetch
+    let sentBody = null
+    globalThis.fetch = async (input, init) => {
+      const url = typeof input === 'string' ? input : input.url
+      if (url.startsWith('https://api.anthropic.com/v1/messages')) {
+        sentBody = JSON.parse(init.body)
+        assert.equal(init.headers['x-api-key'], 'test-key')
+        return new Response(JSON.stringify({ content: [{ type: 'tool_use', name: 'record_profile', input: {
+          name: 'Sara Test', position: 'Right Winger', birthdate: '2004-11-02', heightCm: 168, isAdmin: true,
+          career: [{ years: '2019-2021', team: 'Club A' }],
+        } }] }), { status: 200, headers: { 'content-type': 'application/json' } })
+      }
+      return supa(input, init)
+    }
+    try {
+      const res = await parseCvPOST(cvReq(pdfFile()))
+      assert.equal(res.status, 200)
+      const body = await res.json()
+      assert.deepEqual(body.fields, { name: 'Sara Test', position: 'FORWARD', birthdate: '02/11/2004', height: '168' })
+      assert.deepEqual(body.history, [{ year: '2019-2021', event: 'Club A' }])
+      assert.equal(sentBody.tool_choice.name, 'record_profile')
+      assert.equal(sentBody.messages[0].content[0].source.media_type, 'application/pdf')
+    } finally { restoreFetch(); delete process.env.ANTHROPIC_API_KEY }
+  })
+
+  await t('parse-cv: upstream failure -> 502 without leaking details', async () => {
+    installAuthStub()
+    process.env.ANTHROPIC_API_KEY = 'test-key'
+    const supa = globalThis.fetch
+    globalThis.fetch = async (input, init) => {
+      const url = typeof input === 'string' ? input : input.url
+      if (url.startsWith('https://api.anthropic.com')) return new Response('{"error":"secret detail"}', { status: 500 })
+      return supa(input, init)
+    }
+    try {
+      const res = await parseCvPOST(cvReq(pdfFile()))
+      assert.equal(res.status, 502)
+      assert.ok(!JSON.stringify(await res.json()).includes('secret'))
+    } finally { restoreFetch(); delete process.env.ANTHROPIC_API_KEY }
   })
 
   console.log(`\n${n} tests passed${failed ? `, ${failed} FAILED` : ''}`)

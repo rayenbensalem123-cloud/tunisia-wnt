@@ -34,6 +34,7 @@ import {
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
 import { PassportCard, TravelAlertsCard, BirthdaysEligibilityCard, TripPanel } from "@/components/travel"
+import { CvImport } from "@/components/cv-import"
 import { PerformanceCard } from "@/components/performance"
 import { MeetingsPanel } from "@/components/meetings-panel"
 import { ClubReportsPanel } from "@/components/club-reports-panel"
@@ -2012,6 +2013,7 @@ export default function EliteSquadApp() {
               <button onClick={()=>setIsFormOpen(false)} title="Close" className="pm-close"><X size={14}/></button>
             </div>
             <form onSubmit={saveForm} className="pm-body">
+              <CvImport role={activeTab==="COACHES"?"COACHES":"PLAYERS"} form={form} setForm={setForm}/>
               <div className="relative">
                 <div onClick={()=>fileRef.current?.click()} {...portraitDrop.dropProps} className={`flex flex-col items-center gap-2 py-5 rounded-lg border border-dashed cursor-pointer bg-[var(--c-deep)] transition-all ${portraitDrop.isDragging?'border-[#e3062c] bg-[#e3062c]/10 scale-[1.01]':'border-[rgba(var(--line-rgb),.25)] hover:border-[#e3062c]/60'}`}>
                   <input type="file" ref={fileRef} onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)handlePortraitFile(f)}}

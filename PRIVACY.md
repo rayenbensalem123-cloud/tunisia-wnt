@@ -59,6 +59,14 @@ reports are included in that export only if the account can already see
 that data under the rules above — exporting never reveals more than the
 account could already see on screen.
 
+## CV import (AI)
+
+"Fill from CV" on the player/staff card sends the uploaded CV (PDF or image) to
+Anthropic's API to read it. The file is not stored by this app, and nothing is
+saved until a person reviews the filled card and presses save. Only accounts
+that can add or edit players can use it. Leave `ANTHROPIC_API_KEY` unset to
+turn the feature off.
+
 ## For admins day to day
 
 - **Granting `viewMedical` to a staff account is a real decision, not a

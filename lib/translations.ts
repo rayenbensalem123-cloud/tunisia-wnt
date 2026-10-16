@@ -317,6 +317,12 @@ const t = {
     account: {
       downloadData: "Download my data", downloadFailed: "Could not prepare your data. Please try again.",
     },
+    cvImport: {
+      button: "Fill from CV", hint: "Upload a PDF or photo of the CV and the card is filled in for you to review. The CV is sent to an AI service to be read and is not stored.",
+      reading: "Reading the CV…", done: "{n} fields filled from the CV. Check them before saving.", nothing: "Nothing new found in this CV.",
+      kept: "{n} already had a value and were kept.", history: "{n} career entries added.", replace: "Replace values that are already filled",
+      notConfigured: "CV import is not set up yet. Ask an admin to add the AI key.", failed: "Could not read this CV. Try another file, or fill the card by hand.",
+    },
     emailModal: {
       title: "Recovery Email", menuLabel: "Recovery Email", emailLabel: "Email address",
       hint: "Set an email so you can reset your password yourself if you forget it. This is separate from your username and is never shown to other users.",
@@ -670,6 +676,12 @@ const t = {
     account: {
       downloadData: "Télécharger mes données", downloadFailed: "Impossible de préparer vos données. Réessayez.",
     },
+    cvImport: {
+      button: "Remplir depuis le CV", hint: "Importez un PDF ou une photo du CV : la fiche est remplie pour que vous la vérifiiez. Le CV est envoyé à un service d'IA pour être lu et n'est pas conservé.",
+      reading: "Lecture du CV…", done: "{n} champs remplis depuis le CV. Vérifiez-les avant d'enregistrer.", nothing: "Rien de nouveau trouvé dans ce CV.",
+      kept: "{n} avaient déjà une valeur et ont été conservés.", history: "{n} étapes de carrière ajoutées.", replace: "Remplacer les valeurs déjà renseignées",
+      notConfigured: "L'import de CV n'est pas encore configuré. Demandez à un admin d'ajouter la clé IA.", failed: "Impossible de lire ce CV. Essayez un autre fichier ou remplissez la fiche à la main.",
+    },
     emailModal: {
       title: "E-mail de récupération", menuLabel: "E-mail de récupération", emailLabel: "Adresse e-mail",
       hint: "Définissez un e-mail pour pouvoir réinitialiser votre mot de passe vous-même en cas d'oubli. Ceci est distinct de votre nom d'utilisateur et n'est jamais visible par les autres utilisateurs.",
@@ -1022,6 +1034,12 @@ const t = {
     },
     account: {
       downloadData: "تنزيل بياناتي", downloadFailed: "تعذر تجهيز بياناتك. يرجى المحاولة مرة أخرى.",
+    },
+    cvImport: {
+      button: "تعبئة من السيرة الذاتية", hint: "ارفع ملف PDF أو صورة للسيرة الذاتية لتُعبأ البطاقة لتراجعها. تُرسل السيرة الذاتية إلى خدمة ذكاء اصطناعي لقراءتها ولا يتم حفظها.",
+      reading: "جارٍ قراءة السيرة الذاتية…", done: "تمت تعبئة {n} حقول من السيرة الذاتية. راجعها قبل الحفظ.", nothing: "لم يتم العثور على شيء جديد في هذه السيرة الذاتية.",
+      kept: "{n} كانت تحتوي على قيمة وتم الاحتفاظ بها.", history: "تمت إضافة {n} من المحطات المهنية.", replace: "استبدال القيم المعبأة مسبقًا",
+      notConfigured: "استيراد السيرة الذاتية غير مفعل بعد. اطلب من المشرف إضافة مفتاح الذكاء الاصطناعي.", failed: "تعذرت قراءة هذه السيرة الذاتية. جرّب ملفًا آخر أو عبّئ البطاقة يدويًا.",
     },
     emailModal: {
       title: "بريد الاسترداد", menuLabel: "بريد الاسترداد", emailLabel: "البريد الإلكتروني",

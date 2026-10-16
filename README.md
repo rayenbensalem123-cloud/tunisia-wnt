@@ -27,6 +27,8 @@ pnpm dev
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser anon key (safe to expose) |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server only — **never commit, never ship to the client** |
 | `BLOB_READ_WRITE_TOKEN` | Legacy Vercel Blob token (optional) |
+| `ANTHROPIC_API_KEY` | Server only. Enables "Fill from CV" on the player/staff card; without it that button reports it isn't set up |
+| `CV_PARSE_MODEL` | Optional model override for CV reading |
 
 ## Database setup
 
