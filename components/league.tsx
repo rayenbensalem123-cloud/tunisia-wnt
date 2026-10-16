@@ -252,16 +252,31 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {visibleTeams.map((x, i) => (
               <div key={x.id} className="group relative animate-[fadeUp_0.5s_ease-out_both]" style={{ animationDelay: `${i * 60}ms` }}>
-                <button onClick={() => openTeam(x.id)} className="w-full aspect-[3/4] rounded-2xl overflow-hidden border border-[rgba(var(--line-rgb),.18)] bg-[#101b33] hover:border-[#f6c744]/60 hover:-translate-y-1.5 hover:shadow-[0_22px_60px_rgba(0,0,0,.5)] transition-all duration-300 flex flex-col items-center justify-center p-4 gap-4">
-                  <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#ff2747] to-[#8f0319]" />
-                  <div className="flex-1 w-full flex items-center justify-center min-h-0">
-                    {logoUrl(x)
-                      ? <img src={logoUrl(x)} alt={x.name} className="max-h-full max-w-[88%] object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,.5)]" />
-                      : <span className="text-6xl font-black text-white/25">{x.name.slice(0, 1).toUpperCase()}</span>}
+                <button onClick={() => openTeam(x.id)} className="group/card relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-[rgba(var(--line-rgb),.18)] bg-gradient-to-b from-[#101219] via-[#0a0b11] to-[#06070b] hover:border-white/25 hover:-translate-y-1.5 hover:shadow-[0_30px_68px_rgba(0,0,0,.75)] transition-all duration-300 text-left">
+                  {/* soft white light over the badge */}
+                  <span aria-hidden className="absolute inset-0 pointer-events-none bg-[radial-gradient(70%_46%_at_50%_34%,rgba(255,255,255,.075),transparent_72%)]" />
+                  {/* hairline that brightens on hover */}
+                  <span aria-hidden className="absolute top-0 inset-x-[12%] h-px bg-gradient-to-r from-transparent via-white/35 to-transparent transition-all duration-500 group-hover/card:inset-x-[6%] group-hover/card:via-white/70" />
+                  <span className="absolute top-3 left-1/2 -translate-x-1/2 text-[7px] font-black uppercase tracking-[.3em] text-white/45 pointer-events-none">Ligue F</span>
+                  {/* badge stage: spill (blurred color copy) + shaped shadow + blooming face */}
+                  <div className="absolute left-1/2 top-[36%] -translate-x-1/2 -translate-y-1/2 w-[52%] max-h-[52%]">
+                    {logoUrl(x) ? (
+                      <div className="relative w-full">
+                        <img src={logoUrl(x)} alt="" aria-hidden className="absolute inset-0 w-full h-full object-contain scale-[1.45] blur-[24px] opacity-0 saturate-[1.6] transition-opacity duration-500 group-hover/card:opacity-55 pointer-events-none" />
+                        <img src={logoUrl(x)} alt="" aria-hidden className="absolute left-[52%] top-[58%] w-full h-full -translate-x-1/2 -translate-y-1/2 object-contain blur-[12px] brightness-0 opacity-85 pointer-events-none" />
+                        <img src={logoUrl(x)} alt={x.name} className="relative w-full object-contain grayscale brightness-90 transition-all duration-500 group-hover/card:grayscale-0 group-hover/card:brightness-100 group-hover/card:scale-105 drop-shadow-[0_18px_24px_rgba(0,0,0,.7)]" />
+                      </div>
+                    ) : (
+                      <span className="mx-auto flex aspect-square w-[86%] items-center justify-center rounded-full border border-dashed border-white/25 text-4xl font-black italic text-white/40 transition-colors duration-500 group-hover/card:border-white/45 group-hover/card:text-white/60">{x.name.slice(0, 1).toUpperCase()}</span>
+                    )}
                   </div>
-                  <div className="text-center w-full">
-                    <h2 className="text-sm sm:text-base font-black uppercase tracking-tight text-white leading-tight line-clamp-2">{x.name}</h2>
-                    <p className="mt-1 text-[8px] font-bold uppercase tracking-[.25em] text-[#f6c744]">{countFor(x.id)} {t.playersWord}</p>
+                  {/* glass name plate */}
+                  <div className="absolute inset-x-0 bottom-0 bg-gradient-to-b from-black/40 to-black/85 backdrop-blur-md border-t border-white/10 px-4 pt-3 pb-3.5 flex items-end justify-between gap-2 transition-colors duration-500 group-hover/card:border-white/25">
+                    <div className="min-w-0">
+                      <h2 className="text-[13px] font-black uppercase tracking-tight text-white leading-tight truncate">{x.name}</h2>
+                      <p className="mt-0.5 text-[7px] font-bold uppercase tracking-[.28em] text-white/45">{countFor(x.id)} {t.playersWord}</p>
+                    </div>
+                    <span aria-hidden className="w-7 h-7 shrink-0 rounded-full bg-white text-black flex items-center justify-center font-black text-sm opacity-0 -translate-x-2 transition-all duration-300 group-hover/card:opacity-100 group-hover/card:translate-x-0">→</span>
                   </div>
                 </button>
                 <button onClick={() => pickLogoFor(x.id)} title={t.changeLogo} className="absolute top-2 left-2 p-1.5 rounded-full bg-black/50 text-white/80 hover:bg-[#f6c744] hover:text-[#0c1f3d] opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100 transition-all">{logoBusy === x.id ? <span className="text-[8px] font-black px-1">…</span> : <Camera size={12} />}</button>
