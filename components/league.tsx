@@ -59,6 +59,9 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const [teamBusy, setTeamBusy] = useState(false)
   const photoRef = useRef<HTMLInputElement>(null)
   const logoRef = useRef<HTMLInputElement>(null)
+  const logoChangeRef = useRef<HTMLInputElement>(null)
+  const logoTarget = useRef<number | null>(null)
+  const [logoBusy, setLogoBusy] = useState<number | null>(null)
 
   const reloadTeams = async () => { setTeams(await fetchLeagueTeams()); setLoadedTeams(true) }
   useEffect(() => { void reloadTeams() }, [])
@@ -166,6 +169,19 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
     setTeamOpen(false); setTeamForm({ name: '', username: '', password: '', logoPath: '' })
     await reloadTeams()
   }
+  // Admin: set or replace the logo of a team that already exists.
+  const pickLogoFor = (id: number) => { logoTarget.current = id; logoChangeRef.current?.click() }
+  const changeLogo = async (file: File) => {
+    const id = logoTarget.current
+    if (!id) return
+    setLogoBusy(id)
+    const r = await upload(file, { logo: '1' })
+    if ('error' in r) { setLogoBusy(null); window.alert(r.error); return }
+    const { error } = await supabase.from('league_teams').update({ logo_path: r.path }).eq('id', id)
+    if (error) { setLogoBusy(null); window.alert(t.uploadFailed); return }
+    await reloadTeams()
+    setLogoBusy(null)
+  }
   const removeTeam = async (x: LeagueTeam) => {
     if (!window.confirm(t.confirmDeleteTeam.replace('{name}', x.name))) return
     const r = await deleteLeagueTeam(x.id)
@@ -208,6 +224,8 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
         </div>
       </header>
 
+      <input ref={logoChangeRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void changeLogo(f) }} />
+
       {/* ── ADMIN: grid of clubs ── */}
       {showTeamGrid && (
         <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
@@ -233,7 +251,8 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
                     <p className="mt-1 text-[8px] font-bold uppercase tracking-[.25em] text-[#f6c744]">{countFor(x.id)} {t.playersWord}</p>
                   </div>
                 </button>
-                <button onClick={() => void removeTeam(x)} title={t.deleteTeam} className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white/70 hover:bg-[#e3062c] hover:text-white opacity-0 group-hover:opacity-100 focus:opacity-100 transition-all"><Trash2 size={12} /></button>
+                <button onClick={() => pickLogoFor(x.id)} title={t.changeLogo} className="absolute top-2 left-2 p-1.5 rounded-full bg-black/50 text-white/80 hover:bg-[#f6c744] hover:text-[#0c1f3d] opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100 transition-all">{logoBusy === x.id ? <span className="text-[8px] font-black px-1">…</span> : <Camera size={12} />}</button>
+                <button onClick={() => void removeTeam(x)} title={t.deleteTeam} className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white/70 hover:bg-[#e3062c] hover:text-white opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100 transition-all"><Trash2 size={12} /></button>
               </div>
             ))}
           </div>
@@ -252,6 +271,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
               <div className="flex items-center justify-between gap-3 mb-8">
                 <div className="flex items-center gap-4 min-w-0">
                   {logoUrl(team) && <img src={logoUrl(team)} alt="" className="h-14 w-14 object-contain shrink-0" />}
+                  {mode === 'admin' && <button onClick={() => pickLogoFor(team.id)} title={t.changeLogo} className="p-2 rounded-lg border border-[rgba(var(--line-rgb),.25)] hover:border-[#f6c744]/60 shrink-0"><Camera size={14} /></button>}
                   <p className="text-[9px] font-black uppercase tracking-[.4em] text-[#f6c744]">{players.length} {t.playersWord}</p>
                 </div>
                 <button onClick={openAdd} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Plus size={14} />{t.addPlayer}</button>

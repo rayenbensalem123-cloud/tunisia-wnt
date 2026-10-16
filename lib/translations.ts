@@ -325,7 +325,7 @@ const t = {
     },
     league: {
       title: "Ligue Féminine", sub: "Women's League", back: "Back", logout: "Log out", loading: "Loading…",
-      teams: "Teams", addTeam: "Add team", createTeam: "Create team", deleteTeam: "Delete team",
+      changeLogo: "Change logo", teams: "Teams", addTeam: "Add team", createTeam: "Create team", deleteTeam: "Delete team",
       confirmDeleteTeam: "Delete {name} and its login? This cannot be undone.", noTeams: "No teams yet. Add the first one.",
       teamName: "Team name", logo: "Team logo", clubLogin: "Team login", username: "Username", password: "Password",
       playersWord: "players", noPlayers: "No players yet", noClub: "No team is linked to this account. Ask an admin.",
@@ -695,7 +695,7 @@ const t = {
     },
     league: {
       title: "Ligue Féminine", sub: "Championnat féminin", back: "Retour", logout: "Déconnexion", loading: "Chargement…",
-      teams: "Équipes", addTeam: "Ajouter une équipe", createTeam: "Créer l'équipe", deleteTeam: "Supprimer l'équipe",
+      changeLogo: "Changer le logo", teams: "Équipes", addTeam: "Ajouter une équipe", createTeam: "Créer l'équipe", deleteTeam: "Supprimer l'équipe",
       confirmDeleteTeam: "Supprimer {name} et son accès ? Action irréversible.", noTeams: "Aucune équipe pour l'instant. Ajoutez la première.",
       teamName: "Nom de l'équipe", logo: "Logo de l'équipe", clubLogin: "Accès de l'équipe", username: "Nom d'utilisateur", password: "Mot de passe",
       playersWord: "joueuses", noPlayers: "Aucune joueuse pour l'instant", noClub: "Aucune équipe n'est liée à ce compte. Contactez un admin.",
@@ -1065,7 +1065,7 @@ const t = {
     },
     league: {
       title: "الدوري النسوي", sub: "البطولة النسائية", back: "رجوع", logout: "تسجيل الخروج", loading: "جارٍ التحميل…",
-      teams: "الفرق", addTeam: "إضافة فريق", createTeam: "إنشاء الفريق", deleteTeam: "حذف الفريق",
+      changeLogo: "تغيير الشعار", teams: "الفرق", addTeam: "إضافة فريق", createTeam: "إنشاء الفريق", deleteTeam: "حذف الفريق",
       confirmDeleteTeam: "حذف {name} وحسابه؟ لا يمكن التراجع.", noTeams: "لا توجد فرق بعد. أضف الفريق الأول.",
       teamName: "اسم الفريق", logo: "شعار الفريق", clubLogin: "حساب الفريق", username: "اسم المستخدم", password: "كلمة المرور",
       playersWord: "لاعبات", noPlayers: "لا توجد لاعبات بعد", noClub: "لا يوجد فريق مرتبط بهذا الحساب. تواصل مع المشرف.",
