@@ -252,26 +252,16 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {visibleTeams.map((x, i) => (
               <div key={x.id} className="group relative animate-[fadeUp_0.5s_ease-out_both]" style={{ animationDelay: `${i * 60}ms` }}>
-                <button onClick={() => openTeam(x.id)} className="group/card w-full aspect-[3/4] rounded-2xl overflow-hidden border border-[rgba(var(--line-rgb),.18)] ligue-flood ligue-grain hover:border-[#f6c744]/60 hover:-translate-y-1.5 hover:shadow-[0_22px_60px_rgba(0,0,0,.6),0_0_36px_rgba(246,199,68,.14)] transition-all duration-300 text-left relative">
-                  <span aria-hidden className="ligue-ghost absolute -right-3 top-6 text-[7rem] font-black italic leading-none select-none">{x.name.slice(0, 1).toUpperCase()}</span>
-                  <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#f6c744] via-[#fff3c4] to-[#f6c744]" />
-                  <div className="relative h-full flex flex-col p-5">
-                    <div className="flex items-center justify-between">
-                      <span className="text-[8px] font-black uppercase tracking-[.25em] text-white/50">Ligue · F</span>
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.9)]" />
-                    </div>
-                    <div className="flex-1 w-full flex items-center justify-center min-h-0">
-                      {logoUrl(x)
-                        ? <img src={logoUrl(x)} alt={x.name} className="max-h-full max-w-[82%] object-contain transition-transform duration-500 group-hover/card:scale-110 group-hover/card:-rotate-2 drop-shadow-[0_16px_30px_rgba(0,0,0,.65)]" />
-                        : <span className="text-6xl font-black text-white/25">{x.name.slice(0, 1).toUpperCase()}</span>}
-                    </div>
-                    <div className="rounded-xl bg-white/[.07] backdrop-blur-md border border-white/15 px-4 py-3 flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <h2 className="text-sm font-black uppercase tracking-tight text-white leading-tight truncate">{x.name}</h2>
-                        <p className="text-[8px] font-bold uppercase tracking-[.25em] text-[#f6c744]">{countFor(x.id)} {t.playersWord}</p>
-                      </div>
-                      <span className="w-8 h-8 shrink-0 rounded-full bg-[#f6c744] text-[#0c1f3d] flex items-center justify-center font-black opacity-0 -translate-x-2 group-hover/card:opacity-100 group-hover/card:translate-x-0 transition-all duration-300">→</span>
-                    </div>
+                <button onClick={() => openTeam(x.id)} className="w-full aspect-[3/4] rounded-2xl overflow-hidden border border-[rgba(var(--line-rgb),.18)] bg-[#101b33] hover:border-[#f6c744]/60 hover:-translate-y-1.5 hover:shadow-[0_22px_60px_rgba(0,0,0,.5)] transition-all duration-300 flex flex-col items-center justify-center p-4 gap-4">
+                  <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#ff2747] to-[#8f0319]" />
+                  <div className="flex-1 w-full flex items-center justify-center min-h-0">
+                    {logoUrl(x)
+                      ? <img src={logoUrl(x)} alt={x.name} className="max-h-full max-w-[88%] object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,.5)]" />
+                      : <span className="text-6xl font-black text-white/25">{x.name.slice(0, 1).toUpperCase()}</span>}
+                  </div>
+                  <div className="text-center w-full">
+                    <h2 className="text-sm sm:text-base font-black uppercase tracking-tight text-white leading-tight line-clamp-2">{x.name}</h2>
+                    <p className="mt-1 text-[8px] font-bold uppercase tracking-[.25em] text-[#f6c744]">{countFor(x.id)} {t.playersWord}</p>
                   </div>
                 </button>
                 <button onClick={() => pickLogoFor(x.id)} title={t.changeLogo} className="absolute top-2 left-2 p-1.5 rounded-full bg-black/50 text-white/80 hover:bg-[#f6c744] hover:text-[#0c1f3d] opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100 transition-all">{logoBusy === x.id ? <span className="text-[8px] font-black px-1">…</span> : <Camera size={12} />}</button>
