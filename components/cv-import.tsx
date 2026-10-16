@@ -3,6 +3,7 @@
 // /api/parse-cv); this only merges the suggestions into the open form. Nothing
 // is saved until a person reviews the card and presses save.
 import { useRef, useState } from 'react'
+import { FileText } from 'lucide-react'
 import { useTranslate } from '@/lib/language-context'
 import { authHeaders } from '@/lib/auth-headers'
 import { mergeCvIntoForm, type CvResult } from '@/lib/cv-extract'
@@ -57,13 +58,13 @@ export function CvImport({ role, form, setForm }: Props) {
   }
 
   return (
-    <div style={{ position: 'relative', marginBottom: 12, padding: 10, border: '1px dashed currentColor', borderRadius: 8 }}>
+    <div className="mb-3">
       {/* A real <label> around the file input opens the picker natively, with no script click. */}
       <label
-        className="cursor-pointer select-none"
-        style={{ display: 'inline-block', padding: '8px 14px', borderRadius: 8, fontWeight: 700, background: '#E30613', color: '#fff', opacity: busy ? 0.6 : 1, pointerEvents: busy ? 'none' : 'auto' }}
+        className={`relative flex w-full cursor-pointer select-none items-center justify-center gap-2.5 rounded-xl border border-[#E30613]/50 bg-[#E30613]/10 px-4 py-3 text-[11px] font-black uppercase tracking-[.2em] text-[#ff4b57] transition-colors hover:bg-[#E30613]/20 active:scale-[.99] ${busy ? 'pointer-events-none opacity-60' : ''}`}
       >
-        {busy ? t.reading : `📄 ${t.button}`}
+        <FileText size={16} strokeWidth={2.2} aria-hidden />
+        <span>{busy ? t.reading : t.button}</span>
         <input
           ref={input}
           type="file"
@@ -73,7 +74,7 @@ export function CvImport({ role, form, setForm }: Props) {
           onChange={e => { const f = e.target.files?.[0]; if (f) void onFile(f) }}
         />
       </label>
-      {msg && <p role="status" style={{ margin: '6px 0 0', fontSize: 13, color: msg.bad ? '#E30613' : undefined }}>{msg.text}</p>}
+      {msg && <p role="status" className={`mt-2 text-xs ${msg.bad ? 'text-[#ff4b57]' : 'text-[var(--c-textMid)]'}`}>{msg.text}</p>}
     </div>
   )
 }
