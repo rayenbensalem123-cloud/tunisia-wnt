@@ -53,6 +53,8 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const [form, setForm] = useState<any>(emptyForm)
   const [formErr, setFormErr] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [teamQuery, setTeamQuery] = useState('')
+  const [playerQuery, setPlayerQuery] = useState('')
   const [teamOpen, setTeamOpen] = useState(false)
   const [teamForm, setTeamForm] = useState({ name: '', username: '', password: '', logoPath: '' })
   const [teamErr, setTeamErr] = useState('')
@@ -76,6 +78,9 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
     }),
     [league, selTeamId],
   )
+  const q = (s: string) => s.trim().toLowerCase()
+  const visibleTeams = useMemo(() => teams.filter(x => x.name.toLowerCase().includes(q(teamQuery))), [teams, teamQuery])
+  const visiblePlayers = useMemo(() => players.filter(m => String(m.name || '').toLowerCase().includes(q(playerQuery))), [players, playerQuery])
 
   // Private-bucket images (logos and portraits) need short-lived signed URLs.
   useEffect(() => {
@@ -195,9 +200,10 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const label = 'mb-1 block text-[9px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]'
 
   const goBack = () => {
-    if (mode === 'admin' && selTeamId) { setSelTeamId(null); setSelMember(null); return }
+    if (mode === 'admin' && selTeamId) { setSelTeamId(null); setSelMember(null); setPlayerQuery(''); return }
     onBack?.()
   }
+  const openTeam = (id: number) => { setSelTeamId(id); setPlayerQuery('') }
   const showTeamGrid = mode === 'admin' && !selTeamId
 
   return (
@@ -229,26 +235,43 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
       {/* ── ADMIN: grid of clubs ── */}
       {showTeamGrid && (
         <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
-          <div className="flex items-center justify-between mb-6 gap-3">
-            <p className="text-[9px] font-black uppercase tracking-[.4em] text-[#f6c744]">{t.teams} · {teams.length}</p>
-            <button onClick={() => { setTeamErr(''); setTeamOpen(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Plus size={14} />{t.addTeam}</button>
+          <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+            <p className="text-[9px] font-black uppercase tracking-[.4em] text-[#f6c744]">{t.teams} · {visibleTeams.length}/{teams.length}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <input value={teamQuery} onChange={e => setTeamQuery(e.target.value)} placeholder={t.searchTeams}
+                className="w-52 px-3.5 py-2.5 rounded-xl bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.25)] text-[var(--c-text)] placeholder-[var(--c-textMid)] text-xs font-semibold outline-none focus:border-[#f6c744]/70" />
+              <button onClick={() => { setTeamErr(''); setTeamOpen(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Plus size={14} />{t.addTeam}</button>
+            </div>
           </div>
           {loadedTeams && teams.length === 0 && (
             <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><Users size={56} /><p className="text-[11px] font-black uppercase tracking-[.3em] text-center">{t.noTeams}</p></div>
           )}
+          {loadedTeams && teams.length > 0 && visibleTeams.length === 0 && (
+            <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><p className="text-[11px] font-black uppercase tracking-[.3em] text-center">{t.noMatch}</p></div>
+          )}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
-            {teams.map((x, i) => (
+            {visibleTeams.map((x, i) => (
               <div key={x.id} className="group relative animate-[fadeUp_0.5s_ease-out_both]" style={{ animationDelay: `${i * 60}ms` }}>
-                <button onClick={() => setSelTeamId(x.id)} className="w-full aspect-[3/4] rounded-2xl overflow-hidden border border-[rgba(var(--line-rgb),.18)] bg-[#101b33] hover:border-[#f6c744]/60 hover:-translate-y-1.5 hover:shadow-[0_22px_60px_rgba(0,0,0,.5)] transition-all duration-300 flex flex-col items-center justify-center p-4 gap-4">
-                  <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#ff2747] to-[#8f0319]" />
-                  <div className="flex-1 w-full flex items-center justify-center min-h-0">
-                    {logoUrl(x)
-                      ? <img src={logoUrl(x)} alt={x.name} className="max-h-full max-w-[88%] object-contain drop-shadow-[0_8px_24px_rgba(0,0,0,.5)]" />
-                      : <span className="text-6xl font-black text-white/25">{x.name.slice(0, 1).toUpperCase()}</span>}
-                  </div>
-                  <div className="text-center w-full">
-                    <h2 className="text-sm sm:text-base font-black uppercase tracking-tight text-white leading-tight line-clamp-2">{x.name}</h2>
-                    <p className="mt-1 text-[8px] font-bold uppercase tracking-[.25em] text-[#f6c744]">{countFor(x.id)} {t.playersWord}</p>
+                <button onClick={() => openTeam(x.id)} className="group/card w-full aspect-[3/4] rounded-2xl overflow-hidden border border-[rgba(var(--line-rgb),.18)] ligue-flood ligue-grain hover:border-[#f6c744]/60 hover:-translate-y-1.5 hover:shadow-[0_22px_60px_rgba(0,0,0,.6),0_0_36px_rgba(246,199,68,.14)] transition-all duration-300 text-left relative">
+                  <span aria-hidden className="ligue-ghost absolute -right-3 top-6 text-[7rem] font-black italic leading-none select-none">{x.name.slice(0, 1).toUpperCase()}</span>
+                  <div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#f6c744] via-[#fff3c4] to-[#f6c744]" />
+                  <div className="relative h-full flex flex-col p-5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[8px] font-black uppercase tracking-[.25em] text-white/50">Ligue · F</span>
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_10px_rgba(52,211,153,.9)]" />
+                    </div>
+                    <div className="flex-1 w-full flex items-center justify-center min-h-0">
+                      {logoUrl(x)
+                        ? <img src={logoUrl(x)} alt={x.name} className="max-h-full max-w-[82%] object-contain transition-transform duration-500 group-hover/card:scale-110 group-hover/card:-rotate-2 drop-shadow-[0_16px_30px_rgba(0,0,0,.65)]" />
+                        : <span className="text-6xl font-black text-white/25">{x.name.slice(0, 1).toUpperCase()}</span>}
+                    </div>
+                    <div className="rounded-xl bg-white/[.07] backdrop-blur-md border border-white/15 px-4 py-3 flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <h2 className="text-sm font-black uppercase tracking-tight text-white leading-tight truncate">{x.name}</h2>
+                        <p className="text-[8px] font-bold uppercase tracking-[.25em] text-[#f6c744]">{countFor(x.id)} {t.playersWord}</p>
+                      </div>
+                      <span className="w-8 h-8 shrink-0 rounded-full bg-[#f6c744] text-[#0c1f3d] flex items-center justify-center font-black opacity-0 -translate-x-2 group-hover/card:opacity-100 group-hover/card:translate-x-0 transition-all duration-300">→</span>
+                    </div>
                   </div>
                 </button>
                 <button onClick={() => pickLogoFor(x.id)} title={t.changeLogo} className="absolute top-2 left-2 p-1.5 rounded-full bg-black/50 text-white/80 hover:bg-[#f6c744] hover:text-[#0c1f3d] opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100 transition-all">{logoBusy === x.id ? <span className="text-[8px] font-black px-1">…</span> : <Camera size={12} />}</button>
@@ -274,13 +297,20 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
                   {mode === 'admin' && <button onClick={() => pickLogoFor(team.id)} title={t.changeLogo} className="p-2 rounded-lg border border-[rgba(var(--line-rgb),.25)] hover:border-[#f6c744]/60 shrink-0"><Camera size={14} /></button>}
                   <p className="text-[9px] font-black uppercase tracking-[.4em] text-[#f6c744]">{players.length} {t.playersWord}</p>
                 </div>
-                <button onClick={openAdd} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Plus size={14} />{t.addPlayer}</button>
+                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                  <input value={playerQuery} onChange={e => setPlayerQuery(e.target.value)} placeholder={t.searchPlayers}
+                    className="w-44 sm:w-52 px-3.5 py-2.5 rounded-xl bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.25)] text-[var(--c-text)] placeholder-[var(--c-textMid)] text-xs font-semibold outline-none focus:border-[#f6c744]/70" />
+                  <button onClick={openAdd} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Plus size={14} />{t.addPlayer}</button>
+                </div>
               </div>
               {players.length === 0 && (
                 <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><Users size={56} /><p className="text-[11px] font-black uppercase tracking-[.3em] text-center">{t.noPlayers}</p></div>
               )}
+              {players.length > 0 && visiblePlayers.length === 0 && (
+                <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><p className="text-[11px] font-black uppercase tracking-[.3em] text-center">{t.noMatch}</p></div>
+              )}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
-                {players.map((m, i) => (
+                {visiblePlayers.map((m, i) => (
                   <div key={m.id} onClick={() => setSelMember(m)} className="cursor-pointer animate-[fadeUp_0.5s_ease-out_both]" style={{ animationDelay: `${i * 60}ms` }}>
                     <PlayerCard
                       name={m.name}

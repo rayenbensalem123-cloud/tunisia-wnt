@@ -412,11 +412,11 @@ const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
 // ─────────────────────────────────────────────
 const TeamSelector=({onSelect,showLeague}:{onSelect:(c:TeamCategory)=>void;showLeague:boolean})=>{
   const { tr } = useTranslate()
-  const allTeams:{cat:TeamCategory;label:string;sub:string;abbr:string;bar:string;img:string;tint:string}[]=[
-    {cat:"SENIORS",label:"SENIORS",sub:"Senior National Team",abbr:"S",bar:"from-[#ff2747] to-[#a30420]",img:"/cats/seniors.jpg",tint:"rgba(227,6,44,.14)"},
-    {cat:"U20",label:"U-20",sub:"Under 20 National Team",abbr:"20",bar:"from-[#ff2747] to-[#8f0319]",img:"/cats/u20.jpg",tint:"rgba(178,20,42,.2)"},
-    {cat:"U17",label:"U-17",sub:"Under 17 National Team",abbr:"17",bar:"from-[#ff2747] to-[#75020f]",img:"/cats/u17.jpg",tint:"rgba(150,12,32,.26)"},
-    {cat:"LIGUE",label:"LIGUE FÉMININE",sub:tr.league.sub,abbr:"L",bar:"from-[#f6c744] to-[#a9822e]",img:"",tint:"rgba(246,199,68,.14)"},
+  const allTeams:{cat:TeamCategory;label:string;sub:string;abbr:string;bar:string;img:string;tint:string;tag:string}[]=[
+    {cat:"SENIORS",label:"SENIORS",sub:"Senior National Team",abbr:"S",bar:"from-[#ff2747] to-[#a30420]",img:"/cats/seniors.jpg",tint:"rgba(227,6,44,.14)",tag:"TUNISIA WNT"},
+    {cat:"U20",label:"U-20",sub:"Under 20 National Team",abbr:"20",bar:"from-[#ff2747] to-[#8f0319]",img:"/cats/u20.jpg",tint:"rgba(178,20,42,.2)",tag:"TUNISIA WNT"},
+    {cat:"U17",label:"U-17",sub:"Under 17 National Team",abbr:"17",bar:"from-[#ff2747] to-[#75020f]",img:"/cats/u17.jpg",tint:"rgba(150,12,32,.26)",tag:"TUNISIA WNT"},
+    {cat:"LIGUE",label:"LIGUE FÉMININE",sub:tr.league.sub,abbr:"L",bar:"from-[#f6c744] to-[#a9822e]",img:"",tint:"rgba(246,199,68,.14)",tag:"CLUB FOOTBALL"},
   ]
   const teams=allTeams.filter(x=>showLeague||x.cat!=="LIGUE")
   return(
@@ -455,7 +455,7 @@ const TeamSelector=({onSelect,showLeague}:{onSelect:(c:TeamCategory)=>void;showL
                     <path d="M40 2 L78 18 L78 48 C78 68 40 88 40 88 C40 88 2 68 2 48 L2 18 Z" stroke="#f6c744" strokeWidth="3" strokeOpacity=".9"/>
                     <text x="40" y="50" textAnchor="middle" dominantBaseline="middle" fontSize="30" fontWeight="900" fill="#ffffff">{t.abbr}</text>
                   </svg>
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/70 drop-shadow-[0_1px_4px_rgba(0,0,0,.7)]">TUNISIA WNT</span>
+                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/70 drop-shadow-[0_1px_4px_rgba(0,0,0,.7)]">{t.tag}</span>
                 </div>
                 <div className="mt-auto">
                   <h2 className={`${t.cat==="LIGUE"?"text-[24px]":"text-[30px]"} font-black uppercase tracking-tight text-white leading-none drop-shadow-[0_2px_12px_rgba(0,0,0,.65)]`}>{t.label}</h2>
