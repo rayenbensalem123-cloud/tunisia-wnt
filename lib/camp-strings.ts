@@ -17,6 +17,8 @@ const en: Dict = {
   importOk: "Read {l} lines. Added {p} players and {s} staff. Press Save to keep them.",
   importNone: "Read {l} lines from the PDF but no name matched a member card. Names in the PDF must match the names on the cards.",
   firstLines: "First lines read:", notFound: "Not found in your members ({n}):",
+  programImportOk: "Read {n} sessions from the file. Review them, then press Save.",
+  programImportNone: "No timed sessions were found in this file.",
 }
 const fr: Dict = {
   liveNow: "En cours", dayOf: "Jour {a} sur {b}", startsIn: "Commence dans {n} jours", startsTomorrow: "Commence demain", finished: "Terminé",
@@ -33,6 +35,8 @@ const fr: Dict = {
   importOk: "{l} lignes lues. {p} joueuses et {s} staff ajoutés. Appuyez sur Enregistrer pour les garder.",
   importNone: "{l} lignes lues mais aucun nom ne correspond à une fiche. Les noms du PDF doivent correspondre à ceux des fiches.",
   firstLines: "Premières lignes lues :", notFound: "Introuvables parmi vos membres ({n}) :",
+  programImportOk: "{n} séances lues depuis le fichier. Vérifiez-les puis appuyez sur Enregistrer.",
+  programImportNone: "Aucune séance horodatée n'a été trouvée dans ce fichier.",
 }
 const ar: Dict = {
   liveNow: "جارٍ الآن", dayOf: "اليوم {a} من {b}", startsIn: "يبدأ خلال {n} يوم", startsTomorrow: "يبدأ غدًا", finished: "منتهٍ",
@@ -49,6 +53,8 @@ const ar: Dict = {
   importOk: "تمت قراءة {l} سطرًا. أضيفت {p} لاعبات و{s} من الطاقم. اضغطي حفظ للاحتفاظ بهم.",
   importNone: "تمت قراءة {l} سطرًا لكن لا يوجد اسم مطابق لبطاقة. يجب أن تطابق الأسماء بطاقات الأعضاء.",
   firstLines: "أول الأسطر:", notFound: "غير موجودين بين أعضائك ({n}):",
+  programImportOk: "تمت قراءة {n} حصة من الملف. راجعيها ثم اضغطي حفظ.",
+  programImportNone: "لم يتم العثور على حصص محددة بوقت في هذا الملف.",
 }
 const all: Record<string, Dict> = { en, fr, ar }
 

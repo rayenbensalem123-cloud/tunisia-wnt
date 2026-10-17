@@ -1,6 +1,6 @@
 "use client"
 import React, { useState, useEffect, useRef } from "react"
-import { ChevronLeft, X, Plus, ArrowLeft, Calendar, CalendarDays, MapPin, Users, FileText, Image as ImageIcon, Trash2, Save, Pencil, Download, Check, Briefcase, CalendarRange, Clock, Activity } from "lucide-react"
+import { ChevronLeft, X, Plus, ArrowLeft, Calendar, MapPin, Users, FileText, Image as ImageIcon, Trash2, Save, Pencil, Download, Check, Briefcase, CalendarRange, Clock } from "lucide-react"
 import ThemeToggle from "@/components/theme-toggle"
 import { useTheme } from "@/lib/theme-context"
 import { useTranslate } from "@/lib/language-context"
@@ -10,9 +10,7 @@ import { supabase } from "@/lib/supabase"
 import { matchCallups } from "@/lib/callups"
 import { StoredImg, openStored } from "@/components/stored-file"
 import { useCS } from "@/lib/camp-strings"
-import { TripPanel } from "@/components/travel"
 import { eligibilityFor } from "@/lib/eligibility"
-import { passportStatus } from "@/lib/documents"
 import { clashingCamps } from "@/lib/clash"
 
 type CampReport = { id: string; url: string; name: string; staffId: number | null; staffName: string; role: string; addedAt: string }
@@ -21,10 +19,15 @@ type Stage = {
   id?: number
   name: string
   location: string
+  country: string
+  state: string
+  hotel: string
+  arrivalDate: string
+  departureDate: string
   startDate: string
   endDate: string
   teamCategory: string
-  program: { day: string; time: string; activity: string; details?: string; attendance?: number[] }[]
+  program: { day: string; time: string; activity: string; details?: string }[]
   players: number[]
   staff: number[]
   staffRoles: { memberId: number; role: string }[]
@@ -46,12 +49,11 @@ type Props = {
   onDelete?: (id: number) => Promise<boolean> | boolean
   onRefresh?: () => void
   user?: { username?: string } | null
-  /** travel & documents: who may manage them, and the passport expiries the viewer may see */
-  travel?: { canManage: boolean; expiries?: Record<number, string> }
 }
 
 const emptyStage = (cat: string | null): Stage => ({
-  name: "", location: "", startDate: "", endDate: "", teamCategory: cat || "SENIORS",
+  name: "", location: "", country: "", state: "", hotel: "", arrivalDate: "", departureDate: "",
+  startDate: "", endDate: "", teamCategory: cat || "SENIORS",
   program: [], players: [], staff: [], staffRoles: [], reportUrl: "", reportName: "", images: [],
 })
 
@@ -97,7 +99,7 @@ function useToast() {
   return { msg, show }
 }
 
-export function StagesManager({ open, onClose, stages, members, teamCat, canManage, onSave, onDelete, onRefresh, user, travel }: Props) {
+export function StagesManager({ open, onClose, stages, members, teamCat, canManage, onSave, onDelete, onRefresh, user }: Props) {
   const { tr } = useTranslate()
   const cs = useCS()
   const [view, setView] = useState<"list" | "edit" | "detail">("list")
@@ -220,11 +222,6 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
     if (!current) return
     const next = id === 'legacy' ? { ...current, reportUrl: '', reportName: '' } : { ...current, reports: (current.reports || []).filter(r => r.id !== id) }
     const ok = await onSave(next)
-    if (ok) onRefresh?.()
-  }
-  const detailSaveProgram = async (program: Stage["program"]) => {
-    if (!current) return
-    const ok = await onSave({ ...current, program })
     if (ok) onRefresh?.()
   }
   const formAddReport = async (f: File, byId: string) => {
@@ -494,7 +491,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
         )}
 
         {view === "detail" && editing && (
-          <StageDetail travel={travel} stage={current || editing} members={members} canManage={canManage} tr={tr} staff={staffOf(current || editing)} busy={busy} onAddReport={detailAddReport} onRemoveReport={detailRemoveReport} onSaveProgram={detailSaveProgram}
+          <StageDetail stage={current || editing} members={members} canManage={canManage} tr={tr} staff={staffOf(current || editing)} busy={busy} onAddReport={detailAddReport} onRemoveReport={detailRemoveReport}
             onBack={() => setView("list")}
             onEdit={() => { setDraft(JSON.parse(JSON.stringify(editing))); setTab("program"); setView("edit") }}
             onDelete={() => setDeleteTarget(editing)} />
@@ -549,6 +546,42 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
               </div>
             </div>
 
+            {/* ─── STAY ─── */}
+            <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+              <div>
+                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.countryLabel}</label>
+                <input
+                  value={draft.country}
+                  onChange={e => setDraft({ ...draft, country: e.target.value })}
+                  placeholder={tr.stages.countryPlaceholder}
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+              </div>
+              <div>
+                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.stateLabel}</label>
+                <input
+                  value={draft.state}
+                  onChange={e => setDraft({ ...draft, state: e.target.value })}
+                  placeholder={tr.stages.statePlaceholder}
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+              </div>
+              <div>
+                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.hotelLabel}</label>
+                <input
+                  value={draft.hotel}
+                  onChange={e => setDraft({ ...draft, hotel: e.target.value })}
+                  placeholder={tr.stages.hotelPlaceholder}
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+              </div>
+              <div>
+                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.arrivalLabel}</label>
+                <DatePicker variant="stage" value={draft.arrivalDate} onChange={v => setDraft({ ...draft, arrivalDate: v })} placeholder={tr.stages.arrivalLabel}/>
+              </div>
+              <div>
+                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.departureLabel}</label>
+                <DatePicker variant="stage" value={draft.departureDate} onChange={v => setDraft({ ...draft, departureDate: v })} placeholder={tr.stages.departureLabel}/>
+              </div>
+            </div>
+
             {/* ─── TABS ─── */}
             <div className="mt-6 flex gap-1.5 flex-wrap">
               {([["program",tr.stages.programTab],["players",tr.stages.callupsTab],["staff",tr.common.staff],["report",tr.stages.reportPdfTab],["photos",tr.stages.photosTab]] as [TabKey,string][]).map(([k,label]) => (
@@ -559,11 +592,11 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             {/* ─── TAB CONTENT ─── */}
             <div className="mt-5">
               {tab === "program" && (
-                <ProgramTab draft={draft} setDraft={setDraft} tr={tr} members={members}/>
+                <ProgramTab draft={draft} setDraft={setDraft} tr={tr}/>
               )}
 
               {tab === "players" && (
-                <PlayersTab travel={travel} otherCamps={stages} all={allCandidates} draft={draft} setDraft={setDraft} members={availablePlayers.length ? availablePlayers : allCandidates.filter(m => (m.role||'').toUpperCase()==='PLAYERS')} tr={tr}/>
+                <PlayersTab otherCamps={stages} all={allCandidates} draft={draft} setDraft={setDraft} members={availablePlayers.length ? availablePlayers : allCandidates.filter(m => (m.role||'').toUpperCase()==='PLAYERS')} tr={tr}/>
               )}
 
               {tab === "staff" && (
@@ -622,8 +655,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
   )
 }
 
-function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, staff: staffOpts, busy, onAddReport, onRemoveReport, onSaveProgram, travel }: {
-  travel?: Props["travel"]
+function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, staff: staffOpts, busy, onAddReport, onRemoveReport }: {
   stage: Stage
   members: any[]
   canManage: boolean
@@ -631,7 +663,6 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
   busy: boolean
   onAddReport: (f: File, byId: string) => Promise<void>
   onRemoveReport: (id: string) => Promise<void>
-  onSaveProgram: (program: Stage["program"]) => Promise<void>
   onBack: () => void
   onEdit: () => void
   onDelete?: () => void
@@ -673,43 +704,17 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
 
   const reportCount = (stage.reports || []).length + (stage.reportUrl ? 1 : 0)
   const cover = (stage.images || [])[0]
-  const takenSessionsCount = (stage.program || []).filter(p => (p.attendance || []).length > 0).length
   const sections: [string, string, number][] = [
     ["program", tr.stages.programTab, sessions],
-    ["attendance", cs("attendance"), takenSessionsCount],
     ["players", tr.stages.playersLabel, players.length],
     ["staff", tr.common.staff, staff.length],
+    ["stay", tr.stages.stayTitle, [stage.country, stage.state, stage.hotel, stage.arrivalDate, stage.departureDate].filter(x => x.trim()).length],
     ["report", tr.stages.report, reportCount],
     ["photos", tr.stages.photosTab, photos],
-    ...((travel && stage.id != null) ? [["travel", tr.travel.tripTitle, 0] as [string, string, number]] : []),
   ]
   const [active, setActive] = useState("program")
   const jump = (k: string) => { setActive(k); document.getElementById("sec-" + k)?.scrollIntoView({ behavior: "smooth", block: "start" }) }
 
-  // Attendance: a local copy of the programme so ticks feel instant, saved a moment after the last tap.
-  const [prog, setProg] = useState<Stage["program"]>(stage.program || [])
-  const dirty = useRef(false)
-  const saveTimer = useRef<any>(null)
-  const progKey = JSON.stringify(stage.program || [])
-  useEffect(() => { if (!dirty.current) setProg(JSON.parse(progKey)) }, [progKey])
-  const toggleAtt = (si: number, memberId: number) => {
-    if (!canManage) return
-    dirty.current = true
-    setProg(cur => {
-      const next = (cur || []).map((p, j) => {
-        if (j !== si) return p
-        const a = p.attendance || []
-        return { ...p, attendance: a.includes(memberId) ? a.filter(x => x !== memberId) : [...a, memberId] }
-      })
-      clearTimeout(saveTimer.current)
-      saveTimer.current = setTimeout(async () => { await onSaveProgram(next); dirty.current = false }, 900)
-      return next
-    })
-  }
-  const takenSessions = (prog || []).filter(p => (p.attendance || []).length > 0)
-  const attRate = (players.length && takenSessions.length)
-    ? Math.round(100 * takenSessions.reduce((n, p) => n + (p.attendance || []).filter(id => players.includes(id)).length, 0) / (takenSessions.length * players.length))
-    : null
   const staffWithReport = new Set((stage.reports || []).map(r => r.staffId).filter(x => x != null))
   const waitingStaff = staffOpts.filter(x => !staffWithReport.has(x.id))
 
@@ -752,7 +757,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
               {[
                 { label: tr.stages.playersLabel, value: String(players.length) },
                 { label: tr.common.staff, value: String(staff.length) },
-                { label: cs("attendance"), value: attRate === null ? "—" : attRate + "%" },
+                { label: tr.stages.programTab, value: String(sessions) },
                 { label: cs("reportsInShort"), value: staff.length ? `${staff.length - waitingStaff.length}/${staff.length}` : String(reportCount) },
               ].map(x => (
                 <div key={x.label} className="rounded-2xl bg-[#0b1322]/70 border border-white/10 px-4 py-3 text-center min-w-[74px]">
@@ -790,7 +795,6 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
               {groupedDays.map((g, gi) => {
                 const dayDate = stage.startDate ? new Date(new Date(stage.startDate + "T00:00:00").getTime() + gi * 86400000).toISOString().slice(0, 10) : ""
                 const isToday = dayDate === new Date().toISOString().slice(0, 10)
-                const marks = g.items.map(it => (it.attendance || []).length).filter(n => n > 0)
                 return (
                   <div key={gi} className={`rounded-2xl p-4 ${isToday ? "bg-[#E30613] text-white" : "bg-[var(--c-panel3)]/55 border border-[rgba(var(--line-rgb),.14)]"}`}>
                     <p className={`text-[9px] font-black uppercase tracking-widest ${isToday ? "text-white" : "text-[var(--acc-gold)]"}`}>{g.label}{isToday ? " · " + tr.stages.liveStatus : ""}</p>
@@ -802,7 +806,6 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
                         </div>
                       ))}
                     </div>
-                    {marks.length > 0 && <p className={`mt-3 text-[8px] font-black uppercase tracking-wider ${isToday ? "text-white" : "text-emerald-500"}`}>{Math.max(...marks)} {tr.stages.presentCount}</p>}
                   </div>
                 )
               })}
@@ -810,54 +813,23 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
           )}
         </section>
 
-        {/* ── ATTENDANCE ── */}
-        <section id="sec-attendance" className="scroll-mt-32">
-          <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{cs("attendance")}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/>{canManage && <span className="text-[8px] font-bold normal-case tracking-normal not-italic text-[var(--c-textDim)]">{cs("tapDot")}</span>}</h3>
-          {(prog || []).length === 0 || players.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
-              <Users size={28} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{cs("addSessions")}</p>
-            </div>
-          ) : (
-            <div className="rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel2)]/40 overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-[rgba(var(--line-rgb),.14)]">
-                    <th className="sticky left-0 z-10 bg-[var(--c-panel2)] px-4 py-3 text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] min-w-[190px]">{cs("player")}</th>
-                    {(prog || []).map((p, si) => (
-                      <th key={si} className="px-2 py-3 text-center text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] min-w-[64px]">
-                        <div>{p.day || "—"}</div><div className="font-bold normal-case tracking-normal opacity-70">{p.time || ""}</div>
-                      </th>
-                    ))}
-                    <th className="px-3 py-3 text-center text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] min-w-[64px]">{cs("rate")}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {players.map(id => {
-                    const m: any = memberById(id)
-                    const got = takenSessions.filter(p => (p.attendance || []).includes(id)).length
-                    const rate = takenSessions.length ? Math.round(100 * got / takenSessions.length) : null
-                    return (
-                      <tr key={id} className="border-b border-[rgba(var(--line-rgb),.07)] last:border-0">
-                        <td className="sticky left-0 z-10 bg-[var(--c-panel2)] px-4 py-2 text-[10px] font-black uppercase text-[var(--c-text)] whitespace-nowrap">{m?.name || `#${id}`}</td>
-                        {(prog || []).map((p, si) => {
-                          const on = (p.attendance || []).includes(id)
-                          const taken = (p.attendance || []).length > 0
-                          return (
-                            <td key={si} className="px-2 py-2 text-center">
-                              <button disabled={!canManage} onClick={() => toggleAtt(si, id)} aria-label={`${m?.name || id} ${on ? "present" : "absent"}`}
-                                className={`w-[18px] h-[18px] rounded-full align-middle transition-all ${on ? "bg-emerald-500" : taken ? "bg-[#E30613]" : "border-2 border-[rgba(var(--line-rgb),.35)]"} ${canManage ? "hover:scale-125 cursor-pointer" : "cursor-default"}`}/>
-                            </td>
-                          )
-                        })}
-                        <td className={`px-3 py-2 text-center text-[10px] font-black ${rate === null ? "text-[var(--c-textDim)]" : rate >= 85 ? "text-emerald-500" : rate >= 60 ? "text-[var(--acc-gold)]" : "text-[var(--acc-red)]"}`}>{rate === null ? "—" : rate + "%"}</td>
-                      </tr>
-                    )
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+        {/* ── STAY ── */}
+        <section id="sec-stay" className="scroll-mt-32">
+          <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{tr.stages.stayTitle}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+            {[
+              { label: tr.stages.countryLabel, value: stage.country },
+              { label: tr.stages.stateLabel, value: stage.state },
+              { label: tr.stages.hotelLabel, value: stage.hotel },
+              { label: tr.stages.arrivalLabel, value: fmtDate(stage.arrivalDate) },
+              { label: tr.stages.departureLabel, value: fmtDate(stage.departureDate) },
+            ].map(x => (
+              <div key={x.label} className="rounded-2xl bg-[var(--c-panel3)]/55 border border-[rgba(var(--line-rgb),.14)] p-4">
+                <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{x.label}</p>
+                <p className="mt-1.5 text-[12px] font-black uppercase text-[var(--c-text)] truncate">{x.value || "—"}</p>
+              </div>
+            ))}
+          </div>
         </section>
 
         {/* ── JOUEURS ── */}
@@ -936,16 +908,6 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
           <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{cs("reports")}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
           <ReportsPanel reports={stage.reports || []} legacy={stage.reportUrl ? { url: stage.reportUrl, name: stage.reportName } : null} staff={staffOpts} waiting={waitingStaff} canManage={canManage} busy={busy} onAdd={onAddReport} onRemove={onRemoveReport}/>
         </section>
-
-        {/* ── TRAVEL ── */}
-        {travel && stage.id != null && (
-          <section id="sec-travel" className="scroll-mt-32">
-            <h3 className="mb-5 flex items-center gap-3 text-[18px] font-black italic uppercase tracking-tight text-[var(--c-text)]">{tr.travel.tripTitle}<span className="flex-1 h-px bg-[rgba(var(--line-rgb),.14)]"/></h3>
-            <TripPanel type="camp" eventId={stage.id} startIso={stage.startDate} endIso={stage.endDate}
-              people={[...players, ...staff].map(id => memberById(id)).filter(Boolean).map((m: any) => ({ id: m.id, name: m.name }))}
-              canManage={travel.canManage} expiries={travel.expiries} />
-          </section>
-        )}
 
         {/* ── PHOTOS ── */}
         <section id="sec-photos" className="scroll-mt-32">
@@ -1075,27 +1037,51 @@ function ReportsPanel({ reports, legacy, staff, waiting, canManage, edit, busy, 
 }
 
 // ── Programme editor ──
-function ProgramTab({ draft, setDraft, tr, members }: { draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; tr: any; members: any[] }) {
+function ProgramTab({ draft, setDraft, tr }: { draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; tr: any }) {
+  const cs = useCS()
   const items = draft.program || []
-  const [openAttendance, setOpenAttendance] = useState<number | null>(null)
-  const add = () => setDraft(d => ({ ...d, program: [...(d.program || []), { day: "", time: "", activity: "", details: "", attendance: [] }] }))
+  const [importing, setImporting] = useState(false)
+  const [importMsg, setImportMsg] = useState<{ ok: boolean; text: string } | null>(null)
+  const add = () => setDraft(d => ({ ...d, program: [...(d.program || []), { day: "", time: "", activity: "", details: "" }] }))
   const upd = (i: number, k: string, v: string) => setDraft(d => ({ ...d, program: (d.program || []).map((p, j) => j === i ? { ...p, [k]: v } : p) }))
   const del = (i: number) => setDraft(d => ({ ...d, program: (d.program || []).filter((_, j) => j !== i) }))
-  const toggleAttendee = (i: number, memberId: number) => setDraft(d => ({
-    ...d,
-    program: (d.program || []).map((p, j) => {
-      if (j !== i) return p
-      const cur = p.attendance || []
-      return { ...p, attendance: cur.includes(memberId) ? cur.filter(x => x !== memberId) : [...cur, memberId] }
-    })
-  }))
-  const calledUp = (draft.players || []).map(id => members.find(m => m.id === id)).filter(Boolean)
+
+  // AI import: upload a program file, the model reads it and returns timed sessions.
+  const importProgram = async (f: File) => {
+    setImporting(true); setImportMsg(null)
+    try {
+      const { data: sess } = await supabase.auth.getSession()
+      const token = sess?.session?.access_token
+      const fd = new FormData(); fd.append('file', f, f.name)
+      const r = await fetch('/api/parse-program', { method: 'POST', body: fd, headers: token ? { Authorization: `Bearer ${token}` } : {} })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) { setImportMsg({ ok: false, text: d.error || cs("readFail") }); return }
+      const sessions = Array.isArray(d.sessions) ? d.sessions : []
+      if (!sessions.length) { setImportMsg({ ok: false, text: cs("programImportNone") }); return }
+      setDraft(dr => ({ ...dr, program: [...(dr.program || []), ...sessions] }))
+      setImportMsg({ ok: true, text: cs("programImportOk", { n: sessions.length }) })
+    } catch { setImportMsg({ ok: false, text: cs("readFail") }) }
+    finally { setImporting(false) }
+  }
+  const progDrop = useFileDrop(files => importProgram(files[0]), f => f.type.startsWith('image/') || f.type === 'application/pdf' || /\.docx?$/i.test(f.name))
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
         <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.trainingProgramTitle}</p>
-        <button onClick={add} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--c-panel3)] border border-[#f6c744]/30 text-[var(--acc-gold)] text-[8px] font-black uppercase tracking-wider hover:border-[#f6c744]/60 transition-all"><Plus size={11}/> {tr.stages.addWord}</button>
+        <div className="flex gap-2">
+          <label {...progDrop.dropProps} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[8px] font-black uppercase tracking-wider cursor-pointer transition-all ${progDrop.isDragging ? 'border-[#E30613] bg-[#E30613]/20' : 'border-[#E30613]/40 bg-[#E30613]/10 text-[var(--acc-red)] hover:bg-[#E30613]/20'}`}>
+            <input type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) importProgram(f) }}/>
+            <FileText size={11}/> {importing ? cs("reading") : tr.stages.importProgramBtn}
+          </label>
+          <button onClick={add} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--c-panel3)] border border-[#f6c744]/30 text-[var(--acc-gold)] text-[8px] font-black uppercase tracking-wider hover:border-[#f6c744]/60 transition-all"><Plus size={11}/> {tr.stages.addWord}</button>
+        </div>
       </div>
+      {importMsg && (
+        <div className={`mb-3 rounded-xl border p-3 text-[10px] font-bold ${importMsg.ok ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-500' : 'border-[#E30613]/40 bg-[#E30613]/10 text-[var(--acc-red)]'}`}>
+          {importMsg.text}
+        </div>
+      )}
       {items.length === 0 && <p className="text-[10px] font-bold text-[var(--c-textDim)] py-8 text-center border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">{tr.stages.noSessionsAddFirst}</p>}
       <div className="space-y-2.5">
         {items.map((p, i) => (
@@ -1108,28 +1094,6 @@ function ProgramTab({ draft, setDraft, tr, members }: { draft: Stage; setDraft: 
                 <input value={p.details || ''} onChange={e => upd(i, 'details', e.target.value)} placeholder={tr.stages.detailsPlaceholder} className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
               </div>
               <button onClick={() => del(i)} className="p-2 rounded-lg text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><Trash2 size={14}/></button>
-            </div>
-            <div className="mt-2.5 pt-2.5 border-t border-[rgba(var(--line-rgb),.12)]">
-              <button onClick={() => setOpenAttendance(openAttendance === i ? null : i)} className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] hover:text-[var(--acc-gold)] transition-all">
-                <Users size={11}/> {tr.stages.attendanceLabel} — {(p.attendance || []).length}/{calledUp.length} {tr.stages.presentCount}
-              </button>
-              {openAttendance === i && (
-                calledUp.length === 0 ? (
-                  <p className="mt-2 text-[9px] font-bold text-[var(--c-textDim)]">{tr.stages.noCallupsForAttendance}</p>
-                ) : (
-                  <div className="mt-2 flex flex-wrap gap-1.5">
-                    {calledUp.map((m: any) => {
-                      const on = (p.attendance || []).includes(m.id)
-                      return (
-                        <button key={m.id} onClick={() => toggleAttendee(i, m.id)}
-                          className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-wider border transition-all ${on ? 'bg-emerald-500/15 border-emerald-500/40 text-emerald-500' : 'bg-[var(--c-panel3)] border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:border-[#f6c744]/40'}`}>
-                          {m.name}
-                        </button>
-                      )
-                    })}
-                  </div>
-                )
-              )}
             </div>
           </div>
         ))}
@@ -1196,7 +1160,7 @@ function CallupImport({ all, setDraft }: { all: any[]; setDraft: React.Dispatch<
 }
 
 // ── Convocation editor ──
-function PlayersTab({ all, draft, setDraft, members, tr, travel, otherCamps }: { travel?: Props["travel"]; otherCamps?: Stage[]; all: any[]; draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[]; tr: any }) {
+function PlayersTab({ all, draft, setDraft, members, tr, otherCamps }: { otherCamps?: Stage[]; all: any[]; draft: Stage; setDraft: React.Dispatch<React.SetStateAction<Stage>>; members: any[]; tr: any }) {
   const [q, setQ] = useState("")
   const list = draft.players || []
   const pool = members
@@ -1205,7 +1169,7 @@ function PlayersTab({ all, draft, setDraft, members, tr, travel, otherCamps }: {
     .filter(m => !q.trim() || m.name.toLowerCase().includes(q.toLowerCase()))
     .sort((a, b) => (a.name || '').localeCompare(b.name || ''))
   // Problems worth knowing about before calling someone up: over the category's age limit,
-  // no birthdate for a youth category, or a passport that won't cover the trip.
+  // no birthdate for a youth category, or a camp date clash.
   const warnings = (m: any): string[] => {
     if (!m) return []
     const out: string[] = []
@@ -1213,10 +1177,6 @@ function PlayersTab({ all, draft, setDraft, members, tr, travel, otherCamps }: {
     const e = eligibilityFor(m.birthdate, draft.teamCategory, year)
     if (e.status === 'over') out.push(tr.travel.warnOverAge)
     if (e.status === 'unknown') out.push(tr.travel.warnNoBirthdate)
-    if (travel?.expiries) {
-      const ps = passportStatus(travel.expiries[m.id], draft.endDate || draft.startDate)
-      if (ps.status === 'expired' || ps.status === 'short') out.push(tr.travel.warnPassport)
-    }
     const clash = clashingCamps(draft, otherCamps || [], m.id)
     if (clash.length) out.push(tr.travel.warnClash.replace('{name}', clash.map(c => c.name || '—').join(', ')))
     return out
