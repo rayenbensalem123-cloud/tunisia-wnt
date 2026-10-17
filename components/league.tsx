@@ -58,6 +58,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const [teamQuery, setTeamQuery] = useState('')
   const [playerQuery, setPlayerQuery] = useState('')
   const [posFilter, setPosFilter] = useState<string>('')
+  const [sortBy, setSortBy] = useState<'name' | 'size'>('name')
   const [teamOpen, setTeamOpen] = useState(false)
   const [logins, setLogins] = useState<Record<number, string>>({})
   const [loginOpen, setLoginOpen] = useState(false)
@@ -90,7 +91,11 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
     [league, selTeamId],
   )
   const q = (s: string) => s.trim().toLowerCase()
-  const visibleTeams = useMemo(() => teams.filter(x => x.name.toLowerCase().includes(q(teamQuery))), [teams, teamQuery])
+  const visibleTeams = useMemo(() => {
+    const list = teams.filter(x => x.name.toLowerCase().includes(q(teamQuery)))
+    const size = (id: number) => league.filter(m => m.leagueTeamId === id).length
+    return list.sort((a, b) => sortBy === 'size' ? size(b.id) - size(a.id) || a.name.localeCompare(b.name) : a.name.localeCompare(b.name))
+  }, [teams, teamQuery, sortBy, league])
   const visiblePlayers = useMemo(() => players.filter(m => (!posFilter || m.position === posFilter) && String(m.name || '').toLowerCase().includes(q(playerQuery))), [players, playerQuery, posFilter])
   const posCount = (p: string) => players.filter(m => m.position === p).length
 
@@ -257,12 +262,38 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
       {/* ── ADMIN: grid of clubs ── */}
       {showTeamGrid && (
         <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+          <section className="relative mb-8 overflow-hidden rounded-3xl border border-[rgba(var(--line-rgb),.22)] bg-gradient-to-br from-[#16305c] via-[#0f2146] to-[#2a0d1d] p-6 sm:p-8 shadow-[0_16px_40px_rgba(2,8,23,.35)]">
+            <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#ff2747] to-[#a30420]" />
+            <span aria-hidden className="pointer-events-none absolute -top-16 -right-10 rtl:-left-10 rtl:right-auto h-64 w-64 rounded-full bg-[#E30613]/20 blur-3xl" />
+            <div className="relative flex flex-wrap items-end justify-between gap-6">
+              <div className="min-w-0">
+                <h2 className="text-3xl sm:text-5xl font-black italic uppercase tracking-tight leading-none text-white">{t.title}</h2>
+                <p className="mt-2 text-sm font-semibold text-white/60">{t.sub}</p>
+              </div>
+              <dl className="flex items-stretch gap-3">
+                <div className="min-w-[88px] rounded-2xl bg-black/25 px-4 py-3 ring-1 ring-inset ring-white/10 text-center">
+                  <dd className="text-3xl font-black tabular-nums text-white leading-none">{teams.length}</dd>
+                  <dt className="mt-1.5 text-[9px] font-black uppercase tracking-[.22em] text-[#f6c744]">{t.teams}</dt>
+                </div>
+                <div className="min-w-[88px] rounded-2xl bg-black/25 px-4 py-3 ring-1 ring-inset ring-white/10 text-center">
+                  <dd className="text-3xl font-black tabular-nums text-white leading-none">{league.length}</dd>
+                  <dt className="mt-1.5 text-[9px] font-black uppercase tracking-[.22em] text-[#f6c744]">{t.playersWord}</dt>
+                </div>
+              </dl>
+            </div>
+          </section>
           <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
-            <p className="text-[9px] font-black uppercase tracking-[.4em] text-[#f6c744]">{t.teams} · {visibleTeams.length}/{teams.length}</p>
-            <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-2" role="group" aria-label={t.sortBy}>
+              {([['name', t.sortName], ['size', t.sortSize]] as const).map(([k, lab]) => (
+                <button key={k} onClick={() => setSortBy(k)} aria-pressed={sortBy === k}
+                  className={`px-3.5 py-2 rounded-full text-[10px] font-black uppercase tracking-[.16em] transition-all ring-1 ring-inset ${sortBy === k ? 'bg-[#f6c744] text-[#0c1f3d] ring-[#f6c744]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>{lab}</button>
+              ))}
+              {teamQuery && <span className="ml-1 text-[10px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)] tabular-nums">{visibleTeams.length}/{teams.length}</span>}
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               <input value={teamQuery} onChange={e => setTeamQuery(e.target.value)} placeholder={t.searchTeams}
-                className="w-52 px-3.5 py-2.5 rounded-xl bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.25)] text-[var(--c-text)] placeholder-[var(--c-textMid)] text-xs font-semibold outline-none focus:border-[#f6c744]/70" />
-              <button onClick={() => { setTeamErr(''); setTeamOpen(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Plus size={14} />{t.addTeam}</button>
+                className="min-w-0 flex-1 sm:flex-none sm:w-52 px-3.5 py-2.5 rounded-xl bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.25)] text-[var(--c-text)] placeholder-[var(--c-textMid)] text-xs font-semibold outline-none focus:border-[#f6c744]/70" />
+              <button onClick={() => { setTeamErr(''); setTeamOpen(true) }} className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Plus size={14} />{t.addTeam}</button>
             </div>
           </div>
           {loadedTeams && teams.length === 0 && (

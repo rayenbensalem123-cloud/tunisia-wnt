@@ -332,7 +332,7 @@ const t = {
       addPlayer: "Add player", editPlayer: "Edit player", edit: "Edit", confirmDeletePlayer: "Delete this player?",
       fullName: "Full name", position: "Position", age: "Age", birthdate: "Date of birth", jersey: "Jersey number", nationality: "Nationality",
       photo: "Photo", uploading: "Uploading…", uploadFailed: "Upload failed", save: "Save", cancel: "Cancel",
-      allPlayers: "All", createLogin: "Create login", loginLabel: "Login", searchTeams: "Search teams…", searchPlayers: "Search players…", noMatch: "No matches found.",
+      sortBy: "Sort by", sortName: "A–Z", sortSize: "Most players", allPlayers: "All", createLogin: "Create login", loginLabel: "Login", searchTeams: "Search teams…", searchPlayers: "Search players…", noMatch: "No matches found.",
       nameRequired: "Enter the player's name", birthdateFormat: "Date of birth must be DD/MM/YYYY", jerseyRange: "Jersey number must be 0 to 99",
     },
     emailModal: {
@@ -703,7 +703,7 @@ const t = {
       addPlayer: "Ajouter une joueuse", editPlayer: "Modifier la joueuse", edit: "Modifier", confirmDeletePlayer: "Supprimer cette joueuse ?",
       fullName: "Nom complet", position: "Poste", age: "Âge", birthdate: "Date de naissance", jersey: "Numéro de maillot", nationality: "Nationalité",
       photo: "Photo", uploading: "Envoi…", uploadFailed: "Échec de l'envoi", save: "Enregistrer", cancel: "Annuler",
-      allPlayers: "Toutes", createLogin: "Créer l'accès", loginLabel: "Accès", searchTeams: "Rechercher une équipe…", searchPlayers: "Rechercher une joueuse…", noMatch: "Aucun résultat.",
+      sortBy: "Trier par", sortName: "A–Z", sortSize: "Plus de joueuses", allPlayers: "Toutes", createLogin: "Créer l'accès", loginLabel: "Accès", searchTeams: "Rechercher une équipe…", searchPlayers: "Rechercher une joueuse…", noMatch: "Aucun résultat.",
       nameRequired: "Saisissez le nom de la joueuse", birthdateFormat: "La date de naissance doit être JJ/MM/AAAA", jerseyRange: "Le numéro doit être entre 0 et 99",
     },
     emailModal: {
@@ -1074,7 +1074,7 @@ const t = {
       addPlayer: "إضافة لاعبة", editPlayer: "تعديل اللاعبة", edit: "تعديل", confirmDeletePlayer: "حذف هذه اللاعبة؟",
       fullName: "الاسم الكامل", position: "المركز", age: "العمر", birthdate: "تاريخ الميلاد", jersey: "رقم القميص", nationality: "الجنسية",
       photo: "صورة", uploading: "جارٍ الرفع…", uploadFailed: "فشل الرفع", save: "حفظ", cancel: "إلغاء",
-      allPlayers: "الكل", createLogin: "إنشاء حساب", loginLabel: "الحساب", searchTeams: "ابحث عن فريق…", searchPlayers: "ابحث عن لاعبة…", noMatch: "لا توجد نتائج.",
+      sortBy: "ترتيب حسب", sortName: "أ–ي", sortSize: "الأكثر لاعبات", allPlayers: "الكل", createLogin: "إنشاء حساب", loginLabel: "الحساب", searchTeams: "ابحث عن فريق…", searchPlayers: "ابحث عن لاعبة…", noMatch: "لا توجد نتائج.",
       nameRequired: "أدخل اسم اللاعبة", birthdateFormat: "يجب أن يكون تاريخ الميلاد بصيغة يوم/شهر/سنة", jerseyRange: "يجب أن يكون الرقم بين 0 و99",
     },
     emailModal: {
