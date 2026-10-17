@@ -1368,6 +1368,13 @@ export default function EliteSquadApp() {
           const n = m.jerseyNumber != null && m.jerseyNumber !== "" ? Number(m.jerseyNumber) : autoN
           return(
             <div key={m.id} onClick={()=>selectMode?toggleSelect(m.id):setSelMember(m)} onPointerEnter={()=>prefetchPassport(m)} className={`group cursor-pointer relative animate-[fadeUp_0.5s_ease-out_both] ${selectMode?'select-none':''}`} style={{animationDelay:`${i*60}ms`}}>
+              {/* Logged-in player's own card: gold ring + MY CARD badge so she can spot it instantly */}
+              {user?.role==="player"&&!!user.memberId&&m.id===user.memberId&&(
+                <>
+                  <div className="absolute -inset-[3px] z-[5] rounded-[20px] pointer-events-none ring-1 ring-[#f6c744]/60 shadow-[0_0_24px_rgba(246,199,68,.25)] group-hover:ring-[#f6c744] group-hover:shadow-[0_0_34px_rgba(246,199,68,.4)] transition-all"/>
+                  <div className="absolute -top-2.5 right-3 z-20 px-2 py-0.5 rounded-full bg-[#f6c744] text-[#0b1322] text-[6px] font-black uppercase tracking-[.2em] shadow-lg shadow-[#f6c744]/30">MY CARD</div>
+                </>
+              )}
               {selectMode&&(
                 <div className={`absolute top-3 left-3 z-20 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedIds.includes(m.id)?'bg-[#e3062c] border-[#e3062c] text-white':'bg-[var(--c-bg)]/80 border-white/60 text-transparent'}`}>
                   <Check size={13}/>
@@ -1424,20 +1431,24 @@ export default function EliteSquadApp() {
       {selMember&&(()=>{
         const cs=getCardStatus(selMember)
         const isPlayer=selMember.role==="PLAYERS"
+        // A logged-in player viewing HER OWN card gets the special "My Card"
+        // treatment (gold crest accents). Teammates' and staff cards are unchanged.
+        const isOwnCard=user?.role==="player"&&!!user.memberId&&selMember.id===user.memberId
         const yc=selMember.yellowCards||0
         const rc=selMember.redCards||0
         const ringPct=Math.min(yc/YELLOW_SUSPENSION,1)
         const mcode = isPlayer ? ({GOALKEEPER:"GK",DEFENDER:"DEF",MIDFIELDER:"MID",FORWARD:"FWD"} as Record<string,string>)[selMember.position] || String(selMember.position).slice(0,3) : "STAFF"
         return(
           <div className="pm-backdrop" onClick={()=>setSelMember(null)}>
-            <div className="pm-panel pm-panel-lg" onClick={e=>e.stopPropagation()}>
+            <div className={`pm-panel pm-panel-lg ${isOwnCard?'ring-1 ring-[#f6c744]/40 shadow-[0_0_60px_rgba(246,199,68,.12)]':''}`} onClick={e=>e.stopPropagation()}>
 
               {/* Header */}
-              <div className="pm-head">
+              <div className="pm-head relative">
+                {isOwnCard&&<div className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#8f0319] via-[#E30613] to-[#f6c744]"/>}
                 <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="relative w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-deep)]">
+                  <div className={`relative w-16 h-16 shrink-0 rounded-lg overflow-hidden border ${isOwnCard?'border-[#f6c744]/50':'border-[rgba(var(--line-rgb),.2)]'} bg-[var(--c-deep)]`}>
                     {getImageSrc(selMember,imgUrls)?<img src={getImageSrc(selMember,imgUrls)} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} className="w-full h-full object-cover object-top" alt=""/>:<div className="w-full h-full flex items-center justify-center text-lg font-black text-[#e3062c]/40">{mcode}</div>}
-                    <div className="absolute inset-x-0 bottom-0 h-[3px] bg-[#e3062c]" />
+                    <div className={`absolute inset-x-0 bottom-0 h-[3px] ${isOwnCard?'bg-[#f6c744]':'bg-[#e3062c]'}`} />
                   </div>
                   {getImage2Src(selMember,imgUrls)&&getImageSrc(selMember,imgUrls)&&(
                     <div className="relative w-16 h-16 shrink-0 rounded-lg overflow-hidden border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-deep)]">
@@ -1447,10 +1458,11 @@ export default function EliteSquadApp() {
                   )}
                   <div className="min-w-0">
                     <p className="text-[9px] font-bold uppercase tracking-[.2em] text-[var(--c-textMid)] truncate">{catLabel(selMember.teamCategory)}{selMember.club?` · ${selMember.club}`:""}</p>
-                    <h2 className="mt-0.5 text-[22px] leading-[1.05] font-black uppercase tracking-tight text-[var(--c-text)] truncate">{titleCase(selMember.name)}</h2>
+                    <h2 className={`mt-0.5 text-[22px] leading-[1.05] font-black uppercase tracking-tight truncate ${isOwnCard?'text-transparent bg-clip-text bg-gradient-to-r from-[#f6c744] via-[#fff3c4] to-[#f6c744]':'text-[var(--c-text)]'}`}>{titleCase(selMember.name)}</h2>
                     <div className="mt-1.5 flex items-center gap-2">
-                      <span className="px-1.5 py-0.5 rounded-sm bg-[#e3062c] text-white text-[8px] font-black uppercase tracking-[.18em]">{mcode}</span>
+                      <span className={`px-1.5 py-0.5 rounded-sm text-white text-[8px] font-black uppercase tracking-[.18em] ${isOwnCard?'bg-[#f6c744] text-[#0b1322]':'bg-[#e3062c]'}`}>{mcode}</span>
                       <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{isPlayer?"TUNISIA WNT":"DELEGATION STAFF"}</span>
+                      {isOwnCard&&<span className="px-1.5 py-0.5 rounded-sm bg-[#e3062c] text-white text-[8px] font-black uppercase tracking-[.18em]">MY CARD</span>}
                     </div>
                   </div>
                 </div>
@@ -1462,13 +1474,13 @@ export default function EliteSquadApp() {
               </div>
 
               {/* Stat band */}
-              <div className={`grid ${isPlayer?'grid-cols-5':'grid-cols-4'} border-b border-[rgba(var(--line-rgb),.12)] bg-[var(--c-deep)] divide-x divide-[rgba(var(--line-rgb),.1)]`}>
+              <div className={`grid ${isPlayer?'grid-cols-5':'grid-cols-4'} border-b border-[rgba(var(--line-rgb),.12)] ${isOwnCard?'bg-[#f6c744]/[.05]':'bg-[var(--c-deep)]'} divide-x divide-[rgba(var(--line-rgb),.1)]`}>
                 <div className="py-3 px-1 text-center">
-                  <p className="text-lg font-black text-[var(--c-text)]">{calculateAge(selMember.birthdate)}</p>
+                  <p className={`text-lg font-black ${isOwnCard?'text-[#f6c744]':'text-[var(--c-text)]'}`}>{calculateAge(selMember.birthdate)}</p>
                   <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.age}</p>
                 </div>
                 {isPlayer&&<div className="py-3 px-1 text-center">
-                  <p className="text-lg font-black text-[var(--c-text)]">{selMember.natMatches||"—"}</p>
+                  <p className={`text-lg font-black ${isOwnCard?'text-[#f6c744]':'text-[var(--c-text)]'}`}>{selMember.natMatches||"—"}</p>
                   <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.caps}</p>
                 </div>}
                 {isPlayer&&<div className="py-3 px-1 text-center">
@@ -1476,11 +1488,11 @@ export default function EliteSquadApp() {
                   <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.goals}</p>
                 </div>}
                 {isPlayer&&<div className="py-3 px-1 text-center">
-                  <p className="text-lg font-black text-[var(--c-text)]">{selMember.height||"—"}</p>
+                  <p className={`text-lg font-black ${isOwnCard?'text-[#f6c744]':'text-[var(--c-text)]'}`}>{selMember.height||"—"}</p>
                   <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Height</p>
                 </div>}
                 {isPlayer&&<div className="py-3 px-1 text-center">
-                  <p className="text-lg font-black text-[var(--c-text)]">{selMember.foot||"R"}</p>
+                  <p className={`text-lg font-black ${isOwnCard?'text-[#f6c744]':'text-[var(--c-text)]'}`}>{selMember.foot||"R"}</p>
                   <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Foot</p>
                 </div>}
                 {!isPlayer&&<div className="py-3 px-1 text-center">

@@ -55,9 +55,23 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{
             __html: `
               if ("serviceWorker" in navigator) {
-                window.addEventListener("load", () => {
-                  navigator.serviceWorker.register("/sw.js");
-                });
+                var isDev = location.hostname.includes("localhost") || location.hostname.includes("127.0.0.1");
+                if (isDev) {
+                  // Dev: a leftover service worker from a previous session can keep
+                  // serving stale JS and mask live edits. Kick it out and wipe caches.
+                  navigator.serviceWorker.getRegistrations().then(function (regs) {
+                    regs.forEach(function (r) { r.unregister(); });
+                  });
+                  if (window.caches) {
+                    caches.keys().then(function (keys) {
+                      keys.forEach(function (k) { if (k.indexOf("tunisia-wnt") === 0) caches.delete(k); });
+                    });
+                  }
+                } else {
+                  window.addEventListener("load", () => {
+                    navigator.serviceWorker.register("/sw.js");
+                  });
+                }
               }
               (function(){var t=localStorage.getItem('ftf-theme')||'dark';document.documentElement.setAttribute('data-theme',t)})()
             `,

@@ -1,4 +1,4 @@
-const VERSION = 4
+const VERSION = 5
 const CACHE = `tunisia-wnt-v${VERSION}`
 const STATIC = ["/manifest.json", "/icon.svg", "/ftf-logo.png", "/icon-192.png", "/icon-512.png", "/icon-maskable-512.png"]
 
