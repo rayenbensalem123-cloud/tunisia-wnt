@@ -30,28 +30,23 @@ export function LeagueTeamCard({ name, logoSrc, count, playersWord, onOpen, chil
         <span aria-hidden className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#ff2747] to-[#a30420]" />
         <span aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_42%_at_50%_36%,rgba(255,255,255,.11),transparent_72%)]" />
 
-        {/* crest */}
-        <div className="relative flex flex-1 min-h-0 items-center justify-center px-6 pt-7 pb-2">
-          {logoSrc ? (
-            <img
-              src={logoSrc}
-              alt=""
-              className="max-h-full w-[68%] object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,.5)] motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-105"
-            />
-          ) : (
-            <span
-              aria-hidden
-              className="flex aspect-square w-[52%] items-center justify-center rounded-full bg-white/[.06] text-5xl font-black italic text-white/55 ring-1 ring-inset ring-white/20"
-            >
-              {name.slice(0, 1).toUpperCase()}
-            </span>
-          )}
+        {/* crest on a light plate, so dark or transparent logos stay readable on the navy card */}
+        <div className="relative flex flex-1 min-h-0 items-center justify-center px-6 pt-8 pb-2">
+          <span className="flex aspect-square w-[64%] shrink-0 items-center justify-center rounded-full bg-white shadow-[0_10px_24px_rgba(0,0,0,.45),0_0_0_5px_rgba(255,255,255,.08)] motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-105">
+            {logoSrc ? (
+              <img src={logoSrc} alt="" className="h-[70%] w-[70%] object-contain" />
+            ) : (
+              <span aria-hidden className="text-5xl font-black italic text-[#15294d]/70">
+                {name.slice(0, 1).toUpperCase()}
+              </span>
+            )}
+          </span>
         </div>
 
         {/* name + squad size */}
-        <div className="relative px-4 pb-4 pt-3 text-center">
+        <div className="relative px-4 pb-5 pt-3 text-center">
           <h2 className="text-[16px] sm:text-[18px] font-black uppercase leading-tight tracking-tight line-clamp-2 min-h-[2.2em] flex items-center justify-center">{name}</h2>
-          <p className="mt-1.5 text-[12px] font-semibold text-[#f6c744] tabular-nums">
+          <p className="mt-2 inline-block rounded-full bg-[#f6c744]/12 px-3 py-0.5 text-[12px] font-semibold text-[#f6c744] tabular-nums ring-1 ring-inset ring-[#f6c744]/25">
             {count} {playersWord}
           </p>
         </div>
