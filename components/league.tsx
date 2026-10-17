@@ -13,6 +13,7 @@ import { signedImageUrls, fetchLeagueTeams, createLeagueTeam, deleteLeagueTeam, 
 import { PlayerCard } from '@/components/player-card'
 import { CvImport } from '@/components/cv-import'
 import { LeagueTeamCard } from '@/components/league-team-card'
+import { LeagueTeamHero } from '@/components/league-team-hero'
 import ThemeToggle from '@/components/theme-toggle'
 import LanguageToggle from '@/components/language-toggle'
 
@@ -56,6 +57,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const [uploading, setUploading] = useState(false)
   const [teamQuery, setTeamQuery] = useState('')
   const [playerQuery, setPlayerQuery] = useState('')
+  const [posFilter, setPosFilter] = useState<string>('')
   const [teamOpen, setTeamOpen] = useState(false)
   const [logins, setLogins] = useState<Record<number, string>>({})
   const [loginOpen, setLoginOpen] = useState(false)
@@ -89,7 +91,8 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   )
   const q = (s: string) => s.trim().toLowerCase()
   const visibleTeams = useMemo(() => teams.filter(x => x.name.toLowerCase().includes(q(teamQuery))), [teams, teamQuery])
-  const visiblePlayers = useMemo(() => players.filter(m => String(m.name || '').toLowerCase().includes(q(playerQuery))), [players, playerQuery])
+  const visiblePlayers = useMemo(() => players.filter(m => (!posFilter || m.position === posFilter) && String(m.name || '').toLowerCase().includes(q(playerQuery))), [players, playerQuery, posFilter])
+  const posCount = (p: string) => players.filter(m => m.position === p).length
 
   // Private-bucket images (logos and portraits) need short-lived signed URLs.
   useEffect(() => {
@@ -219,10 +222,10 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const label = 'mb-1 block text-[9px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]'
 
   const goBack = () => {
-    if (mode === 'admin' && selTeamId) { setSelTeamId(null); setSelMember(null); setPlayerQuery(''); return }
+    if (mode === 'admin' && selTeamId) { setSelTeamId(null); setSelMember(null); setPlayerQuery(''); setPosFilter(''); return }
     onBack?.()
   }
-  const openTeam = (id: number) => { setSelTeamId(id); setPlayerQuery('') }
+  const openTeam = (id: number) => { setSelTeamId(id); setPlayerQuery(''); setPosFilter('') }
   const showTeamGrid = mode === 'admin' && !selTeamId
 
   return (
@@ -290,18 +293,26 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
           )}
           {team && (
             <>
-              <div className="flex items-center justify-between gap-3 mb-8">
-                <div className="flex items-center gap-4 min-w-0">
-                  {logoUrl(team) && <img src={logoUrl(team)} alt="" className="h-14 w-14 object-contain shrink-0" />}
-                  {mode === 'admin' && (logins[team.id]
-                    ? <span className="px-3 py-2 rounded-lg border border-[rgba(var(--line-rgb),.25)] text-[9px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)] shrink-0">{t.loginLabel}: {logins[team.id]}</span>
-                    : <button onClick={() => { setLoginErr(''); setLoginOpen(true) }} className="px-3 py-2 rounded-lg border border-[#f6c744]/50 text-[9px] font-black uppercase tracking-[.2em] text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all shrink-0">{t.createLogin}</button>)}
-                  {mode === 'admin' && <button onClick={() => pickLogoFor(team.id)} title={t.changeLogo} className="p-2 rounded-lg border border-[rgba(var(--line-rgb),.25)] hover:border-[#f6c744]/60 shrink-0"><Camera size={14} /></button>}
-                  <p className="text-[9px] font-black uppercase tracking-[.4em] text-[#f6c744]">{players.length} {t.playersWord}</p>
+              <LeagueTeamHero name={team.name} logoSrc={logoUrl(team)} count={players.length} playersWord={t.playersWord}>
+                {mode === 'admin' && (logins[team.id]
+                  ? <span className="px-3 py-2 rounded-lg bg-black/25 ring-1 ring-inset ring-white/15 text-[10px] font-black uppercase tracking-[.18em] text-white/80">{t.loginLabel}: {logins[team.id]}</span>
+                  : <button onClick={() => { setLoginErr(''); setLoginOpen(true) }} className="px-3 py-2 rounded-lg bg-[#f6c744] text-[#0c1f3d] text-[10px] font-black uppercase tracking-[.18em] hover:bg-white transition-all">{t.createLogin}</button>)}
+                {mode === 'admin' && <button onClick={() => pickLogoFor(team.id)} title={t.changeLogo} aria-label={t.changeLogo} className="p-2 rounded-lg bg-black/25 ring-1 ring-inset ring-white/15 text-white/85 hover:bg-white/25 transition-all"><Camera size={14} /></button>}
+              </LeagueTeamHero>
+              <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
+                <div className="flex items-center gap-2 flex-wrap" role="group" aria-label={t.position}>
+                  {([['', t.allPlayers, players.length], ...(['GOALKEEPER', 'DEFENDER', 'MIDFIELDER', 'FORWARD'] as const).map(p => [p, ({ GOALKEEPER: 'GK', DEFENDER: 'DEF', MIDFIELDER: 'MID', FORWARD: 'FWD' })[p], posCount(p)] as [string, string, number])] as [string, string, number][])
+                    .filter(([p, , n]) => p === '' || n > 0)
+                    .map(([p, lab, n]) => (
+                      <button key={p || 'all'} onClick={() => setPosFilter(p)} aria-pressed={posFilter === p}
+                        className={`px-3.5 py-2 rounded-full text-[10px] font-black uppercase tracking-[.16em] transition-all ring-1 ring-inset ${posFilter === p ? 'bg-[#f6c744] text-[#0c1f3d] ring-[#f6c744]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>
+                        {lab} <span className="opacity-60 tabular-nums">{n}</span>
+                      </button>
+                    ))}
                 </div>
-                <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                <div className="flex items-center gap-2 w-full sm:w-auto sm:shrink-0 justify-end">
                   <input value={playerQuery} onChange={e => setPlayerQuery(e.target.value)} placeholder={t.searchPlayers}
-                    className="w-44 sm:w-52 px-3.5 py-2.5 rounded-xl bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.25)] text-[var(--c-text)] placeholder-[var(--c-textMid)] text-xs font-semibold outline-none focus:border-[#f6c744]/70" />
+                    className="min-w-0 flex-1 sm:flex-none sm:w-52 px-3.5 py-2.5 rounded-xl bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.25)] text-[var(--c-text)] placeholder-[var(--c-textMid)] text-xs font-semibold outline-none focus:border-[#f6c744]/70" />
                   <button onClick={openAdd} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Plus size={14} />{t.addPlayer}</button>
                 </div>
               </div>

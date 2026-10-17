@@ -4,9 +4,9 @@
 // logo get a colour derived from the name and an initials shield. Name and player count only.
 import { useEffect, useState, type ReactNode } from 'react'
 
-type Tint = { h: number; s: number }
+export type Tint = { h: number; s: number }
 
-const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
+export const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
   "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>",
 )}")`
 
@@ -17,7 +17,7 @@ function hueOf(name: string) {
 }
 
 const GENERIC = new Set(['as', 'asf', 'ans', 'us', 'ms', 'psf', 'cs', 'es', 'fc', 'sc', 'ca', 'club', 'de', 'la', 'le', 'el', 'al', "l'"])
-function initialsOf(name: string) {
+export function initialsOf(name: string) {
   const all = name.replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean)
   const w = all.filter((x) => !GENERIC.has(x.toLowerCase()) && x.length > 1)
   const use = w.length ? w : all
@@ -56,7 +56,7 @@ function dominantTint(img: HTMLImageElement): Tint | null {
   return { h: best * 10 + 5, s: Math.min(0.75, Math.max(0.4, sat[best] / bins[best])) }
 }
 
-function useTint(logoSrc: string, name: string): Tint | 'neutral' {
+export function useTint(logoSrc: string, name: string): Tint | 'neutral' {
   const fallback: Tint = { h: hueOf(name), s: 0.55 }
   const [tint, setTint] = useState<Tint | 'neutral'>(fallback)
   useEffect(() => {
