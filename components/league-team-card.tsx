@@ -6,6 +6,10 @@ import { useEffect, useState, type ReactNode } from 'react'
 
 type Tint = { h: number; s: number }
 
+const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
+  "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>",
+)}")`
+
 function hueOf(name: string) {
   let h = 0
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360
@@ -102,6 +106,11 @@ export function LeagueTeamCard({ name, logoSrc, count, playersWord, onOpen, chil
       <button
         type="button"
         onClick={onOpen}
+        onPointerMove={(e) => {
+          const r = e.currentTarget.getBoundingClientRect()
+          e.currentTarget.style.setProperty('--mx', `${e.clientX - r.left}px`)
+          e.currentTarget.style.setProperty('--my', `${e.clientY - r.top}px`)
+        }}
         aria-label={`${name}, ${count} ${playersWord}`}
         style={{ background: bg }}
         className="relative flex w-full aspect-[4/5] sm:aspect-square flex-col overflow-hidden rounded-2xl text-left text-white
@@ -114,6 +123,10 @@ export function LeagueTeamCard({ name, logoSrc, count, playersWord, onOpen, chil
         <span aria-hidden className="pointer-events-none absolute -top-6 -left-3 rtl:-right-3 rtl:left-auto select-none text-[150px] leading-none font-black text-white/[.09]">
           {initialsOf(name).slice(0, 2)}
         </span>
+        {/* fine grain so the colour wash feels printed, not flat */}
+        <span aria-hidden className="pointer-events-none absolute inset-0 opacity-[.22] mix-blend-overlay" style={{ backgroundImage: GRAIN }} />
+        {/* light that follows the pointer (hover devices only) */}
+        <span aria-hidden className="pointer-events-none absolute inset-0 opacity-0 motion-safe:transition-opacity motion-safe:duration-300 [@media(hover:hover)]:group-hover:opacity-100" style={{ background: 'radial-gradient(220px circle at var(--mx, 50%) var(--my, 30%), rgba(255,255,255,.22), transparent 65%)' }} />
         {/* soft light behind the crest */}
         <span aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(55%_55%_at_50%_34%,rgba(255,255,255,.16),transparent_70%)]" />
 
