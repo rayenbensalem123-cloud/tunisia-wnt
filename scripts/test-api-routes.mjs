@@ -337,6 +337,16 @@ async function run() {
       assert.equal((await leagueDELETE(leagueReq('DELETE', { id: 'abc' }))).status, 400)
     } finally { restoreFetch() }
   })
+  await t('league-teams: adding a login to an existing team validates input and is admin only', async () => {
+    installAuthStub({ role: 'club', permissions: {}, leagueTeamId: 7 })
+    try { assert.equal((await leaguePOST(leagueReq('POST', { teamId: 7, username: 'newlogin', password: 'secret1' }))).status, 403) } finally { restoreFetch() }
+    installAuthStub({ role: 'admin', permissions: {} })
+    try {
+      assert.equal((await leaguePOST(leagueReq('POST', { teamId: 'abc', username: 'newlogin', password: 'secret1' }))).status, 400)
+      assert.equal((await leaguePOST(leagueReq('POST', { teamId: 7, username: 'x', password: 'secret1' }))).status, 400)
+      assert.equal((await leaguePOST(leagueReq('POST', { teamId: 7, username: 'newlogin', password: '123' }))).status, 400)
+    } finally { restoreFetch() }
+  })
   await t('upload league: a club always lands in its OWN team folder', async () => {
     installAuthStub({ role: 'club', permissions: {}, leagueTeamId: 7 })
     try {

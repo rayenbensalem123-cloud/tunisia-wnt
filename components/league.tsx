@@ -9,7 +9,7 @@ import { ChevronLeft, LogOut, Plus, Trash2, X, Users, Pencil, Camera } from 'luc
 import { supabase } from '@/lib/supabase'
 import { useTranslate } from '@/lib/language-context'
 import { authHeaders } from '@/lib/auth-headers'
-import { signedImageUrls, fetchLeagueTeams, createLeagueTeam, deleteLeagueTeam, type LeagueTeam } from '@/lib/app-data'
+import { signedImageUrls, fetchLeagueTeams, createLeagueTeam, deleteLeagueTeam, createClubLogin, fetchClubLogins, type LeagueTeam } from '@/lib/app-data'
 import { PlayerCard } from '@/components/player-card'
 import { CvImport } from '@/components/cv-import'
 import ThemeToggle from '@/components/theme-toggle'
@@ -56,6 +56,11 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const [teamQuery, setTeamQuery] = useState('')
   const [playerQuery, setPlayerQuery] = useState('')
   const [teamOpen, setTeamOpen] = useState(false)
+  const [logins, setLogins] = useState<Record<number, string>>({})
+  const [loginOpen, setLoginOpen] = useState(false)
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' })
+  const [loginErr, setLoginErr] = useState('')
+  const [loginBusy, setLoginBusy] = useState(false)
   const [teamForm, setTeamForm] = useState({ name: '', username: '', password: '', logoPath: '' })
   const [teamErr, setTeamErr] = useState('')
   const [teamBusy, setTeamBusy] = useState(false)
@@ -65,7 +70,10 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const logoTarget = useRef<number | null>(null)
   const [logoBusy, setLogoBusy] = useState<number | null>(null)
 
-  const reloadTeams = async () => { setTeams(await fetchLeagueTeams()); setLoadedTeams(true) }
+  const reloadTeams = async () => {
+    setTeams(await fetchLeagueTeams()); setLoadedTeams(true)
+    if (mode === 'admin') setLogins(await fetchClubLogins())
+  }
   useEffect(() => { void reloadTeams() }, [])
 
   const league = useMemo(() => members.filter(m => m.teamCategory === 'LIGUE' && m.role === 'PLAYERS'), [members])
@@ -187,6 +195,16 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
     await reloadTeams()
     setLogoBusy(null)
   }
+  const submitLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!team) return
+    setLoginBusy(true); setLoginErr('')
+    const r = await createClubLogin({ teamId: team.id, username: loginForm.username.trim().toLowerCase(), password: loginForm.password })
+    setLoginBusy(false)
+    if (r.error) { setLoginErr(r.error); return }
+    setLoginOpen(false); setLoginForm({ username: '', password: '' })
+    await reloadTeams()
+  }
   const removeTeam = async (x: LeagueTeam) => {
     if (!window.confirm(t.confirmDeleteTeam.replace('{name}', x.name))) return
     const r = await deleteLeagueTeam(x.id)
@@ -299,6 +317,9 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
               <div className="flex items-center justify-between gap-3 mb-8">
                 <div className="flex items-center gap-4 min-w-0">
                   {logoUrl(team) && <img src={logoUrl(team)} alt="" className="h-14 w-14 object-contain shrink-0" />}
+                  {mode === 'admin' && (logins[team.id]
+                    ? <span className="px-3 py-2 rounded-lg border border-[rgba(var(--line-rgb),.25)] text-[9px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)] shrink-0">{t.loginLabel}: {logins[team.id]}</span>
+                    : <button onClick={() => { setLoginErr(''); setLoginOpen(true) }} className="px-3 py-2 rounded-lg border border-[#f6c744]/50 text-[9px] font-black uppercase tracking-[.2em] text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all shrink-0">{t.createLogin}</button>)}
                   {mode === 'admin' && <button onClick={() => pickLogoFor(team.id)} title={t.changeLogo} className="p-2 rounded-lg border border-[rgba(var(--line-rgb),.25)] hover:border-[#f6c744]/60 shrink-0"><Camera size={14} /></button>}
                   <p className="text-[9px] font-black uppercase tracking-[.4em] text-[#f6c744]">{players.length} {t.playersWord}</p>
                 </div>
@@ -402,6 +423,27 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
             <div className="mt-5 flex gap-2">
               <button type="button" onClick={() => setFormOpen(false)} className="flex-1 px-4 py-3 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
               <button type="submit" disabled={uploading} className="flex-1 px-4 py-3 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-60">{t.save}</button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ── add a login to an existing team (admin) ── */}
+      {loginOpen && team && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setLoginOpen(false)}>
+          <form onSubmit={submitLogin} className="relative w-full max-w-sm rounded-2xl border border-[rgba(var(--line-rgb),.25)] bg-[var(--c-bg)] p-5" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-black uppercase tracking-[.2em]">{t.createLogin} · {team.name}</h3>
+              <button type="button" onClick={() => setLoginOpen(false)} className="p-2 rounded-full hover:bg-white/10"><X size={14} /></button>
+            </div>
+            <div className="space-y-3">
+              <div><label className={label}>{t.username} *</label><input className={input} value={loginForm.username} onChange={e => setLoginForm({ ...loginForm, username: e.target.value })} autoCapitalize="none" autoComplete="off" required /></div>
+              <div><label className={label}>{t.password} *</label><input className={input} type="text" value={loginForm.password} onChange={e => setLoginForm({ ...loginForm, password: e.target.value })} autoComplete="off" minLength={6} required /></div>
+            </div>
+            {loginErr && <p role="alert" className="mt-3 text-xs text-[#ff5f72]">{loginErr}</p>}
+            <div className="mt-5 flex gap-2">
+              <button type="button" onClick={() => setLoginOpen(false)} className="flex-1 px-4 py-3 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
+              <button type="submit" disabled={loginBusy} className="flex-1 px-4 py-3 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-60">{t.createLogin}</button>
             </div>
           </form>
         </div>

@@ -814,3 +814,16 @@ export const createLeagueTeam = (p: { name: string; username: string; password: 
 
 /** Admin only: refused by the server while the club still has players. */
 export const deleteLeagueTeam = (id: number) => leagueTeamsCall('DELETE', { id })
+
+/** Admin only: gives an existing club that has no login a username and password. */
+export const createClubLogin = (p: { teamId: number; username: string; password: string }) =>
+  leagueTeamsCall('POST', p)
+
+/** Admin only (RLS): which club already has a login, as teamId -> username. */
+export async function fetchClubLogins(): Promise<Record<number, string>> {
+  const { data, error } = await supabase.from('profiles').select('username,league_team_id').eq('role', 'club')
+  if (error) return {}
+  const out: Record<number, string> = {}
+  for (const r of data ?? []) if (r.league_team_id != null) out[r.league_team_id] = r.username
+  return out
+}
