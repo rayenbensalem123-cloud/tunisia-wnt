@@ -9,11 +9,12 @@ import { ChevronLeft, LogOut, Plus, Trash2, X, Users, Pencil, Camera } from 'luc
 import { supabase } from '@/lib/supabase'
 import { useTranslate } from '@/lib/language-context'
 import { authHeaders } from '@/lib/auth-headers'
-import { signedImageUrls, fetchLeagueTeams, createLeagueTeam, deleteLeagueTeam, createClubLogin, fetchClubLogins, type LeagueTeam } from '@/lib/app-data'
+import { signedImageUrls, fetchLeagueTeams, createLeagueTeam, deleteLeagueTeam, createClubLogin, fetchClubLogins, fetchLeagueDirectory, type LeagueTeam } from '@/lib/app-data'
 import { PlayerCard } from '@/components/player-card'
 import { CvImport } from '@/components/cv-import'
 import { LeagueTeamCard } from '@/components/league-team-card'
 import { LeagueTeamHero } from '@/components/league-team-hero'
+import { LeagueFixtures } from '@/components/league-fixtures'
 import ThemeToggle from '@/components/theme-toggle'
 import LanguageToggle from '@/components/language-toggle'
 
@@ -46,6 +47,8 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const { tr } = useTranslate()
   const t = tr.league
   const [teams, setTeams] = useState<LeagueTeam[]>([])
+  const [directory, setDirectory] = useState<LeagueTeam[]>([])
+  const [tab, setTab] = useState<'teams' | 'matchdays'>('teams')
   const [loadedTeams, setLoadedTeams] = useState(false)
   const [selTeamId, setSelTeamId] = useState<number | null>(mode === 'club' ? clubTeamId : null)
   const [urls, setUrls] = useState<Record<string, string>>({})
@@ -77,6 +80,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const reloadTeams = async () => {
     setTeams(await fetchLeagueTeams()); setLoadedTeams(true)
     if (mode === 'admin') setLogins(await fetchClubLogins())
+    if (mode === 'club') setDirectory(await fetchLeagueDirectory())
   }
   useEffect(() => { void reloadTeams() }, [])
 
@@ -101,12 +105,12 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
 
   // Private-bucket images (logos and portraits) need short-lived signed URLs.
   useEffect(() => {
-    const paths = [...teams.map(x => x.logoPath), ...league.map(m => m.imagePath), form.imagePath].filter(Boolean).map(String)
+    const paths = [...teams.map(x => x.logoPath), ...directory.map(x => x.logoPath), ...league.map(m => m.imagePath), form.imagePath].filter(Boolean).map(String)
     if (!paths.length) return
     let alive = true
     signedImageUrls(paths).then(next => { if (alive) setUrls(prev => ({ ...prev, ...next })) })
     return () => { alive = false }
-  }, [teams, league, form.imagePath])
+  }, [teams, directory, league, form.imagePath])
 
   const upload = async (file: File, extra: Record<string, string>): Promise<{ path: string } | { error: string }> => {
     const body = new FormData()
@@ -232,6 +236,14 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   }
   const openTeam = (id: number) => { setSelTeamId(id); setPlayerQuery(''); setPosFilter('') }
   const showTeamGrid = mode === 'admin' && !selTeamId
+  const tabBar = (
+    <div className="mb-6 flex items-center gap-2" role="tablist">
+      {([['teams', mode === 'admin' ? t.teams : t.playersWord], ['matchdays', t.matchdays]] as const).map(([k, lab]) => (
+        <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+          className={`px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[.18em] transition-all ring-1 ring-inset ${tab === k ? 'bg-[#E30613] text-white ring-[#E30613]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>{lab}</button>
+      ))}
+    </div>
+  )
 
   return (
     <div className="fed-screen min-h-screen relative overflow-x-hidden text-[var(--c-text)]">
@@ -260,8 +272,15 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
       <input ref={logoChangeRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void changeLogo(f) }} />
 
       {/* ── ADMIN: grid of clubs ── */}
-      {showTeamGrid && (
+      {showTeamGrid && tab === 'matchdays' && (
         <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+          {tabBar}
+          <LeagueFixtures mode="admin" teams={teams} logoUrl={logoUrl} myTeamId={null} />
+        </main>
+      )}
+      {showTeamGrid && tab === 'teams' && (
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+          {tabBar}
           <section className="relative mb-8 overflow-hidden rounded-3xl border border-[rgba(var(--line-rgb),.22)] bg-gradient-to-br from-[#16305c] via-[#0f2146] to-[#2a0d1d] p-6 sm:p-8 shadow-[0_16px_40px_rgba(2,8,23,.35)]">
             <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#ff2747] to-[#a30420]" />
             <span aria-hidden className="pointer-events-none absolute -top-16 -right-10 rtl:-left-10 rtl:right-auto h-64 w-64 rounded-full bg-[#E30613]/20 blur-3xl" />
@@ -316,8 +335,15 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
       )}
 
       {/* ── TEAM PAGE: player cards ── */}
-      {!showTeamGrid && (
+      {!showTeamGrid && mode === 'club' && tab === 'matchdays' && (
+        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+          {tabBar}
+          <LeagueFixtures mode="club" teams={directory} logoUrl={logoUrl} myTeamId={clubTeamId} />
+        </main>
+      )}
+      {!showTeamGrid && !(mode === 'club' && tab === 'matchdays') && (
         <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
+          {mode === 'club' && tabBar}
           {mode === 'club' && !loadedTeams && <p className="text-center text-[10px] font-black uppercase tracking-[.3em] text-[var(--c-textMid)] py-24">{t.loading}</p>}
           {mode === 'club' && loadedTeams && !team && (
             <p className="text-center text-sm text-[var(--c-textMid)] py-24">{t.noClub}</p>

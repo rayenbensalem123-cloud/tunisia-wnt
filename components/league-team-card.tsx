@@ -10,7 +10,7 @@ export const GRAIN = `url("data:image/svg+xml;utf8,${encodeURIComponent(
   "<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 0'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>",
 )}")`
 
-function hueOf(name: string) {
+export function hueOf(name: string) {
   let h = 0
   for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360
   return h

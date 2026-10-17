@@ -827,3 +827,85 @@ export async function fetchClubLogins(): Promise<Record<number, string>> {
   for (const r of data ?? []) if (r.league_team_id != null) out[r.league_team_id] = r.username
   return out
 }
+
+// ─────────────────────────────────────────────
+// LIGUE FEMININE: seasons, matchdays, results (migration 0014)
+// ─────────────────────────────────────────────
+export interface LeagueSeason { id: number; name: string; startsOn: string | null; endsOn: string | null; isCurrent: boolean }
+export type FixtureStatus = 'scheduled' | 'played' | 'postponed'
+export interface LeagueFixture {
+  id: number; seasonId: number; matchday: number; homeTeamId: number; awayTeamId: number
+  /** ISO timestamp, or null while the date is not fixed. */
+  kickoff: string | null; venue: string | null; status: FixtureStatus
+  homeGoals: number | null; awayGoals: number | null
+}
+/** Why a fixtures write failed, so the screen can say it in the user's language. */
+export type FixtureError = 'duplicate' | 'sameTeam' | 'invalid' | 'denied' | 'generic'
+
+const fixtureError = (e: { code?: string; message?: string } | null): FixtureError | null => {
+  if (!e) return null
+  if (e.code === '23505') return 'duplicate'
+  if (e.code === '23514') return e.message?.includes('league_fixtures_check"') ? 'sameTeam' : 'invalid'
+  if (e.code === '42501') return 'denied'
+  return 'generic'
+}
+
+/** Every club's id, name and logo. A club account needs this to name its opponents. */
+export async function fetchLeagueDirectory(): Promise<LeagueTeam[]> {
+  const { data, error } = await supabase.rpc('league_club_directory')
+  if (error) return []
+  return (data ?? []).map((r: any) => ({ id: r.id, name: r.name, logoPath: r.logo_path ?? null }))
+}
+
+export async function fetchLeagueSeasons(): Promise<LeagueSeason[]> {
+  const { data, error } = await supabase.from('league_seasons').select('id,name,starts_on,ends_on,is_current').order('starts_on', { ascending: false, nullsFirst: false }).order('id', { ascending: false })
+  if (error) return []
+  return (data ?? []).map((r: any) => ({ id: r.id, name: r.name, startsOn: r.starts_on ?? null, endsOn: r.ends_on ?? null, isCurrent: !!r.is_current }))
+}
+
+export async function fetchLeagueFixtures(seasonId: number): Promise<LeagueFixture[]> {
+  const { data, error } = await supabase.from('league_fixtures')
+    .select('id,season_id,matchday,home_team_id,away_team_id,kickoff,venue,status,home_goals,away_goals')
+    .eq('season_id', seasonId).order('matchday').order('kickoff', { nullsFirst: false }).order('id')
+  if (error) return []
+  return (data ?? []).map((r: any) => ({
+    id: r.id, seasonId: r.season_id, matchday: r.matchday, homeTeamId: r.home_team_id, awayTeamId: r.away_team_id,
+    kickoff: r.kickoff ?? null, venue: r.venue ?? null, status: r.status, homeGoals: r.home_goals ?? null, awayGoals: r.away_goals ?? null,
+  }))
+}
+
+/** Admin only (RLS). The first season ever created becomes the current one. */
+export async function createLeagueSeason(p: { name: string; startsOn: string | null; endsOn: string | null; makeCurrent: boolean }): Promise<{ error: FixtureError | null; id?: number }> {
+  const { data, error } = await supabase.from('league_seasons').insert({ name: p.name.trim(), starts_on: p.startsOn || null, ends_on: p.endsOn || null }).select('id').single()
+  if (error) return { error: fixtureError(error) }
+  if (p.makeCurrent) await supabase.rpc('league_set_current_season', { p_id: data.id })
+  return { error: null, id: data.id }
+}
+
+export async function setCurrentLeagueSeason(id: number): Promise<{ error: FixtureError | null }> {
+  const { error } = await supabase.rpc('league_set_current_season', { p_id: id })
+  return { error: fixtureError(error) }
+}
+
+/** Deletes the season and, by cascade, all of its fixtures. */
+export async function deleteLeagueSeason(id: number): Promise<{ error: FixtureError | null }> {
+  const { error } = await supabase.from('league_seasons').delete().eq('id', id)
+  return { error: fixtureError(error) }
+}
+
+/** Insert (no id) or update (id) one match. Scores only count when status is "played". */
+export async function saveLeagueFixture(f: Omit<LeagueFixture, 'id'> & { id?: number }): Promise<{ error: FixtureError | null }> {
+  const played = f.status === 'played'
+  const row = {
+    season_id: f.seasonId, matchday: f.matchday, home_team_id: f.homeTeamId, away_team_id: f.awayTeamId,
+    kickoff: f.kickoff, venue: f.venue?.trim() || null, status: f.status,
+    home_goals: played ? f.homeGoals : null, away_goals: played ? f.awayGoals : null,
+  }
+  const { error } = f.id ? await supabase.from('league_fixtures').update(row).eq('id', f.id) : await supabase.from('league_fixtures').insert(row)
+  return { error: fixtureError(error) }
+}
+
+export async function deleteLeagueFixture(id: number): Promise<{ error: FixtureError | null }> {
+  const { error } = await supabase.from('league_fixtures').delete().eq('id', id)
+  return { error: fixtureError(error) }
+}
