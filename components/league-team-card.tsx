@@ -4,6 +4,21 @@
 // spotlight, the club name, and the number of registered players. Nothing else on the card.
 import type { ReactNode } from 'react'
 
+// Clubs without an uploaded logo get a stable colour and their initials on a shield outline.
+function hueOf(name: string) {
+  let h = 0
+  for (const c of name) h = (h * 31 + c.charCodeAt(0)) % 360
+  return h
+}
+const GENERIC = new Set(['as', 'asf', 'ans', 'us', 'ms', 'psf', 'cs', 'es', 'fc', 'sc', 'ca', 'club', 'de', 'la', 'le', 'el', 'al', "l'"])
+function initialsOf(name: string) {
+  const all = name.replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean)
+  const w = all.filter((x) => !GENERIC.has(x.toLowerCase()) && x.length > 1)
+  const use = w.length ? w : all
+  const out = use.length > 1 ? use.slice(0, 2).map((x) => x[0]).join('') : (use[0] || '?').slice(0, 3)
+  return out.toUpperCase()
+}
+
 type Props = {
   name: string
   logoSrc: string
@@ -39,9 +54,10 @@ export function LeagueTeamCard({ name, logoSrc, count, playersWord, onOpen, chil
               className="max-h-full w-[74%] object-contain drop-shadow-[0_14px_22px_rgba(0,0,0,.55)] motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-105"
             />
           ) : (
-            <span aria-hidden className="text-[72px] leading-none font-black italic text-white/25">
-              {name.slice(0, 1).toUpperCase()}
-            </span>
+            <svg aria-hidden viewBox="0 0 100 116" className="w-[56%] drop-shadow-[0_14px_22px_rgba(0,0,0,.5)]">
+              <path d="M50 3 93 17v38c0 31-19 49-43 58C26 104 7 86 7 55V17z" fill={`hsl(${hueOf(name)} 45% 24%)`} stroke={`hsl(${hueOf(name)} 55% 62%)`} strokeWidth="3" />
+              <text x="50" y="68" textAnchor="middle" fontSize={initialsOf(name).length > 2 ? 27 : 34} fontWeight="900" fill="#fff" fillOpacity=".9" fontFamily="inherit">{initialsOf(name)}</text>
+            </svg>
           )}
         </div>
 
