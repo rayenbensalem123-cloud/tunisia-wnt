@@ -104,17 +104,21 @@ export function LeagueTeamCard({ name, logoSrc, count, playersWord, onOpen, chil
         onClick={onOpen}
         aria-label={`${name}, ${count} ${playersWord}`}
         style={{ background: bg }}
-        className="relative flex w-full aspect-[4/5] sm:aspect-square flex-col overflow-hidden rounded-2xl p-4 text-left text-white
+        className="relative flex w-full aspect-[4/5] sm:aspect-square flex-col overflow-hidden rounded-2xl text-left text-white
           shadow-[0_12px_30px_rgba(2,8,23,.45)] ring-1 ring-inset ring-white/15
           motion-safe:transition-[transform,box-shadow] motion-safe:duration-300
           hover:-translate-y-1 hover:shadow-[0_20px_44px_rgba(2,8,23,.6)]
           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#f6c744] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a1322]"
       >
+        {/* big faded initials as a watermark */}
+        <span aria-hidden className="pointer-events-none absolute -top-6 -left-3 rtl:-right-3 rtl:left-auto select-none text-[150px] leading-none font-black text-white/[.09]">
+          {initialsOf(name).slice(0, 2)}
+        </span>
         {/* soft light behind the crest */}
         <span aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(55%_55%_at_50%_34%,rgba(255,255,255,.16),transparent_70%)]" />
 
         {/* crest, always fully visible */}
-        <div className="relative flex min-h-0 flex-1 items-center justify-center px-2 pb-3 pt-1">
+        <div className="relative flex min-h-0 flex-1 items-center justify-center px-4 pb-2 pt-4">
           {logoSrc ? (
             <img
               src={logoSrc}
@@ -131,11 +135,17 @@ export function LeagueTeamCard({ name, logoSrc, count, playersWord, onOpen, chil
           )}
         </div>
 
-        <div className="relative">
-          <h2 className="text-[17px] sm:text-[19px] font-black leading-[1.08] tracking-tight line-clamp-2 min-h-[2.16em] flex items-end">{name}</h2>
-          <p className="mt-1.5 text-[12px] font-medium text-white/75 tabular-nums">
-            {count} {playersWord}
-          </p>
+        {/* frosted name bar */}
+        <div className="relative m-2 flex items-center justify-between gap-2 rounded-xl bg-black/30 px-3 py-2.5 ring-1 ring-inset ring-white/10 backdrop-blur-sm">
+          <div className="min-w-0">
+            <h2 className="text-[13px] sm:text-[15px] font-black leading-tight line-clamp-2 break-words min-h-[2.2em] flex items-center">{name}</h2>
+            <p className="mt-0.5 text-[11.5px] text-white/70 tabular-nums">
+              {count} {playersWord}
+            </p>
+          </div>
+          <span aria-hidden className="hidden sm:grid h-8 w-8 shrink-0 place-items-center rounded-full bg-white/15 motion-safe:transition-colors group-hover:bg-white/30">
+            <svg className="h-4 w-4 rtl:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
+          </span>
         </div>
       </button>
       {children}
