@@ -37,6 +37,7 @@ import { PassportCard, TravelAlertsCard, BirthdaysEligibilityCard, TripPanel } f
 import { CvImport } from "@/components/cv-import"
 import { LigueView } from "@/components/league"
 import { PerformanceCard } from "@/components/performance"
+import { summarize } from "@/lib/match-stats"
 import { MeetingsPanel } from "@/components/meetings-panel"
 import { ClubReportsPanel } from "@/components/club-reports-panel"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
@@ -1009,10 +1010,11 @@ export default function EliteSquadApp() {
   const StatsView = () => {
     const squad = catPlayers.filter(p=>p.role==="PLAYERS")
     const squadIds = new Set(squad.map((p:any)=>p.id))
-    const topScorers = [...squad].sort((a,b)=>(b.goals||0)-(a.goals||0)).slice(0,10)
-    const topAssists = [...squad].sort((a,b)=>(b.assists||0)-(a.assists||0)).slice(0,10)
-    const topCaps = [...squad].sort((a,b)=>(b.natMatches||0)-(a.natMatches||0)).slice(0,10)
-    const recent = catMatches.slice(-5).map(m=>{const r=m.result;if(!r||!r.includes('-'))return null;const [a,b]=r.split('-').map(Number);return isNaN(a)||isNaN(b)?null:a>b?'W':a<b?'L':'D'}).filter(Boolean)
+    const s = summarize(catMatches)
+    const topScorers = [...squad].sort((a,b)=>(b.goals||0)-(a.goals||0)).slice(0,5)
+    const topAssists = [...squad].sort((a,b)=>(b.assists||0)-(a.assists||0)).slice(0,5)
+    const topCaps = [...squad].sort((a,b)=>(b.natMatches||0)-(a.natMatches||0)).slice(0,5)
+    const recent = s.series.slice(-5).map(p=>p.outcome)
     const posCount = {GOALKEEPER:0,DEFENDER:0,MIDFIELDER:0,FORWARD:0}
     squad.forEach(p=>{if(p.position in posCount)posCount[p.position as keyof typeof posCount]++})
     // Welfare: only this team category's players, only unresolved cases.
@@ -1020,59 +1022,132 @@ export default function EliteSquadApp() {
     const catInjuries = allInjuries.filter((i:any)=>squadIds.has(i.member_id))
     const activeInjuries = catInjuries.filter((i:any)=>i.status==="active").sort((a:any,b:any)=>(a.expected_return||"9999").localeCompare(b.expected_return||"9999"))
     const recoveringInjuries = catInjuries.filter((i:any)=>i.status==="recovering").sort((a:any,b:any)=>(a.expected_return||"9999").localeCompare(b.expected_return||"9999"))
+
+    const CARD="relative overflow-hidden bg-white rounded-xl border border-zinc-100 shadow-sm"
+    const STRIP="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-[#8f0319] via-[#E30613] to-[#f6c744] opacity-70"
+    const LABEL="text-[7px] font-black uppercase tracking-[.22em] text-zinc-400"
+    const gRed="bg-gradient-to-br from-[#ff4f66] to-[#E30613] bg-clip-text text-transparent"
+    const gGold="bg-gradient-to-br from-[#fff3c4] via-[#f6c744] to-[#a9822e] bg-clip-text text-transparent"
+    const gBlue="bg-gradient-to-br from-[#7ec3ff] to-[#2B6CB0] bg-clip-text text-transparent"
+    const kpi=(value:React.ReactNode,label:string,grad:string)=>(
+      <div className={`${CARD} px-3 py-4 flex flex-col items-center justify-center gap-1.5`}>
+        <div className={STRIP}/>
+        <p className={`text-[26px] font-black tracking-tight leading-none ${grad}`}>{value}</p>
+        <p className={LABEL}>{label}</p>
+      </div>
+    )
+    const medals=["bg-gradient-to-br from-[#fff3c4] via-[#f6c744] to-[#d9a916] text-[#1a1408] shadow-[0_0_10px_rgba(246,199,68,.35)]","bg-zinc-200 text-zinc-600","bg-[#f0d2b8] text-[#7c4a20]"]
+    const boards=[{title:"Top Scorers",color:"bg-[#E30613]",data:topScorers,key:"goals"},{title:"Most Assists",color:"bg-[#f6c744]",data:topAssists,key:"assists"},{title:"Most Caps",color:"bg-[#2B6CB0]",data:topCaps,key:"natMatches"}] as const
     return(
-      <div className="p-4 sm:p-5 space-y-4">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          {Object.entries(posCount).map(([pos,count])=>(<div key={pos} className="bg-white rounded-xl border border-zinc-100 p-3 text-center shadow-sm hover:shadow-md hover:border-[#E30613]/20 transition-all duration-300 hover:-translate-y-0.5"><p className="text-[18px] font-black text-zinc-800">{count}</p><p className="text-[7px] font-black uppercase tracking-wider text-zinc-400">{pos==='GOALKEEPER'?'GK':pos==='DEFENDER'?'DEF':pos==='MIDFIELDER'?'MID':'FWD'}</p></div>))}
-        </div>
-        {recent.length>0&&<div className="bg-white rounded-xl border border-zinc-100 p-3 shadow-sm hover:shadow-md transition-all duration-300"><p className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mb-2">Recent Form</p><div className="flex gap-1.5">{recent.map((r,i)=><div key={i} className={`w-7 h-7 rounded-lg flex items-center justify-center text-[9px] font-black ${r==='W'?'bg-[#f6c744] text-[var(--c-bg)] shadow-[0_0_14px_rgba(246,199,68,.25)]':r==='D'?'bg-white/5 text-[var(--c-cream4)] border border-[rgba(213,200,174,.22)]':'bg-[#e3062c] text-white shadow-[0_0_12px_rgba(227,6,44,.25)]'} hover:scale-110 transition-transform`}>{r}</div>)}</div></div>}
-        <PerformanceCard matches={catMatches}/>
-        <BirthdaysEligibilityCard people={squad.map((m:any)=>({id:m.id,name:m.name,birthdate:m.birthdate}))} category={teamCat||""}/>
-        {canSeeExpiries&&<TravelAlertsCard people={squad.map((m:any)=>({id:m.id,name:m.name}))} expiries={passportExpiries}/>}
-        {canSeeWelfare&&(
-          <div className="bg-white rounded-xl border border-zinc-100 p-3 shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-              <p className="text-[7px] font-black uppercase tracking-wider text-zinc-400">Player Welfare</p>
-              <div className="flex items-center gap-2">
-                <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#e3062c]/10 text-[#E30613]">{activeInjuries.length} out</span>
-                <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#f6c744]/15 text-[#a9822e]">{recoveringInjuries.length} recovering</span>
-              </div>
+      <div className="p-4 sm:p-5 space-y-3.5">
+
+        {/* ── BAND 1: KPI squares + recent form ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          {kpi(s.played,"Played",gRed)}
+          <div className={`${CARD} px-3 py-4 flex flex-col items-center justify-center gap-1.5`}>
+            <div className={STRIP}/>
+            <div className="flex items-baseline gap-1 leading-none">
+              <span className={`text-[24px] font-black tracking-tight ${gGold}`}>{s.w}</span>
+              <span className="text-[13px] font-black text-zinc-400">–</span>
+              <span className={`text-[24px] font-black tracking-tight ${gBlue}`}>{s.d}</span>
+              <span className="text-[13px] font-black text-zinc-400">–</span>
+              <span className={`text-[24px] font-black tracking-tight ${gRed}`}>{s.l}</span>
             </div>
-            {activeInjuries.length===0&&recoveringInjuries.length===0?(
-              <p className="text-[10px] text-zinc-400 py-2 text-center">No active injuries in this squad</p>
-            ):(
-              <div className="space-y-1.5">
-                {[...activeInjuries,...recoveringInjuries].map((inj:any)=>{
-                  const m:any=byId.get(inj.member_id)
-                  return(
-                    <div key={inj.id} className="flex items-center gap-2 text-[10px]">
-                      <span className={`text-[6px] font-black px-1 py-0.5 rounded uppercase ${inj.status==="active"?'bg-[#e3062c]/10 text-[#E30613]':'bg-[#f6c744]/15 text-[#a9822e]'}`}>{inj.status}</span>
-                      <span className="font-bold truncate text-zinc-800">{m?.name||"Unknown player"}</span>
-                      <span className="text-zinc-400 truncate">{inj.injury_type}</span>
-                      {inj.expected_return&&<span className="ml-auto font-black text-zinc-500 shrink-0">back {fmtDateWords(inj.expected_return)}</span>}
-                    </div>
-                  )
-                })}
-              </div>
-            )}
+            <p className={LABEL}>W · D · L</p>
           </div>
-        )}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[{title:"Top Scorers",key:"goals",data:topScorers},{title:"Most Assists",key:"assists",data:topAssists},{title:"Most Caps",key:"natMatches",data:topCaps}].map(section=>(
-            <div key={section.title} className="bg-white rounded-xl border border-zinc-100 p-3 shadow-sm">
-              <p className="text-[7px] font-black uppercase tracking-wider text-zinc-400 mb-2">{section.title}</p>
-              <div className="space-y-1.5">
-                {section.data.map((p,i)=>(
-                  <div key={p.id} className="flex items-center gap-2 text-[10px]">
-                    <span className="w-4 text-right font-black text-zinc-300">{i+1}</span>
-                    <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#E30613]/10 text-[#E30613]">{(p.position||"").slice(0,3)}</span>
-                    <span className="font-bold truncate text-zinc-800">{p.name}</span>
-                    <span className="ml-auto font-black text-zinc-500">{p[section.key as keyof typeof p]||0}</span>
+          {kpi(`${s.winRate}%`,"Win Rate",gRed)}
+          {kpi(<>{s.gf}<small className="text-[13px] text-zinc-400">–{s.ga}</small></>,"Goals F – A",gGold)}
+          <div className={`${CARD} col-span-2 px-3.5 py-3.5 flex flex-col justify-center gap-2.5`}>
+            <div className={STRIP}/>
+            <div className="flex items-center justify-between">
+              <p className={LABEL}>Recent Form</p>
+              <p className="text-[9px] font-black text-zinc-500">{recent.filter(r=>r==="W").length}W · {recent.filter(r=>r==="D").length}D · {recent.filter(r=>r==="L").length}L</p>
+            </div>
+            <div className="flex gap-1.5">
+              {recent.length===0&&<p className="text-[10px] text-zinc-400">No played matches yet</p>}
+              {recent.map((r,i)=><div key={i} className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-black ${r==="W"?"bg-gradient-to-br from-[#fff3c4] to-[#f6c744] text-[#1a1408] shadow-[0_0_14px_rgba(246,199,68,.35)]":r==="D"?"bg-white/5 text-zinc-500 border border-[rgba(213,200,174,.22)]":"bg-gradient-to-br from-[#ff4f66] to-[#E30613] text-white shadow-[0_0_12px_rgba(227,6,44,.3)]"} hover:scale-110 transition-transform`}>{r}</div>)}
+            </div>
+          </div>
+        </div>
+
+        {/* ── BAND 2: chart + squad composition ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-3.5">
+          <div className="lg:col-span-2"><PerformanceCard matches={catMatches}/></div>
+          <div className={`${CARD} p-3.5`}>
+            <div className={STRIP}/>
+            <div className="flex items-center justify-between mb-3">
+              <p className={LABEL}>Squad Composition</p>
+              <p className={LABEL}>{squad.length} Players</p>
+            </div>
+            {([["FORWARD","FWD","from-[#ff4f66] to-[#E30613]"],["MIDFIELDER","MID","from-[#fff3c4] to-[#f6c744]"],["DEFENDER","DEF","from-[#7ec3ff] to-[#2B6CB0]"],["GOALKEEPER","GK","from-zinc-400 to-zinc-500"]] as const).map(([pos,tag,grad])=>{
+              const n=posCount[pos as keyof typeof posCount]
+              const pct=squad.length?Math.round(n/squad.length*100):0
+              return(
+                <div key={pos} className="flex items-center gap-2.5 mb-2.5 last:mb-0">
+                  <span className="w-7 text-[7.5px] font-black tracking-[.1em] text-zinc-400">{tag}</span>
+                  <div className="flex-1 h-2 rounded-full bg-zinc-100 overflow-hidden">
+                    <div className={`h-full rounded-full bg-gradient-to-r ${grad} transition-all duration-700`} style={{width:`${pct}%`}}/>
                   </div>
-                ))}
-              </div>
+                  <span className="w-5 text-right text-[12px] font-black">{n}</span>
+                </div>
+              )
+            })}
+            {squad.length===0&&<p className="text-[10px] text-zinc-400 py-4 text-center">No players in this category</p>}
+          </div>
+        </div>
+
+        {/* ── BAND 3: leaderboards ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+          {boards.map(board=>(
+            <div key={board.title} className={`${CARD} p-3.5`}>
+              <div className={STRIP}/>
+              <p className="text-[8.5px] font-black uppercase tracking-[.2em] text-zinc-600 flex items-center gap-2 mb-1.5"><span className={`w-1.5 h-1.5 rounded-full ${board.color}`}/>{board.title}</p>
+              {board.data.length===0&&<p className="text-[10px] text-zinc-400 py-4 text-center">No data yet</p>}
+              {board.data.map((p,i)=>(
+                <div key={p.id} className="flex items-center gap-2.5 py-1.5 border-t border-zinc-100 first:border-t-0">
+                  <span className={`w-5.5 h-5.5 min-w-[22px] min-h-[22px] rounded-md flex items-center justify-center text-[9px] font-black ${medals[i]||"bg-zinc-100 text-zinc-400"}`}>{i+1}</span>
+                  <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#E30613]/10 text-[#E30613] shrink-0">{(p.position||"").slice(0,3)}</span>
+                  <span className="text-[11px] font-bold truncate text-zinc-800 flex-1">{p.name}</span>
+                  <span className={`text-[13px] font-black tabular-nums ${i===0?gGold:"text-zinc-500"}`}>{String((p as any)[board.key]||0)}</span>
+                </div>
+              ))}
             </div>
           ))}
+        </div>
+
+        {/* ── BAND 4: alerts ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3.5">
+          {canSeeWelfare&&(
+            <div className={`${CARD} p-3.5`}>
+              <div className={STRIP}/>
+              <div className="flex items-center justify-between mb-2">
+                <p className={LABEL}>Player Welfare</p>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#e3062c]/10 text-[#E30613]">{activeInjuries.length} out</span>
+                  <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#f6c744]/15 text-[#a9822e]">{recoveringInjuries.length} recovering</span>
+                </div>
+              </div>
+              {activeInjuries.length===0&&recoveringInjuries.length===0?(
+                <p className="text-[10px] text-zinc-400 py-2 text-center">No active injuries in this squad</p>
+              ):(
+                <div className="space-y-1.5">
+                  {[...activeInjuries,...recoveringInjuries].map((inj:any)=>{
+                    const m:any=byId.get(inj.member_id)
+                    return(
+                      <div key={inj.id} className="flex items-center gap-2 text-[10px] py-1 border-t border-zinc-100 first:border-t-0">
+                        <span className={`text-[6px] font-black px-1 py-0.5 rounded uppercase ${inj.status==="active"?'bg-[#e3062c]/10 text-[#E30613]':'bg-[#f6c744]/15 text-[#a9822e]'}`}>{inj.status}</span>
+                        <span className="font-bold truncate text-zinc-800">{m?.name||"Unknown player"}</span>
+                        <span className="text-zinc-400 truncate">{inj.injury_type}</span>
+                        {inj.expected_return&&<span className="ml-auto font-black text-zinc-500 shrink-0">back {fmtDateWords(inj.expected_return)}</span>}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+          <BirthdaysEligibilityCard people={squad.map((m:any)=>({id:m.id,name:m.name,birthdate:m.birthdate}))} category={teamCat||""}/>
+          {canSeeExpiries&&<TravelAlertsCard people={squad.map((m:any)=>({id:m.id,name:m.name}))} expiries={passportExpiries}/>}
         </div>
       </div>
     )
