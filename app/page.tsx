@@ -504,6 +504,7 @@ export default function EliteSquadApp() {
     const run=async()=>{
       if(!user||user.role!=="admin"||birthdayDone.current||!members.length)return
       const pending=members.filter((m:any)=>m.role==="PLAYERS"&&(!m.birthdate||m.birthdate==="")&&m.passportImage)
+      console.log('fix-birthday: found', pending.length, 'players missing birthdate with passport')
       if(pending.length===0)return
       for(const m of pending){
         if(!active)break
@@ -513,7 +514,7 @@ export default function EliteSquadApp() {
           if(r.ok&&d.birthdate){
             setMembers(ms=>ms.map((x:any)=>x.id===m.id?{...x,birthdate:d.birthdate}:x))
           }
-        }catch(e){/* skip silently */}
+        }catch(e){console.error('fix-birthday error for', m.name||m.id, e)}
       }
       birthdayDone.current=true
     }
