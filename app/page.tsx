@@ -1182,6 +1182,35 @@ export default function EliteSquadApp() {
 
   // ── RENDER GATES ──
   const busy=buffering||!authChecked||!loaded
+  // The federation loader, shown as an overlay so it can ghost away over whichever
+  // screen is beneath it without that screen ever mounting twice.
+  const LoaderOverlay=({show}:{show:boolean})=>(!show?null:(
+    <div data-x="loader-overlay" className={`fed-screen fixed inset-0 z-[200] flex flex-col items-center justify-center overflow-hidden${" loader-ghost pointer-events-none"}`}>
+      <FedBg/>
+      <div className="relative z-10 flex flex-col items-center gap-8">
+        <div className="relative animate-[float_3s_ease-in-out_infinite]">
+          <div className="w-40 h-40 rounded-full bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] shadow-2xl shadow-red-500/10 flex items-center justify-center">
+            <div className="w-28 h-28 rounded-full bg-[linear-gradient(135deg,var(--c-grad1),var(--c-panelG1))] border border-[rgba(246,199,68,.22)] flex items-center justify-center">
+              <img src="/ftf-logo.png" className="h-16" alt=""/>
+            </div>
+          </div>
+          <div className="absolute -inset-3 rounded-full border-[3px] border-transparent border-t-[#E30613] border-r-[#E30613]/30 animate-spin" style={{animationDuration:'1.8s'}}/>
+          <div className="absolute -inset-1.5 rounded-full border border-transparent border-b-[#f6c744]/60 border-l-[#f6c744]/25 animate-spin" style={{animationDuration:'2.5s',animationDirection:'reverse'}}/>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full bg-[#E30613] animate-[loadDot_1.4s_ease-in-out_infinite]"/>
+          <div className="w-2 h-2 rounded-full bg-[#f6c744] animate-[loadDot_1.4s_ease-in-out_infinite] [animation-delay:.2s]"/>
+          <div className="w-2 h-2 rounded-full bg-[#E30613] animate-[loadDot_1.4s_ease-in-out_infinite] [animation-delay:.4s]"/>
+        </div>
+        <div className="flex flex-col items-center gap-1.5">
+          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[var(--c-text)]">{tr.login.loadingDb}</p>
+          <p className="text-[7px] font-medium uppercase tracking-[0.25em] text-[#f6c744]/70">Fédération Tunisienne de Football</p>
+        </div>
+      </div>
+      <style>{`@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}@keyframes loadDot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}`}</style>
+    </div>
+  ))
+
   const renderTeamSelect=()=>(
     <div className="relative">
       <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[999] flex items-center gap-2 sm:gap-2.5 safe-top">
@@ -1204,13 +1233,11 @@ export default function EliteSquadApp() {
       <TeamSelector onSelect={selectCat} showLeague={user?.role==="admin"}/>
     </div>
   )
+  // Loader only. The screen underneath is rendered by the gates below, exactly once:
+  // rendering it here too made the category selector mount twice and look like it
+  // refreshed on arrival. The loader ghosts away via CSS on its own overlay.
   if(busy||leaving) return(
     <div className="relative min-h-screen">
-      {leaving&&!busy&&(
-        <div className="content-reveal min-h-screen">
-          {user?renderTeamSelect():<LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>{setBuffering(false);beginFadeIn()},2500))}}/>}
-        </div>
-      )}
       <div data-x="loader-overlay" className={`fed-screen min-h-screen flex flex-col items-center justify-center relative overflow-hidden${leaving?" loader-ghost pointer-events-none":""}`}>
         <FedBg/>
         <ThemeToggle className="absolute top-6 right-6 z-20 safe-top"/>
@@ -1253,7 +1280,7 @@ export default function EliteSquadApp() {
   // (national-team data, medical, camps...) is ever rendered for a club login.
   if(user?.role==="club") return <LigueView mode="club" clubTeamId={user.leagueTeamId} members={members} setMembers={setMembers} onLogout={logout}/>
   if(teamCat==="LIGUE"&&user?.role==="admin") return <LigueView mode="admin" clubTeamId={null} members={members} setMembers={setMembers} onBack={()=>{setTeamCat(null);setSearch("")}} onLogout={logout}/>
-  if(!teamCat) return renderTeamSelect()
+  if(!teamCat) return <><LoaderOverlay show={leaving}/>{renderTeamSelect()}</>
 
   // ── MAIN SQUAD VIEW ──
   return(
@@ -3683,8 +3710,6 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
       </>
       )}
 
-      {/* Keyframes for alive UI */}
-      <style>{`@keyframes fadeUp{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}@keyframes shine{0%{transform:translateX(-100%) skewX(-20deg)}100%{transform:translateX(200%) skewX(-20deg)}}@keyframes lineupReveal{0%{opacity:0;transform:translateY(45px) scale(1.28);filter:blur(9px)}55%{opacity:1;filter:blur(0px)}100%{opacity:1;transform:translateY(0) scale(1);filter:blur(0px)}}`}</style>
     </main>
   )
 }

@@ -93,7 +93,7 @@ export function LeagueRoundStrip({ teams, logoUrl, onOpen }: { teams: LeagueTeam
   const latest = fixtures.filter(f => f.status === 'played').sort((a, b) => b.matchday - a.matchday || stamp(b) - stamp(a)).slice(0, 4)
 
   return (
-    <button onClick={onOpen} className="mb-8 block w-full rounded-2xl border border-[rgba(var(--line-rgb),.22)] bg-[var(--c-deep)] p-4 text-start transition-all hover:border-[#f6c744]/50" aria-label={t.matchdays}>
+    <button onClick={onOpen} className="mb-8 block w-full rounded-2xl border border-[rgba(var(--line-rgb),.22)] bg-[var(--c-deep)] p-4 text-start transition-all hover:border-[#f6c744]/50 motion-safe:hover:-translate-y-0.5 animate-[fadeUp_0.55s_ease-out_both] [animation-delay:120ms]" aria-label={t.matchdays}>
       <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
         {nextDay != null && (
           <div className="shrink-0">

@@ -16,6 +16,58 @@ export function hueOf(name: string) {
   return h
 }
 
+/** Stable per-club seed. The generated crest is derived from it, so a club keeps
+ *  the same shape and pattern on every reload — variety, but not moving parts. */
+function seedOf(name: string) {
+  let h = 0
+  for (const c of name) h = (h * 33 + c.charCodeAt(0)) >>> 0
+  return h
+}
+
+// Five outlines so a grid of logo-less clubs does not read as one repeated badge.
+const SHAPES = [
+  'M50 3 93 17v38c0 31-19 49-43 58C26 104 7 86 7 55V17z',
+  'M50 2 86 14v44c0 32-14 50-36 58-22-8-36-26-36-58V14z',
+  'M28 6h44a20 20 0 0 1 20 20v52a18 18 0 0 1-9 15l-33 20-33-20a18 18 0 0 1-9-15V26A20 20 0 0 1 28 6z',
+  'M50 2 95 16v54c0 20-19 32-45 44C24 102 5 90 5 70V16z',
+  'M50 3 92 30v56L50 113 8 86V30z',
+]
+
+/**
+ * Generated crest for a club with no uploaded logo. Outline, pattern and colour
+ * all come from the club name, so every box on the league page gets its own badge
+ * and no two clubs look alike. Uploading a real logo replaces it.
+ */
+export function TeamCrest({ name, hue, className = '' }: { name: string; hue: number; className?: string }) {
+  const seed = seedOf(name)
+  const shape = SHAPES[seed % SHAPES.length]
+  const pattern = (seed >>> 3) % 5
+  const id = `crest-${seed}`
+  const ini = initialsOf(name)
+  const edge = `hsl(${hue} 60% 72%)`
+  const band = `hsl(${(hue + 188) % 360} 55% 46% / .5)`
+  return (
+    <svg aria-hidden viewBox="0 0 100 116" className={className}>
+      <defs>
+        <clipPath id={id}>
+          <path d={shape} />
+        </clipPath>
+      </defs>
+      <path d={shape} fill={`hsl(${hue} 45% 22% / .88)`} />
+      <g clipPath={`url(#${id})`}>
+        {pattern === 1 && <rect x="0" y="42" width="100" height="28" fill={band} />}
+        {pattern === 2 && <rect x="34" y="0" width="32" height="116" fill={band} />}
+        {pattern === 3 && <path d="M-12 100 58 -12h26L14 116Z" fill={band} />}
+        {pattern === 4 && <path d="M0 38 50 68 100 38v24L50 92 0 62Z" fill={band} />}
+      </g>
+      <path d={shape} fill="none" stroke={edge} strokeWidth="3" />
+      <text x="50" y="68" textAnchor="middle" fontSize={ini.length > 2 ? 27 : 34} fontWeight="900" fill="#fff" fillOpacity=".92" fontFamily="inherit">
+        {ini}
+      </text>
+    </svg>
+  )
+}
+
 const GENERIC = new Set(['as', 'asf', 'ans', 'us', 'ms', 'psf', 'cs', 'es', 'fc', 'sc', 'ca', 'club', 'de', 'la', 'le', 'el', 'al', "l'"])
 export function initialsOf(name: string) {
   const all = name.replace(/[^\p{L}\p{N}\s]/gu, ' ').split(/\s+/).filter(Boolean)
@@ -98,7 +150,6 @@ export function LeagueTeamCard({ name, logoSrc, count, playersWord, onOpen, chil
     tint === 'neutral'
       ? 'linear-gradient(150deg, #3b4658, #121926)'
       : `linear-gradient(150deg, hsl(${tint.h} ${Math.round(tint.s * 100)}% 34%), hsl(${(tint.h + 24) % 360} ${Math.round(tint.s * 100)}% 14%))`
-  const edge = tint === 'neutral' ? 'hsl(215 20% 70%)' : `hsl(${tint.h} 60% 72%)`
   const hue = tint === 'neutral' ? 215 : tint.h
 
   return (
@@ -139,12 +190,11 @@ export function LeagueTeamCard({ name, logoSrc, count, playersWord, onOpen, chil
               className="max-h-full max-w-[72%] object-contain drop-shadow-[0_10px_16px_rgba(0,0,0,.5)] motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-105"
             />
           ) : (
-            <svg aria-hidden viewBox="0 0 100 116" className="h-full max-h-[8rem] w-auto drop-shadow-[0_10px_16px_rgba(0,0,0,.45)] motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-105">
-              <path d="M50 3 93 17v38c0 31-19 49-43 58C26 104 7 86 7 55V17z" fill={`hsl(${hue} 45% 22% / .85)`} stroke={edge} strokeWidth="3" />
-              <text x="50" y="68" textAnchor="middle" fontSize={initialsOf(name).length > 2 ? 27 : 34} fontWeight="900" fill="#fff" fillOpacity=".92" fontFamily="inherit">
-                {initialsOf(name)}
-              </text>
-            </svg>
+            <TeamCrest
+              name={name}
+              hue={hue}
+              className="h-full max-h-[8rem] w-auto drop-shadow-[0_10px_16px_rgba(0,0,0,.45)] motion-safe:transition-transform motion-safe:duration-300 group-hover:scale-105"
+            />
           )}
         </div>
 

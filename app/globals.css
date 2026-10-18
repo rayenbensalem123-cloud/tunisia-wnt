@@ -917,6 +917,24 @@ button[class*="w-full"][class*="bg-[#E30613]"]:focus-visible {
 .loader-ghost { animation: loader-ghost .75s ease-out both; }
 .content-reveal { animation: content-reveal .8s cubic-bezier(.2, .7, .3, 1) both; }
 
+/* Shared entrance keyframes. These used to live in an inline <style> inside the
+   squad view, so every screen that renders outside it (the whole Ligue Féminine,
+   for one) silently lost them and its animate-[fadeUp_...] classes did nothing.
+   Global definitions keep the motion identical everywhere. */
+@keyframes fadeUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes shine {
+  0% { transform: translateX(-100%) skewX(-20deg); }
+  100% { transform: translateX(200%) skewX(-20deg); }
+}
+@keyframes lineupReveal {
+  0% { opacity: 0; transform: translateY(45px) scale(1.28); filter: blur(9px); }
+  55% { opacity: 1; filter: blur(0px); }
+  100% { opacity: 1; transform: translateY(0) scale(1); filter: blur(0px); }
+}
+
 /* ── Mobile / tablet support ──
    These rules only apply on small viewports and never alter desktop sizing. */
 html { -webkit-text-size-adjust: 100%; }

@@ -13,6 +13,7 @@ import { signedImageUrls, fetchLeagueTeams, createLeagueTeam, deleteLeagueTeam, 
 import { PlayerCard } from '@/components/player-card'
 import { CvImport } from '@/components/cv-import'
 import { LeagueTeamCard } from '@/components/league-team-card'
+import { defaultLeagueLogo } from '@/lib/league-logos'
 import { LeagueTeamHero } from '@/components/league-team-hero'
 import { LeagueFixtures } from '@/components/league-fixtures'
 import { DateField, NumberField, SelectField } from '@/components/league-pickers'
@@ -53,7 +54,41 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const [teams, setTeams] = useState<LeagueTeam[]>([])
   const [directory, setDirectory] = useState<LeagueTeam[]>([])
   const [tab, setTab] = useState<'teams' | 'matchdays'>('teams')
+  const [tabPulse, setTabPulse] = useState(0)
+  // Switching tabs swaps content of a different height, so the browser clamps the
+  // scroll to the top and then jumps back down as the new page grows. Remember the
+  // offset and put it back once the new content is on screen.
+  const keepScroll = useRef(0)
+  const goTab = (k: 'teams' | 'matchdays') => {
+    keepScroll.current = window.scrollY
+    setTab(k)
+    setTabPulse(p => p + 1)
+  }
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const y = keepScroll.current
+    if (!y) return
+    const id = requestAnimationFrame(() => { if (Math.abs(window.scrollY - y) > 4) window.scrollTo(0, y) })
+    return () => cancelAnimationFrame(id)
+  }, [tabPulse])
   const [teamTab, setTeamTab] = useState<'players' | 'matchdays' | 'standings' | 'calendar' | 'cup'>('players')
+  // Bumping this on every tab change remounts the tab body, so the entrance
+  // animations replay instead of leaving stale (or invisible) content behind.
+  const [teamPulse, setTeamPulse] = useState(0)
+  const keepTeamScroll = useRef(0)
+  const goTeamTab = (k: 'players' | 'matchdays' | 'standings' | 'calendar' | 'cup') => {
+    keepTeamScroll.current = window.scrollY
+    setTeamTab(k)
+    setTeamPulse(p => p + 1)
+  }
+  // Runs after each tab switch paints; restores the offset the browser dropped.
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const y = keepTeamScroll.current
+    if (!y) return
+    const id = requestAnimationFrame(() => { if (Math.abs(window.scrollY - y) > 4) window.scrollTo(0, y) })
+    return () => cancelAnimationFrame(id)
+  }, [teamPulse])
   const [loadedTeams, setLoadedTeams] = useState(false)
   const [selTeamId, setSelTeamId] = useState<number | null>(mode === 'club' ? clubTeamId : null)
   const [urls, setUrls] = useState<Record<string, string>>({})
@@ -230,7 +265,9 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
     await reloadTeams()
   }
 
-  const logoUrl = (x: LeagueTeam | null) => (x?.logoPath ? urls[x.logoPath] || '' : '')
+  // An uploaded logo always wins; the bundled crest is only the fallback, so a club
+  // that uploads its own badge replaces it immediately.
+  const logoUrl = (x: LeagueTeam | null) => (x?.logoPath ? urls[x.logoPath] || defaultLeagueLogo(x.name) : defaultLeagueLogo(x?.name || ''))
   const portrait = (m: any) => (m.imagePath ? urls[String(m.imagePath)] || '' : String(m.image || ''))
   const input = 'w-full rounded-xl border border-[rgba(var(--line-rgb),.25)] bg-[var(--c-deep)] px-3.5 py-3 text-sm font-semibold text-[var(--c-text)] outline-none focus:border-[#f6c744]/70'
   const label = 'mb-1 block text-[9px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]'
@@ -244,14 +281,17 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const tabBar = (
     <div className="mb-6 flex items-center gap-2" role="tablist">
       {([['teams', mode === 'admin' ? t.teams : t.playersWord], ['matchdays', t.matchdays]] as const).map(([k, lab]) => (
-        <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
+        <button key={k} role="tab" aria-selected={tab === k} onClick={() => goTab(k)}
           className={`px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[.18em] transition-all ring-1 ring-inset ${tab === k ? 'bg-[#E30613] text-white ring-[#E30613]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>{lab}</button>
       ))}
     </div>
   )
 
   return (
-    <div className="fed-screen min-h-screen relative overflow-x-hidden text-[var(--c-text)]">
+    // NB: no overflow-x-hidden here. It turns this wrapper into a scroll container,
+    // which detaches the sticky header from the viewport — the header then scrolls
+    // away and leaves the banner area bare. overflow-x-clip clips without scrolling.
+    <div className="fed-screen min-h-screen relative overflow-x-clip text-[var(--c-text)]">
       <header className="sticky top-0 z-[100] border-b border-[rgba(var(--line-rgb),.18)] bg-[var(--c-bg)]/85 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -278,15 +318,15 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
 
       {/* ── ADMIN: grid of clubs ── */}
       {showTeamGrid && tab === 'matchdays' && (
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+        <main key={`adm-m-${tabPulse}`} className="max-w-6xl mx-auto px-4 sm:px-6 py-10 animate-[fadeUp_0.4s_ease-out_both]">
           {tabBar}
           <LeagueFixtures mode="admin" teams={teams} logoUrl={logoUrl} myTeamId={null} />
         </main>
       )}
       {showTeamGrid && tab === 'teams' && (
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-10">
+        <main key={`adm-t-${tabPulse}`} className="max-w-6xl mx-auto px-4 sm:px-6 py-10 animate-[fadeUp_0.4s_ease-out_both]">
           {tabBar}
-          <section className="relative mb-8 overflow-hidden rounded-3xl border border-[rgba(var(--line-rgb),.22)] bg-gradient-to-br from-[#16305c] via-[#0f2146] to-[#2a0d1d] p-6 sm:p-8 shadow-[0_16px_40px_rgba(2,8,23,.35)]">
+          <section className="relative mb-8 overflow-hidden rounded-3xl border border-[rgba(var(--line-rgb),.22)] bg-gradient-to-br from-[#16305c] via-[#0f2146] to-[#2a0d1d] p-6 sm:p-8 shadow-[0_16px_40px_rgba(2,8,23,.35)] animate-[fadeUp_0.55s_ease-out_both]">
             <span aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#ff2747] to-[#a30420]" />
             <span aria-hidden className="pointer-events-none absolute -top-16 -right-10 rtl:-left-10 rtl:right-auto h-64 w-64 rounded-full bg-[#E30613]/20 blur-3xl" />
             <div className="relative flex flex-wrap items-end justify-between gap-6">
@@ -358,14 +398,20 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
               <LeagueNextMatch teamId={team.id} teams={mode === 'club' ? directory : teams} logoUrl={logoUrl} />
               <div className="mb-6 flex items-center gap-1 overflow-x-auto border-b border-[rgba(var(--line-rgb),.18)]" role="tablist" aria-label={team.name}>
                 {([['players', t.playersWord], ['matchdays', t.matchdays], ['standings', t.standings], ['calendar', t.calendar], ['cup', t.cup]] as const).map(([k, lab]) => (
-                  <button key={k} role="tab" aria-selected={teamTab === k} onClick={() => setTeamTab(k)}
+                  <button key={k} role="tab" aria-selected={teamTab === k} onClick={() => goTeamTab(k)}
                     className={`shrink-0 border-b-2 px-4 py-3 text-[11px] font-black uppercase tracking-[.16em] transition-all ${teamTab === k ? 'border-[#E30613] text-[var(--c-text)]' : 'border-transparent text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{lab}</button>
                 ))}
               </div>
+              {/* The tab body is keyed on teamTab + pulse so it remounts on every
+                  switch: the entrance animations replay, and content can never be
+                  left stranded mid-animation (which showed up as a missing banner). */}
               {teamTab !== 'players' && (
-                <LeagueFixtures key={teamTab} mode="club" section={teamTab} scoped teams={mode === 'club' ? directory : teams} logoUrl={logoUrl} myTeamId={team.id} />
+                <div key={`tf-${teamTab}-${teamPulse}`} className="animate-[fadeUp_0.4s_ease-out_both]">
+                  <LeagueFixtures mode="club" section={teamTab} scoped teams={mode === 'club' ? directory : teams} logoUrl={logoUrl} myTeamId={team.id} />
+                </div>
               )}
               {teamTab === 'players' && (<>
+              <div key={`pl-${teamPulse}`} className="animate-[fadeUp_0.4s_ease-out_both]">
               <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
                 <div className="flex items-center gap-2 flex-wrap" role="group" aria-label={t.position}>
                   {([['', t.allPlayers, players.length], ...(['GOALKEEPER', 'DEFENDER', 'MIDFIELDER', 'FORWARD'] as const).map(p => [p, ({ GOALKEEPER: 'GK', DEFENDER: 'DEF', MIDFIELDER: 'MID', FORWARD: 'FWD' })[p], posCount(p)] as [string, string, number])] as [string, string, number][])
@@ -404,6 +450,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
                     />
                   </div>
                 ))}
+              </div>
               </div>
               </>)}
             </>

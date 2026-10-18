@@ -2,7 +2,7 @@
 // Banner at the top of a club's page: same colour-from-logo treatment as the grid tile,
 // with the crest, club name and squad size. Admin controls arrive as children.
 import type { ReactNode } from 'react'
-import { GRAIN, initialsOf, useTint } from '@/components/league-team-card'
+import { GRAIN, initialsOf, useTint, TeamCrest } from '@/components/league-team-card'
 
 type Props = {
   name: string
@@ -18,7 +18,6 @@ export function LeagueTeamHero({ name, logoSrc, count, playersWord, children }: 
   const h = neutral ? 215 : tint.h
   const sat = neutral ? 18 : Math.round(tint.s * 100)
   const bg = `linear-gradient(120deg, hsl(${h} ${sat}% 32%), hsl(${(h + 24) % 360} ${sat}% 13%))`
-  const edge = `hsl(${h} 60% 72%)`
 
   return (
     <section style={{ background: bg }} className="relative mb-6 overflow-hidden rounded-3xl text-white shadow-[0_16px_40px_rgba(2,8,23,.4)] ring-1 ring-inset ring-white/15">
@@ -32,10 +31,7 @@ export function LeagueTeamHero({ name, logoSrc, count, playersWord, children }: 
           {logoSrc ? (
             <img src={logoSrc} alt="" className="max-h-full max-w-full object-contain drop-shadow-[0_12px_18px_rgba(0,0,0,.5)]" />
           ) : (
-            <svg aria-hidden viewBox="0 0 100 116" className="h-full w-auto drop-shadow-[0_12px_18px_rgba(0,0,0,.45)]">
-              <path d="M50 3 93 17v38c0 31-19 49-43 58C26 104 7 86 7 55V17z" fill={`hsl(${h} 45% 22% / .85)`} stroke={edge} strokeWidth="3" />
-              <text x="50" y="68" textAnchor="middle" fontSize={initialsOf(name).length > 2 ? 27 : 34} fontWeight="900" fill="#fff" fillOpacity=".92" fontFamily="inherit">{initialsOf(name)}</text>
-            </svg>
+            <TeamCrest name={name} hue={h} className="h-full w-auto drop-shadow-[0_12px_18px_rgba(0,0,0,.45)]" />
           )}
         </div>
         <div className="min-w-0 flex-1">
