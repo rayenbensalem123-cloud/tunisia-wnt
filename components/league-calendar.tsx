@@ -27,7 +27,11 @@ export function LeagueCalendar({ admin, season, teams, fixtures, myTeamId, onlyT
   const [breaks, setBreaks] = useState<LeagueBreak[]>([])
   const start = season.startsOn ? new Date(season.startsOn + 'T00:00:00') : null
   const firstMatch = useMemo(() => fixtures.map(f => f.kickoff).filter(Boolean).sort()[0] ?? null, [fixtures])
-  const initial = start ?? (firstMatch ? new Date(firstMatch) : new Date())
+  // Open on the current month while the season is running, otherwise on its first month.
+  const nowD = new Date()
+  const end = season.endsOn ? new Date(season.endsOn + 'T23:59:59') : null
+  const running = (!start || nowD >= start) && (!end || nowD <= end)
+  const initial = running ? nowD : (start ?? (firstMatch ? new Date(firstMatch) : nowD))
   const [cursor, setCursor] = useState({ y: initial.getFullYear(), m: initial.getMonth() })
   const [picked, setPicked] = useState<string | null>(null)
   const [form, setForm] = useState<{ title: string; startsOn: string; endsOn: string } | null>(null)
