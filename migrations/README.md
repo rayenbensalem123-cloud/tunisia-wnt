@@ -69,12 +69,20 @@ that already ran the setup file.
 Check it at any time:
 
 ```bash
-node scripts/check-rls-helpers.mjs
+node scripts/check-rls-helpers.mjs          # static: defined by the migrations?
+node scripts/check-rls-helpers-live.mjs     # live: present on the real project?
 ```
 
-It parses every migration, collects the `public.<fn>()` calls made in an RLS position
-and reports any that no migration defines. It exits non-zero while the gap exists, so
-it works as a pre-commit or CI guard.
+The first parses every migration, collects the `public.<fn>()` calls made in an RLS
+position and reports any that no migration defines. It exits non-zero while the gap
+exists, so it works as a pre-commit or CI guard.
+
+The second asks the live Supabase project instead. PostgREST exposes the public
+schema's functions as RPC endpoints, so a function that does not exist answers `404`
+while one that does answers normally — which makes existence checkable without a
+direct postgres connection. It reads `.env.local` itself and prints only status codes,
+never a secret. It probes a deliberately bogus function name first as a control, and
+refuses to report if that control does not `404`, so a false green is not possible.
 
 If you add a migration whose statements genuinely can't be made re-run-safe
 (e.g. a one-off data backfill), say so loudly in its header instead of
