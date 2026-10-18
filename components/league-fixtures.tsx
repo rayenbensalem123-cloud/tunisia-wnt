@@ -11,6 +11,7 @@ import {
   type LeagueTeam, type LeagueSeason, type LeagueFixture, type FixtureStatus, type FixtureError,
 } from '@/lib/app-data'
 import { ClubMark, chip, input, label, toLocalInput } from '@/components/league-ui'
+import { DateField, DateTimeField, NumberField, SelectField, TimeField } from '@/components/league-pickers'
 import { generateRoundRobin, matchdayDate } from '@/lib/league-schedule'
 import { LeagueStandings } from '@/components/league-standings'
 import { LeagueCalendar } from '@/components/league-calendar'
@@ -25,11 +26,15 @@ type Props = {
   logoUrl: (x: LeagueTeam | null) => string
   /** The club this login belongs to (club mode), highlighted in the list. */
   myTeamId: number | null
+  /** Show one section only (no section tabs). Used on a team page. */
+  section?: Sub
+  /** Team page: the matchdays section shows this week's round and the club's own matches. */
+  scoped?: boolean
 }
 
 type FxForm = { id?: number; matchday: string; home: string; away: string; when: string; venue: string; status: FixtureStatus; hg: string; ag: string }
 
-export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
+export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped }: Props) {
   const { tr, lang } = useTranslate()
   const t = tr.league
   const admin = mode === 'admin'
@@ -44,7 +49,8 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
   const [seasonForm, setSeasonForm] = useState({ name: '', startsOn: '', endsOn: '', makeCurrent: true })
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
-  const [sub, setSub] = useState<Sub>('matchdays')
+  const [subState, setSub] = useState<Sub>('matchdays')
+  const sub: Sub = section ?? subState
   const [genOpen, setGenOpen] = useState(false)
   const [gen, setGen] = useState({ double: true, start: '', every: '7', time: '15:00' })
 
@@ -130,10 +136,8 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
   }
 
   const teamSelect = (value: string, onChange: (v: string) => void, id: string) => (
-    <select id={id} value={value} onChange={e => onChange(e.target.value)} className={input}>
-      <option value="">{t.chooseClub}</option>
-      {[...teams].sort((a, b) => a.name.localeCompare(b.name)).map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
-    </select>
+    <SelectField id={id} value={value} onChange={onChange} title={t.chooseClub} placeholder={t.chooseClub}
+      options={[...teams].sort((a, b) => a.name.localeCompare(b.name)).map(x => ({ value: String(x.id), label: x.name }))} />
   )
 
   const side = (id: number, align: 'start' | 'end') => {
@@ -143,6 +147,44 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
         <ClubMark team={x} src={logoUrl(x ?? null)} />
         <span className={`min-w-0 text-[13px] sm:text-[15px] font-black leading-tight line-clamp-2 break-words ${id === myTeamId ? 'text-[#f6c744]' : ''}`}>{x?.name || '—'}</span>
       </div>
+    )
+  }
+
+  const card = (f: LeagueFixture, i: number) => {
+    const mine = myTeamId != null && (f.homeTeamId === myTeamId || f.awayTeamId === myTeamId)
+    const played = f.status === 'played'
+    const d = f.kickoff ? new Date(f.kickoff) : null
+    return (
+      <li key={f.id} style={{ animationDelay: `${i * 50}ms` }}
+        className={`relative rounded-2xl border bg-gradient-to-br from-[#15294d] to-[#0c1730] px-4 py-4 sm:px-6 text-white shadow-[0_10px_24px_rgba(2,8,23,.35)] animate-[fadeUp_0.4s_ease-out_both] ${mine ? 'border-[#f6c744]/60' : 'border-[rgba(var(--line-rgb),.22)]'}`}>
+        <div className="flex items-center gap-3 sm:gap-6">
+          {side(f.homeTeamId, 'start')}
+          <div className="shrink-0 w-24 sm:w-32 text-center">
+            {played ? (
+              <p className="text-2xl sm:text-3xl font-black tabular-nums leading-none" dir="ltr">{f.homeGoals} <span className="text-white/40">–</span> {f.awayGoals}</p>
+            ) : f.status === 'postponed' ? (
+              <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#ff9aa6]">{t.statusPostponed}</p>
+            ) : d ? (
+              <p className="text-xl sm:text-2xl font-black tabular-nums leading-none" dir="ltr">{timeFmt.format(d)}</p>
+            ) : (
+              <p className="text-[10px] font-black uppercase tracking-[.2em] text-white/50">{t.dateTbd}</p>
+            )}
+            {d && <p className="mt-1.5 text-[10px] font-bold uppercase tracking-[.14em] text-white/60">{dateFmt.format(d)}</p>}
+          </div>
+          {side(f.awayTeamId, 'end')}
+        </div>
+        {(f.venue || admin) && (
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-2.5 text-[11px] text-white/55">
+            <span className="truncate">{f.venue || ''}</span>
+            {admin && (
+              <span className="flex items-center gap-1 shrink-0">
+                <button onClick={() => openEdit(f)} title={t.edit} aria-label={t.edit} className="p-1.5 rounded-lg hover:bg-white/10 hover:text-white"><Pencil size={13} /></button>
+                <button onClick={() => void removeMatch(f)} title={t.confirmDeleteMatch} aria-label={t.confirmDeleteMatch} className="p-1.5 rounded-lg hover:bg-[#e3062c]/80 hover:text-white"><Trash2 size={13} /></button>
+              </span>
+            )}
+          </div>
+        )}
+      </li>
     )
   }
 
@@ -176,12 +218,8 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-2">
           {seasons.length > 0 && (
-            <label className="flex items-center gap-2">
-              <span className="sr-only">{t.season}</span>
-              <select value={seasonId ?? ''} onChange={e => setSeasonId(Number(e.target.value))} className={`${input} !w-auto !py-2.5 !pe-9`} aria-label={t.season}>
-                {seasons.map(s => <option key={s.id} value={s.id}>{s.name}{s.isCurrent ? ` · ${t.currentWord}` : ''}</option>)}
-              </select>
-            </label>
+            <SelectField value={seasonId != null ? String(seasonId) : ''} onChange={v => setSeasonId(Number(v))} title={t.season} className="!w-auto min-w-[9rem] !py-2.5"
+              options={seasons.map(x => ({ value: String(x.id), label: `${x.name}${x.isCurrent ? ` · ${t.currentWord}` : ''}` }))} />
           )}
           {admin && season && !season.isCurrent && (
             <button onClick={() => void makeCurrent()} className="px-3.5 py-2.5 rounded-xl border border-[#f6c744]/50 text-[10px] font-black uppercase tracking-[.16em] text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all">{t.setCurrent}</button>
@@ -191,7 +229,7 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {mode === 'club' && myTeamId != null && days.length > 0 && sub === 'matchdays' && (
+          {mode === 'club' && !scoped && myTeamId != null && days.length > 0 && sub === 'matchdays' && (
             <button onClick={() => setOnlyMine(v => !v)} aria-pressed={onlyMine} className={chip(onlyMine)}>{onlyMine ? t.allMatches : t.myMatches}</button>
           )}
           {admin && <button onClick={() => { setErr(''); setSeasonOpen(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest hover:border-[#f6c744]/60 transition-all"><Plus size={14} />{t.newSeason}</button>}
@@ -206,7 +244,7 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
         <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><CalendarDays size={56} /><p className="text-[11px] font-black uppercase tracking-[.3em] text-center">{admin ? t.noSeasons : t.noSeasonsClub}</p></div>
       )}
 
-      {season && (
+      {season && !section && (
         <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-1" role="tablist" aria-label={t.season}>
           {([['matchdays', t.matchdays], ['standings', t.standings], ['calendar', t.calendar], ['cup', t.cup]] as const).map(([k, lab]) => (
             <button key={k} role="tab" aria-selected={sub === k} onClick={() => setSub(k)}
@@ -216,10 +254,31 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
       )}
 
       {season && sub === 'standings' && <LeagueStandings teams={teams} fixtures={fixtures} logoUrl={logoUrl} myTeamId={myTeamId} />}
-      {season && sub === 'calendar' && <LeagueCalendar admin={admin} season={season} teams={teams} fixtures={fixtures} myTeamId={myTeamId} />}
+      {season && sub === 'calendar' && <LeagueCalendar admin={admin} season={season} teams={teams} fixtures={fixtures} myTeamId={myTeamId} onlyTeamId={scoped ? myTeamId : null} />}
       {season && sub === 'cup' && <LeagueCup admin={admin} season={season} teams={teams} logoUrl={logoUrl} myTeamId={myTeamId} onInfoSaved={() => void loadSeasons(season.id)} />}
 
-      {season && sub === 'matchdays' && (
+      {season && sub === 'matchdays' && scoped && (() => {
+        const now = new Date(); const mon = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7)).getTime(), nextMon = mon + 7 * 86400000
+        const week = fixtures.filter(f => f.kickoff && new Date(f.kickoff).getTime() >= mon && new Date(f.kickoff).getTime() < nextMon).sort((a, b) => +new Date(a.kickoff!) - +new Date(b.kickoff!))
+        const upcoming = fixtures.filter(f => f.status === 'scheduled'); const nd = upcoming.length ? Math.min(...upcoming.map(f => f.matchday)) : null
+        const round = week.length ? week : fixtures.filter(f => f.matchday === nd)
+        const mineAll = fixtures.filter(f => f.homeTeamId === myTeamId || f.awayTeamId === myTeamId).sort((a, b) => a.matchday - b.matchday)
+        const head = 'mb-3 text-[10px] font-black uppercase tracking-[.25em] text-[#f6c744]'
+        return (
+          <div className="space-y-8">
+            <section>
+              <h3 className={head}>{week.length || nd == null ? t.thisWeek : `${t.nextMatchday} · ${t.matchdayN.replace('{n}', String(nd))}`}</h3>
+              {round.length === 0 ? <p className="rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.3)] py-8 text-center text-sm text-[var(--c-textMid)]">{t.noMatchesWeek}</p> : <ul className="space-y-3">{round.map((f, i) => card(f, i))}</ul>}
+            </section>
+            <section>
+              <h3 className={head}>{t.ourMatches}</h3>
+              {mineAll.length === 0 ? <p className="py-8 text-center text-sm text-[var(--c-textMid)]">{t.noMatches}</p> : <ul className="space-y-3">{mineAll.map((f, i) => card(f, i))}</ul>}
+            </section>
+          </div>
+        )
+      })()}
+
+      {season && sub === 'matchdays' && !scoped && (
         <>
           {/* matchday tabs */}
           {days.length > 0 && (
@@ -244,43 +303,7 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
           )}
 
           <ul className="space-y-3">
-            {shown.map((f, i) => {
-              const mine = myTeamId != null && (f.homeTeamId === myTeamId || f.awayTeamId === myTeamId)
-              const played = f.status === 'played'
-              const d = f.kickoff ? new Date(f.kickoff) : null
-              return (
-                <li key={f.id} style={{ animationDelay: `${i * 50}ms` }}
-                  className={`relative rounded-2xl border bg-gradient-to-br from-[#15294d] to-[#0c1730] px-4 py-4 sm:px-6 text-white shadow-[0_10px_24px_rgba(2,8,23,.35)] animate-[fadeUp_0.4s_ease-out_both] ${mine ? 'border-[#f6c744]/60' : 'border-[rgba(var(--line-rgb),.22)]'}`}>
-                  <div className="flex items-center gap-3 sm:gap-6">
-                    {side(f.homeTeamId, 'start')}
-                    <div className="shrink-0 w-24 sm:w-32 text-center">
-                      {played ? (
-                        <p className="text-2xl sm:text-3xl font-black tabular-nums leading-none" dir="ltr">{f.homeGoals} <span className="text-white/40">–</span> {f.awayGoals}</p>
-                      ) : f.status === 'postponed' ? (
-                        <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#ff9aa6]">{t.statusPostponed}</p>
-                      ) : d ? (
-                        <p className="text-xl sm:text-2xl font-black tabular-nums leading-none" dir="ltr">{timeFmt.format(d)}</p>
-                      ) : (
-                        <p className="text-[10px] font-black uppercase tracking-[.2em] text-white/50">{t.dateTbd}</p>
-                      )}
-                      {d && <p className="mt-1.5 text-[10px] font-bold uppercase tracking-[.14em] text-white/60">{dateFmt.format(d)}</p>}
-                    </div>
-                    {side(f.awayTeamId, 'end')}
-                  </div>
-                  {(f.venue || admin) && (
-                    <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-2.5 text-[11px] text-white/55">
-                      <span className="truncate">{f.venue || ''}</span>
-                      {admin && (
-                        <span className="flex items-center gap-1 shrink-0">
-                          <button onClick={() => openEdit(f)} title={t.edit} aria-label={t.edit} className="p-1.5 rounded-lg hover:bg-white/10 hover:text-white"><Pencil size={13} /></button>
-                          <button onClick={() => void removeMatch(f)} title={t.confirmDeleteMatch} aria-label={t.confirmDeleteMatch} className="p-1.5 rounded-lg hover:bg-[#e3062c]/80 hover:text-white"><Trash2 size={13} /></button>
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </li>
-              )
-            })}
+            {shown.map((f, i) => card(f, i))}
           </ul>
           {days.length > 0 && shown.length === 0 && <p className="py-10 text-center text-sm text-[var(--c-textMid)]">{t.noMatches}</p>}
         </>
@@ -293,20 +316,18 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
             <button onClick={() => setForm(null)} className="absolute top-3 right-3 rtl:left-3 rtl:right-auto p-2 rounded-full bg-black/30 text-white" aria-label={t.cancel}><X size={14} /></button>
             <h3 className="mb-4 text-lg font-black uppercase tracking-tight">{form.id ? t.editMatch : t.addMatch}</h3>
             <div className="grid grid-cols-2 gap-3">
-              <div><label className={label} htmlFor="fx-md">{t.matchdayWord}</label><input id="fx-md" type="number" min={1} max={99} value={form.matchday} onChange={e => setForm({ ...form, matchday: e.target.value })} className={input} /></div>
+              <div><label className={label} htmlFor="fx-md">{t.matchdayWord}</label><NumberField id="fx-md" min={1} max={99} value={form.matchday} onChange={v => setForm({ ...form, matchday: v })} title={t.matchdayWord} /></div>
               <div><label className={label} htmlFor="fx-status">{t.status}</label>
-                <select id="fx-status" value={form.status} onChange={e => setForm({ ...form, status: e.target.value as FixtureStatus })} className={input}>
-                  <option value="scheduled">{t.statusScheduled}</option><option value="played">{t.statusPlayed}</option><option value="postponed">{t.statusPostponed}</option>
-                </select></div>
+                <SelectField id="fx-status" value={form.status} onChange={v => setForm({ ...form, status: v as FixtureStatus })} options={[{ value: 'scheduled', label: t.statusScheduled }, { value: 'played', label: t.statusPlayed }, { value: 'postponed', label: t.statusPostponed }]} title={t.status} /></div>
               <div className="col-span-2 sm:col-span-1"><label className={label} htmlFor="fx-home">{t.homeTeam}</label>{teamSelect(form.home, v => setForm({ ...form, home: v }), 'fx-home')}</div>
               <div className="col-span-2 sm:col-span-1"><label className={label} htmlFor="fx-away">{t.awayTeam}</label>{teamSelect(form.away, v => setForm({ ...form, away: v }), 'fx-away')}</div>
               {form.status === 'played' && (
                 <>
-                  <div><label className={label} htmlFor="fx-hg">{t.scoreWord} · {t.homeTeam}</label><input id="fx-hg" type="number" min={0} max={99} value={form.hg} onChange={e => setForm({ ...form, hg: e.target.value })} className={input} /></div>
-                  <div><label className={label} htmlFor="fx-ag">{t.scoreWord} · {t.awayTeam}</label><input id="fx-ag" type="number" min={0} max={99} value={form.ag} onChange={e => setForm({ ...form, ag: e.target.value })} className={input} /></div>
+                  <div><label className={label} htmlFor="fx-hg">{t.scoreWord} · {t.homeTeam}</label><NumberField id="fx-hg" min={0} max={99} value={form.hg} onChange={v => setForm({ ...form, hg: v })} title={`${t.scoreWord} · ${t.homeTeam}`} allowEmpty /></div>
+                  <div><label className={label} htmlFor="fx-ag">{t.scoreWord} · {t.awayTeam}</label><NumberField id="fx-ag" min={0} max={99} value={form.ag} onChange={v => setForm({ ...form, ag: v })} title={`${t.scoreWord} · ${t.awayTeam}`} allowEmpty /></div>
                 </>
               )}
-              <div className="col-span-2 sm:col-span-1"><label className={label} htmlFor="fx-when">{t.dateTime}</label><input id="fx-when" type="datetime-local" value={form.when} onChange={e => setForm({ ...form, when: e.target.value })} className={input} /></div>
+              <div className="col-span-2 sm:col-span-1"><label className={label} htmlFor="fx-when">{t.dateTime}</label><DateTimeField id="fx-when" value={form.when} onChange={v => setForm({ ...form, when: v })} title={t.dateTime} /></div>
               <div className="col-span-2 sm:col-span-1"><label className={label} htmlFor="fx-venue">{t.venue}</label><input id="fx-venue" maxLength={120} value={form.venue} onChange={e => setForm({ ...form, venue: e.target.value })} className={input} /></div>
             </div>
             {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}
@@ -329,9 +350,9 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
               <label className="flex items-start gap-2 text-sm font-semibold"><input type="checkbox" className="mt-1" checked={gen.double} onChange={e => setGen({ ...gen, double: e.target.checked })} />{t.genDouble}</label>
               {teams.length % 2 === 1 && <p className="text-xs text-[var(--c-textMid)]">{t.genOdd}</p>}
               <div className="grid grid-cols-3 gap-3">
-                <div className="col-span-3 sm:col-span-1"><label className={label} htmlFor="gn-start">{t.genStart}</label><input id="gn-start" type="date" value={gen.start} onChange={e => setGen({ ...gen, start: e.target.value })} className={input} /></div>
-                <div><label className={label} htmlFor="gn-every">{t.genEvery}</label><input id="gn-every" type="number" min={1} max={60} value={gen.every} onChange={e => setGen({ ...gen, every: e.target.value })} className={input} disabled={!gen.start} /></div>
-                <div><label className={label} htmlFor="gn-time">{t.genTime}</label><input id="gn-time" type="time" value={gen.time} onChange={e => setGen({ ...gen, time: e.target.value })} className={input} disabled={!gen.start} /></div>
+                <div className="col-span-3 sm:col-span-1"><label className={label} htmlFor="gn-start">{t.genStart}</label><DateField id="gn-start" value={gen.start} onChange={v => setGen({ ...gen, start: v })} title={t.genStart} /></div>
+                <div><label className={label} htmlFor="gn-every">{t.genEvery}</label><NumberField id="gn-every" min={1} max={60} value={gen.every} onChange={v => setGen({ ...gen, every: v })} title={t.genEvery} disabled={!gen.start} /></div>
+                <div><label className={label} htmlFor="gn-time">{t.genTime}</label><TimeField id="gn-time" value={gen.time} onChange={v => setGen({ ...gen, time: v })} title={t.genTime} disabled={!gen.start} /></div>
               </div>
               <p className="rounded-xl bg-[#f6c744]/10 px-3.5 py-2.5 text-sm font-bold text-[#f6c744]">{t.genPreview.replace('{matches}', String(genPlan.matches)).replace('{days}', String(genPlan.days))}</p>
             </div>
@@ -353,8 +374,8 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
             <div className="space-y-3">
               <div><label className={label} htmlFor="se-name">{t.seasonName}</label><input id="se-name" maxLength={40} value={seasonForm.name} onChange={e => setSeasonForm({ ...seasonForm, name: e.target.value })} placeholder="2026/27" className={input} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={label} htmlFor="se-from">{t.startsOn}</label><input id="se-from" type="date" value={seasonForm.startsOn} onChange={e => setSeasonForm({ ...seasonForm, startsOn: e.target.value })} className={input} /></div>
-                <div><label className={label} htmlFor="se-to">{t.endsOn}</label><input id="se-to" type="date" value={seasonForm.endsOn} onChange={e => setSeasonForm({ ...seasonForm, endsOn: e.target.value })} className={input} /></div>
+                <div><label className={label} htmlFor="se-from">{t.startsOn}</label><DateField id="se-from" value={seasonForm.startsOn} onChange={v => setSeasonForm({ ...seasonForm, startsOn: v })} title={t.startsOn} /></div>
+                <div><label className={label} htmlFor="se-to">{t.endsOn}</label><DateField id="se-to" value={seasonForm.endsOn} onChange={v => setSeasonForm({ ...seasonForm, endsOn: v })} title={t.endsOn} /></div>
               </div>
               <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" checked={seasonForm.makeCurrent || seasons.length === 0} disabled={seasons.length === 0} onChange={e => setSeasonForm({ ...seasonForm, makeCurrent: e.target.checked })} />{t.makeCurrent}</label>
             </div>

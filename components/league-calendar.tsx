@@ -8,8 +8,9 @@ import {
   type LeagueTeam, type LeagueSeason, type LeagueFixture, type LeagueCupMatch, type LeagueBreak, type FixtureError,
 } from '@/lib/app-data'
 import { input, label } from '@/components/league-ui'
+import { DateField } from '@/components/league-pickers'
 
-type Props = { admin: boolean; season: LeagueSeason; teams: LeagueTeam[]; fixtures: LeagueFixture[]; myTeamId: number | null }
+type Props = { admin: boolean; season: LeagueSeason; teams: LeagueTeam[]; fixtures: LeagueFixture[]; myTeamId: number | null; /** Team page: show only this club's matches. */ onlyTeamId?: number | null }
 
 type Item = { key: string; kind: 'league' | 'cup'; time: string | null; home: string; away: string; score: string | null; mine: boolean }
 
@@ -18,7 +19,7 @@ const pad = (n: number) => String(n).padStart(2, '0')
 const dayOf = (iso: string) => { const d = new Date(iso); return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}` }
 const ymd = (y: number, m: number, d: number) => `${y}-${pad(m + 1)}-${pad(d)}`
 
-export function LeagueCalendar({ admin, season, teams, fixtures, myTeamId }: Props) {
+export function LeagueCalendar({ admin, season, teams, fixtures, myTeamId, onlyTeamId = null }: Props) {
   const { tr, lang } = useTranslate()
   const t = tr.league
   const locale = lang === 'ar' ? 'ar-TN' : lang === 'fr' ? 'fr-TN' : 'en-GB'
@@ -51,17 +52,18 @@ export function LeagueCalendar({ admin, season, teams, fixtures, myTeamId }: Pro
   const byDay = useMemo(() => {
     const map = new Map<string, Item[]>()
     const add = (day: string, it: Item) => map.set(day, [...(map.get(day) ?? []), it])
+    const mineOnly = (a: number | null, b: number | null) => onlyTeamId == null || a === onlyTeamId || b === onlyTeamId
     for (const f of fixtures) {
-      if (!f.kickoff) continue
+      if (!f.kickoff || !mineOnly(f.homeTeamId, f.awayTeamId)) continue
       add(dayOf(f.kickoff), { key: `l${f.id}`, kind: 'league', time: timeFmt.format(new Date(f.kickoff)), home: name(f.homeTeamId), away: name(f.awayTeamId), score: f.status === 'played' ? `${f.homeGoals}–${f.awayGoals}` : f.status === 'postponed' ? t.statusPostponed : null, mine: myTeamId != null && (f.homeTeamId === myTeamId || f.awayTeamId === myTeamId) })
     }
     for (const c of cup) {
-      if (!c.kickoff) continue
+      if (!c.kickoff || !mineOnly(c.homeTeamId, c.awayTeamId)) continue
       add(dayOf(c.kickoff), { key: `c${c.id}`, kind: 'cup', time: timeFmt.format(new Date(c.kickoff)), home: c.homeTeamId ? name(c.homeTeamId) : t.tbd, away: c.awayTeamId ? name(c.awayTeamId) : t.tbd, score: c.status === 'played' ? `${c.homeGoals}–${c.awayGoals}` : c.status === 'postponed' ? t.statusPostponed : null, mine: myTeamId != null && (c.homeTeamId === myTeamId || c.awayTeamId === myTeamId) })
     }
     return map
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fixtures, cup, teams, myTeamId, timeFmt, t])
+  }, [fixtures, cup, teams, myTeamId, onlyTeamId, timeFmt, t])
 
   const inBreak = (day: string) => breaks.find(b => day >= b.startsOn && day <= b.endsOn)
   const cells = useMemo(() => {
@@ -181,8 +183,8 @@ export function LeagueCalendar({ admin, season, teams, fixtures, myTeamId }: Pro
             <div className="space-y-3">
               <div><label className={label} htmlFor="br-title">{t.breakTitle}</label><input id="br-title" maxLength={80} value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} className={input} /></div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={label} htmlFor="br-from">{t.breakFrom}</label><input id="br-from" type="date" value={form.startsOn} onChange={e => setForm({ ...form, startsOn: e.target.value })} className={input} /></div>
-                <div><label className={label} htmlFor="br-to">{t.breakTo}</label><input id="br-to" type="date" value={form.endsOn} onChange={e => setForm({ ...form, endsOn: e.target.value })} className={input} /></div>
+                <div><label className={label} htmlFor="br-from">{t.breakFrom}</label><DateField id="br-from" value={form.startsOn} onChange={v => setForm({ ...form, startsOn: v })} title={t.breakFrom} /></div>
+                <div><label className={label} htmlFor="br-to">{t.breakTo}</label><DateField id="br-to" value={form.endsOn} onChange={v => setForm({ ...form, endsOn: v })} title={t.breakTo} /></div>
               </div>
             </div>
             {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}

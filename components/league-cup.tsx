@@ -9,6 +9,7 @@ import {
 } from '@/lib/app-data'
 import { cupWinner, nextFreeSlot, roundKey } from '@/lib/league-cup'
 import { ClubMark, input, label, toLocalInput } from '@/components/league-ui'
+import { DateTimeField, NumberField, SelectField } from '@/components/league-pickers'
 
 type Props = {
   admin: boolean
@@ -96,10 +97,8 @@ export function LeagueCup({ admin, season, teams, logoUrl, myTeamId, onInfoSaved
   }
 
   const teamSelect = (value: string, onChange: (v: string) => void, id: string) => (
-    <select id={id} value={value} onChange={e => onChange(e.target.value)} className={input}>
-      <option value="">{t.tbd}</option>
-      {[...teams].sort((a, b) => a.name.localeCompare(b.name)).map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
-    </select>
+    <SelectField id={id} value={value} onChange={onChange} title={t.tbd} placeholder={t.tbd}
+      options={[{ value: '', label: t.tbd }, ...[...teams].sort((a, b) => a.name.localeCompare(b.name)).map(x => ({ value: String(x.id), label: x.name }))]} />
   )
 
   const row = (m: LeagueCupMatch, side: 'home' | 'away') => {
@@ -191,27 +190,25 @@ export function LeagueCup({ admin, season, teams, logoUrl, myTeamId, onInfoSaved
             <h3 className="mb-4 text-lg font-black uppercase tracking-tight">{form.id ? t.editCupMatch : t.addCupMatch}</h3>
             <div className="grid grid-cols-2 gap-3">
               <div><label className={label} htmlFor="cm-round">{t.roundWord}</label>
-                <select id="cm-round" value={form.round} onChange={e => setRound(e.target.value)} className={input}>{ROUNDS.map(r => <option key={r} value={r}>{t[roundKey(r)]}</option>)}</select></div>
-              <div><label className={label} htmlFor="cm-slot">{t.slotWord}</label><input id="cm-slot" type="number" min={1} max={Number(form.round) / 2} value={form.slot} onChange={e => setForm({ ...form, slot: e.target.value })} className={input} /></div>
+                <SelectField id="cm-round" value={form.round} onChange={setRound} title={t.roundWord} options={ROUNDS.map(r => ({ value: String(r), label: t[roundKey(r)] }))} /></div>
+              <div><label className={label} htmlFor="cm-slot">{t.slotWord}</label><NumberField id="cm-slot" min={1} max={Number(form.round) / 2} value={form.slot} onChange={v => setForm({ ...form, slot: v })} title={t.slotWord} /></div>
               <div className="col-span-2 sm:col-span-1"><label className={label} htmlFor="cm-home">{t.homeTeam}</label>{teamSelect(form.home, v => setForm({ ...form, home: v }), 'cm-home')}</div>
               <div className="col-span-2 sm:col-span-1"><label className={label} htmlFor="cm-away">{t.awayTeam}</label>{teamSelect(form.away, v => setForm({ ...form, away: v }), 'cm-away')}</div>
               <div className="col-span-2"><label className={label} htmlFor="cm-status">{t.status}</label>
-                <select id="cm-status" value={form.status} onChange={e => setForm({ ...form, status: e.target.value as FixtureStatus })} className={input}>
-                  <option value="scheduled">{t.statusScheduled}</option><option value="played">{t.statusPlayed}</option><option value="postponed">{t.statusPostponed}</option>
-                </select></div>
+                <SelectField id="cm-status" value={form.status} onChange={v => setForm({ ...form, status: v as FixtureStatus })} options={[{ value: 'scheduled', label: t.statusScheduled }, { value: 'played', label: t.statusPlayed }, { value: 'postponed', label: t.statusPostponed }]} title={t.status} /></div>
               {form.status === 'played' && (
                 <>
-                  <div><label className={label} htmlFor="cm-hg">{t.scoreWord} · {t.homeTeam}</label><input id="cm-hg" type="number" min={0} max={99} value={form.hg} onChange={e => setForm({ ...form, hg: e.target.value })} className={input} /></div>
-                  <div><label className={label} htmlFor="cm-ag">{t.scoreWord} · {t.awayTeam}</label><input id="cm-ag" type="number" min={0} max={99} value={form.ag} onChange={e => setForm({ ...form, ag: e.target.value })} className={input} /></div>
+                  <div><label className={label} htmlFor="cm-hg">{t.scoreWord} · {t.homeTeam}</label><NumberField id="cm-hg" min={0} max={99} value={form.hg} onChange={v => setForm({ ...form, hg: v })} title={`${t.scoreWord} · ${t.homeTeam}`} allowEmpty /></div>
+                  <div><label className={label} htmlFor="cm-ag">{t.scoreWord} · {t.awayTeam}</label><NumberField id="cm-ag" min={0} max={99} value={form.ag} onChange={v => setForm({ ...form, ag: v })} title={`${t.scoreWord} · ${t.awayTeam}`} allowEmpty /></div>
                   {form.hg !== '' && form.hg === form.ag && (
                     <>
-                      <div><label className={label} htmlFor="cm-hp">{t.penaltiesWord} · {t.homeTeam}</label><input id="cm-hp" type="number" min={0} max={99} value={form.hp} onChange={e => setForm({ ...form, hp: e.target.value })} className={input} /></div>
-                      <div><label className={label} htmlFor="cm-ap">{t.penaltiesWord} · {t.awayTeam}</label><input id="cm-ap" type="number" min={0} max={99} value={form.ap} onChange={e => setForm({ ...form, ap: e.target.value })} className={input} /></div>
+                      <div><label className={label} htmlFor="cm-hp">{t.penaltiesWord} · {t.homeTeam}</label><NumberField id="cm-hp" min={0} max={99} value={form.hp} onChange={v => setForm({ ...form, hp: v })} title={`${t.penaltiesWord} · ${t.homeTeam}`} allowEmpty /></div>
+                      <div><label className={label} htmlFor="cm-ap">{t.penaltiesWord} · {t.awayTeam}</label><NumberField id="cm-ap" min={0} max={99} value={form.ap} onChange={v => setForm({ ...form, ap: v })} title={`${t.penaltiesWord} · ${t.awayTeam}`} allowEmpty /></div>
                     </>
                   )}
                 </>
               )}
-              <div className="col-span-2 sm:col-span-1"><label className={label} htmlFor="cm-when">{t.dateTime}</label><input id="cm-when" type="datetime-local" value={form.when} onChange={e => setForm({ ...form, when: e.target.value })} className={input} /></div>
+              <div className="col-span-2 sm:col-span-1"><label className={label} htmlFor="cm-when">{t.dateTime}</label><DateTimeField id="cm-when" value={form.when} onChange={v => setForm({ ...form, when: v })} title={t.dateTime} /></div>
               <div className="col-span-2 sm:col-span-1"><label className={label} htmlFor="cm-venue">{t.venue}</label><input id="cm-venue" maxLength={120} value={form.venue} onChange={e => setForm({ ...form, venue: e.target.value })} className={input} /></div>
             </div>
             {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}

@@ -15,6 +15,7 @@ import { CvImport } from '@/components/cv-import'
 import { LeagueTeamCard } from '@/components/league-team-card'
 import { LeagueTeamHero } from '@/components/league-team-hero'
 import { LeagueFixtures } from '@/components/league-fixtures'
+import { DateField, NumberField, SelectField } from '@/components/league-pickers'
 import { LeagueNextMatch, LeagueRoundStrip } from '@/components/league-glance'
 import ThemeToggle from '@/components/theme-toggle'
 import LanguageToggle from '@/components/language-toggle'
@@ -32,6 +33,8 @@ const ageOf = (bd: string): number => {
   return age > 0 && age < 70 ? age : 0
 }
 
+const dmyToIso = (v: string) => { const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(v || ''); return m ? `${m[3]}-${m[2]}-${m[1]}` : '' }
+const isoToDmy = (v: string) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(v || ''); return m ? `${m[3]}/${m[2]}/${m[1]}` : '' }
 const emptyForm = { name: '', position: '', birthdate: '', jerseyNumber: '', nationality: '', image: '', imagePath: '' }
 
 type Props = {
@@ -50,6 +53,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const [teams, setTeams] = useState<LeagueTeam[]>([])
   const [directory, setDirectory] = useState<LeagueTeam[]>([])
   const [tab, setTab] = useState<'teams' | 'matchdays'>('teams')
+  const [teamTab, setTeamTab] = useState<'players' | 'matchdays' | 'standings' | 'calendar' | 'cup'>('players')
   const [loadedTeams, setLoadedTeams] = useState(false)
   const [selTeamId, setSelTeamId] = useState<number | null>(mode === 'club' ? clubTeamId : null)
   const [urls, setUrls] = useState<Record<string, string>>({})
@@ -232,10 +236,10 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const label = 'mb-1 block text-[9px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]'
 
   const goBack = () => {
-    if (mode === 'admin' && selTeamId) { setSelTeamId(null); setSelMember(null); setPlayerQuery(''); setPosFilter(''); return }
+    if (mode === 'admin' && selTeamId) { setSelTeamId(null); setSelMember(null); setPlayerQuery(''); setPosFilter(''); setTeamTab('players'); return }
     onBack?.()
   }
-  const openTeam = (id: number) => { setSelTeamId(id); setPlayerQuery(''); setPosFilter('') }
+  const openTeam = (id: number) => { setSelTeamId(id); setPlayerQuery(''); setPosFilter(''); setTeamTab('players') }
   const showTeamGrid = mode === 'admin' && !selTeamId
   const tabBar = (
     <div className="mb-6 flex items-center gap-2" role="tablist">
@@ -337,15 +341,8 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
       )}
 
       {/* ── TEAM PAGE: player cards ── */}
-      {!showTeamGrid && mode === 'club' && tab === 'matchdays' && (
-        <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-          {tabBar}
-          <LeagueFixtures mode="club" teams={directory} logoUrl={logoUrl} myTeamId={clubTeamId} />
-        </main>
-      )}
-      {!showTeamGrid && !(mode === 'club' && tab === 'matchdays') && (
+      {!showTeamGrid && (
         <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
-          {mode === 'club' && tabBar}
           {mode === 'club' && !loadedTeams && <p className="text-center text-[10px] font-black uppercase tracking-[.3em] text-[var(--c-textMid)] py-24">{t.loading}</p>}
           {mode === 'club' && loadedTeams && !team && (
             <p className="text-center text-sm text-[var(--c-textMid)] py-24">{t.noClub}</p>
@@ -359,6 +356,16 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
                 {mode === 'admin' && <button onClick={() => pickLogoFor(team.id)} title={t.changeLogo} aria-label={t.changeLogo} className="p-2 rounded-lg bg-black/25 ring-1 ring-inset ring-white/15 text-white/85 hover:bg-white/25 transition-all"><Camera size={14} /></button>}
               </LeagueTeamHero>
               <LeagueNextMatch teamId={team.id} teams={mode === 'club' ? directory : teams} logoUrl={logoUrl} />
+              <div className="mb-6 flex items-center gap-1 overflow-x-auto border-b border-[rgba(var(--line-rgb),.18)]" role="tablist" aria-label={team.name}>
+                {([['players', t.playersWord], ['matchdays', t.matchdays], ['standings', t.standings], ['calendar', t.calendar], ['cup', t.cup]] as const).map(([k, lab]) => (
+                  <button key={k} role="tab" aria-selected={teamTab === k} onClick={() => setTeamTab(k)}
+                    className={`shrink-0 border-b-2 px-4 py-3 text-[11px] font-black uppercase tracking-[.16em] transition-all ${teamTab === k ? 'border-[#E30613] text-[var(--c-text)]' : 'border-transparent text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{lab}</button>
+                ))}
+              </div>
+              {teamTab !== 'players' && (
+                <LeagueFixtures key={teamTab} mode="club" section={teamTab} scoped teams={mode === 'club' ? directory : teams} logoUrl={logoUrl} myTeamId={team.id} />
+              )}
+              {teamTab === 'players' && (<>
               <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
                 <div className="flex items-center gap-2 flex-wrap" role="group" aria-label={t.position}>
                   {([['', t.allPlayers, players.length], ...(['GOALKEEPER', 'DEFENDER', 'MIDFIELDER', 'FORWARD'] as const).map(p => [p, ({ GOALKEEPER: 'GK', DEFENDER: 'DEF', MIDFIELDER: 'MID', FORWARD: 'FWD' })[p], posCount(p)] as [string, string, number])] as [string, string, number][])
@@ -398,6 +405,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
                   </div>
                 ))}
               </div>
+              </>)}
             </>
           )}
         </main>
@@ -454,15 +462,12 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
               <div><label className={label}>{t.fullName} *</label><input className={input} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} maxLength={80} /></div>
               <div className="grid grid-cols-2 gap-3">
                 <div><label className={label}>{t.position}</label>
-                  <select className={input} value={form.position} onChange={e => setForm({ ...form, position: e.target.value })}>
-                    <option value="">—</option>
-                    {POSITIONS.map(p => <option key={p} value={p}>{p}</option>)}
-                  </select>
+                  <SelectField value={form.position} onChange={v => setForm({ ...form, position: v })} title={t.position} placeholder="—" options={[{ value: '', label: '—' }, ...POSITIONS.map(p => ({ value: p, label: p }))]} />
                 </div>
-                <div><label className={label}>{t.jersey}</label><input className={input} inputMode="numeric" value={form.jerseyNumber} onChange={e => setForm({ ...form, jerseyNumber: e.target.value.replace(/\D/g, '').slice(0, 2) })} /></div>
+                <div><label className={label}>{t.jersey}</label><NumberField value={form.jerseyNumber} onChange={v => setForm({ ...form, jerseyNumber: v })} min={1} max={99} allowEmpty title={t.jersey} /></div>
               </div>
               <div className="grid grid-cols-2 gap-3">
-                <div><label className={label}>{t.birthdate}</label><input className={input} placeholder="DD/MM/YYYY" inputMode="numeric" value={form.birthdate} onChange={e => setForm({ ...form, birthdate: e.target.value.replace(/[^\d/]/g, '').slice(0, 10) })} /></div>
+                <div><label className={label}>{t.birthdate}</label><DateField value={dmyToIso(form.birthdate)} onChange={v => setForm({ ...form, birthdate: isoToDmy(v) })} title={t.birthdate} minYear={new Date().getFullYear() - 50} maxYear={new Date().getFullYear() - 6} startYear={new Date().getFullYear() - 20} /></div>
                 <div><label className={label}>{t.nationality}</label><input className={input} value={form.nationality} onChange={e => setForm({ ...form, nationality: e.target.value })} maxLength={60} /></div>
               </div>
             </div>
