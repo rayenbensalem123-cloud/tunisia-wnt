@@ -67,17 +67,18 @@ export async function POST(req: Request) {
 
     const { data: m, error } = await supabaseAdmin
       .from('members')
-      .select('id, name, birthdate, passport_image')
+      .select('id, name, birthdate, passport_image, image2_path')
       .eq('id', Number(memberId))
       .maybeSingle()
     if (error) return NextResponse.json({ error: 'Could not read the member' }, { status: 500 })
     if (!m) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
     if (m.birthdate) return NextResponse.json({ skipped: true, name: m.name, birthdate: m.birthdate })
-    if (!m.passport_image) return NextResponse.json({ skipped: true, name: m.name, birthdate: null, reason: 'no_passport' })
+    const passportPath = m.passport_image || m.image2_path
+    if (!passportPath) return NextResponse.json({ skipped: true, name: m.name, birthdate: null, reason: 'no_passport' })
 
     const { data: signed, error: signErr } = await supabaseAdmin.storage
       .from(BUCKET)
-      .createSignedUrl(String(m.passport_image), 300)
+      .createSignedUrl(String(passportPath), 300)
     if (signErr || !signed?.signedUrl) return NextResponse.json({ error: 'Could not open the passport' }, { status: 500 })
 
     const bytes = new Uint8Array(await (await fetch(signed.signedUrl)).arrayBuffer())
