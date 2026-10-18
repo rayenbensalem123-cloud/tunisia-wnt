@@ -119,8 +119,9 @@ export async function POST(req: Request) {
       clearTimeout(timer)
     }
     if (!upstream.ok) {
-      console.error('fix-birthday upstream', upstream.status)
-      return NextResponse.json({ error: 'The passport reader is unavailable right now' }, { status: 502 })
+      const detail = await upstream.text().catch(()=> '')
+      console.error('fix-birthday upstream', upstream.status, detail.slice(0, 500))
+      return NextResponse.json({ error: `Passport reader unavailable (${upstream.status}): ${detail.slice(0, 250)}` }, { status: 502 })
     }
     const json: any = await upstream.json()
     const tool = (json?.content || []).find((c: any) => c?.type === 'tool_use' && c?.name === TOOL.name)
