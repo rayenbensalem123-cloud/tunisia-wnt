@@ -764,7 +764,7 @@ export default function EliteSquadApp() {
       beginFadeIn()
     })()
     const { data: sub } = supabase.auth.onAuthStateChange((event)=>{
-      if(event==="SIGNED_OUT") setUser(null)
+      if(event==="SIGNED_OUT") logout()
     })
     return ()=>{sub.subscription.unsubscribe()}
   },[])
@@ -810,6 +810,16 @@ export default function EliteSquadApp() {
 
   const selectCat=(cat:TeamCategory)=>{
     setTeamCat(cat);setFilterPos("ALL");setActiveTab("PLAYERS");setSearch("")
+  }
+
+  // Logout must reset the selected category too. teamCat is component state that
+  // survives a sign-out, so without this an admin who picked SENIORS, logged out
+  // and logged back in would land straight in SENIORS — skipping the category
+  // selection screen entirely.
+  const logout=()=>{
+    setTeamCat(null);setFilterPos("ALL");setActiveTab("PLAYERS");setSearch("");setSelMember(null)
+    supabase.auth.signOut()
+    setUser(null)
   }
 
   const [squadLabOpen,setSquadLabOpen]=useState(false)
@@ -1087,7 +1097,7 @@ export default function EliteSquadApp() {
           ))}
         </Dropdown>
         <span className="hidden lg:inline px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.16)] bg-[#0d1f3c]/55 backdrop-blur-md text-[#f6c744]/90 text-[9px] font-black uppercase tracking-wider">{user?.username}</span>
-        <button onClick={handleChangePassword} title="Change your password" className="p-2.5 rounded-lg border border-[rgba(148,170,210,.25)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#7ec3ff] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all"><Key size={15}/></button><button onClick={()=>{supabase.auth.signOut();setUser(null)}} title="Log out" className="p-2.5 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_16px_rgba(227,6,44,.35)] transition-all"><LogOut size={15}/></button>
+        <button onClick={handleChangePassword} title="Change your password" className="p-2.5 rounded-lg border border-[rgba(148,170,210,.25)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#7ec3ff] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all"><Key size={15}/></button><button onClick={logout} title="Log out" className="p-2.5 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_16px_rgba(227,6,44,.35)] transition-all"><LogOut size={15}/></button>
       </div>
       <TeamSelector onSelect={selectCat} showLeague={user?.role==="admin"}/>
     </div>
@@ -1096,7 +1106,7 @@ export default function EliteSquadApp() {
     <div className="relative min-h-screen">
       {leaving&&!busy&&(
         <div className="content-reveal min-h-screen">
-          {user?renderTeamSelect():<LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>{setBuffering(false);beginFadeIn()},1200))}}/>}
+          {user?renderTeamSelect():<LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>{setBuffering(false);beginFadeIn()},2500))}}/>}
         </div>
       )}
       <div data-x="loader-overlay" className={`fed-screen min-h-screen flex flex-col items-center justify-center relative overflow-hidden${leaving?" loader-ghost pointer-events-none":""}`}>
@@ -1135,12 +1145,12 @@ export default function EliteSquadApp() {
       </div>
     </div>
   )
-  if(authChecked&&!user) return <LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>{setBuffering(false);beginFadeIn()},1200))}}/>
+  if(authChecked&&!user) return <LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>{setBuffering(false);beginFadeIn()},2500))}}/>
   // Ligue Féminine. A club account lives entirely inside its own team page; only an
   // admin can open the grid of clubs. Both are separate screens, so nothing below
   // (national-team data, medical, camps...) is ever rendered for a club login.
-  if(user?.role==="club") return <LigueView mode="club" clubTeamId={user.leagueTeamId} members={members} setMembers={setMembers} onLogout={()=>setUser(null)}/>
-  if(teamCat==="LIGUE"&&user?.role==="admin") return <LigueView mode="admin" clubTeamId={null} members={members} setMembers={setMembers} onBack={()=>{setTeamCat(null);setSearch("")}} onLogout={()=>setUser(null)}/>
+  if(user?.role==="club") return <LigueView mode="club" clubTeamId={user.leagueTeamId} members={members} setMembers={setMembers} onLogout={logout}/>
+  if(teamCat==="LIGUE"&&user?.role==="admin") return <LigueView mode="admin" clubTeamId={null} members={members} setMembers={setMembers} onBack={()=>{setTeamCat(null);setSearch("")}} onLogout={logout}/>
   if(!teamCat) return renderTeamSelect()
 
   // ── MAIN SQUAD VIEW ──
@@ -1293,7 +1303,7 @@ export default function EliteSquadApp() {
               <button onClick={async()=>{const d=await exportMyData();if(!d){alert(tr.account.downloadFailed);return}const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:"application/json"}));a.download=`my-data-${user?.username||"account"}.json`;a.click();URL.revokeObjectURL(a.href)}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Download size={14} className="text-[#a9822e]"/>{tr.account.downloadData}
               </button>
-              <button onClick={()=>{supabase.auth.signOut();setUser(null)}} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all text-left">
+              <button onClick={logout} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all text-left">
                 <LogOut size={14}/>Log Out
               </button>
             </Dropdown>
@@ -1368,12 +1378,14 @@ export default function EliteSquadApp() {
           const n = m.jerseyNumber != null && m.jerseyNumber !== "" ? Number(m.jerseyNumber) : autoN
           return(
             <div key={m.id} onClick={()=>selectMode?toggleSelect(m.id):setSelMember(m)} onPointerEnter={()=>prefetchPassport(m)} className={`group cursor-pointer relative animate-[fadeUp_0.5s_ease-out_both] ${selectMode?'select-none':''}`} style={{animationDelay:`${i*60}ms`}}>
-              {/* Logged-in player's own card: gold ring + MY CARD badge so she can spot it instantly */}
+              {/* Logged-in player's own card: gold ring + MY CARD badge so she can spot it
+                  instantly. The ring/badge mirror the card's hover transform (scale 1.07,
+                  lift) or the ring would poke out from under the card on hover. */}
               {user?.role==="player"&&!!user.memberId&&m.id===user.memberId&&(
-                <>
-                  <div className="absolute -inset-[3px] z-[5] rounded-[20px] pointer-events-none ring-1 ring-[#f6c744]/60 shadow-[0_0_24px_rgba(246,199,68,.25)] group-hover:ring-[#f6c744] group-hover:shadow-[0_0_34px_rgba(246,199,68,.4)] transition-all"/>
-                  <div className="absolute -top-2.5 right-3 z-20 px-2 py-0.5 rounded-full bg-[#f6c744] text-[#0b1322] text-[6px] font-black uppercase tracking-[.2em] shadow-lg shadow-[#f6c744]/30">MY CARD</div>
-                </>
+                <div className="absolute inset-0 z-[5] rounded-[0.8rem] pointer-events-none transition-all duration-[550ms] [transition-timing-function:cubic-bezier(.16,.84,.44,1)] group-hover:scale-[1.07] group-hover:-translate-y-2">
+                  <div className="absolute inset-0 rounded-[0.8rem] ring-1 ring-[#f6c744]/60 shadow-[0_0_24px_rgba(246,199,68,.25)] group-hover:ring-[#f6c744] group-hover:shadow-[0_0_34px_rgba(246,199,68,.4)] transition-all duration-300"/>
+                  <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-[#f6c744] text-[#0b1322] text-[6px] font-black uppercase tracking-[.2em] shadow-lg shadow-[#f6c744]/30">MY CARD</div>
+                </div>
               )}
               {selectMode&&(
                 <div className={`absolute top-3 left-3 z-20 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all ${selectedIds.includes(m.id)?'bg-[#e3062c] border-[#e3062c] text-white':'bg-[var(--c-bg)]/80 border-white/60 text-transparent'}`}>
