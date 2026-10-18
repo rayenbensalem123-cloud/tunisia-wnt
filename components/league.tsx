@@ -15,6 +15,7 @@ import { CvImport } from '@/components/cv-import'
 import { LeagueTeamCard } from '@/components/league-team-card'
 import { LeagueTeamHero } from '@/components/league-team-hero'
 import { LeagueFixtures } from '@/components/league-fixtures'
+import { LeagueNextMatch, LeagueRoundStrip } from '@/components/league-glance'
 import ThemeToggle from '@/components/theme-toggle'
 import LanguageToggle from '@/components/language-toggle'
 
@@ -301,6 +302,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
               </dl>
             </div>
           </section>
+          <LeagueRoundStrip teams={teams} logoUrl={logoUrl} onOpen={() => setTab('matchdays')} />
           <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
             <div className="flex items-center gap-2" role="group" aria-label={t.sortBy}>
               {([['name', t.sortName], ['size', t.sortSize]] as const).map(([k, lab]) => (
@@ -356,6 +358,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
                   : <button onClick={() => { setLoginErr(''); setLoginOpen(true) }} className="px-3 py-2 rounded-lg bg-[#f6c744] text-[#0c1f3d] text-[10px] font-black uppercase tracking-[.18em] hover:bg-white transition-all">{t.createLogin}</button>)}
                 {mode === 'admin' && <button onClick={() => pickLogoFor(team.id)} title={t.changeLogo} aria-label={t.changeLogo} className="p-2 rounded-lg bg-black/25 ring-1 ring-inset ring-white/15 text-white/85 hover:bg-white/25 transition-all"><Camera size={14} /></button>}
               </LeagueTeamHero>
+              <LeagueNextMatch teamId={team.id} teams={mode === 'club' ? directory : teams} logoUrl={logoUrl} />
               <div className="flex items-center justify-between gap-3 mb-6 flex-wrap">
                 <div className="flex items-center gap-2 flex-wrap" role="group" aria-label={t.position}>
                   {([['', t.allPlayers, players.length], ...(['GOALKEEPER', 'DEFENDER', 'MIDFIELDER', 'FORWARD'] as const).map(p => [p, ({ GOALKEEPER: 'GK', DEFENDER: 'DEF', MIDFIELDER: 'MID', FORWARD: 'FWD' })[p], posCount(p)] as [string, string, number])] as [string, string, number][])

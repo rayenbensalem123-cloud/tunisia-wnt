@@ -3,14 +3,20 @@
 // Admin creates seasons and matches and enters scores; a club account sees the same
 // fixtures read-only, with its own matches highlighted.
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, Pencil, Plus, Trash2, X } from 'lucide-react'
+import { CalendarDays, Pencil, Plus, Trash2, Wand2, X } from 'lucide-react'
 import { useTranslate } from '@/lib/language-context'
 import {
   fetchLeagueSeasons, fetchLeagueFixtures, createLeagueSeason, setCurrentLeagueSeason, deleteLeagueSeason,
-  saveLeagueFixture, deleteLeagueFixture,
+  saveLeagueFixture, deleteLeagueFixture, bulkCreateLeagueFixtures,
   type LeagueTeam, type LeagueSeason, type LeagueFixture, type FixtureStatus, type FixtureError,
 } from '@/lib/app-data'
-import { hueOf, initialsOf } from '@/components/league-team-card'
+import { ClubMark, chip, input, label, toLocalInput } from '@/components/league-ui'
+import { generateRoundRobin, matchdayDate } from '@/lib/league-schedule'
+import { LeagueStandings } from '@/components/league-standings'
+import { LeagueCalendar } from '@/components/league-calendar'
+import { LeagueCup } from '@/components/league-cup'
+
+type Sub = 'matchdays' | 'standings' | 'calendar' | 'cup'
 
 type Props = {
   mode: 'admin' | 'club'
@@ -19,32 +25,6 @@ type Props = {
   logoUrl: (x: LeagueTeam | null) => string
   /** The club this login belongs to (club mode), highlighted in the list. */
   myTeamId: number | null
-}
-
-const input = 'w-full rounded-xl border border-[rgba(var(--line-rgb),.25)] bg-[var(--c-deep)] px-3.5 py-3 text-sm font-semibold text-[var(--c-text)] outline-none focus:border-[#f6c744]/70'
-const label = 'mb-1 block text-[9px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]'
-const chip = (on: boolean) =>
-  `px-3.5 py-2 rounded-full text-[10px] font-black uppercase tracking-[.16em] transition-all ring-1 ring-inset ${on ? 'bg-[#f6c744] text-[#0c1f3d] ring-[#f6c744]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`
-
-/** ISO timestamp -> value for <input type="datetime-local"> in the viewer's time zone. */
-const toLocalInput = (iso: string | null) => {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return ''
-  const p = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`
-}
-
-function ClubMark({ team, src, size = 44 }: { team: LeagueTeam | undefined; src: string; size?: number }) {
-  const name = team?.name || '?'
-  const h = hueOf(name)
-  if (src) return <img src={src} alt="" width={size} height={size} className="object-contain shrink-0 drop-shadow-[0_4px_8px_rgba(0,0,0,.4)]" style={{ width: size, height: size }} />
-  return (
-    <svg aria-hidden viewBox="0 0 100 116" className="shrink-0" style={{ width: size * 0.9, height: size }}>
-      <path d="M50 3 93 17v38c0 31-19 49-43 58C26 104 7 86 7 55V17z" fill={`hsl(${h} 45% 24%)`} stroke={`hsl(${h} 55% 62%)`} strokeWidth="4" />
-      <text x="50" y="68" textAnchor="middle" fontSize={initialsOf(name).length > 2 ? 27 : 34} fontWeight="900" fill="#fff" fillOpacity=".92" fontFamily="inherit">{initialsOf(name)}</text>
-    </svg>
-  )
 }
 
 type FxForm = { id?: number; matchday: string; home: string; away: string; when: string; venue: string; status: FixtureStatus; hg: string; ag: string }
@@ -64,6 +44,9 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
   const [seasonForm, setSeasonForm] = useState({ name: '', startsOn: '', endsOn: '', makeCurrent: true })
   const [err, setErr] = useState('')
   const [busy, setBusy] = useState(false)
+  const [sub, setSub] = useState<Sub>('matchdays')
+  const [genOpen, setGenOpen] = useState(false)
+  const [gen, setGen] = useState({ double: true, start: '', every: '7', time: '15:00' })
 
   const teamById = useMemo(() => new Map(teams.map(x => [x.id, x])), [teams])
   const locale = lang === 'ar' ? 'ar-TN' : lang === 'fr' ? 'fr-TN' : 'en-GB'
@@ -163,6 +146,28 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
     )
   }
 
+  const genPlan = useMemo(() => {
+    const n = teams.length
+    if (n < 2) return { days: 0, matches: 0 }
+    const per = n % 2 ? n : n - 1
+    return { days: gen.double ? per * 2 : per, matches: gen.double ? n * (n - 1) : (n * (n - 1)) / 2 }
+  }, [teams.length, gen.double])
+  const submitGenerate = async () => {
+    if (seasonId == null) return
+    if (fixtures.length > 0) { setErr(t.genNeedsEmpty); return }
+    const every = Number(gen.every)
+    if (gen.start && (!Number.isInteger(every) || every < 1 || every > 60 || !/^\d{2}:\d{2}$/.test(gen.time))) { setErr(t.errInvalid); return }
+    const rows = generateRoundRobin(teams.map(x => x.id), { double: gen.double }).map(f => ({
+      seasonId, matchday: f.matchday, homeTeamId: f.homeTeamId, awayTeamId: f.awayTeamId,
+      kickoff: gen.start ? new Date(`${matchdayDate(gen.start, f.matchday, every)}T${gen.time}`).toISOString() : null,
+    }))
+    setBusy(true); setErr('')
+    const r = await bulkCreateLeagueFixtures(rows)
+    setBusy(false)
+    if (r.error) { setErr(errText(r.error)); await loadFixtures(seasonId); return }
+    setGenOpen(false); setMatchday(null); await loadFixtures(seasonId)
+  }
+
   if (!loaded) return <p className="py-24 text-center text-[10px] font-black uppercase tracking-[.3em] text-[var(--c-textMid)]">{t.loading}</p>
 
   return (
@@ -186,11 +191,14 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
           )}
         </div>
         <div className="flex items-center gap-2">
-          {mode === 'club' && myTeamId != null && days.length > 0 && (
+          {mode === 'club' && myTeamId != null && days.length > 0 && sub === 'matchdays' && (
             <button onClick={() => setOnlyMine(v => !v)} aria-pressed={onlyMine} className={chip(onlyMine)}>{onlyMine ? t.allMatches : t.myMatches}</button>
           )}
           {admin && <button onClick={() => { setErr(''); setSeasonOpen(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest hover:border-[#f6c744]/60 transition-all"><Plus size={14} />{t.newSeason}</button>}
-          {admin && season && <button onClick={openNew} disabled={teams.length < 2} title={teams.length < 2 ? t.needTwoTeams : undefined} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-40 disabled:hover:bg-[#E30613] transition-all"><Plus size={14} />{t.addMatch}</button>}
+          {admin && season && sub === 'matchdays' && fixtures.length === 0 && teams.length >= 2 && (
+            <button onClick={() => { setErr(''); setGenOpen(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#f6c744]/60 text-[#f6c744] text-[10px] font-black uppercase tracking-widest hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all"><Wand2 size={14} />{t.generateFixtures}</button>
+          )}
+          {admin && season && sub === 'matchdays' && <button onClick={openNew} disabled={teams.length < 2} title={teams.length < 2 ? t.needTwoTeams : undefined} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-40 disabled:hover:bg-[#E30613] transition-all"><Plus size={14} />{t.addMatch}</button>}
         </div>
       </div>
 
@@ -199,6 +207,19 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
       )}
 
       {season && (
+        <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-1" role="tablist" aria-label={t.season}>
+          {([['matchdays', t.matchdays], ['standings', t.standings], ['calendar', t.calendar], ['cup', t.cup]] as const).map(([k, lab]) => (
+            <button key={k} role="tab" aria-selected={sub === k} onClick={() => setSub(k)}
+              className={`shrink-0 px-4 py-2.5 text-[11px] font-black uppercase tracking-[.16em] border-b-2 transition-all ${sub === k ? 'border-[#E30613] text-[var(--c-text)]' : 'border-transparent text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{lab}</button>
+          ))}
+        </div>
+      )}
+
+      {season && sub === 'standings' && <LeagueStandings teams={teams} fixtures={fixtures} logoUrl={logoUrl} myTeamId={myTeamId} />}
+      {season && sub === 'calendar' && <LeagueCalendar admin={admin} season={season} teams={teams} fixtures={fixtures} myTeamId={myTeamId} />}
+      {season && sub === 'cup' && <LeagueCup admin={admin} season={season} teams={teams} logoUrl={logoUrl} myTeamId={myTeamId} onInfoSaved={() => void loadSeasons(season.id)} />}
+
+      {season && sub === 'matchdays' && (
         <>
           {/* matchday tabs */}
           {days.length > 0 && (
@@ -292,6 +313,32 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId }: Props) {
             <div className="mt-5 flex justify-end gap-2">
               <button onClick={() => setForm(null)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
               <button onClick={() => void submitMatch()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.save}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* generate fixtures */}
+      {genOpen && (
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={() => setGenOpen(false)}>
+          <div role="dialog" aria-modal="true" className="relative w-full max-w-md rounded-2xl border border-[rgba(var(--line-rgb),.25)] bg-[var(--c-bg)] p-5 sm:p-6" onClick={e => e.stopPropagation()}>
+            <button onClick={() => setGenOpen(false)} className="absolute top-3 right-3 rtl:left-3 rtl:right-auto p-2 rounded-full bg-black/30 text-white" aria-label={t.cancel}><X size={14} /></button>
+            <h3 className="mb-1 text-lg font-black uppercase tracking-tight">{t.genTitle}</h3>
+            <p className="mb-4 text-sm text-[var(--c-textMid)]">{t.genClubs.replace('{n}', String(teams.length))}</p>
+            <div className="space-y-3">
+              <label className="flex items-start gap-2 text-sm font-semibold"><input type="checkbox" className="mt-1" checked={gen.double} onChange={e => setGen({ ...gen, double: e.target.checked })} />{t.genDouble}</label>
+              {teams.length % 2 === 1 && <p className="text-xs text-[var(--c-textMid)]">{t.genOdd}</p>}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="col-span-3 sm:col-span-1"><label className={label} htmlFor="gn-start">{t.genStart}</label><input id="gn-start" type="date" value={gen.start} onChange={e => setGen({ ...gen, start: e.target.value })} className={input} /></div>
+                <div><label className={label} htmlFor="gn-every">{t.genEvery}</label><input id="gn-every" type="number" min={1} max={60} value={gen.every} onChange={e => setGen({ ...gen, every: e.target.value })} className={input} disabled={!gen.start} /></div>
+                <div><label className={label} htmlFor="gn-time">{t.genTime}</label><input id="gn-time" type="time" value={gen.time} onChange={e => setGen({ ...gen, time: e.target.value })} className={input} disabled={!gen.start} /></div>
+              </div>
+              <p className="rounded-xl bg-[#f6c744]/10 px-3.5 py-2.5 text-sm font-bold text-[#f6c744]">{t.genPreview.replace('{matches}', String(genPlan.matches)).replace('{days}', String(genPlan.days))}</p>
+            </div>
+            {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}
+            <div className="mt-5 flex justify-end gap-2">
+              <button onClick={() => setGenOpen(false)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
+              <button onClick={() => void submitGenerate()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.genCreate}</button>
             </div>
           </div>
         </div>

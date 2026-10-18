@@ -841,7 +841,7 @@ export async function fetchClubLogins(): Promise<Record<number, string>> {
 // ─────────────────────────────────────────────
 // LIGUE FEMININE: seasons, matchdays, results (migration 0014)
 // ─────────────────────────────────────────────
-export interface LeagueSeason { id: number; name: string; startsOn: string | null; endsOn: string | null; isCurrent: boolean }
+export interface LeagueSeason { id: number; name: string; startsOn: string | null; endsOn: string | null; isCurrent: boolean; cupName: string | null; cupInfo: string | null }
 export type FixtureStatus = 'scheduled' | 'played' | 'postponed'
 export interface LeagueFixture {
   id: number; seasonId: number; matchday: number; homeTeamId: number; awayTeamId: number
@@ -855,7 +855,7 @@ export type FixtureError = 'duplicate' | 'sameTeam' | 'invalid' | 'denied' | 'ge
 const fixtureError = (e: { code?: string; message?: string } | null): FixtureError | null => {
   if (!e) return null
   if (e.code === '23505') return 'duplicate'
-  if (e.code === '23514') return e.message?.includes('league_fixtures_check"') ? 'sameTeam' : 'invalid'
+  if (e.code === '23514') return /league_(fixtures|cup_matches)_check"/.test(e.message ?? '') ? 'sameTeam' : 'invalid'
   if (e.code === '42501') return 'denied'
   return 'generic'
 }
@@ -868,9 +868,9 @@ export async function fetchLeagueDirectory(): Promise<LeagueTeam[]> {
 }
 
 export async function fetchLeagueSeasons(): Promise<LeagueSeason[]> {
-  const { data, error } = await supabase.from('league_seasons').select('id,name,starts_on,ends_on,is_current').order('starts_on', { ascending: false, nullsFirst: false }).order('id', { ascending: false })
+  const { data, error } = await supabase.from('league_seasons').select('id,name,starts_on,ends_on,is_current,cup_name,cup_info').order('starts_on', { ascending: false, nullsFirst: false }).order('id', { ascending: false })
   if (error) return []
-  return (data ?? []).map((r: any) => ({ id: r.id, name: r.name, startsOn: r.starts_on ?? null, endsOn: r.ends_on ?? null, isCurrent: !!r.is_current }))
+  return (data ?? []).map((r: any) => ({ id: r.id, name: r.name, startsOn: r.starts_on ?? null, endsOn: r.ends_on ?? null, isCurrent: !!r.is_current, cupName: r.cup_name ?? null, cupInfo: r.cup_info ?? null }))
 }
 
 export async function fetchLeagueFixtures(seasonId: number): Promise<LeagueFixture[]> {
@@ -917,5 +917,83 @@ export async function saveLeagueFixture(f: Omit<LeagueFixture, 'id'> & { id?: nu
 
 export async function deleteLeagueFixture(id: number): Promise<{ error: FixtureError | null }> {
   const { error } = await supabase.from('league_fixtures').delete().eq('id', id)
+  return { error: fixtureError(error) }
+}
+
+/** Admin only: inserts many generated matches at once (chunked so no single request is huge). */
+export async function bulkCreateLeagueFixtures(rows: { seasonId: number; matchday: number; homeTeamId: number; awayTeamId: number; kickoff: string | null }[]): Promise<{ error: FixtureError | null }> {
+  for (let i = 0; i < rows.length; i += 100) {
+    const chunk = rows.slice(i, i + 100).map(r => ({
+      season_id: r.seasonId, matchday: r.matchday, home_team_id: r.homeTeamId, away_team_id: r.awayTeamId,
+      kickoff: r.kickoff, status: 'scheduled', home_goals: null, away_goals: null,
+    }))
+    const { error } = await supabase.from('league_fixtures').insert(chunk)
+    if (error) return { error: fixtureError(error) }
+  }
+  return { error: null }
+}
+
+// ── cup (migration 0015) ──
+/** Number of clubs left in the round: 2 = final, 4 = semi-finals, 8 = quarter-finals, 16, 32, 64. */
+export type CupRound = 2 | 4 | 8 | 16 | 32 | 64
+export interface LeagueCupMatch {
+  id: number; seasonId: number; round: CupRound; slot: number
+  homeTeamId: number | null; awayTeamId: number | null
+  kickoff: string | null; venue: string | null; status: FixtureStatus
+  homeGoals: number | null; awayGoals: number | null; homePens: number | null; awayPens: number | null
+}
+
+export async function fetchLeagueCupMatches(seasonId: number): Promise<LeagueCupMatch[]> {
+  const { data, error } = await supabase.from('league_cup_matches')
+    .select('id,season_id,round,slot,home_team_id,away_team_id,kickoff,venue,status,home_goals,away_goals,home_pens,away_pens')
+    .eq('season_id', seasonId).order('round', { ascending: false }).order('slot')
+  if (error) return []
+  return (data ?? []).map((r: any) => ({
+    id: r.id, seasonId: r.season_id, round: r.round, slot: r.slot, homeTeamId: r.home_team_id ?? null, awayTeamId: r.away_team_id ?? null,
+    kickoff: r.kickoff ?? null, venue: r.venue ?? null, status: r.status,
+    homeGoals: r.home_goals ?? null, awayGoals: r.away_goals ?? null, homePens: r.home_pens ?? null, awayPens: r.away_pens ?? null,
+  }))
+}
+
+export async function saveLeagueCupMatch(m: Omit<LeagueCupMatch, 'id'> & { id?: number }): Promise<{ error: FixtureError | null }> {
+  const played = m.status === 'played'
+  const tied = played && m.homeGoals != null && m.homeGoals === m.awayGoals
+  const row = {
+    season_id: m.seasonId, round: m.round, slot: m.slot, home_team_id: m.homeTeamId, away_team_id: m.awayTeamId,
+    kickoff: m.kickoff, venue: m.venue?.trim() || null, status: m.status,
+    home_goals: played ? m.homeGoals : null, away_goals: played ? m.awayGoals : null,
+    home_pens: tied ? m.homePens : null, away_pens: tied ? m.awayPens : null,
+  }
+  const { error } = m.id ? await supabase.from('league_cup_matches').update(row).eq('id', m.id) : await supabase.from('league_cup_matches').insert(row)
+  return { error: fixtureError(error) }
+}
+
+export async function deleteLeagueCupMatch(id: number): Promise<{ error: FixtureError | null }> {
+  const { error } = await supabase.from('league_cup_matches').delete().eq('id', id)
+  return { error: fixtureError(error) }
+}
+
+/** Admin only: the cup's name and description for a season. */
+export async function saveLeagueCupInfo(seasonId: number, cupName: string, cupInfo: string): Promise<{ error: FixtureError | null }> {
+  const { error } = await supabase.from('league_seasons').update({ cup_name: cupName.trim() || null, cup_info: cupInfo.trim() || null }).eq('id', seasonId)
+  return { error: fixtureError(error) }
+}
+
+// ── season breaks (migration 0015) ──
+export interface LeagueBreak { id: number; seasonId: number; title: string; startsOn: string; endsOn: string }
+
+export async function fetchLeagueBreaks(seasonId: number): Promise<LeagueBreak[]> {
+  const { data, error } = await supabase.from('league_breaks').select('id,season_id,title,starts_on,ends_on').eq('season_id', seasonId).order('starts_on')
+  if (error) return []
+  return (data ?? []).map((r: any) => ({ id: r.id, seasonId: r.season_id, title: r.title, startsOn: r.starts_on, endsOn: r.ends_on }))
+}
+
+export async function createLeagueBreak(p: { seasonId: number; title: string; startsOn: string; endsOn: string }): Promise<{ error: FixtureError | null }> {
+  const { error } = await supabase.from('league_breaks').insert({ season_id: p.seasonId, title: p.title.trim(), starts_on: p.startsOn, ends_on: p.endsOn })
+  return { error: fixtureError(error) }
+}
+
+export async function deleteLeagueBreak(id: number): Promise<{ error: FixtureError | null }> {
+  const { error } = await supabase.from('league_breaks').delete().eq('id', id)
   return { error: fixtureError(error) }
 }

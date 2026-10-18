@@ -44,6 +44,7 @@ that baseline, in order.
 | `0012_ligue_feminine.sql` | Yes — all `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Changes live access rules (members read policy, `is_active_user`), so run it deliberately. |
 | `0013_close_public_reads.sql` | Yes — `REVOKE` and `DROP POLICY IF EXISTS`. Removes anonymous read access to the roster view and five unused tables. |
 | `0014_league_fixtures.sql` | Yes — `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Adds Ligue Féminine seasons and fixtures (admin writes, club accounts read-only). Needs 0012 first. |
+| `0015_league_cup_calendar.sql` | Yes — `IF NOT EXISTS` / `DROP … IF EXISTS`. Adds the Ligue Féminine cup (name, info, knockout matches) and season breaks for the calendar (admin writes, club accounts read-only). Needs 0012 and 0014 first. |
 
 If you add a migration whose statements genuinely can't be made re-run-safe
 (e.g. a one-off data backfill), say so loudly in its header instead of

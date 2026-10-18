@@ -10,7 +10,7 @@
     "db:apply": "node scripts/apply-sql.mjs",
     "db:migrate": "node scripts/db-migrate.mjs",
     "check-translations": "node scripts/check-translations.mjs",
-    "test:eligibility": "node --experimental-strip-types scripts/test-eligibility.mjs && node --experimental-strip-types scripts/test-clash.mjs && node --experimental-strip-types scripts/test-match-stats.mjs && node --experimental-strip-types scripts/test-cv-extract.mjs",
+    "test:eligibility": "node --experimental-strip-types scripts/test-eligibility.mjs && node --experimental-strip-types scripts/test-clash.mjs && node --experimental-strip-types scripts/test-match-stats.mjs && node --experimental-strip-types scripts/test-cv-extract.mjs && node --experimental-strip-types scripts/test-league.mjs",
     "test:routes": "node --import ./scripts/register-alias-loader.mjs scripts/test-api-routes.mjs"
   },
   "dependencies": {
