@@ -59,6 +59,13 @@ CREATE POLICY league_player_stats_admin_write ON public.league_player_stats
 
 REVOKE ALL ON public.league_player_stats FROM anon;
 
+-- Explicit table privileges. RLS decides WHICH rows an authenticated caller may
+-- see; these grants decide whether they may touch the table at all. A table created
+-- here does not reliably pick up Supabase's default privileges for every role, and
+-- without this the app gets "permission denied for table" instead of a policy
+-- result. anon keeps nothing.
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.league_player_stats TO authenticated;
+
 -- ------------------------------------------------------------
 -- 3. Convenience read for the leaderboards
 --
