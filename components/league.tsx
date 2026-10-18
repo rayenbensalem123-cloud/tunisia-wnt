@@ -18,6 +18,7 @@ import { LeagueTeamHero } from '@/components/league-team-hero'
 import { LeagueFixtures } from '@/components/league-fixtures'
 import { DateField, NumberField, SelectField } from '@/components/league-pickers'
 import { LeagueNextMatch, LeagueRoundStrip } from '@/components/league-glance'
+import { LeaguePlayerStats } from '@/components/league-player-stats'
 import ThemeToggle from '@/components/theme-toggle'
 import LanguageToggle from '@/components/language-toggle'
 
@@ -71,12 +72,12 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
     const id = requestAnimationFrame(() => { if (Math.abs(window.scrollY - y) > 4) window.scrollTo(0, y) })
     return () => cancelAnimationFrame(id)
   }, [tabPulse])
-  const [teamTab, setTeamTab] = useState<'players' | 'matchdays' | 'standings' | 'calendar' | 'cup'>('players')
+  const [teamTab, setTeamTab] = useState<'players' | 'matchdays' | 'standings' | 'stats' | 'calendar' | 'cup'>('players')
   // Bumping this on every tab change remounts the tab body, so the entrance
   // animations replay instead of leaving stale (or invisible) content behind.
   const [teamPulse, setTeamPulse] = useState(0)
   const keepTeamScroll = useRef(0)
-  const goTeamTab = (k: 'players' | 'matchdays' | 'standings' | 'calendar' | 'cup') => {
+  const goTeamTab = (k: 'players' | 'matchdays' | 'standings' | 'stats' | 'calendar' | 'cup') => {
     keepTeamScroll.current = window.scrollY
     setTeamTab(k)
     setTeamPulse(p => p + 1)
@@ -125,6 +126,12 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   useEffect(() => { void reloadTeams() }, [])
 
   const league = useMemo(() => members.filter(m => m.teamCategory === 'LIGUE' && m.role === 'PLAYERS'), [members])
+  // Every league player, for the admin stats editor: a line can be entered for any
+  // club's player, not only the one whose page you happen to be on.
+  const leaguePlayers = useMemo(
+    () => [...league].sort((a, b) => String(a.name).localeCompare(String(b.name))),
+    [league],
+  )
   const countFor = (id: number) => league.filter(m => m.leagueTeamId === id).length
   const team = teams.find(x => x.id === selTeamId) || null
   const players = useMemo(
@@ -397,7 +404,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
               </LeagueTeamHero>
               <LeagueNextMatch teamId={team.id} teams={mode === 'club' ? directory : teams} logoUrl={logoUrl} />
               <div className="mb-6 flex items-center gap-1 overflow-x-auto border-b border-[rgba(var(--line-rgb),.18)]" role="tablist" aria-label={team.name}>
-                {([['players', t.playersWord], ['matchdays', t.matchdays], ['standings', t.standings], ['calendar', t.calendar], ['cup', t.cup]] as const).map(([k, lab]) => (
+                {([['players', t.playersWord], ['matchdays', t.matchdays], ['standings', t.standings], ['stats', t.statsTab], ['calendar', t.calendar], ['cup', t.cup]] as const).map(([k, lab]) => (
                   <button key={k} role="tab" aria-selected={teamTab === k} onClick={() => goTeamTab(k)}
                     className={`shrink-0 border-b-2 px-4 py-3 text-[11px] font-black uppercase tracking-[.16em] transition-all ${teamTab === k ? 'border-[#E30613] text-[var(--c-text)]' : 'border-transparent text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{lab}</button>
                 ))}
@@ -405,7 +412,18 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
               {/* The tab body is keyed on teamTab + pulse so it remounts on every
                   switch: the entrance animations replay, and content can never be
                   left stranded mid-animation (which showed up as a missing banner). */}
-              {teamTab !== 'players' && (
+              {teamTab === 'stats' && (
+                <div key={`st-${teamPulse}`} className="animate-[fadeUp_0.4s_ease-out_both]">
+                  <LeaguePlayerStats
+                    teams={mode === 'club' ? directory : teams}
+                    logoUrl={logoUrl}
+                    players={leaguePlayers.map((m: any) => ({ id: m.id, name: m.name, teamId: m.leagueTeamId ?? null }))}
+                    admin={mode === 'admin'}
+                    myTeamId={team.id}
+                  />
+                </div>
+              )}
+              {teamTab !== 'players' && teamTab !== 'stats' && (
                 <div key={`tf-${teamTab}-${teamPulse}`} className="animate-[fadeUp_0.4s_ease-out_both]">
                   <LeagueFixtures mode="club" section={teamTab} scoped teams={mode === 'club' ? directory : teams} logoUrl={logoUrl} myTeamId={team.id} />
                 </div>

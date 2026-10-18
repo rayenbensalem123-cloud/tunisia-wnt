@@ -337,6 +337,10 @@ const t = {
       pickDate: "Choose a date", pickDateTime: "Choose date and time", pickTime: "Choose a time", today: "Today", clear: "Clear", done: "Done", hoursWord: "Hour", minutesWord: "Minute", thisWeek: "This week", ourMatches: "Our matches", noMatchesWeek: "No league matches this week.",
       allPlayers: "All", createLogin: "Create login", loginLabel: "Login", searchTeams: "Search teams…", searchPlayers: "Search players…", noMatch: "No matches found.",
       nameRequired: "Enter the player's name", birthdateFormat: "Date of birth must be DD/MM/YYYY", jerseyRange: "Jersey number must be 0 to 99",
+      statsTab: "Stats", topScorers: "Top Scorers", topAssists: "Most Assists", appearances: "Apps", goals: "Goals", assists: "Assists",
+      yellows: "Yellows", reds: "Reds", editStats: "Edit stats", playerStats: "Season stats", noStatsYet: "No player statistics recorded for this season yet.",
+      statsFor: "Stats for {name}", statsSaved: "Stats saved", statsEnteredBy: "Stats are entered by an admin", statRange: "Numbers cannot be negative",
+      confirmDeleteStat: "Clear this player's stats for the season?", clubWord: "Club", addWord: "Add", choosePlayer: "Choose a player…",
     },
     emailModal: {
       title: "Recovery Email", menuLabel: "Recovery Email", emailLabel: "Email address",
@@ -714,6 +718,10 @@ const t = {
       pickDate: "Choisir une date", pickDateTime: "Choisir la date et l'heure", pickTime: "Choisir l'heure", today: "Aujourd'hui", clear: "Effacer", done: "Valider", hoursWord: "Heure", minutesWord: "Minute", thisWeek: "Cette semaine", ourMatches: "Nos matchs", noMatchesWeek: "Aucun match de championnat cette semaine.",
       allPlayers: "Toutes", createLogin: "Créer l'accès", loginLabel: "Accès", searchTeams: "Rechercher une équipe…", searchPlayers: "Rechercher une joueuse…", noMatch: "Aucun résultat.",
       nameRequired: "Saisissez le nom de la joueuse", birthdateFormat: "La date de naissance doit être JJ/MM/AAAA", jerseyRange: "Le numéro doit être entre 0 et 99",
+      statsTab: "Statistiques", topScorers: "Meilleures buteuses", topAssists: "Meilleures passeuses", appearances: "J", goals: "Buts", assists: "Passes",
+      yellows: "Jaunes", reds: "Rouges", editStats: "Modifier les stats", playerStats: "Stats de la saison", noStatsYet: "Aucune statistique enregistrée pour cette saison.",
+      statsFor: "Statistiques de {name}", statsSaved: "Statistiques enregistrées", statsEnteredBy: "Les statistiques sont saisies par un administrateur", statRange: "Les nombres ne peuvent pas être négatifs",
+      confirmDeleteStat: "Effacer les statistiques de cette joueuse pour la saison ?", clubWord: "Club", addWord: "Ajouter", choosePlayer: "Choisir une joueuse…",
     },
     emailModal: {
       title: "E-mail de récupération", menuLabel: "E-mail de récupération", emailLabel: "Adresse e-mail",
@@ -1091,6 +1099,10 @@ const t = {
       pickDate: "اختر تاريخًا", pickDateTime: "اختر التاريخ والوقت", pickTime: "اختر الوقت", today: "اليوم", clear: "مسح", done: "تم", hoursWord: "الساعة", minutesWord: "الدقيقة", thisWeek: "هذا الأسبوع", ourMatches: "مبارياتنا", noMatchesWeek: "لا توجد مباريات في البطولة هذا الأسبوع.",
       allPlayers: "الكل", createLogin: "إنشاء حساب", loginLabel: "الحساب", searchTeams: "ابحث عن فريق…", searchPlayers: "ابحث عن لاعبة…", noMatch: "لا توجد نتائج.",
       nameRequired: "أدخل اسم اللاعبة", birthdateFormat: "يجب أن يكون تاريخ الميلاد بصيغة يوم/شهر/سنة", jerseyRange: "يجب أن يكون الرقم بين 0 و99",
+      statsTab: "الإحصائيات", topScorers: "أفضل هدّافات", topAssists: "أفضل صانعات أهداف", appearances: "م", goals: "أهداف", assists: "تمريرات",
+      yellows: "بطاقات صفراء", reds: "بطاقات حمراء", editStats: "تعديل الإحصائيات", playerStats: "إحصائيات الموسم", noStatsYet: "لا توجد إحصائيات مسجلة لهذا الموسم بعد.",
+      statsFor: "إحصائيات {name}", statsSaved: "تم حفظ الإحصائيات", statsEnteredBy: "يقوم المسؤول بإدخال الإحصائيات", statRange: "لا يمكن أن تكون الأرقام سالبة",
+      confirmDeleteStat: "هل تريد مسح إحصائيات هذه اللاعبة للموسم؟", clubWord: "النادي", addWord: "إضافة", choosePlayer: "اختر لاعبة…",
     },
     emailModal: {
       title: "بريد الاسترداد", menuLabel: "بريد الاسترداد", emailLabel: "البريد الإلكتروني",

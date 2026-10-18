@@ -884,6 +884,85 @@ export async function fetchLeagueFixtures(seasonId: number): Promise<LeagueFixtu
   }))
 }
 
+// ── Player statistics (migration 0018) ──────────────────────────────────────
+
+export interface LeaguePlayerStat {
+  memberId: number
+  name: string
+  teamId: number | null
+  teamName: string | null
+  appearances: number
+  goals: number
+  assists: number
+  yellows: number
+  reds: number
+}
+
+/** One player's season line, as stored. teamId/teamName are not part of the table. */
+export interface LeaguePlayerStatRow {
+  seasonId: number
+  memberId: number
+  appearances: number
+  goals: number
+  assists: number
+  yellows: number
+  reds: number
+}
+
+/**
+ * Every player's line for a season, with the name and club joined on.
+ * The RPC is SECURITY INVOKER, so the table's own policies decide what the
+ * caller may see: an admin or a club account, nobody else.
+ */
+export async function fetchLeaguePlayerStats(seasonId: number): Promise<LeaguePlayerStat[]> {
+  const { data, error } = await supabase.rpc('league_top_players', { p_season_id: seasonId })
+  if (error || !data) return []
+  return (data as any[]).map((r) => ({
+    memberId: Number(r.member_id),
+    name: r.name ?? '',
+    teamId: r.team_id != null ? Number(r.team_id) : null,
+    teamName: r.team_name ?? null,
+    appearances: Number(r.appearances || 0),
+    goals: Number(r.goals || 0),
+    assists: Number(r.assists || 0),
+    yellows: Number(r.yellows || 0),
+    reds: Number(r.reds || 0),
+  }))
+}
+
+/**
+ * Save one player's line. Upserts on (season_id, member_id), so entering a
+ * stat twice corrects it rather than failing. Admin only (RLS).
+ */
+export async function saveLeaguePlayerStat(
+  row: LeaguePlayerStatRow,
+): Promise<{ error: FixtureError | null }> {
+  const { error } = await supabase.from('league_player_stats').upsert(
+    {
+      season_id: row.seasonId,
+      member_id: row.memberId,
+      appearances: row.appearances,
+      goals: row.goals,
+      assists: row.assists,
+      yellows: row.yellows,
+      reds: row.reds,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'season_id,member_id' },
+  )
+  return { error: fixtureError(error) }
+}
+
+/** Admin only (RLS). Drops a player's line entirely. */
+export async function deleteLeaguePlayerStat(
+  seasonId: number,
+  memberId: number,
+): Promise<{ error: FixtureError | null }> {
+  const { error } = await supabase.from('league_player_stats')
+    .delete().eq('season_id', seasonId).eq('member_id', memberId)
+  return { error: fixtureError(error) }
+}
+
 /** Admin only (RLS). The first season ever created becomes the current one. */
 export async function createLeagueSeason(p: { name: string; startsOn: string | null; endsOn: string | null; makeCurrent: boolean }): Promise<{ error: FixtureError | null; id?: number }> {
   const { data, error } = await supabase.from('league_seasons').insert({ name: p.name.trim(), starts_on: p.startsOn || null, ends_on: p.endsOn || null }).select('id').single()
