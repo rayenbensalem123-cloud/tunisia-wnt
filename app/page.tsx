@@ -505,7 +505,11 @@ export default function EliteSquadApp() {
       if(!user||user.role!=="admin"||birthdayDone.current||!members.length)return
       const pending=members.filter((m:any)=>m.role==="PLAYERS"&&(!m.birthdate||m.birthdate==="")&&m.passportImage)
       console.log('fix-birthday: found', pending.length, 'players missing birthdate with passport')
-      if(pending.length===0)return
+      if(pending.length===0){
+        const missingPas=(members||[]).filter((m:any)=>m.role==="PLAYERS"&&(!m.birthdate||m.birthdate==="")&&!m.passportImage)
+        if(missingPas.length) console.log('fix-birthday: still missing passport scans for:', missingPas.map((m:any)=>m.name).join(', '))
+        return
+      }
       for(const m of pending){
         if(!active)break
         try{
@@ -513,6 +517,9 @@ export default function EliteSquadApp() {
           const d=await r.json().catch(()=>({}))
           if(r.ok&&d.birthdate){
             setMembers(ms=>ms.map((x:any)=>x.id===m.id?{...x,birthdate:d.birthdate}:x))
+            console.log('fix-birthday: read', d.name||m.name, '→', d.birthdate)
+          }else{
+            console.log('fix-birthday: could not read', d.name||m.name, '-', d.reason||d.error||'unknown')
           }
         }catch(e){console.error('fix-birthday error for', m.name||m.id, e)}
       }
