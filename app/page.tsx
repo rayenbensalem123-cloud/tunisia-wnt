@@ -496,6 +496,30 @@ export default function EliteSquadApp() {
   const [leaving,setLeaving]=useState(false)
   const beginFadeIn=()=>{setLeaving(true);setTimeout(()=>setLeaving(false),800)}
   const [members,setMembers]=useState<any[]>([])
+  // Auto-fix: read missing birthdates from passport scans for every player.
+  // Admin-only, runs once per session — nothing to click.
+  const birthdayDone=useRef(false)
+  useEffect(()=>{
+    let active=true
+    const run=async()=>{
+      if(!user||user.role!=="admin"||birthdayDone.current||!members.length)return
+      const pending=members.filter((m:any)=>m.role==="PLAYERS"&&(!m.birthdate||m.birthdate==="")&&m.passportImage)
+      if(pending.length===0)return
+      for(const m of pending){
+        if(!active)break
+        try{
+          const r=await fetch('/api/fix-birthday',{method:'POST',headers:await authHeaders(),body:JSON.stringify({memberId:m.id})})
+          const d=await r.json().catch(()=>({}))
+          if(r.ok&&d.birthdate){
+            setMembers(ms=>ms.map((x:any)=>x.id===m.id?{...x,birthdate:d.birthdate}:x))
+          }
+        }catch(e){/* skip silently */}
+      }
+      birthdayDone.current=true
+    }
+    run()
+    return ()=>{active=false}
+  },[user,members])
   // Short-lived signed URLs for the private storage bucket, keyed by path.
   const [imgUrls,setImgUrls]=useState<Record<string,string>>({})
   const [matches,setMatches]=useState<any[]>([])
