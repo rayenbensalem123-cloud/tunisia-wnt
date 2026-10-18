@@ -41,6 +41,10 @@ After that baseline, apply the numbered incremental migrations in
 for the convention and `pnpm db:migrate` for a script that applies whichever
 of them haven't been run yet and tracks which have.
 
+Before applying, run `node scripts/check-rls-helpers.mjs`. It verifies that every
+RLS helper a policy calls is actually defined by a migration — a gap there makes a
+`CREATE POLICY` fail, leaving the table with no access rule at all.
+
 After registering your first account through the portal, promote it to admin:
 
 ```sql

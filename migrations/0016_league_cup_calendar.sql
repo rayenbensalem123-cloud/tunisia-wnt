@@ -1,14 +1,14 @@
 -- ============================================================
--- 0015  LIGUE FEMININE: CUP AND SEASON CALENDAR
+-- 0016  LIGUE FEMININE: CUP AND SEASON CALENDAR
 --
 --   * league_seasons.cup_name / cup_info   the cup's name and a short description
 --   * league_cup_matches                   knockout matches (round, slot, clubs, score, penalties)
 --   * league_breaks                        winter break, international dates ... shown on the calendar
 --
--- Same access as 0014: admin reads and writes, club accounts read only,
+-- Same access as 0015: admin reads and writes, club accounts read only,
 -- nobody else and no anonymous access.
 --
--- Depends on 0012 and 0014. Safe to re-run.
+-- Depends on 0012 and 0015. Safe to re-run.
 -- ============================================================
 
 ALTER TABLE public.league_seasons ADD COLUMN IF NOT EXISTS cup_name text;

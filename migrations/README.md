@@ -43,21 +43,38 @@ that baseline, in order.
 | `0011_activity_log_new_entities.sql` | Yes — drops and recreates the constraint. |
 | `0012_ligue_feminine.sql` | Yes — all `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Changes live access rules (members read policy, `is_active_user`), so run it deliberately. |
 | `0013_close_public_reads.sql` | Yes — `REVOKE` and `DROP POLICY IF EXISTS`. Removes anonymous read access to the roster view and five unused tables. |
-| `0014_league_fixtures.sql` | Yes — `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Adds Ligue Féminine seasons and fixtures (admin writes, club accounts read-only). Needs 0012 first. |
-| `0015_league_cup_calendar.sql` | Yes — `IF NOT EXISTS` / `DROP … IF EXISTS`. Adds the Ligue Féminine cup (name, info, knockout matches) and season breaks for the calendar (admin writes, club accounts read-only). Needs 0012 and 0014 first. |
-| `0016_define_is_admin.sql` | Yes — `CREATE OR REPLACE FUNCTION` only. Defines `public.is_admin()`, which 0012/0014/0015 call in their policies but no migration ever created. Apply it even on a database where the league tables already exist and work: it only makes the definition reproducible from the migrations alone. |
+| `0014_camp_stay_fields.sql` | Yes — `ADD COLUMN IF NOT EXISTS` only. Adds the camp stay fields (country, state, hotel, arrival/departure). Renamed from `0013_camp_stay_fields.sql`, which collided with the table below. |
+| `0015_league_fixtures.sql` | Yes — `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Adds Ligue Féminine seasons and fixtures (admin writes, club accounts read-only). Needs 0012 first. Renamed from `0014_league_fixtures.sql`. |
+| `0016_league_cup_calendar.sql` | Yes — `IF NOT EXISTS` / `DROP … IF EXISTS`. Adds the Ligue Féminine cup (name, info, knockout matches) and season breaks for the calendar (admin writes, club accounts read-only). Needs 0012 and 0015 first. Renamed from `0015_league_cup_calendar.sql`. |
+| `0017_define_rls_helpers.sql` | Yes — `CREATE OR REPLACE FUNCTION` only. Defines the four RLS helpers that policies call but no migration creates (see below). Safe to apply to a live database that already ran `supabase-setup.sql`. |
 
-### `is_admin()` and the setup file
+### RLS helpers and the setup file
 
-`0012_ligue_feminine.sql`, `0014` and `0015` write RLS policies calling
-`public.is_admin()`, `public.my_league_team_id()` and `public.current_active_admin()`.
-Those helpers were only ever defined in `../supabase-setup.sql`, which is applied by
-hand rather than by `db:migrate`. On a database built from migrations alone the
-policy statements therefore fail with *function does not exist*.
+`0002`, `0009`, `0010`, `0012`, `0015` and `0016` write policies calling
+`public.has_permission()`, `public.is_admin()`, `public.current_active_admin()` and
+`public.my_league_team_id()`. Those helpers were only ever defined in
+`../supabase-setup.sql`, which is applied by hand rather than by `db:migrate`.
 
-`0016` adds the definitions so the migrations are self-contained. The bodies are
-copied from `supabase-setup.sql` and `0012`, so re-running it on a database that
-already ran the setup file changes nothing.
+This matters because Postgres resolves a function call inside `CREATE POLICY` when the
+policy is created. A missing helper means the statement errors and **the table ends up
+with no policy at all**. Under `db:migrate` that is loud — the transaction rolls back
+and the run stops. Applied by hand in the SQL editor it is easy to miss, which is how
+a league table can end up with no access rule and nobody notices until someone reports
+it.
+
+`0017` adds all four definitions, copied verbatim from `supabase-setup.sql` and `0012`,
+so the migrations are self-contained and re-running it changes nothing on a database
+that already ran the setup file.
+
+Check it at any time:
+
+```bash
+node scripts/check-rls-helpers.mjs
+```
+
+It parses every migration, collects the `public.<fn>()` calls made in an RLS position
+and reports any that no migration defines. It exits non-zero while the gap exists, so
+it works as a pre-commit or CI guard.
 
 If you add a migration whose statements genuinely can't be made re-run-safe
 (e.g. a one-off data backfill), say so loudly in its header instead of
