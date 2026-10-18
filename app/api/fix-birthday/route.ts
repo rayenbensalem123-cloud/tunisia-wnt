@@ -66,6 +66,9 @@ export async function POST(req: Request) {
     if (!process.env.ANTHROPIC_API_KEY) {
       return NextResponse.json({ error: 'This tool is not set up yet. ANTHROPIC_API_KEY is missing.', code: 'not_configured' }, { status: 503 })
     }
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json({ error: 'SUPABASE_SERVICE_ROLE_KEY is missing on the server.', code: 'no_service_key' }, { status: 503 })
+    }
     const rl = await checkRateLimit(`fix-birthday:${auth.caller.id}`, { limit: 60, windowSeconds: 600 })
     if (!rl.ok) return NextResponse.json({ error: 'Too many requests, please try again shortly' }, { status: 429 })
 
@@ -77,7 +80,10 @@ export async function POST(req: Request) {
       .select('id, name, birthdate, passport_image')
       .eq('id', Number(memberId))
       .maybeSingle()
-    if (error) return NextResponse.json({ error: 'Could not read the member' }, { status: 500 })
+    if (error) {
+      console.error('fix-birthday db error', error)
+      return NextResponse.json({ error: `Could not read the member: ${error.message || String(error)}` }, { status: 500 })
+    }
     if (!m) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
     if (m.birthdate) return NextResponse.json({ skipped: true, name: m.name, birthdate: m.birthdate })
     const passportPath = m.passport_image
