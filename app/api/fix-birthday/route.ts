@@ -9,6 +9,13 @@ export const maxDuration = 60
 const MODEL = process.env.CV_PARSE_MODEL || 'claude-sonnet-5'
 const BUCKET = 'members'
 
+// Base64 encode a Uint8Array without Buffer (Edge-safe)
+function toBase64(bytes: Uint8Array): string {
+  let binary = ''
+  for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i])
+  return btoa(binary)
+}
+
 // A passport goes to the model as an image. Only the date of birth is read out —
 // nothing else on the document is recorded or stored anywhere.
 function sniffImage(b: Uint8Array): string | null {
@@ -97,7 +104,7 @@ export async function POST(req: Request) {
           model: MODEL, max_tokens: 1000,
           tools: [TOOL], tool_choice: { type: 'tool', name: TOOL.name },
           messages: [{ role: 'user', content: [
-            { type: 'image', source: { type: 'base64', media_type: media, data: Buffer.from(bytes).toString('base64') } },
+            { type: 'image', source: { type: 'base64', media_type: media, data: toBase64(bytes) } },
             { type: 'text', text: INSTRUCTIONS },
           ] }],
         }),
