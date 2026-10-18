@@ -54,13 +54,13 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const t = tr.league
   const [teams, setTeams] = useState<LeagueTeam[]>([])
   const [directory, setDirectory] = useState<LeagueTeam[]>([])
-  const [tab, setTab] = useState<'teams' | 'matchdays'>('teams')
+  const [tab, setTab] = useState<'teams' | 'matchdays' | 'stats'>('teams')
   const [tabPulse, setTabPulse] = useState(0)
   // Switching tabs swaps content of a different height, so the browser clamps the
   // scroll to the top and then jumps back down as the new page grows. Remember the
   // offset and put it back once the new content is on screen.
   const keepScroll = useRef(0)
-  const goTab = (k: 'teams' | 'matchdays') => {
+  const goTab = (k: 'teams' | 'matchdays' | 'stats') => {
     keepScroll.current = window.scrollY
     setTab(k)
     setTabPulse(p => p + 1)
@@ -287,7 +287,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const showTeamGrid = mode === 'admin' && !selTeamId
   const tabBar = (
     <div className="mb-6 flex items-center gap-2" role="tablist">
-      {([['teams', mode === 'admin' ? t.teams : t.playersWord], ['matchdays', t.matchdays]] as const).map(([k, lab]) => (
+      {([['teams', mode === 'admin' ? t.teams : t.playersWord], ['matchdays', t.matchdays], ['stats', t.statsTab]] as const).map(([k, lab]) => (
         <button key={k} role="tab" aria-selected={tab === k} onClick={() => goTab(k)}
           className={`px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[.18em] transition-all ring-1 ring-inset ${tab === k ? 'bg-[#E30613] text-white ring-[#E30613]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>{lab}</button>
       ))}
@@ -323,7 +323,19 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
 
       <input ref={logoChangeRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void changeLogo(f) }} />
 
-      {/* ── ADMIN: grid of clubs ── */}
+      {/* ── ADMIN: league-wide player statistics ── */}
+      {showTeamGrid && tab === 'stats' && (
+        <main key={`adm-s-${tabPulse}`} className="max-w-6xl mx-auto px-4 sm:px-6 py-10 animate-[fadeUp_0.4s_ease-out_both]">
+          {tabBar}
+          <LeaguePlayerStats
+            teams={teams}
+            logoUrl={logoUrl}
+            players={leaguePlayers.map((m: any) => ({ id: m.id, name: m.name, teamId: m.leagueTeamId ?? null }))}
+            admin={mode === 'admin'}
+            myTeamId={null}
+          />
+        </main>
+      )}
       {showTeamGrid && tab === 'matchdays' && (
         <main key={`adm-m-${tabPulse}`} className="max-w-6xl mx-auto px-4 sm:px-6 py-10 animate-[fadeUp_0.4s_ease-out_both]">
           {tabBar}
