@@ -495,37 +495,6 @@ export default function EliteSquadApp() {
   const [buffering,setBuffering]=useState(false)
   const [leaving,setLeaving]=useState(false)
   const beginFadeIn=()=>{setLeaving(true);setTimeout(()=>setLeaving(false),800)}
-  // Birthday fixer: reads missing birthdates from passport scans via Claude.
-  const [birthdayFix,setBirthdayFix]=useState<{active:boolean;done:number;total:number;count:number;fixed:string[];errors:string[]}>({active:false,done:0,total:0,count:0,fixed:[],errors:[]})
-  const startBirthdayFix=async()=>{
-    if(birthdayFix.active)return
-    const pending=(members||[]).filter((m:any)=>m.role==="PLAYERS"&&(!m.birthdate||m.birthdate==="")&&m.passportImage)
-    if(pending.length===0){alert("Every player already has a birthdate on record.");return}
-    if(!confirm(`Fix birthdates for ${pending.length} player(s) missing one? Each passport scan is read by Claude, so it takes a moment.`))return
-    let fixedCount=0
-    let errorCount=0
-    setBirthdayFix({active:true,done:0,total:pending.length,count:pending.length,fixed:[],errors:[]})
-    for(const m of pending){
-      try{
-        const r=await fetch('/api/fix-birthday',{method:'POST',headers:await authHeaders(),body:JSON.stringify({memberId:m.id})})
-        const d=await r.json().catch(()=>({}))
-        if(r.ok&&d.birthdate){
-          fixedCount++
-          setMembers(ms=>ms.map((x:any)=>x.id===m.id?{...x,birthdate:d.birthdate}:x))
-          setBirthdayFix(b=>({...b,fixed:[...b.fixed,d.name||m.name]}))
-        }else{
-          errorCount++
-          setBirthdayFix(b=>({...b,errors:[...b.errors,(d.error||d.reason||'unreadable')+' · '+(d.name||m.name)]}))
-        }
-      }catch(e){
-        setBirthdayFix(b=>({...b,errors:[...b.errors,'error · '+(m.name||m.id)]}))
-      }finally{
-        setBirthdayFix(b=>({...b,done:b.done+1}))
-      }
-    }
-    setBirthdayFix(b=>({...b,active:false}))
-    alert(`Done. ${fixedCount} birthdate(s) read from passports and saved.${errorCount?` ${errorCount} unreadable.`:''}`)
-  }
   const [members,setMembers]=useState<any[]>([])
   // Short-lived signed URLs for the private storage bucket, keyed by path.
   const [imgUrls,setImgUrls]=useState<Record<string,string>>({})
@@ -560,6 +529,7 @@ export default function EliteSquadApp() {
   }
   const mergeById=(local:any[],remote:any[])=>{const m=new Map();remote.forEach(i=>m.set(i.id,i));local.forEach(i=>{const e=m.get(i.id);if(!e||(i.updatedAt||0)>=(e.updatedAt||0))m.set(i.id,i)});return[...m.values()]}
   const [activeTab,setActiveTab]=useState("PLAYERS")
+
   const [teamCat,setTeamCat]=useState<TeamCategory|null>(null)
   const [search,setSearch]=useState("")
   const [filterPos,setFilterPos]=useState("ALL")
@@ -1319,11 +1289,6 @@ export default function EliteSquadApp() {
             {user&&<button onClick={()=>setGamesOpen(true)} title={GAME_STRINGS[lang].gamesTitle} className={HEADER_BTN}>
               <Gamepad2 size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">{GAME_STRINGS[lang].gamesTitle}</span>
             </button>}
-            {/* Admin only: read missing birthdates from passport scans */}
-            {canManageUsers&&<button onClick={startBirthdayFix} title="Fix missing birthdates from passports" className={HEADER_BTN}>
-              <IdCard size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">{birthdayFix.active?'Fixing…':'Fix Birthdays'}</span>
-            </button>}
-            {birthdayFix.active&&birthdayFix.count>0&&<span className="bg-[#f6c744] text-[#1a1408] rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{birthdayFix.count}</span>}
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
             <ThemeToggle className="p-2.5"/>
             <Dropdown trigger={
