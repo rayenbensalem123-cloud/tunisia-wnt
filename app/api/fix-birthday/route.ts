@@ -67,13 +67,13 @@ export async function POST(req: Request) {
 
     const { data: m, error } = await supabaseAdmin
       .from('members')
-      .select('id, name, birthdate, passport_image, image2_path')
+      .select('id, name, birthdate, passport_image')
       .eq('id', Number(memberId))
       .maybeSingle()
     if (error) return NextResponse.json({ error: 'Could not read the member' }, { status: 500 })
     if (!m) return NextResponse.json({ error: 'Member not found' }, { status: 404 })
     if (m.birthdate) return NextResponse.json({ skipped: true, name: m.name, birthdate: m.birthdate })
-    const passportPath = m.passport_image || m.image2_path
+    const passportPath = m.passport_image
     if (!passportPath) return NextResponse.json({ skipped: true, name: m.name, birthdate: null, reason: 'no_passport' })
 
     const { data: signed, error: signErr } = await supabaseAdmin.storage
