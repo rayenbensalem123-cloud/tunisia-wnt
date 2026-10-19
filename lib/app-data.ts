@@ -1000,16 +1000,22 @@ export async function deleteLeagueFixture(id: number): Promise<{ error: FixtureE
 }
 
 /** Admin only: inserts many generated matches at once (chunked so no single request is huge). */
-export async function bulkCreateLeagueFixtures(rows: { seasonId: number; matchday: number; homeTeamId: number; awayTeamId: number; kickoff: string | null }[]): Promise<{ error: FixtureError | null }> {
+export async function bulkCreateLeagueFixtures(rows: { seasonId: number; matchday: number; homeTeamId: number; awayTeamId: number; kickoff: string | null; venue?: string | null }[]): Promise<{ error: FixtureError | null }> {
   for (let i = 0; i < rows.length; i += 100) {
     const chunk = rows.slice(i, i + 100).map(r => ({
       season_id: r.seasonId, matchday: r.matchday, home_team_id: r.homeTeamId, away_team_id: r.awayTeamId,
-      kickoff: r.kickoff, status: 'scheduled', home_goals: null, away_goals: null,
+      kickoff: r.kickoff, venue: r.venue ?? null, status: 'scheduled', home_goals: null, away_goals: null,
     }))
     const { error } = await supabase.from('league_fixtures').insert(chunk)
     if (error) return { error: fixtureError(error) }
   }
   return { error: null }
+}
+
+/** Delete every fixture of a season (used before importing the official calendar). */
+export async function deleteSeasonFixtures(seasonId: number): Promise<{ error: FixtureError | null }> {
+  const { error } = await supabase.from('league_fixtures').delete().eq('season_id', seasonId)
+  return { error: error ? fixtureError(error) : null }
 }
 
 // ── cup (migration 0015) ──

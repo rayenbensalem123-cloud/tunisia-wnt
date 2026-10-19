@@ -150,3 +150,32 @@ assert.equal(pickNext(recent, 1, now).id, 1)
 const stale = [pf(1, 1, 1, 2, 'scheduled', '2026-10-18T11:00:00Z'), pf(2, 2, 1, 3, 'scheduled', '2026-10-27T11:00:00Z')]
 assert.equal(pickNext(stale, 1, now).id, 2)
 console.log('pick tests passed')
+
+// ── calendar import ─────────────────────────────────────
+import { parseCalendar, matchClub } from '../lib/league-import.ts'
+const clubs = [{ id: 1, name: "AS Banque de l'Habitat" }, { id: 2, name: 'ASF Sbiba' }, { id: 3, name: 'ASF Sahel' }, { id: 4, name: 'ASF Sousse' }, { id: 5, name: 'US Tunisienne' }]
+assert.equal(matchClub('Sbiba', clubs)?.id, 2)
+assert.equal(matchClub('ASF Sbeiba', clubs)?.id, 2)        // spelling slip
+assert.equal(matchClub('ASF', clubs), null)                 // ambiguous
+assert.equal(matchClub('Banque de l Habitat', clubs)?.id, 1)
+const imp = parseCalendar(`Journée 1
+ASF Sbiba - ASF Sahel  25/10/2026 15:00 Stade de Sbiba
+US Tunisienne vs ASF Sousse 25/10 16h30
+J2
+2 ; Sahel ; Sbiba ; 01/11/2026 ; 14:00 ; Stade X
+ASF Sbiba - Inconnu 08/11/2026
+ASF Sbiba - ASF Sousse 32/13/2026
+`, clubs, 2026)
+assert.equal(imp.length, 5)
+assert.deepEqual([imp[0].matchday, imp[0].homeTeamId, imp[0].awayTeamId, imp[0].date, imp[0].time, imp[0].venue, imp[0].errors.length], [1, 2, 3, '2026-10-25', '15:00', 'Stade de Sbiba', 0])
+assert.deepEqual([imp[1].homeTeamId, imp[1].awayTeamId, imp[1].date, imp[1].time, imp[1].venue], [5, 4, '2026-10-25', '16:30', null])
+assert.deepEqual([imp[2].matchday, imp[2].homeTeamId, imp[2].awayTeamId, imp[2].venue], [2, 3, 2, 'Stade X'])
+assert.ok(imp[3].errors.some(e => e.startsWith('club:')))
+assert.ok(imp[4].errors.includes('date'))
+const twice = parseCalendar('J1\nSbiba - Sahel\nSbiba - Sousse', clubs, 2026)
+assert.ok(twice[1].errors.some(e => e.startsWith('twice')))
+console.log('import tests passed')
+
+const wrap = parseCalendar('J1\nSbiba - Sahel 20/12\nSousse - Tunisienne 15/02', clubs, 2026, 12)
+assert.deepEqual([wrap[0].date, wrap[1].date], ['2026-12-20', '2027-02-15'])
+console.log('import year-wrap tests passed')

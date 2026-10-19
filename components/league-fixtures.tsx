@@ -3,7 +3,7 @@
 // Admin creates seasons and matches and enters scores; a club account sees the same
 // fixtures read-only, with its own matches highlighted.
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, Pencil, Plus, Trash2, Wand2, X } from 'lucide-react'
+import { CalendarDays, ClipboardPaste, Pencil, Plus, Trash2, Wand2, X } from 'lucide-react'
 import { useTranslate } from '@/lib/language-context'
 import {
   fetchLeagueSeasons, fetchLeagueFixtures, createLeagueSeason, setCurrentLeagueSeason, deleteLeagueSeason,
@@ -16,6 +16,7 @@ import { generateRoundRobin, matchdayDate } from '@/lib/league-schedule'
 import { LeagueStandings } from '@/components/league-standings'
 import { LeagueCalendar } from '@/components/league-calendar'
 import { LeagueCup } from '@/components/league-cup'
+import { LeagueImport } from '@/components/league-import'
 
 type Sub = 'matchdays' | 'standings' | 'calendar' | 'cup'
 
@@ -52,6 +53,7 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
   const [subState, setSub] = useState<Sub>('matchdays')
   const sub: Sub = section ?? subState
   const [genOpen, setGenOpen] = useState(false)
+  const [importOpen, setImportOpen] = useState(false)
   const [gen, setGen] = useState({ double: true, start: '', every: '7', time: '15:00' })
 
   const teamById = useMemo(() => new Map(teams.map(x => [x.id, x])), [teams])
@@ -233,6 +235,9 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
             <button onClick={() => setOnlyMine(v => !v)} aria-pressed={onlyMine} className={chip(onlyMine)}>{onlyMine ? t.allMatches : t.myMatches}</button>
           )}
           {admin && <button onClick={() => { setErr(''); setSeasonOpen(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest hover:border-[#f6c744]/60 transition-all"><Plus size={14} />{t.newSeason}</button>}
+          {admin && season && sub === 'matchdays' && teams.length >= 2 && (
+            <button onClick={() => setImportOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#f6c744]/60 text-[#f6c744] text-[10px] font-black uppercase tracking-widest hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all"><ClipboardPaste size={14} />{t.importCalendar}</button>
+          )}
           {admin && season && sub === 'matchdays' && fixtures.length === 0 && teams.length >= 2 && (
             <button onClick={() => { setErr(''); setGenOpen(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#f6c744]/60 text-[#f6c744] text-[10px] font-black uppercase tracking-widest hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all"><Wand2 size={14} />{t.generateFixtures}</button>
           )}
@@ -363,6 +368,12 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
             </div>
           </div>
         </div>
+      )}
+
+      {importOpen && season && (
+        <LeagueImport seasonId={season.id} seasonYear={Number((season.startsOn || '').slice(0, 4)) || new Date().getFullYear()} seasonMonth={Number((season.startsOn || '').slice(5, 7)) || 1} teams={teams}
+          existing={fixtures.length} played={fixtures.filter(f => f.status === 'played').length}
+          onClose={() => setImportOpen(false)} onDone={() => { setImportOpen(false); setMatchday(null); void loadFixtures(season.id) }} />
       )}
 
       {/* season form */}
