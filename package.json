@@ -11,6 +11,7 @@
     "db:migrate": "node scripts/db-migrate.mjs",
     "check-translations": "node scripts/check-translations.mjs",
     "check:migrations": "node scripts/check-migrations-live.mjs",
+    "check:match-sheet": "node scripts/check-match-sheet-live.mjs",
     "check:rls": "node scripts/check-rls-helpers.mjs",
     "test:eligibility": "node --experimental-strip-types scripts/test-eligibility.mjs && node --experimental-strip-types scripts/test-clash.mjs && node --experimental-strip-types scripts/test-match-stats.mjs && node --experimental-strip-types scripts/test-cv-extract.mjs && node --experimental-strip-types scripts/test-league.mjs",
     "test:routes": "node --import ./scripts/register-alias-loader.mjs scripts/test-api-routes.mjs"
