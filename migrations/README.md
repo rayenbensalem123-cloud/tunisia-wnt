@@ -48,6 +48,7 @@ that baseline, in order.
 | `0016_league_cup_calendar.sql` | Yes — `IF NOT EXISTS` / `DROP … IF EXISTS`. Adds the Ligue Féminine cup (name, info, knockout matches) and season breaks for the calendar (admin writes, club accounts read-only). Needs 0012 and 0015 first. Renamed from `0015_league_cup_calendar.sql`. |
 | `0017_define_rls_helpers.sql` | Yes — `CREATE OR REPLACE FUNCTION` only. Defines the four RLS helpers that policies call but no migration creates (see below). Safe to apply to a live database that already ran `supabase-setup.sql`. |
 | `0018_league_player_stats.sql` | Yes — `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Adds per-season player statistics (appearances, goals, assists, cards) and the `league_top_players` read used by the scorers' tables. Needs 0012 and 0015 first. |
+| `0019_league_touch_search_path.sql` | Yes. Pins the `search_path` of `league_fixtures_touch()` (security checker warning). Needs 0015 first. |
 
 ### RLS helpers and the setup file
 
