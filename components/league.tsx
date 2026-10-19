@@ -126,12 +126,6 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   useEffect(() => { void reloadTeams() }, [])
 
   const league = useMemo(() => members.filter(m => m.teamCategory === 'LIGUE' && m.role === 'PLAYERS'), [members])
-  // Every league player, for the admin stats editor: a line can be entered for any
-  // club's player, not only the one whose page you happen to be on.
-  const leaguePlayers = useMemo(
-    () => [...league].sort((a, b) => String(a.name).localeCompare(String(b.name))),
-    [league],
-  )
   const countFor = (id: number) => league.filter(m => m.leagueTeamId === id).length
   const team = teams.find(x => x.id === selTeamId) || null
   const players = useMemo(
@@ -330,7 +324,6 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
           <LeaguePlayerStats
             teams={teams}
             logoUrl={logoUrl}
-            players={leaguePlayers.map((m: any) => ({ id: m.id, name: m.name, teamId: m.leagueTeamId ?? null }))}
             admin={mode === 'admin'}
             myTeamId={null}
           />
@@ -429,7 +422,6 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
                   <LeaguePlayerStats
                     teams={mode === 'club' ? directory : teams}
                     logoUrl={logoUrl}
-                    players={leaguePlayers.map((m: any) => ({ id: m.id, name: m.name, teamId: m.leagueTeamId ?? null }))}
                     admin={mode === 'admin'}
                     myTeamId={team.id}
                   />
