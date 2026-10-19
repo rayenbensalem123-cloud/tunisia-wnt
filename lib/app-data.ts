@@ -1082,3 +1082,43 @@ export async function deleteLeagueBreak(id: number): Promise<{ error: FixtureErr
   const { error } = await supabase.from('league_breaks').delete().eq('id', id)
   return { error: fixtureError(error) }
 }
+
+// ── match sheet (migration 0020) ──
+export type EventKind = 'goal' | 'assist' | 'yellow' | 'red'
+export interface LeagueMatchEvent { id: number; fixtureId: number; seasonId: number; teamId: number; memberId: number; playerName: string; kind: EventKind; minute: number | null }
+export interface LeagueLineupEntry { id: number; fixtureId: number; seasonId: number; teamId: number; memberId: number; playerName: string }
+export interface LeagueRosterEntry { id: number; name: string; teamId: number }
+
+export async function fetchLeagueEvents(seasonId: number): Promise<LeagueMatchEvent[]> {
+  const { data, error } = await supabase.from('league_match_events').select('id,fixture_id,season_id,team_id,member_id,player_name,kind,minute').eq('season_id', seasonId).order('minute', { ascending: true, nullsFirst: false })
+  if (error || !data) return []
+  return data.map((r: any) => ({ id: r.id, fixtureId: r.fixture_id, seasonId: r.season_id, teamId: r.team_id, memberId: r.member_id, playerName: r.player_name, kind: r.kind, minute: r.minute }))
+}
+export async function fetchLeagueLineups(seasonId: number): Promise<LeagueLineupEntry[]> {
+  const { data, error } = await supabase.from('league_match_lineup').select('id,fixture_id,season_id,team_id,member_id,player_name').eq('season_id', seasonId)
+  if (error || !data) return []
+  return data.map((r: any) => ({ id: r.id, fixtureId: r.fixture_id, seasonId: r.season_id, teamId: r.team_id, memberId: r.member_id, playerName: r.player_name }))
+}
+/** Admin only: the players of the given clubs (names for the match sheet pickers). */
+export async function fetchLeagueRoster(teamIds: number[]): Promise<LeagueRosterEntry[]> {
+  if (!teamIds.length) return []
+  const { data, error } = await supabase.from('members').select('id,name,league_team_id').in('league_team_id', teamIds).order('name')
+  if (error || !data) return []
+  return data.map((r: any) => ({ id: r.id, name: r.name, teamId: r.league_team_id }))
+}
+export async function addLeagueEvent(e: { fixtureId: number; teamId: number; memberId: number; kind: EventKind; minute: number | null }): Promise<{ error: FixtureError | null }> {
+  const { error } = await supabase.from('league_match_events').insert({ fixture_id: e.fixtureId, team_id: e.teamId, member_id: e.memberId, kind: e.kind, minute: e.minute })
+  return { error: fixtureError(error) }
+}
+export async function deleteLeagueEvent(id: number): Promise<{ error: FixtureError | null }> {
+  const { error } = await supabase.from('league_match_events').delete().eq('id', id)
+  return { error: fixtureError(error) }
+}
+/** Replace one club's lineup for a match. */
+export async function setLeagueLineup(fixtureId: number, teamId: number, memberIds: number[]): Promise<{ error: FixtureError | null }> {
+  const del = await supabase.from('league_match_lineup').delete().eq('fixture_id', fixtureId).eq('team_id', teamId)
+  if (del.error) return { error: fixtureError(del.error) }
+  if (!memberIds.length) return { error: null }
+  const { error } = await supabase.from('league_match_lineup').insert(memberIds.map(m => ({ fixture_id: fixtureId, team_id: teamId, member_id: m })))
+  return { error: fixtureError(error) }
+}

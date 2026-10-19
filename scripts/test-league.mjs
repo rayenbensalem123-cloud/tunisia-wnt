@@ -179,3 +179,13 @@ console.log('import tests passed')
 const wrap = parseCalendar('J1\nSbiba - Sahel 20/12\nSousse - Tunisienne 15/02', clubs, 2026, 12)
 assert.deepEqual([wrap[0].date, wrap[1].date], ['2026-12-20', '2027-02-15'])
 console.log('import year-wrap tests passed')
+
+// ── discipline ──────────────────────────────────────────
+import { computeSuspensions, suspendedFor } from '../lib/league-discipline.ts'
+const dfx = [1, 2, 3, 4, 5].map(md => ({ id: md, matchday: md, kickoff: null, status: md <= 4 ? 'played' : 'scheduled', homeTeamId: 1, awayTeamId: 10 + md }))
+const ev = (fixtureId, memberId, kind) => ({ fixtureId, teamId: 1, memberId, playerName: 'P' + memberId, kind })
+const sus = computeSuspensions(dfx, [ev(1, 7, 'yellow'), ev(2, 7, 'yellow'), ev(3, 7, 'yellow'), ev(2, 8, 'red'), ev(4, 7, 'yellow'), ev(5, 9, 'red')])
+assert.deepEqual(sus.map(s => [s.memberId, s.reason, s.fixtureId]), [[8, 'red', 3], [7, 'yellows', 4]]) // 3rd yellow in md3 -> banned md4; red in md5 has no later match
+assert.equal(suspendedFor(sus, 4, 1).length, 1)
+assert.equal(suspendedFor(sus, 4, 2).length, 0)
+console.log('discipline tests passed')

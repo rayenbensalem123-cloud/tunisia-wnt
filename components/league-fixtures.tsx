@@ -3,12 +3,12 @@
 // Admin creates seasons and matches and enters scores; a club account sees the same
 // fixtures read-only, with its own matches highlighted.
 import { useEffect, useMemo, useState } from 'react'
-import { CalendarDays, ClipboardPaste, Pencil, Plus, Trash2, Wand2, X } from 'lucide-react'
+import { CalendarDays, ClipboardList, ClipboardPaste, Pencil, Plus, Trash2, Wand2, X } from 'lucide-react'
 import { useTranslate } from '@/lib/language-context'
 import {
-  fetchLeagueSeasons, fetchLeagueFixtures, createLeagueSeason, setCurrentLeagueSeason, deleteLeagueSeason,
+  fetchLeagueSeasons, fetchLeagueFixtures, fetchLeagueEvents, fetchLeagueLineups, fetchLeagueRoster, createLeagueSeason, setCurrentLeagueSeason, deleteLeagueSeason,
   saveLeagueFixture, deleteLeagueFixture, bulkCreateLeagueFixtures,
-  type LeagueTeam, type LeagueSeason, type LeagueFixture, type FixtureStatus, type FixtureError,
+  type LeagueTeam, type LeagueMatchEvent, type LeagueLineupEntry, type LeagueRosterEntry, type LeagueSeason, type LeagueFixture, type FixtureStatus, type FixtureError,
 } from '@/lib/app-data'
 import { ClubMark, chip, input, label, toLocalInput } from '@/components/league-ui'
 import { DateField, DateTimeField, NumberField, SelectField, TimeField } from '@/components/league-pickers'
@@ -17,6 +17,8 @@ import { LeagueStandings } from '@/components/league-standings'
 import { LeagueCalendar } from '@/components/league-calendar'
 import { LeagueCup } from '@/components/league-cup'
 import { LeagueImport } from '@/components/league-import'
+import { LeagueMatchSheet, KIND_ICON } from '@/components/league-match-sheet'
+import { computeSuspensions, suspendedFor } from '@/lib/league-discipline'
 
 type Sub = 'matchdays' | 'standings' | 'calendar' | 'cup'
 
@@ -54,6 +56,10 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
   const sub: Sub = section ?? subState
   const [genOpen, setGenOpen] = useState(false)
   const [importOpen, setImportOpen] = useState(false)
+  const [events, setEvents] = useState<LeagueMatchEvent[]>([])
+  const [lineups, setLineups] = useState<LeagueLineupEntry[]>([])
+  const [roster, setRoster] = useState<LeagueRosterEntry[]>([])
+  const [sheetId, setSheetId] = useState<number | null>(null)
   const [gen, setGen] = useState({ double: true, start: '', every: '7', time: '15:00' })
 
   const teamById = useMemo(() => new Map(teams.map(x => [x.id, x])), [teams])
@@ -68,9 +74,12 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
     setSeasonId(prev => pick ?? (prev && list.some(s => s.id === prev) ? prev : (list.find(s => s.isCurrent) || list[0])?.id ?? null))
   }
   const loadFixtures = async (id: number | null) => {
-    if (id == null) { setFixtures([]); return }
-    setFixtures(await fetchLeagueFixtures(id))
+    if (id == null) { setFixtures([]); setEvents([]); setLineups([]); return }
+    const [f, e, l] = await Promise.all([fetchLeagueFixtures(id), fetchLeagueEvents(id), fetchLeagueLineups(id)])
+    setFixtures(f); setEvents(e); setLineups(l)
   }
+  useEffect(() => { if (admin && teams.length) void fetchLeagueRoster(teams.map(x => x.id)).then(setRoster) }, [admin, teams])
+  const suspensions = useMemo(() => computeSuspensions(fixtures, events), [fixtures, events])
   useEffect(() => { void loadSeasons() }, [])
   useEffect(() => { void loadFixtures(seasonId); setMatchday(null) }, [seasonId])
 
@@ -175,11 +184,23 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
           </div>
           {side(f.awayTeamId, 'end')}
         </div>
+        {(() => {
+          const ev = events.filter(e => e.fixtureId === f.id)
+          if (!ev.length) return null
+          const col = (id: number) => ev.filter(e => e.teamId === id && e.kind !== 'assist')
+          const line = (id: number, end: boolean) => (
+            <ul className={`min-w-0 flex-1 space-y-0.5 text-[11px] text-white/75 ${end ? 'text-end' : ''}`}>
+              {col(id).map(e => <li key={e.id} className="truncate"><span aria-hidden>{KIND_ICON[e.kind]}</span> {e.playerName}{e.minute != null && <span className="text-white/50" dir="ltr"> {e.minute}&apos;</span>}</li>)}
+            </ul>
+          )
+          return <div className="mt-3 flex gap-4 border-t border-white/10 pt-2.5">{line(f.homeTeamId, false)}{line(f.awayTeamId, true)}</div>
+        })()}
         {(f.venue || admin) && (
           <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-2.5 text-[11px] text-white/55">
             <span className="truncate">{f.venue || ''}</span>
             {admin && (
               <span className="flex items-center gap-1 shrink-0">
+                <button onClick={() => setSheetId(f.id)} title={t.matchSheet} aria-label={t.matchSheet} className="p-1.5 rounded-lg hover:bg-white/10 hover:text-white"><ClipboardList size={13} /></button>
                 <button onClick={() => openEdit(f)} title={t.edit} aria-label={t.edit} className="p-1.5 rounded-lg hover:bg-white/10 hover:text-white"><Pencil size={13} /></button>
                 <button onClick={() => void removeMatch(f)} title={t.confirmDeleteMatch} aria-label={t.confirmDeleteMatch} className="p-1.5 rounded-lg hover:bg-[#e3062c]/80 hover:text-white"><Trash2 size={13} /></button>
               </span>
@@ -269,8 +290,16 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
         const round = week.length ? week : fixtures.filter(f => f.matchday === nd)
         const mineAll = fixtures.filter(f => f.homeTeamId === myTeamId || f.awayTeamId === myTeamId).sort((a, b) => a.matchday - b.matchday)
         const head = 'mb-3 text-[10px] font-black uppercase tracking-[.25em] text-[#f6c744]'
+        const nextMine = mineAll.find(f => f.status === 'scheduled')
+        const banned = nextMine && myTeamId != null ? suspendedFor(suspensions, nextMine.id, myTeamId) : []
         return (
           <div className="space-y-8">
+            {banned.length > 0 && (
+              <section className="rounded-2xl border border-[#e3062c]/50 bg-[#3a0b18]/50 p-4">
+                <h3 className="mb-2 text-[10px] font-black uppercase tracking-[.25em] text-[#ff9aa6]">⛔ {t.suspendedNext}</h3>
+                <ul className="space-y-1">{banned.map(b => <li key={b.memberId} className="text-sm font-bold">{b.name} <span className="font-semibold text-[#ff9aa6]">· {b.reason === 'red' ? t.suspRed : t.suspYellows}</span></li>)}</ul>
+              </section>
+            )}
             <section>
               <h3 className={head}>{week.length || nd == null ? t.thisWeek : `${t.nextMatchday} · ${t.matchdayN.replace('{n}', String(nd))}`}</h3>
               {round.length === 0 ? <p className="rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.3)] py-8 text-center text-sm text-[var(--c-textMid)]">{t.noMatchesWeek}</p> : <ul className="space-y-3">{round.map((f, i) => card(f, i))}</ul>}
@@ -369,6 +398,15 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
           </div>
         </div>
       )}
+
+      {sheetId != null && (() => {
+        const f = fixtures.find(x => x.id === sheetId)
+        if (!f) return null
+        return <LeagueMatchSheet fixture={f} home={teamById.get(f.homeTeamId)} away={teamById.get(f.awayTeamId)} roster={roster}
+          lineup={lineups.filter(l => l.fixtureId === f.id)} events={events.filter(e => e.fixtureId === f.id)}
+          suspensions={[...suspendedFor(suspensions, f.id, f.homeTeamId), ...suspendedFor(suspensions, f.id, f.awayTeamId)]}
+          logoUrl={logoUrl} onChanged={() => void loadFixtures(seasonId)} onClose={() => setSheetId(null)} />
+      })()}
 
       {importOpen && season && (
         <LeagueImport seasonId={season.id} seasonYear={Number((season.startsOn || '').slice(0, 4)) || new Date().getFullYear()} seasonMonth={Number((season.startsOn || '').slice(5, 7)) || 1} teams={teams}
