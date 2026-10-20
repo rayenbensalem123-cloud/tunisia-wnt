@@ -2965,7 +2965,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
       )})()}
 
       {isMatchOpen&&(
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80">
+        <div className="fixed inset-0 z-[220] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-2xl rounded-3xl bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.16)] shadow-2xl flex flex-col max-h-[90vh] overflow-hidden">
 
             {/* ── HEADER ── */}
@@ -2976,7 +2976,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     <Plus size={14} className="text-[#ff5f72]"/>
                   </div>
                   <div>
-                    <h2 className="text-sm font-black uppercase tracking-tight text-[var(--c-text)]">New Match</h2>
+                    <h2 className="text-sm font-black uppercase tracking-tight text-[var(--c-text)]">{matchForm.id?tr.common.edit:tr.match.newMatch}</h2>
                     <p className="text-[8px] font-bold uppercase tracking-wider text-[var(--c-textFaint)] mt-0.5">{["Opponent first","Lock the squad","Opposition lineup","Match actions"][matchStep]}</p>
                   </div>
                 </div>
@@ -3275,7 +3275,26 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               <div className="flex gap-2">
                 {matchStep>0&&<button onClick={()=>setMatchStep(matchStep-1)} className="px-4 py-2 rounded-lg border border-[rgba(var(--line-rgb),.25)] text-xs font-bold text-[var(--c-textBlue)] hover:bg-[var(--c-surface)] hover:border-[rgba(var(--line-rgb),.4)] transition-all">Back</button>}
                 {matchStep<3&&<button onClick={()=>setMatchStep(matchStep+1)} disabled={matchStep===0&&!matchForm.opponent.trim()} className="px-5 py-2 rounded-full bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all disabled:opacity-40">Next</button>}
-                {matchStep===3&&<button onClick={()=>{const id=Date.now();const nm={...matchForm,id,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username};setMatches((p:any)=>[...p,nm]);if(canManageUsers)approveMatch(nm);setIsMatchOpen(false);setMatchForm(initMatch);setMatchStep(0)}} className="px-5 py-2 rounded-full bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all">Save Match</button>}
+                {matchStep===3&&<button onClick={()=>()=>{
+                  // Editing keeps the match's own id, its status and who logged
+                  // it; a new match keeps today's behaviour exactly.
+                  const editing=!!matchForm.id
+                  const id=matchForm.id||Date.now()
+                  const nm={...matchForm,eventMinutes:cleanEventMinutes(matchForm),id,teamCategory:matchForm.teamCategory||teamCat,status:matchForm.status||(canManageUsers?"approved":"pending"),submittedBy:matchForm.submittedBy||user?.username}
+                  if(editing){
+                    // The cards the old version put on the players are taken
+                    // back before the new version puts its own on, so totals
+                    // never double up.
+                    const old=(matches||[]).find((x:any)=>x.id===nm.id)
+                    reverseMatchCards(old)
+                    setMatches((p2:any[])=>p2.map((x:any)=>x.id===nm.id?nm:x))
+                    if(nm.status==="approved")approveMatch(nm)
+                  }else{
+                    setMatches((p2:any[])=>[...p2,nm])
+                    if(canManageUsers)approveMatch(nm)
+                  }
+                  setIsMatchOpen(false);setMatchForm(initMatch);setMatchStep(0)
+                }} className="px-5 py-2 rounded-full bg-[#E30613] text-white text-xs font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/20 hover:bg-red-700 transition-all">{matchForm.id?tr.common.save:tr.match.saveMatch}</button>}
               </div>
             </div>
           </div>
@@ -3674,9 +3693,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                         )}
                       </div>
 
-                      {/* Match Sheet + Delete */}
+                      {/* Match Sheet + Modify + Delete */}
                       <div className="flex justify-end gap-2">
                         <button onClick={()=>setMatchSheetTarget(match)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg pm-btn-soft text-[#ffbfca] text-[8px] font-black uppercase tracking-wider"><ClipboardCheck size={11}/> Match Sheet</button>
+                        {(p.addMatch||canManageUsers)&&<button onClick={()=>{setMatchForm({...initMatch,...match,eventMinutes:match.eventMinutes||{}});setMatchStep(0);setActionPick(null);setSubOutId(null);setIsMatchOpen(true)}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(var(--line-rgb),.22)] text-[var(--c-textBlue)] text-[8px] font-black uppercase tracking-wider hover:bg-[var(--c-surface)] transition-all"><Edit3 size={11}/> {tr.common.edit}</button>}
                         {p.deleteMatch&&<button onClick={async()=>{if(await askConfirm(tr.history.delete+" this match?")){reverseMatchCards(match);setMatches(m=>m.filter((x:any)=>x.id!==match.id));setSelMatch(null)}}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(255,79,102,.35)] bg-[#e3062c]/10 text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c] hover:text-white transition-all"><Trash2 size={11}/> {tr.history.delete}</button>}
                       </div>
                     </div>
