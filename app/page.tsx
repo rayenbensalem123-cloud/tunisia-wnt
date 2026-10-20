@@ -14,6 +14,7 @@ import { EmailModal } from "@/components/email-modal"
 import { ExportTools } from "@/components/export-tools"
 import { PlayerCard } from "@/components/player-card"
 import { CountryFlag } from "@/components/country-flag"
+import { HeadToHead } from "@/components/head-to-head"
 import { FormationPitch, FORMATIONS } from "@/components/formation-pitch"
 import ThemeToggle from "@/components/theme-toggle"
 import LanguageToggle from "@/components/language-toggle"
@@ -2702,6 +2703,8 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               )}
 
               {/* Later fixtures — smaller, secondary treatment */}
+              {next&&<HeadToHead matches={catMatches} members={members} opponent={next.opponent||""} category={teamCat} excludeId={next.id}/>}
+
               {rest.length>0&&(
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--c-textFaint)] mb-2.5">Also Coming Up</p>
@@ -2895,6 +2898,8 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                       <DatePicker variant="big" value={matchForm.date} onChange={(v)=>setMatchForm({...matchForm,date:v})} placeholder="Match date"/>
                     </div>
                   </div>
+
+                  {matchForm.opponent.trim().length>=3&&<HeadToHead compact matches={catMatches} members={members} opponent={matchForm.opponent} category={teamCat} excludeId={matchForm.id}/>}
 
                   <div>
                     <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Competition</label>
@@ -3287,6 +3292,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2.5">
+              {opponentFilter&&<HeadToHead matches={catMatches} members={members} opponent={opponentFilter} category={teamCat}/>}
               {filteredMatches.length===0&&(
                 <div className="flex flex-col items-center justify-center py-20 gap-4">
                   <div className="w-16 h-16 rounded-2xl bg-[#e3062c]/10 border border-[#e3062c]/25 flex items-center justify-center"><Calendar size={26} className="text-[#ff4f66]/70"/></div>

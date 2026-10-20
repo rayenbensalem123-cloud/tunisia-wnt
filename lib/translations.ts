@@ -323,6 +323,9 @@ const t = {
       kept: "{n} already had a value and were kept.", history: "{n} career entries added.", replace: "Replace values that are already filled",
       notConfigured: "CV import is not set up yet. Ask an admin to add the AI key.", failed: "Could not read this CV. Try another file, or fill the card by hand.",
     },
+    h2h: {
+      title: "Head to head", firstMeeting: "First meeting. No earlier match against {opp} in this team.", played: "Played", goals: "Goals", winRate: "Win rate", cleanSheets: "Clean sheets", lastMeetings: "Last meetings", biggestWin: "Biggest win", heaviestLoss: "Heaviest defeat", topScorers: "Top scorers", streak: "Current run", won: "W", drawn: "D", lost: "L", friendly: "Friendly"
+    },
     league: {
       title: "Ligue Féminine", sub: "Women's League", back: "Back", logout: "Log out", loading: "Loading…",
       changeLogo: "Change logo", teams: "Teams", addTeam: "Add team", createTeam: "Create team", deleteTeam: "Delete team",
@@ -709,6 +712,9 @@ const t = {
       kept: "{n} avaient déjà une valeur et ont été conservés.", history: "{n} étapes de carrière ajoutées.", replace: "Remplacer les valeurs déjà renseignées",
       notConfigured: "L'import de CV n'est pas encore configuré. Demandez à un admin d'ajouter la clé IA.", failed: "Impossible de lire ce CV. Essayez un autre fichier ou remplissez la fiche à la main.",
     },
+    h2h: {
+      title: "Face à face", firstMeeting: "Première rencontre. Aucun match antérieur contre {opp} dans cette équipe.", played: "Joués", goals: "Buts", winRate: "Victoires", cleanSheets: "Cages inviolées", lastMeetings: "Dernières rencontres", biggestWin: "Plus large victoire", heaviestLoss: "Plus lourde défaite", topScorers: "Meilleures buteuses", streak: "Série en cours", won: "V", drawn: "N", lost: "D", friendly: "Amical"
+    },
     league: {
       title: "Ligue Féminine", sub: "Championnat féminin", back: "Retour", logout: "Déconnexion", loading: "Chargement…",
       changeLogo: "Changer le logo", teams: "Équipes", addTeam: "Ajouter une équipe", createTeam: "Créer l'équipe", deleteTeam: "Supprimer l'équipe",
@@ -1094,6 +1100,9 @@ const t = {
       reading: "جارٍ قراءة السيرة الذاتية…", done: "تمت تعبئة {n} حقول من السيرة الذاتية. راجعها قبل الحفظ.", nothing: "لم يتم العثور على شيء جديد في هذه السيرة الذاتية.",
       kept: "{n} كانت تحتوي على قيمة وتم الاحتفاظ بها.", history: "تمت إضافة {n} من المحطات المهنية.", replace: "استبدال القيم المعبأة مسبقًا",
       notConfigured: "استيراد السيرة الذاتية غير مفعل بعد. اطلب من المشرف إضافة مفتاح الذكاء الاصطناعي.", failed: "تعذرت قراءة هذه السيرة الذاتية. جرّب ملفًا آخر أو عبّئ البطاقة يدويًا.",
+    },
+    h2h: {
+      title: "المواجهات المباشرة", firstMeeting: "أول مواجهة. لا توجد مباراة سابقة ضد {opp} في هذا المنتخب.", played: "لُعبت", goals: "الأهداف", winRate: "نسبة الفوز", cleanSheets: "شباك نظيفة", lastMeetings: "آخر المواجهات", biggestWin: "أكبر فوز", heaviestLoss: "أثقل خسارة", topScorers: "الهدافات", streak: "السلسلة الحالية", won: "ف", drawn: "ت", lost: "خ", friendly: "ودية"
     },
     league: {
       title: "الدوري النسوي", sub: "البطولة النسائية", back: "رجوع", logout: "تسجيل الخروج", loading: "جارٍ التحميل…",
