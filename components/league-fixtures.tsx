@@ -6,9 +6,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { CalendarDays, ClipboardList, ClipboardPaste, Pencil, Plus, Trash2, Wand2, X } from 'lucide-react'
 import { useTranslate } from '@/lib/language-context'
 import {
-  fetchLeagueSeasons, fetchLeagueFixtures, fetchLeagueEvents, fetchLeagueLineups, fetchLeagueRoster, createLeagueSeason, setCurrentLeagueSeason, deleteLeagueSeason,
+  fetchLeagueSeasons, fetchLeagueFixtures, fetchLeagueEvents, fetchLeagueLineups, fetchLeagueRoster, fetchLeagueChanges, fetchLeagueSquads, createLeagueSeason, setCurrentLeagueSeason, deleteLeagueSeason,
   saveLeagueFixture, deleteLeagueFixture, bulkCreateLeagueFixtures,
-  type LeagueTeam, type LeagueMatchEvent, type LeagueLineupEntry, type LeagueRosterEntry, type LeagueSeason, type LeagueFixture, type FixtureStatus, type FixtureError,
+  type LeagueTeam, type LeagueMatchEvent, type LeagueFixtureChange, type LeagueSquadEntry, type LeagueLineupEntry, type LeagueRosterEntry, type LeagueSeason, type LeagueFixture, type FixtureStatus, type FixtureError,
 } from '@/lib/app-data'
 import { ClubMark, chip, input, label, toLocalInput } from '@/components/league-ui'
 import { DateField, DateTimeField, NumberField, SelectField, TimeField } from '@/components/league-pickers'
@@ -17,6 +17,7 @@ import { LeagueStandings } from '@/components/league-standings'
 import { LeagueCalendar } from '@/components/league-calendar'
 import { LeagueCup } from '@/components/league-cup'
 import { LeagueImport } from '@/components/league-import'
+import { LeagueSquad } from '@/components/league-squad'
 import { LeagueMatchSheet, KIND_ICON } from '@/components/league-match-sheet'
 import { computeSuspensions, suspendedFor } from '@/lib/league-discipline'
 
@@ -33,11 +34,13 @@ type Props = {
   section?: Sub
   /** Team page: the matchdays section shows this week's round and the club's own matches. */
   scoped?: boolean
+  /** Club account: the club's own players, for naming a squad. */
+  ownPlayers?: { id: number; name: string }[]
 }
 
-type FxForm = { id?: number; matchday: string; home: string; away: string; when: string; venue: string; status: FixtureStatus; hg: string; ag: string }
+type FxForm = { id?: number; note: string; matchday: string; home: string; away: string; when: string; venue: string; status: FixtureStatus; hg: string; ag: string }
 
-export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped }: Props) {
+export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped, ownPlayers }: Props) {
   const { tr, lang } = useTranslate()
   const t = tr.league
   const admin = mode === 'admin'
@@ -60,6 +63,10 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
   const [lineups, setLineups] = useState<LeagueLineupEntry[]>([])
   const [roster, setRoster] = useState<LeagueRosterEntry[]>([])
   const [sheetId, setSheetId] = useState<number | null>(null)
+  const [changes, setChanges] = useState<LeagueFixtureChange[]>([])
+  const [squads, setSquads] = useState<LeagueSquadEntry[]>([])
+  const [squadId, setSquadId] = useState<number | null>(null)
+  const [histOpen, setHistOpen] = useState<Set<number>>(new Set())
   const [gen, setGen] = useState({ double: true, start: '', every: '7', time: '15:00' })
 
   const teamById = useMemo(() => new Map(teams.map(x => [x.id, x])), [teams])
@@ -74,9 +81,9 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
     setSeasonId(prev => pick ?? (prev && list.some(s => s.id === prev) ? prev : (list.find(s => s.isCurrent) || list[0])?.id ?? null))
   }
   const loadFixtures = async (id: number | null) => {
-    if (id == null) { setFixtures([]); setEvents([]); setLineups([]); return }
-    const [f, e, l] = await Promise.all([fetchLeagueFixtures(id), fetchLeagueEvents(id), fetchLeagueLineups(id)])
-    setFixtures(f); setEvents(e); setLineups(l)
+    if (id == null) { setFixtures([]); setEvents([]); setLineups([]); setChanges([]); setSquads([]); return }
+    const [f, e, l, c, q] = await Promise.all([fetchLeagueFixtures(id), fetchLeagueEvents(id), fetchLeagueLineups(id), fetchLeagueChanges(id), fetchLeagueSquads(id)])
+    setFixtures(f); setEvents(e); setLineups(l); setChanges(c); setSquads(q)
   }
   useEffect(() => { if (admin && teams.length) void fetchLeagueRoster(teams.map(x => x.id)).then(setRoster) }, [admin, teams])
   const suspensions = useMemo(() => computeSuspensions(fixtures, events), [fixtures, events])
@@ -91,11 +98,11 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
 
   const openNew = () => {
     setErr('')
-    setForm({ matchday: String(shownDay ?? (days.length ? days[days.length - 1] + 1 : 1)), home: '', away: '', when: '', venue: '', status: 'scheduled', hg: '', ag: '' })
+    setForm({ note: '', matchday: String(shownDay ?? (days.length ? days[days.length - 1] + 1 : 1)), home: '', away: '', when: '', venue: '', status: 'scheduled', hg: '', ag: '' })
   }
   const openEdit = (f: LeagueFixture) => {
     setErr('')
-    setForm({ id: f.id, matchday: String(f.matchday), home: String(f.homeTeamId), away: String(f.awayTeamId), when: toLocalInput(f.kickoff), venue: f.venue || '', status: f.status, hg: f.homeGoals != null ? String(f.homeGoals) : '', ag: f.awayGoals != null ? String(f.awayGoals) : '' })
+    setForm({ id: f.id, note: '', matchday: String(f.matchday), home: String(f.homeTeamId), away: String(f.awayTeamId), when: toLocalInput(f.kickoff), venue: f.venue || '', status: f.status, hg: f.homeGoals != null ? String(f.homeGoals) : '', ag: f.awayGoals != null ? String(f.awayGoals) : '' })
   }
 
   const submitMatch = async () => {
@@ -111,6 +118,7 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
       id: form.id, seasonId, matchday: md, homeTeamId: Number(form.home), awayTeamId: Number(form.away),
       kickoff: when ? when.toISOString() : null, venue: form.venue || null, status: form.status,
       homeGoals: form.status === 'played' ? hg : null, awayGoals: form.status === 'played' ? ag : null,
+      changeNote: form.note,
     })
     setBusy(false)
     if (r.error) { setErr(errText(r.error)); return }
@@ -194,6 +202,35 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
             </ul>
           )
           return <div className="mt-3 flex gap-4 border-t border-white/10 pt-2.5">{line(f.homeTeamId, false)}{line(f.awayTeamId, true)}</div>
+        })()}
+        {(() => {
+          const ch = changes.filter(c => c.fixtureId === f.id)
+          if (!ch.length) return null
+          const open = histOpen.has(f.id)
+          const when = (iso: string | null) => (iso ? `${dateFmt.format(new Date(iso))} ${timeFmt.format(new Date(iso))}` : t.dateTbd)
+          const line = (c: LeagueFixtureChange) => {
+            if (c.newStatus === 'postponed' && c.oldStatus !== 'postponed') return t.histPostponed
+            if (c.newStatus === 'played' && c.oldStatus !== 'played') return t.histPlayed
+            if (c.oldStatus === 'postponed') return t.histBack.replace('{to}', when(c.newKickoff))
+            if (!c.oldKickoff) return t.histSet.replace('{to}', when(c.newKickoff))
+            return t.histMoved.replace('{from}', when(c.oldKickoff)).replace('{to}', when(c.newKickoff))
+          }
+          return (
+            <div className="mt-3 border-t border-white/10 pt-2">
+              <button type="button" onClick={() => setHistOpen(prev => { const n = new Set(prev); if (n.has(f.id)) n.delete(f.id); else n.add(f.id); return n })} aria-expanded={open}
+                className="text-[10px] font-black uppercase tracking-[.18em] text-[#f6c744] hover:text-white">↻ {t.historyWord} ({ch.length})</button>
+              {open && <ul className="mt-1.5 space-y-1">{ch.map(c => <li key={c.id} className="text-[11px] text-white/75">{line(c)}{c.note && <span className="text-white/50"> — {c.note}</span>}</li>)}</ul>}
+            </div>
+          )
+        })()}
+        {scoped && mode === 'club' && !admin && ownPlayers && f.status === 'scheduled' && myTeamId != null && (f.homeTeamId === myTeamId || f.awayTeamId === myTeamId) && (() => {
+          const n = squads.filter(q => q.fixtureId === f.id && q.teamId === myTeamId).length
+          return (
+            <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-2.5">
+              <span className={`text-[11px] font-bold ${n ? 'text-emerald-300' : 'text-white/55'}`}>{n ? t.squadSubmitted.replace('{n}', String(n)) : t.squadNone}</span>
+              <button type="button" onClick={() => setSquadId(f.id)} className="rounded-lg bg-[#f6c744] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#0c1f3d] hover:bg-white">{t.squadWord}</button>
+            </div>
+          )
         })()}
         {(f.venue || admin) && (
           <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-2.5 text-[11px] text-white/55">
@@ -362,6 +399,7 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
                 </>
               )}
               <div className="col-span-2 sm:col-span-1"><label className={label} htmlFor="fx-when">{t.dateTime}</label><DateTimeField id="fx-when" value={form.when} onChange={v => setForm({ ...form, when: v })} title={t.dateTime} /></div>
+              {form.id && <div className="col-span-2"><label className={label} htmlFor="fx-note">{t.changeReason}</label><input id="fx-note" maxLength={200} value={form.note} onChange={e => setForm({ ...form, note: e.target.value })} className={input} /></div>}
               <div className="col-span-2 sm:col-span-1"><label className={label} htmlFor="fx-venue">{t.venue}</label><input id="fx-venue" maxLength={120} value={form.venue} onChange={e => setForm({ ...form, venue: e.target.value })} className={input} /></div>
             </div>
             {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}
@@ -404,8 +442,16 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
         if (!f) return null
         return <LeagueMatchSheet fixture={f} home={teamById.get(f.homeTeamId)} away={teamById.get(f.awayTeamId)} roster={roster}
           lineup={lineups.filter(l => l.fixtureId === f.id)} events={events.filter(e => e.fixtureId === f.id)}
+          squads={squads.filter(q => q.fixtureId === f.id)}
           suspensions={[...suspendedFor(suspensions, f.id, f.homeTeamId), ...suspendedFor(suspensions, f.id, f.awayTeamId)]}
           logoUrl={logoUrl} onChanged={() => void loadFixtures(seasonId)} onClose={() => setSheetId(null)} />
+      })()}
+
+      {squadId != null && myTeamId != null && ownPlayers && (() => {
+        const f = fixtures.find(x => x.id === squadId)
+        if (!f) return null
+        return <LeagueSquad fixture={f} myTeamId={myTeamId} teams={teams} players={ownPlayers} squad={squads} suspendedIds={suspendedFor(suspensions, f.id, myTeamId).map(x => x.memberId)}
+          logoUrl={logoUrl} onSaved={() => { setSquadId(null); void loadFixtures(seasonId) }} onClose={() => setSquadId(null)} />
       })()}
 
       {importOpen && season && (

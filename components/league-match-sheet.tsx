@@ -5,7 +5,7 @@ import { Trash2, X } from 'lucide-react'
 import { useTranslate } from '@/lib/language-context'
 import {
   addLeagueEvent, deleteLeagueEvent, setLeagueLineup,
-  type LeagueTeam, type LeagueFixture, type LeagueMatchEvent, type LeagueLineupEntry, type LeagueRosterEntry, type EventKind,
+  type LeagueTeam, type LeagueFixture, type LeagueMatchEvent, type LeagueLineupEntry, type LeagueSquadEntry, type LeagueRosterEntry, type EventKind,
 } from '@/lib/app-data'
 import type { Suspension } from '@/lib/league-discipline'
 import { ClubMark, label } from '@/components/league-ui'
@@ -17,6 +17,7 @@ type Props = {
   away: LeagueTeam | undefined
   roster: LeagueRosterEntry[]
   lineup: LeagueLineupEntry[]
+  squads: LeagueSquadEntry[]
   events: LeagueMatchEvent[]
   suspensions: Suspension[]
   logoUrl: (x: LeagueTeam | null) => string
@@ -26,7 +27,7 @@ type Props = {
 
 export const KIND_ICON: Record<EventKind, string> = { goal: '⚽', assist: '👟', yellow: '🟨', red: '🟥' }
 
-export function LeagueMatchSheet({ fixture, home, away, roster, lineup, events, suspensions, logoUrl, onChanged, onClose }: Props) {
+export function LeagueMatchSheet({ fixture, home, away, roster, lineup, squads, events, suspensions, logoUrl, onChanged, onClose }: Props) {
   const { tr } = useTranslate()
   const t = tr.league
   const [playerId, setPlayerId] = useState('')
@@ -78,6 +79,15 @@ export function LeagueMatchSheet({ fixture, home, away, roster, lineup, events, 
             return (
               <div key={id}>
                 <p className="mb-1.5 truncate text-[11px] font-black uppercase tracking-[.14em]">{team?.name}</p>
+                {(() => {
+                  const sq = squads.filter(q => q.teamId === id)
+                  return (
+                    <div className="mb-2 flex items-center justify-between gap-2 text-[11px]">
+                      <span className={sq.length ? 'font-bold text-emerald-300' : 'text-[var(--c-textMid)]'}>{sq.length ? t.squadSubmitted.replace('{n}', String(sq.length)) : t.squadNone}</span>
+                      {sq.length > 0 && <button type="button" disabled={busy} onClick={() => void run(setLeagueLineup(fixture.id, id, sq.map(q => q.memberId)))} className="font-black uppercase tracking-[.14em] text-[#f6c744] hover:text-[var(--c-text)]">{t.useSquad}</button>}
+                    </div>
+                  )
+                })()}
                 {mine.length === 0 ? <p className="text-xs text-[var(--c-textMid)]">{t.noPlayers}</p> : (
                   <div className="flex flex-wrap gap-1.5">
                     {mine.map(p => (

@@ -16,6 +16,7 @@ import { LeagueTeamCard } from '@/components/league-team-card'
 import { defaultLeagueLogo } from '@/lib/league-logos'
 import { LeagueTeamHero } from '@/components/league-team-hero'
 import { LeagueFixtures } from '@/components/league-fixtures'
+import { LeagueBell } from '@/components/league-bell'
 import { DateField, NumberField, SelectField } from '@/components/league-pickers'
 import { LeagueNextMatch, LeagueRoundStrip } from '@/components/league-glance'
 import { LeaguePlayerStats } from '@/components/league-player-stats'
@@ -308,6 +309,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
           <div className="flex items-center gap-2 shrink-0">
             <ThemeToggle className="p-2.5" />
             <LanguageToggle />
+            {mode === 'club' && clubTeamId != null && <LeagueBell teamId={clubTeamId} teams={directory} />}
             {mode === 'club' && (
               <button onClick={() => { void supabase.auth.signOut(); onLogout() }} title={t.logout} className="p-2.5 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 text-[#ff5f72] hover:bg-[#e3062c] hover:text-white transition-all"><LogOut size={15} /></button>
             )}

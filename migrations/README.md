@@ -52,6 +52,7 @@ that baseline, in order.
 | `0020_league_match_sheet.sql` | Yes — `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Adds match lineups and match events (goals, assists, cards) and keeps `league_player_stats` in step with them. Admin writes, club accounts read-only. Needs 0015 and 0018 first. |
 | `0021_league_sheet_source_of_truth.sql` | Yes, except the deletion in section 5, which only fires while no sheet exists. Rewrites the recount so it counts played matches only and removes a player's row when her sheet entries are gone, recounts on a change of match status, and raises `league_top_players` from 50 to 500 rows. Needs 0020 first. |
 | `0022_league_recount_grants.sql` | Yes — `REVOKE` / `GRANT` only. Closes `league_recount_player` and `league_recount_season` to anonymous callers: 0021 made them `SECURITY DEFINER` and PostgreSQL grants `EXECUTE` on a new function to `PUBLIC`, so a logged-out visitor could reach a write path that runs over row level security. Needs 0021 first. |
+| `0023_league_changes_notifications_squads.sql` | Yes — `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Adds the match change history (with an optional reason), club notifications and matchday squads. A club reads only its own notifications and squad. Needs 0015 and 0020 first. |
 
 ### RLS helpers and the setup file
 

@@ -983,12 +983,13 @@ export async function deleteLeagueSeason(id: number): Promise<{ error: FixtureEr
 }
 
 /** Insert (no id) or update (id) one match. Scores only count when status is "played". */
-export async function saveLeagueFixture(f: Omit<LeagueFixture, 'id'> & { id?: number }): Promise<{ error: FixtureError | null }> {
+export async function saveLeagueFixture(f: Omit<LeagueFixture, 'id'> & { id?: number; changeNote?: string | null }): Promise<{ error: FixtureError | null }> {
   const played = f.status === 'played'
   const row = {
     season_id: f.seasonId, matchday: f.matchday, home_team_id: f.homeTeamId, away_team_id: f.awayTeamId,
     kickoff: f.kickoff, venue: f.venue?.trim() || null, status: f.status,
     home_goals: played ? f.homeGoals : null, away_goals: played ? f.awayGoals : null,
+    change_note: f.changeNote?.trim() || null, // always sent, so an old reason is never repeated on a new change
   }
   const { error } = f.id ? await supabase.from('league_fixtures').update(row).eq('id', f.id) : await supabase.from('league_fixtures').insert(row)
   return { error: fixtureError(error) }
@@ -1120,5 +1121,38 @@ export async function setLeagueLineup(fixtureId: number, teamId: number, memberI
   if (del.error) return { error: fixtureError(del.error) }
   if (!memberIds.length) return { error: null }
   const { error } = await supabase.from('league_match_lineup').insert(memberIds.map(m => ({ fixture_id: fixtureId, team_id: teamId, member_id: m })))
+  return { error: fixtureError(error) }
+}
+
+// ── history, notifications, squads (migration 0021) ──
+export interface LeagueFixtureChange { id: number; fixtureId: number; oldKickoff: string | null; newKickoff: string | null; oldStatus: FixtureStatus; newStatus: FixtureStatus; note: string | null; changedAt: string }
+export interface LeagueNotification { id: number; teamId: number; fixtureId: number; kind: 'scheduled' | 'moved' | 'postponed' | 'result'; createdAt: string; readAt: string | null }
+export interface LeagueSquadEntry { id: number; fixtureId: number; teamId: number; memberId: number; playerName: string }
+
+export async function fetchLeagueChanges(seasonId: number): Promise<LeagueFixtureChange[]> {
+  const { data, error } = await supabase.from('league_fixture_changes').select('id,fixture_id,old_kickoff,new_kickoff,old_status,new_status,note,changed_at').eq('season_id', seasonId).order('changed_at')
+  if (error || !data) return []
+  return data.map((r: any) => ({ id: r.id, fixtureId: r.fixture_id, oldKickoff: r.old_kickoff, newKickoff: r.new_kickoff, oldStatus: r.old_status, newStatus: r.new_status, note: r.note, changedAt: r.changed_at }))
+}
+export async function fetchMyNotifications(): Promise<LeagueNotification[]> {
+  const { data, error } = await supabase.from('league_notifications').select('id,team_id,fixture_id,kind,created_at,read_at').order('created_at', { ascending: false }).limit(30)
+  if (error || !data) return []
+  return data.map((r: any) => ({ id: r.id, teamId: r.team_id, fixtureId: r.fixture_id, kind: r.kind, createdAt: r.created_at, readAt: r.read_at }))
+}
+export async function markNotificationsRead(ids: number[]): Promise<void> {
+  if (!ids.length) return
+  await supabase.from('league_notifications').update({ read_at: new Date().toISOString() }).in('id', ids)
+}
+export async function fetchLeagueSquads(seasonId: number): Promise<LeagueSquadEntry[]> {
+  const { data, error } = await supabase.from('league_match_squad').select('id,fixture_id,team_id,member_id,player_name').eq('season_id', seasonId)
+  if (error || !data) return []
+  return data.map((r: any) => ({ id: r.id, fixtureId: r.fixture_id, teamId: r.team_id, memberId: r.member_id, playerName: r.player_name }))
+}
+/** Replace one club's squad for a match (a club account can only do this for its own club, until the match is played). */
+export async function setMatchSquad(fixtureId: number, teamId: number, memberIds: number[]): Promise<{ error: FixtureError | null }> {
+  const del = await supabase.from('league_match_squad').delete().eq('fixture_id', fixtureId).eq('team_id', teamId)
+  if (del.error) return { error: fixtureError(del.error) }
+  if (!memberIds.length) return { error: null }
+  const { error } = await supabase.from('league_match_squad').insert(memberIds.map(m => ({ fixture_id: fixtureId, team_id: teamId, member_id: m })))
   return { error: fixtureError(error) }
 }
