@@ -579,7 +579,7 @@ export default function EliteSquadApp() {
   // played with their CLUB (not the national team squad).
   const [clubReports,setClubReports]=useState<any[]>([])
   const [addClubReportOpen,setAddClubReportOpen]=useState(false)
-  const initClubReportForm={match_date:"",opponent:"",competition:"",minutes_played:"",goals:"",assists:"",yellow_cards:"",red_cards:"",result:"",notes:"",is_starting:"" as ""|"yes"|"no",rating:"",highlights_url:"",position_played:"",did_not_play:"" as ""|"yes"|"no",had_injury:"" as ""|"yes"|"no",injury_notes:""}
+  const initClubReportForm={match_date:"",opponent:"",competition:"",competitionOther:"",minutes_played:"",goals:"",assists:"",yellow_cards:"",red_cards:"",result:"",notes:"",is_starting:"" as ""|"yes"|"no",rating:"",highlights_url:"",position_played:"",did_not_play:"" as ""|"yes"|"no",had_injury:"" as ""|"yes"|"no",injury_notes:""}
   const canVerifyClubReport=()=>!!(p.editPlayer||p.addPlayer||canManageUsers)
   const [clubReportForm,setClubReportForm]=useState(initClubReportForm)
   const canSeeClubReports=(m:any)=>!!m&&(p.viewClubReports||canManageUsers||user?.memberId===m.id)
@@ -2134,6 +2134,20 @@ export default function EliteSquadApp() {
           if(cleaned!==""&&!isNaN(n)&&n>10)return
           setClubReportForm({...clubReportForm,rating:cleaned})
         }
+        // Competitions are picked from a short list; anything not on it is typed
+        // after choosing "Other". Positions are tapped, not typed, and several
+        // can be picked — the stored text is the picked labels joined with " / ".
+        const compOptions=[{value:tr.clubReports.compOptionLeague,label:tr.clubReports.compOptionLeague},
+          {value:tr.clubReports.compOptionCup,label:tr.clubReports.compOptionCup},
+          {value:tr.clubReports.compOptionChampions,label:tr.clubReports.compOptionChampions},
+          {value:tr.clubReports.compOptionFriendly,label:tr.clubReports.compOptionFriendly},
+          {value:"__other__",label:tr.clubReports.compOptionOther}]
+        const compStd=compOptions.slice(0,4).map(o=>o.value)
+        const compValue=compStd.includes(clubReportForm.competition)?clubReportForm.competition:(clubReportForm.competition?"__other__":"")
+        const posOptions=[tr.clubReports.posGk,tr.clubReports.posRb,tr.clubReports.posCb,tr.clubReports.posLb,tr.clubReports.posDm,tr.clubReports.posCm,tr.clubReports.posAm,tr.clubReports.posRw,tr.clubReports.posLw,tr.clubReports.posSt]
+        const chosenPos=String(clubReportForm.position_played||"").split(" / ").filter(Boolean)
+        const togglePos=(posLabel:string)=>setClubReportForm({...clubReportForm,
+          position_played:chosenPos.includes(posLabel)?chosenPos.filter(x=>x!==posLabel).join(" / "):[...chosenPos,posLabel].join(" / ")})
         return(
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-sm rounded-2xl bg-[var(--c-cream2)] text-zinc-900 shadow-2xl p-5 space-y-3 max-h-[90vh] overflow-y-auto">
@@ -2143,10 +2157,13 @@ export default function EliteSquadApp() {
             </div>
             <DatePicker variant="zinc" value={clubReportForm.match_date} onChange={(v)=>setClubReportForm({...clubReportForm,match_date:v})} placeholder={tr.form.date}/>
             <input placeholder={tr.clubReports.opponentPh} value={clubReportForm.opponent} onChange={e=>setClubReportForm({...clubReportForm,opponent:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
-            <div className="flex gap-2">
-              <input placeholder={tr.clubReports.competitionPh} value={clubReportForm.competition} onChange={e=>setClubReportForm({...clubReportForm,competition:e.target.value})} className="flex-1 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
-              <input placeholder={tr.clubReports.resultPh} value={clubReportForm.result} onChange={e=>setClubReportForm({...clubReportForm,result:e.target.value})} className="w-24 p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.competitionLabel}</p>
+              <Select value={compValue} onChange={v=>setClubReportForm({...clubReportForm,competition:v})}
+                options={compOptions} placeholder={tr.clubReports.competitionPh} className="mb-1.5"/>
+              {compValue==="__other__"&&<input placeholder={tr.clubReports.competitionOtherPh} value={clubReportForm.competitionOther||""} onChange={e=>setClubReportForm({...clubReportForm,competitionOther:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>}
             </div>
+            <input placeholder={tr.clubReports.resultPh} value={clubReportForm.result} onChange={e=>setClubReportForm({...clubReportForm,result:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
             <div>
               <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.playedQuestion}</p>
               <div className="flex gap-2">
@@ -2155,7 +2172,17 @@ export default function EliteSquadApp() {
               </div>
             </div>
             {clubReportForm.did_not_play!=="yes"&&(<>
-              <input placeholder={tr.clubReports.positionPh} value={clubReportForm.position_played} onChange={e=>setClubReportForm({...clubReportForm,position_played:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+              <div>
+                <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.positionLabel}</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {posOptions.map(posLabel=>(
+                    <button key={posLabel} type="button" onClick={()=>togglePos(posLabel)}
+                      className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all ${chosenPos.includes(posLabel)?'bg-[#E30613] border border-[#E30613] text-white':'bg-zinc-50 border border-zinc-200 text-zinc-500 hover:border-[#E30613]/40'}`}>
+                      {posLabel}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.mins}</p>
@@ -2215,7 +2242,7 @@ export default function EliteSquadApp() {
                 const {error}=await addClubReport(selMember.id,{
                   match_date:clubReportForm.match_date||undefined,
                   opponent:clubReportForm.opponent.trim(),
-                  competition:clubReportForm.competition.trim()||undefined,
+                  competition:(clubReportForm.competition==="__other__"?clubReportForm.competitionOther.trim():clubReportForm.competition.trim())||undefined,
                   did_not_play:didNotPlay,
                   minutes_played:didNotPlay?0:(clubReportForm.minutes_played?parseInt(clubReportForm.minutes_played,10):undefined),
                   goals:didNotPlay?0:(clubReportForm.goals?parseInt(clubReportForm.goals,10):0),
