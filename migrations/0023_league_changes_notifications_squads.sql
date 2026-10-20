@@ -53,11 +53,14 @@ CREATE INDEX IF NOT EXISTS league_notifications_team_idx ON public.league_notifi
 
 CREATE OR REPLACE FUNCTION public.league_fixture_track()
 RETURNS trigger LANGUAGE plpgsql SECURITY INVOKER SET search_path = public, pg_temp AS $$
-DECLARE k text;
+DECLARE k text; v_note text;
 BEGIN
+  -- the reason is used once: read it, then clear it so the next edit never repeats it
+  v_note := NULLIF(btrim(NEW.change_note), '');
+  NEW.change_note := NULL;
   IF NEW.kickoff IS NOT DISTINCT FROM OLD.kickoff AND NEW.status = OLD.status THEN RETURN NEW; END IF;
   INSERT INTO public.league_fixture_changes (fixture_id, season_id, old_kickoff, new_kickoff, old_status, new_status, note, changed_by)
-  VALUES (NEW.id, NEW.season_id, OLD.kickoff, NEW.kickoff, OLD.status, NEW.status, NULLIF(btrim(NEW.change_note), ''), auth.uid());
+  VALUES (NEW.id, NEW.season_id, OLD.kickoff, NEW.kickoff, OLD.status, NEW.status, v_note, auth.uid());
   k := CASE
     WHEN NEW.status = 'played' AND OLD.status <> 'played' THEN 'result'
     WHEN NEW.status = 'postponed' AND OLD.status <> 'postponed' THEN 'postponed'
@@ -72,7 +75,7 @@ BEGIN
 END $$;
 
 DROP TRIGGER IF EXISTS trg_league_fixture_track ON public.league_fixtures;
-CREATE TRIGGER trg_league_fixture_track AFTER UPDATE ON public.league_fixtures
+CREATE TRIGGER trg_league_fixture_track BEFORE UPDATE ON public.league_fixtures
   FOR EACH ROW EXECUTE FUNCTION public.league_fixture_track();
 
 -- ------------------------------------------------------------

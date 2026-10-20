@@ -989,8 +989,10 @@ export async function saveLeagueFixture(f: Omit<LeagueFixture, 'id'> & { id?: nu
     season_id: f.seasonId, matchday: f.matchday, home_team_id: f.homeTeamId, away_team_id: f.awayTeamId,
     kickoff: f.kickoff, venue: f.venue?.trim() || null, status: f.status,
     home_goals: played ? f.homeGoals : null, away_goals: played ? f.awayGoals : null,
-    change_note: f.changeNote?.trim() || null, // always sent, so an old reason is never repeated on a new change
-  }
+  } as Record<string, unknown>
+  // The column comes with migration 0023, whose trigger clears it after use; only sent when there is a reason,
+  // so saving a match keeps working before 0023 is applied.
+  if (f.changeNote?.trim()) row.change_note = f.changeNote.trim()
   const { error } = f.id ? await supabase.from('league_fixtures').update(row).eq('id', f.id) : await supabase.from('league_fixtures').insert(row)
   return { error: fixtureError(error) }
 }

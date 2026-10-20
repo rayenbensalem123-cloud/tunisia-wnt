@@ -20,7 +20,7 @@ export function computeSuspensions(fixtures: Fx[], events: Ev[]): Suspension[] {
     const target = nextOf(e.teamId, trigger)
     if (target) out.push({ memberId: e.memberId, teamId: e.teamId, name: e.playerName, reason, triggerFixtureId: trigger.id, fixtureId: target.id, matchday: target.matchday })
   }
-  const cards = events.filter(e => (e.kind === 'yellow' || e.kind === 'red') && fx.has(e.fixtureId))
+  const cards = events.filter(e => (e.kind === 'yellow' || e.kind === 'red') && fx.get(e.fixtureId)?.status === 'played')
     .sort((a, b) => order(fx.get(a.fixtureId)!, fx.get(b.fixtureId)!))
   const yellows = new Map<number, number>()
   for (const e of cards) {
