@@ -1836,20 +1836,39 @@ export default function EliteSquadApp() {
                   </div>
                 </section>
 
-                {/* Camps participated */}
+                {/* Camps participated — the camps she was registered into on the
+                    camp page, plus the older free-text list kept on her card. */}
                 <section className="mt-4">
                   <p className="pm-label mb-1.5">Camps</p>
                   <div className="rounded-lg border border-[rgba(var(--line-rgb),.14)] overflow-hidden">
-                    {selMember.camps?.filter(Boolean).length>0?(
-                      <div>
-                        {selMember.camps.filter(Boolean).map((c:string,i:number)=>(
-                          <div key={i} className={`flex items-center gap-2.5 px-3 py-2.5 ${i>0?'border-t border-[rgba(var(--line-rgb),.1)]':''}`}>
-                            <span className="w-1.5 h-1.5 rounded-full bg-[#e3062c] shrink-0"/>
-                            <span className="text-[12px] font-medium text-[var(--c-textBlue)] truncate">{c}</span>
-                          </div>
-                        ))}
-                      </div>
-                    ):<p className="text-[12px] text-[var(--c-textDim)] py-4 text-center">No camps recorded</p>}
+                    {(()=> {
+                      const legacy=(selMember.camps||[]).filter(Boolean) as string[]
+                      const held=new Set<string>(legacy.map((s:string)=>String(s).trim().toLowerCase()))
+                      const registered=(camps||[]).filter((c:any)=>Array.isArray(c.players)&&c.players.includes(selMember.id))
+                      const registeredFresh=registered.filter((c:any)=>!held.has(String(c.name||"").trim().toLowerCase()))
+                      const rows=[
+                        ...registeredFresh.map((c:any)=>({
+                          name:String(c.name||""),
+                          when:fmtDateWords(c.arrivalDate||c.startDate||""),
+                          place:!!(c.location||c.country),
+                          location:[c.location,c.country].filter(Boolean).join(", "),
+                        })),
+                        ...legacy.map((s:string)=>({name:s,when:"",place:false,location:""})),
+                      ]
+                      if(rows.length===0)return <p className="text-[12px] text-[var(--c-textDim)] py-4 text-center">No camps recorded</p>
+                      return(
+                        <div>
+                          {rows.map((row,i)=>(
+                            <div key={i} className={`flex items-center gap-2.5 px-3 py-2.5 ${i>0?'border-t border-[rgba(var(--line-rgb),.1)]':''}`}>
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#e3062c] shrink-0"/>
+                              <span className="text-[12px] font-medium text-[var(--c-textBlue)] truncate">{row.name}</span>
+                              {row.when&&<span className="text-[10px] font-bold text-[var(--c-textFaint)] uppercase tracking-wider ml-auto shrink-0">{row.when}</span>}
+                              {row.place&&<span className="text-[10px] text-[var(--c-textDim)] shrink-0 truncate">{row.location}</span>}
+                            </div>
+                          ))}
+                        </div>
+                      )
+                    })()}
                   </div>
                 </section>
 
