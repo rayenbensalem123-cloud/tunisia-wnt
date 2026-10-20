@@ -34,7 +34,7 @@ import {
   updateMyEmail, requestPasswordReset, verifyClubReport
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
-import { PassportCard, TravelAlertsCard, BirthdaysEligibilityCard, TripPanel } from "@/components/travel"
+import { PassportCard, TravelAlertsCard, BirthdaysEligibilityCard } from "@/components/travel"
 import { CvImport } from "@/components/cv-import"
 import { LigueView } from "@/components/league"
 import { PerformanceCard } from "@/components/performance"
@@ -607,7 +607,7 @@ export default function EliteSquadApp() {
   const askConfirm=(message:string):Promise<boolean>=>new Promise(resolve=>setConfirmState({message,resolve}))
   const [isMatchOpen,setIsMatchOpen]=useState(false)
   const [scheduleOpen,setScheduleOpen]=useState(false)
-  const [scheduleForm,setScheduleForm]=useState({opponent:"",date:"",competition:"",venue:""})
+  const [scheduleForm,setScheduleForm]=useState({opponent:"",date:"",competition:"",venue:"",homeAway:""})
   const [isHistoryOpen,setIsHistoryOpen]=useState(false)
   const [matchSheetTarget,setMatchSheetTarget]=useState<any>(null)
   // Post-match video library: which match's "add video" form is open, and its draft fields.
@@ -666,7 +666,7 @@ export default function EliteSquadApp() {
 
   const initForm={name:"",club:"",position:"",image:"",passportImage:"",jerseyNumber:"",camps:[],natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",bioQuote:"",leagueRegion:"",dualNationality:false,secondNationality:""}
   const [form,setForm]=useState<any>(initForm)
-  const initMatch={opponent:"",date:"",result:"",venue:"",competition:"",squad:[] as number[],scorers:[] as {playerId:number,goals:number}[],yellowCards:[] as number[],redCards:[] as number[],subs:[] as {out:number;in:number}[],notes:"",opponentSquad:[] as string[],opponentScorers:[] as {name:string,goals:number}[],opponentYellowCards:[] as string[],opponentRedCards:[] as string[],opponentSubs:[] as {out:string;in:string}[],tunisiaPossession:"",opponentPossession:"",tunisiaShots:"",opponentShots:"",tunisiaShotsOnTarget:"",opponentShotsOnTarget:"",tunisiaCorners:"",opponentCorners:"",tunisiaFouls:"",opponentFouls:"",eventMinutes:{} as Record<string,number>}
+  const initMatch={opponent:"",date:"",result:"",venue:"",homeAway:"",competition:"",squad:[] as number[],scorers:[] as {playerId:number,goals:number}[],yellowCards:[] as number[],redCards:[] as number[],subs:[] as {out:number;in:number}[],notes:"",opponentSquad:[] as string[],opponentScorers:[] as {name:string,goals:number}[],opponentYellowCards:[] as string[],opponentRedCards:[] as string[],opponentSubs:[] as {out:string;in:string}[],tunisiaPossession:"",opponentPossession:"",tunisiaShots:"",opponentShots:"",tunisiaShotsOnTarget:"",opponentShotsOnTarget:"",tunisiaCorners:"",opponentCorners:"",tunisiaFouls:"",opponentFouls:"",eventMinutes:{} as Record<string,number>}
   const countryFlags:Record<string,string>={"Tunisia":"tn","Algeria":"dz","Egypt":"eg","Morocco":"ma","Senegal":"sn","Nigeria":"ng","Cameroon":"cm","Ghana":"gh","Ivory Coast":"ci","Côte d'Ivoire":"ci","Cote d'Ivoire":"ci","Mali":"ml","Burkina Faso":"bf","South Africa":"za","DR Congo":"cd","DRC":"cd","Congo":"cg","Zambia":"zm","Equatorial Guinea":"gq","Guinea":"gn","Guinea-Bissau":"gw","Benin":"bj","Togo":"tg","Sierra Leone":"sl","Liberia":"lr","Sudan":"sd","South Sudan":"ss","Uganda":"ug","Kenya":"ke","Tanzania":"tz","Rwanda":"rw","Burundi":"bi","Ethiopia":"et","Eritrea":"er","Somalia":"so","Angola":"ao","Namibia":"na","Botswana":"bw","Zimbabwe":"zw","Mozambique":"mz","Malawi":"mw","Lesotho":"ls","Eswatini":"sz","Madagascar":"mg","Mauritius":"mu","Cape Verde":"cv","Mauritania":"mr","Gambia":"gm","Gabon":"ga","Chad":"td","Niger":"ne","Libya":"ly","France":"fr","England":"gb-eng","Spain":"es","Germany":"de","Italy":"it","Netherlands":"nl","Portugal":"pt","Belgium":"be","Croatia":"hr","Switzerland":"ch","Sweden":"se","Denmark":"dk","Norway":"no","Poland":"pl","Brazil":"br","Argentina":"ar","Uruguay":"uy","Colombia":"co","Chile":"cl","Peru":"pe","Ecuador":"ec","Mexico":"mx","USA":"us","United States":"us","Canada":"ca","Japan":"jp","South Korea":"kr","Korea Republic":"kr","Saudi Arabia":"sa","Iran":"ir","Australia":"au","New Zealand":"nz"}
   const [matchForm,setMatchForm]=useState<any>(initMatch)
 
@@ -977,10 +977,27 @@ export default function EliteSquadApp() {
 
   const toggleSquad=(id:number)=>setMatchForm((p:any)=>({...p,squad:p.squad.includes(id)?p.squad.filter((x:number)=>x!==id):[...p.squad,id]}))
   const moveDown=(id:number,i:number)=>setMatchForm((p:any)=>{const s=[...p.squad];s.splice(i,1);s.push(id);return{...p,squad:s}})
-  const moveUp=(id:number)=>setMatchForm((p:any)=>{const s=[...p.squad];const ri=s.indexOf(id);s.splice(ri,1);s.splice(10,0,id);return{...p,squad:s}})
+  // ✕ on a bench player takes her out of the squad altogether; ✕ on a starter
+  // drops her to the bench (moveDown).
+  const dropFromSquad=(id:number)=>setMatchForm((p:any)=>({...p,squad:p.squad.filter((x:number)=>x!==id)}))
   const subOut=(id:number)=>setMatchForm((p:any)=>{const bi=p.squad.slice(11);if(bi.length<1)return p;const si=bi[0];return{...p,squad:p.squad.map((x:number)=>x===id?si:x===si?id:x),subs:[...p.subs,{out:id,"in":si}]}})
-  const subOutWith=(xiId:number,bnId:number)=>setMatchForm((p:any)=>({...p,squad:p.squad.map((x:number)=>x===xiId?bnId:x===bnId?xiId:x),subs:[...p.subs,{out:xiId,"in":bnId}]}))
-  const removeSub=(idx:number)=>setMatchForm((p:any)=>{const s=p.subs[idx];if(!s)return p;return{...p,squad:p.squad.map((x:number)=>x===s.out?s["in"]:x===s["in"]?s.out:x),subs:p.subs.filter((_:any,i:number)=>i!==idx)}})
+  // A substitution is final: the substitute takes the starter's place in the
+  // eleven, and the player coming off leaves the squad for the rest of the
+  // match. She stays in `subs` for the event log, but she must not reappear on
+  // the bench, in the sub picker or among the available players — she cannot
+  // come back on.
+  const subOutWith=(xiId:number,bnId:number)=>setMatchForm((p:any)=>{
+    const squad=p.squad.map((x:number)=>x===xiId?bnId:x===bnId?xiId:x).filter((x:number)=>x!==xiId)
+    return{...p,squad,subs:[...p.subs,{out:xiId,"in":bnId}]}
+  })
+  // Undoing a substitution puts the substitute back on the bench and restores
+  // the player who came off to the eleven, in the slot the substitute holds.
+  const removeSub=(idx:number)=>setMatchForm((p:any)=>{
+    const s=p.subs[idx];if(!s)return p
+    const squad=p.squad.map((x:number)=>x===s["in"]?s.out:x)
+    const seen=new Set<number>();const unique=squad.filter((x:number)=>seen.has(x)?false:(seen.add(x),true))
+    return{...p,squad:[...unique,s["in"]],subs:p.subs.filter((_:any,i:number)=>i!==idx)}
+  })
   const subIn=(id:number)=>setMatchForm((p:any)=>{const xi=p.squad.slice(0,11);const so=xi[10];return{...p,squad:p.squad.map((x:number)=>x===so?id:x===id?so:x),subs:[...p.subs,{out:so,"in":id}]}})
   const undoSub=(id:number,isIn:boolean)=>setMatchForm((p:any)=>{const ms=isIn?p.subs.find((s:any)=>s["in"]===id):p.subs.find((s:any)=>s.out===id);if(!ms)return p;return{...p,squad:p.squad.map((x:number)=>x===ms.out?ms["in"]:x===ms["in"]?ms.out:x),subs:p.subs.filter((s:any)=>s.out!==ms.out||s["in"]!==ms["in"])}})
   const editGoals=(id:number,delta:number)=>setMatchForm((p:any)=>{const g=(p.scorers.find((s:any)=>s.playerId===id)?.goals||0)+delta;if(g<=0)return{...p,scorers:p.scorers.filter((s:any)=>s.playerId!==id)};if(p.scorers.find((s:any)=>s.playerId===id))return{...p,scorers:p.scorers.map((s:any)=>s.playerId===id?{...s,goals:g}:s)};return{...p,scorers:[...p.scorers,{playerId:id,goals:g}]}})
@@ -1019,6 +1036,12 @@ export default function EliteSquadApp() {
       </div>
     )
   }
+  // A player who has been substituted off is finished for this match. She is
+  // kept out of the bench, the sub pickers and the available list, because she
+  // cannot come back on.
+  const subbedOffIds:number[]=(matchForm.subs||[]).map((s:any)=>s.out)
+  const availableForMatch:any[]=catPlayers.filter((pl:any)=>!matchForm.squad.includes(pl.id)&&!subbedOffIds.includes(pl.id))
+  const homeAwayLabel=(v:string)=>v==="home"?tr.match.home:v==="away"?tr.match.away:v==="neutral"?tr.match.neutral:""
   const p = user?.perms || DEFAULT_PERMS
   const canManageUsers = user?.role === "admin"
   const canSeeWelfare = p.viewMedical||canManageUsers
@@ -1337,7 +1360,7 @@ export default function EliteSquadApp() {
             {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className={HEADER_BTN}>
               <Users size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">Add Match</span>
             </button>}
-            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className={HEADER_BTN}>
+            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:"",homeAway:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className={HEADER_BTN}>
               <Calendar size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">Schedule Match</span>
             </button>}
             {user&&<button onClick={()=>setGamesOpen(true)} title={GAME_STRINGS[lang].gamesTitle} className={HEADER_BTN}>
@@ -2696,6 +2719,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     <div className="flex items-center gap-2 mt-5">
                       <MapPin size={11} className="text-[#f6c744]"/><span className="text-[10px] font-bold text-white/85">{next.venue||"Venue TBD"}</span>
                       <View size={11} className="text-[#f6c744] ml-2"/><span className="text-[10px] font-bold text-white/85">{next.competition||"Friendly"}</span>
+                      {next.homeAway&&<><span className="w-px h-3 bg-white/20 mx-1"/><span className="text-[9px] font-black uppercase tracking-wider text-[#f6c744]">{homeAwayLabel(next.homeAway)}</span></>}
                     </div>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#E30613]"/>
@@ -2717,7 +2741,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="flex items-center gap-1.5 text-[13px] font-black text-[var(--c-text)] truncate"><CountryFlag name="Tunisia" className="w-5 h-3 rounded-[2px]"/><span className="shrink-0">Tunisia</span><span className="text-[#ff4f66] font-serif not-italic shrink-0">vs</span><CountryFlag name={m.opponent} className="w-5 h-3 rounded-[2px]"/><span className="truncate">{m.opponent||"TBD"}</span></p>
-                          <p className="text-[9px] text-[var(--c-textFaint)] mt-0.5 truncate">{m.competition||"Friendly"}{m.venue?` · ${m.venue}`:""}</p>
+                          <p className="text-[9px] text-[var(--c-textFaint)] mt-0.5 truncate">{m.competition||"Friendly"}{m.venue?` · ${m.venue}`:""}{m.homeAway?` · ${homeAwayLabel(m.homeAway)}`:""}</p>
                         </div>
                         <span className="shrink-0 text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f6c744]/10 border border-[#f6c744]/30 text-[#f6c744]">In {Math.max(0,daysUntil(m.date))}d</span>
                       </div>
@@ -2913,6 +2937,18 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     </div>
                   </div>
 
+                  <div>
+                    <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">{tr.match.homeAway}</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {([["home",tr.match.home],["away",tr.match.away],["neutral",tr.match.neutral]] as const).map(([v,lbl])=>(
+                        <button key={v} type="button" onClick={()=>setMatchForm({...matchForm,homeAway:v})}
+                          className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${matchForm.homeAway===v?'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/20':'bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textFaint)] hover:bg-[var(--c-panel2)] hover:border-[#e3062c]/40'}`}>
+                          {lbl}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
                   <div className="grid grid-cols-[1fr_auto] gap-3">
                     <div>
                       <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Venue</label>
@@ -2989,7 +3025,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                             <div key={pl.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white border border-zinc-200/60 text-xs">
                               <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#f6c744]/10 text-[#f6c744] shrink-0">BN</span>
                               <span className="font-bold truncate flex-1 text-zinc-800">{pl.name}</span>
-                              <button onClick={()=>moveUp(pl.id)} className="text-zinc-300 hover:text-amber-500 text-[9px] leading-none">✕</button>
+                              <button onClick={()=>dropFromSquad(pl.id)} className="text-zinc-300 hover:text-red-500 text-[9px] leading-none" title="Remove from the squad">✕</button>
                             </div>
                           )
                         }):<p className="text-[9px] text-zinc-400 text-center py-4">No subs yet</p>}
@@ -2998,11 +3034,11 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   </div>
 
                   {/* Available */}
-                  {catPlayers.filter((p:any)=>!matchForm.squad.includes(p.id)).length>0&&(
+                  {availableForMatch.length>0&&(
                     <div>
                       <p className="text-[8px] font-black uppercase tracking-wider text-zinc-400 mb-2">Available Players</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {catPlayers.filter((p:any)=>!matchForm.squad.includes(p.id)).map((pl:any)=>(
+                        {availableForMatch.map((pl:any)=>(
                           <div key={pl.id} onClick={()=>toggleSquad(pl.id)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-white text-xs text-zinc-500 cursor-pointer hover:border-[#E30613]/30 hover:bg-[#E30613]/5 hover:text-[#E30613] transition-all">
                             <span className="text-[6px] font-black px-1 py-0.5 rounded bg-zinc-100 text-zinc-400">{(pl.position||"").slice(0,3)}</span>
                             <span className="font-semibold">{pl.name}</span>
@@ -3048,7 +3084,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   {actionPick==="goal"&&<PickerCard title="Select goal scorer" color="green" onClose={()=>setActionPick(null)} players={matchForm.squad.filter((pid:number)=>!matchForm.subs.find((s:any)=>s.out===pid))} onPick={(pid)=>editGoals(pid,1)}/>}
                   {actionPick==="yellow"&&<PickerCard title="Select player (yellow card)" color="yellow" onClose={()=>setActionPick(null)} players={matchForm.squad} onPick={(pid)=>toggleYellow(pid)} filter={(pid)=>!matchForm.redCards.includes(pid)}/>}
                   {actionPick==="red"&&<PickerCard title="Select player (red card)" color="red" onClose={()=>setActionPick(null)} players={matchForm.squad} onPick={(pid)=>toggleRed(pid)}/>}
-                  {actionPick==="sub"&&!subOutId&&<PickerCard title="Select player to sub OUT" color="blue" onClose={()=>{setActionPick(null);setSubOutId(null)}} players={matchForm.squad.slice(0,11)} onPick={(pid)=>{setSubOutId(pid)}} filter={(pid)=>!matchForm.subs.find((s:any)=>s.out===pid)}/>}
+                  {actionPick==="sub"&&!subOutId&&<PickerCard title="Select player to sub OUT" color="blue" onClose={()=>{setActionPick(null);setSubOutId(null)}} players={matchForm.squad.slice(0,11)} onPick={(pid)=>{setSubOutId(pid)}} filter={(pid)=>!matchForm.redCards.includes(pid)}/>}
                   {actionPick==="sub"&&subOutId&&<PickerCard title={`Replace ${members.find((m:any)=>m.id===subOutId)?.name||'?'} with...`} color="blue" onClose={()=>{setActionPick(null);setSubOutId(null)}} players={matchForm.squad.slice(11)} onPick={(pid)=>{subOutWith(subOutId,pid);setActionPick(null);setSubOutId(null)}} filter={(pid)=>!matchForm.subs.find((s:any)=>s["in"]===pid)}/>}
 
                   {/* Event cards */}
@@ -3117,7 +3153,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <span className="text-zinc-300">→</span>
                               <span className="text-[#7fd6a8]">{inn}</span>
                               <MinuteBox title="Minute of the substitution" value={matchForm.eventMinutes?.[`s:${s.out}:${s["in"]}`]} onChange={v=>setMinute(`s:${s.out}:${s["in"]}`,v)}/>
-                              <button onClick={()=>removeSub(i)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
+                              {i===matchForm.subs.length-1&&<button onClick={()=>removeSub(i)} title="Undo this substitution" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>}
                             </div>
                           )
                         })}
@@ -3241,6 +3277,18 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               </div>
             </div>
 
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">{tr.match.homeAway}</p>
+              <div className="flex flex-wrap gap-1.5">
+                {([["home",tr.match.home],["away",tr.match.away],["neutral",tr.match.neutral]] as const).map(([v,lbl])=>(
+                  <button key={v} onClick={()=>setScheduleForm({...scheduleForm,homeAway:v})}
+                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${scheduleForm.homeAway===v?'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/20':'bg-zinc-50 border border-zinc-200 text-zinc-500 hover:border-[#E30613]/40'}`}>
+                    {lbl}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <input placeholder="Venue (optional)" value={scheduleForm.venue} onChange={e=>setScheduleForm({...scheduleForm,venue:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[12px] font-bold outline-none"/>
 
             <div className="flex gap-2 pt-1">
@@ -3249,7 +3297,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 if(!scheduleForm.opponent.trim()){alert("Enter an opponent");return}
                 if(!scheduleForm.date){alert("Pick a date");return}
                 const id=Date.now()
-                const nm={...initMatch,id,opponent:scheduleForm.opponent.trim(),date:scheduleForm.date,competition:scheduleForm.competition,venue:scheduleForm.venue,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username}
+                const nm={...initMatch,id,opponent:scheduleForm.opponent.trim(),date:scheduleForm.date,competition:scheduleForm.competition,venue:scheduleForm.venue,homeAway:scheduleForm.homeAway,teamCategory:teamCat,status:canManageUsers?"approved":"pending",submittedBy:user?.username}
                 setMatches((p:any)=>[...p,nm])
                 if(canManageUsers)approveMatch(nm)
                 setScheduleOpen(false)
@@ -3317,6 +3365,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                         <div className="flex items-center gap-1.5 text-xs font-bold">
                           <span className="text-[var(--c-textBlue)]">{fmtDateWords(match.date)}</span>
                           {match.competition&&<><span className="text-[#3a4a63]">·</span><span className="text-[var(--c-textMid)]">{match.competition}</span></>}
+                          {match.homeAway&&<><span className="text-[#3a4a63]">·</span><span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${match.homeAway==='home'?'bg-[#f6c744]/25 text-[#a9822e]':'bg-[rgba(var(--line-rgb),.12)] text-[var(--c-textMid)]'}`}>{homeAwayLabel(match.homeAway)}</span></>}
                         </div>
                       </div>
                       <ChevronDown size={12} className={`text-[var(--c-textDim)] transition-transform shrink-0 ${selMatch?.id===match.id?'rotate-180':''}`}/>
@@ -3488,16 +3537,6 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                         </div>
                       </div>}
 
-                      {/* Travel & logistics (only for saved matches; players see only what concerns them) */}
-                      {typeof match.id==="number"&&match.id<2147483647&&(
-                        <div className="bg-[var(--c-deep)] rounded-lg border border-[rgba(var(--line-rgb),.14)] p-3">
-                          <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-2">{tr.travel.tripTitle}</p>
-                          <TripPanel type="match" eventId={match.id} startIso={match.date||""} endIso={match.date||""} hideWhenEmpty
-                            people={(Array.isArray(match.squad)?match.squad:[]).map((id:number)=>members.find((m:any)=>m.id===id)).filter(Boolean).map((m:any)=>({id:m.id,name:m.name}))}
-                            canManage={canManageTravel} expiries={canSeeExpiries?passportExpiries:undefined}/>
-                        </div>
-                      )}
-
                       {/* Post-match video library */}
                       <div className="bg-[var(--c-deep)] rounded-lg border border-[rgba(var(--line-rgb),.14)] p-3">
                         <div className="flex items-center justify-between mb-2">
@@ -3602,7 +3641,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 </div>
                 <div className="text-right text-[10px] font-bold text-zinc-500">
                   <p>{fmtDateWords(match.date)||"—"}</p>
-                  <p className="mt-0.5">{match.venue||"Venue TBC"}</p>
+                  <p className="mt-0.5">{match.venue||"Venue TBC"}{match.homeAway?` · ${homeAwayLabel(match.homeAway)}`:""}</p>
                 </div>
               </div>
 
