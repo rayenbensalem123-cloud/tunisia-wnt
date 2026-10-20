@@ -873,6 +873,23 @@ export default function EliteSquadApp() {
   }),[members,activeTab,search,filterPos,teamCat])
 
   const catPlayers=useMemo(()=>members.filter(m=>m.role==="PLAYERS"&&m.teamCategory===teamCat),[members,teamCat])
+  // A cap is a match she actually took part in — in the eleven, or on the bench
+  // and brought on. It is counted from the matches themselves, so adding a
+  // match raises her total and deleting one lowers it again, with nothing to
+  // undo by hand. The number typed on her card stays as her record of the
+  // matches played before the app.
+  const capsFor=(mem:any):number=>{
+    const base=Number(mem?.natMatches)||0
+    if(!mem||mem.role!=="PLAYERS") return base
+    const extra=matches.reduce((n:number,x:any)=>{
+      if(x.teamCategory!==mem.teamCategory||x.status!=="approved") return n
+      const squad=Array.isArray(x.squad)?x.squad:[]
+      const subs=Array.isArray(x.subs)?x.subs:[]
+      const played=squad.slice(0,11).includes(mem.id)||subs.some((s:any)=>s["in"]===mem.id||s.out===mem.id)
+      return played?n+1:n
+    },0)
+    return base+extra
+  }
   const catMatches=useMemo(()=>matches.filter(m=>m.teamCategory===teamCat&&m.status==="approved"),[matches,teamCat])
   const pendingMatches=useMemo(()=>matches.filter(m=>m.teamCategory===teamCat&&m.status==="pending"),[matches,teamCat])
   const catLabel=(c:TeamCategory|null)=>!c?"":(c==="SENIORS"?"SENIORS":c==="U20"?"U-20":c==="LIGUE"?"LIGUE FÉMININE":"U-17")
@@ -965,6 +982,28 @@ export default function EliteSquadApp() {
       return {...m,yellowCards:ny,redCards:nr,suspended:ny>=YELLOW_SUSPENSION||nr>0?true:(m.suspended||false)}
     }))
     setPendingMatchesOpen(false)
+  }
+  // Deleting a match has to give back exactly what approving it took: the cards
+  // it added to the players' records, and the suspension those cards caused. A
+  // pending match never added anything, so it is left alone.
+  const reverseMatchCards=(match:any)=>{
+    if(!match||match.status!=="approved") return
+    const cat=match.teamCategory
+    const yellows:number[]=Array.isArray(match.yellowCards)?match.yellowCards:[]
+    const reds:number[]=Array.isArray(match.redCards)?match.redCards:[]
+    if(yellows.length===0&&reds.length===0) return
+    setMembers(p=>p.map(m=>{
+      if(m.role!=="PLAYERS"||m.teamCategory!==cat) return m
+      const gotYellow=yellows.includes(m.id)?1:0
+      const gotRed=reds.includes(m.id)?1:0
+      if(!gotYellow&&!gotRed) return m
+      const ny=Math.max(0,(m.yellowCards||0)-gotYellow)
+      const nr=Math.max(0,(m.redCards||0)-gotRed)
+      // Lift a suspension the cards caused; leave one that was set by hand.
+      const wasCardSuspension=(m.yellowCards||0)>=YELLOW_SUSPENSION||(m.redCards||0)>0
+      const suspended=ny>=YELLOW_SUSPENSION||nr>0?true:(m.suspended&&!wasCardSuspension)
+      return {...m,yellowCards:ny,redCards:nr,suspended}
+    }))
   }
   const saveMatch=(e:React.FormEvent)=>{
     e.preventDefault()
@@ -1064,7 +1103,7 @@ export default function EliteSquadApp() {
     const s = summarize(catMatches)
     const topScorers = [...squad].sort((a,b)=>(b.goals||0)-(a.goals||0)).slice(0,5)
     const topAssists = [...squad].sort((a,b)=>(b.assists||0)-(a.assists||0)).slice(0,5)
-    const topCaps = [...squad].sort((a,b)=>(b.natMatches||0)-(a.natMatches||0)).slice(0,5)
+    const topCaps = [...squad].sort((a,b)=>capsFor(b)-capsFor(a)).slice(0,5)
     const recent = s.series.slice(-5).map(p=>p.outcome)
     const posCount = {GOALKEEPER:0,DEFENDER:0,MIDFIELDER:0,FORWARD:0}
     squad.forEach(p=>{if(p.position in posCount)posCount[p.position as keyof typeof posCount]++})
@@ -1088,7 +1127,7 @@ export default function EliteSquadApp() {
       </div>
     )
     const medals=["bg-gradient-to-br from-[#fff3c4] via-[#f6c744] to-[#d9a916] text-[#1a1408] shadow-[0_0_10px_rgba(246,199,68,.35)]","bg-zinc-200 text-zinc-600","bg-[#f0d2b8] text-[#7c4a20]"]
-    const boards=[{title:"Top Scorers",color:"bg-[#E30613]",data:topScorers,key:"goals"},{title:"Most Assists",color:"bg-[#f6c744]",data:topAssists,key:"assists"},{title:"Most Caps",color:"bg-[#2B6CB0]",data:topCaps,key:"natMatches"}] as const
+    const boards=[{title:"Top Scorers",color:"bg-[#E30613]",data:topScorers,key:"goals"},{title:"Most Assists",color:"bg-[#f6c744]",data:topAssists,key:"assists"},{title:"Most Caps",color:"bg-[#2B6CB0]",data:topCaps.map(p=>({...p,natMatches:capsFor(p)})),key:"natMatches"}] as const
     return(
       <div className="p-4 sm:p-5 space-y-3.5">
 
@@ -1558,7 +1597,7 @@ export default function EliteSquadApp() {
                 club={m.role==="PLAYERS"?m.club||"TUNISIA":m.nationality||"TUNISIA"}
                 position={m.position||"PLAYER"}
                 age={calculateAge(m.birthdate)}
-                caps={m.role==="PLAYERS"?Number(m.natMatches)||0:undefined}
+                caps={m.role==="PLAYERS"?capsFor(m):undefined}
                 goals={m.role==="PLAYERS"?Number(m.goals)||0:undefined}
                 imageSrc={getCardImages(m,imgUrls).main}
                 image2Src={getCardImages(m,imgUrls).alt}
@@ -1645,7 +1684,7 @@ export default function EliteSquadApp() {
                   <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.age}</p>
                 </div>
                 {isPlayer&&<div className="py-3 px-1 text-center">
-                  <p className={`text-lg font-black ${isOwnCard?'text-[#f6c744]':'text-[var(--c-text)]'}`}>{selMember.natMatches||"—"}</p>
+                  <p className={`text-lg font-black ${isOwnCard?'text-[#f6c744]':'text-[var(--c-text)]'}`}>{capsFor(selMember)||"—"}</p>
                   <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.caps}</p>
                 </div>}
                 {isPlayer&&<div className="py-3 px-1 text-center">
@@ -2241,7 +2280,15 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                       options={PLAYER_POSITIONS.filter(p=>p!=="ALL").map(p=>({value:p,label:p}))}/>
                     <JerseyScale value={form.jerseyNumber} onChange={v=>setForm({...form,jerseyNumber:v})} placeholder={tr.form.jersey}/>
                     <input placeholder={tr.form.heightCm} value={form.height} onChange={e=>setForm({...form,height:e.target.value})} className="pm-field"/>
-                    <input placeholder={tr.form.caps} value={form.natMatches} onChange={e=>setForm({...form,natMatches:e.target.value})} className="pm-field"/>
+                    {(()=>{
+                      // Show the total including matches played since the app
+                      // started; typing a new total adjusts the stored number,
+                      // so the two never count the same match twice.
+                      const extra=capsFor({...form,role:"PLAYERS",teamCategory:form.teamCategory||teamCat,natMatches:0})
+                      const shown=(Number(form.natMatches)||0)+extra
+                      return <input placeholder={tr.form.caps} value={shown||""} inputMode="numeric"
+                        onChange={e=>{const n=parseInt(e.target.value.replace(/\D/g,""),10)||0;setForm({...form,natMatches:String(Math.max(0,n-extra))})}} className="pm-field"/>
+                    })()}
                     <div className="grid grid-cols-2 gap-3">
                       <input placeholder={tr.form.goals} value={form.goals} onChange={e=>setForm({...form,goals:e.target.value})} className="pm-field"/>
                       <input placeholder={tr.form.assists} value={form.assists} onChange={e=>setForm({...form,assists:e.target.value})} className="pm-field"/>
@@ -2436,7 +2483,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   </div>
                   <div className="flex gap-3 px-5 pb-5">
                     <button onClick={()=>approveMatch(m)} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>{tr.match.approveMatch}</button>
-                    <button onClick={()=>{setMatches(p=>p.filter((x:any)=>x.id!==m.id));setPendingMatchesOpen(false)}} className="py-3 px-5 rounded-xl border border-[rgba(255,79,102,.35)] text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c]/10 transition-all"><Trash2 size={12} className="inline mr-1"/>{tr.match.reject}</button>
+                    <button onClick={()=>{reverseMatchCards(m);setMatches(p=>p.filter((x:any)=>x.id!==m.id));setPendingMatchesOpen(false)}} className="py-3 px-5 rounded-xl border border-[rgba(255,79,102,.35)] text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c]/10 transition-all"><Trash2 size={12} className="inline mr-1"/>{tr.match.reject}</button>
                   </div>
                 </div>
               ))}
@@ -3584,7 +3631,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                       {/* Match Sheet + Delete */}
                       <div className="flex justify-end gap-2">
                         <button onClick={()=>setMatchSheetTarget(match)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg pm-btn-soft text-[#ffbfca] text-[8px] font-black uppercase tracking-wider"><ClipboardCheck size={11}/> Match Sheet</button>
-                        {p.deleteMatch&&<button onClick={async()=>{if(await askConfirm(tr.history.delete+" this match?")){setMatches(m=>m.filter((x:any)=>x.id!==match.id));setSelMatch(null)}}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(255,79,102,.35)] bg-[#e3062c]/10 text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c] hover:text-white transition-all"><Trash2 size={11}/> {tr.history.delete}</button>}
+                        {p.deleteMatch&&<button onClick={async()=>{if(await askConfirm(tr.history.delete+" this match?")){reverseMatchCards(match);setMatches(m=>m.filter((x:any)=>x.id!==match.id));setSelMatch(null)}}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(255,79,102,.35)] bg-[#e3062c]/10 text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c] hover:text-white transition-all"><Trash2 size={11}/> {tr.history.delete}</button>}
                       </div>
                     </div>
                   )}
