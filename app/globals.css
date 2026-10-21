@@ -945,6 +945,9 @@ html { -webkit-text-size-adjust: 100%; }
   .ftf-portal .grid.justify-items-center { overflow-x: clip; }
 }
 .safe-top { margin-top: env(safe-area-inset-top); }
+/* Standalone (installed) app: the sticky header must stop below the phone's
+   status bar / notch, which otherwise covers the crest at the top-left. */
+.pt-safe-header { padding-top: env(safe-area-inset-top); }
 .font-tight { letter-spacing: -0.01em; }
 @media (max-width: 767px) {
   table { -webkit-overflow-scrolling: touch; }
