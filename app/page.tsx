@@ -1377,11 +1377,11 @@ export default function EliteSquadApp() {
       <header className="sticky top-0 z-[100] border-b relative pt-safe-header">
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E30613]/40 to-transparent animate-[pulse_3s_ease-in-out_infinite]"/>
         <div className="max-w-[1800px] mx-auto px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-x-4 gap-y-2 flex-wrap xl:flex-nowrap">
-          <div className="flex items-center gap-3 min-w-0">
-            <img src="/ftf-logo.png" className="h-10 sm:h-11 w-auto object-contain shrink-0" alt="Federation crest"/>
+          <div className="flex items-center gap-3 shrink-0">
             <button onClick={()=>{setTeamCat(null);setSearch("")}} title="Back to team categories" className={`${HEADER_ICON_BTN} shrink-0`}><ChevronLeft size={16}/></button>
-            <div className="leading-tight shrink-0">
-              <h1 className="text-xs sm:text-xl font-black italic uppercase tracking-wider leading-none whitespace-nowrap">{tr.header.eliteSquad}</h1>
+            <img src="/ftf-logo.png" className="h-10 sm:h-11 w-auto object-contain shrink-0" alt="Federation crest"/>
+            <div className="leading-tight min-w-0 max-w-[15rem] sm:max-w-[22rem]">
+              <h1 className="text-xs sm:text-xl font-black italic uppercase tracking-wider leading-[1.05]">{tr.header.eliteSquad}</h1>
               <p className="text-[11px] font-black text-[#E30613] uppercase tracking-[0.3em]">{catLabel(teamCat)}</p>
             </div>
           </div>
