@@ -1376,16 +1376,16 @@ export default function EliteSquadApp() {
       {/* ─── HEADER ─── */}
       <header className="sticky top-0 z-[100] border-b relative pt-safe-header">
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E30613]/40 to-transparent animate-[pulse_3s_ease-in-out_infinite]"/>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-x-4 gap-y-2 flex-wrap xl:flex-nowrap">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-x-4 gap-y-2 flex-wrap xl:flex-nowrap">
           <div className="flex items-center gap-3 min-w-0">
             <img src="/ftf-logo.png" className="h-10 sm:h-11 w-auto object-contain shrink-0" alt="Federation crest"/>
             <button onClick={()=>{setTeamCat(null);setSearch("")}} title="Back to team categories" className={`${HEADER_ICON_BTN} shrink-0`}><ChevronLeft size={16}/></button>
-            <div className="leading-tight min-w-0">
-              <h1 className="text-xs sm:text-xl font-black italic uppercase tracking-wider leading-none truncate">{tr.header.eliteSquad}</h1>
+            <div className="leading-tight shrink-0">
+              <h1 className="text-xs sm:text-xl font-black italic uppercase tracking-wider leading-none whitespace-nowrap">{tr.header.eliteSquad}</h1>
               <p className="text-[11px] font-black text-[#E30613] uppercase tracking-[0.3em]">{catLabel(teamCat)}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap justify-end w-full lg:w-auto lg:grow lg:flex-nowrap">
+          <div className="flex items-center gap-1.5 flex-wrap justify-end w-full lg:w-auto lg:grow lg:flex-nowrap min-w-0">
             <div className="portal-search hidden sm:flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border w-44 transition-all focus-within:border-[#E30613]/50 focus-within:shadow-[0_0_0_3px_rgba(227,6,44,.1)]">
               <Search size={13} className="text-[var(--c-textDim)] shrink-0"/>
               <input placeholder={tr.header.search} value={search} onChange={e=>setSearch(e.target.value)} className="bg-transparent text-[12px] font-bold outline-none w-full uppercase text-[var(--c-text)] placeholder-[var(--c-textMid)]"/>
@@ -1504,7 +1504,7 @@ export default function EliteSquadApp() {
             {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="hidden md:flex p-2 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_14px_rgba(227,6,44,.35)] transition-all fc-keep"><Plus size={16}/></button>}
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-6 pb-3 flex items-center gap-3 flex-wrap">
+        <div className="max-w-[1800px] mx-auto px-6 pb-3 flex items-center gap-3 flex-wrap">
           <div className="flex p-1 rounded-xl bg-zinc-100 border border-zinc-200">
             <button onClick={()=>{setActiveTab("STATS");setFilterPos("ALL")}} className={`px-5 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activeTab==="STATS"?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>Stats</button>
             <button onClick={()=>{setActiveTab("PLAYERS");setFilterPos("ALL")}} className={`px-5 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activeTab==="PLAYERS"?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>{tr.header.players}</button>
@@ -1539,7 +1539,7 @@ export default function EliteSquadApp() {
 
       {/* ─── DISCIPLINE LEGEND ─── */}
       {activeTab==="PLAYERS"&&(
-        <div className="max-w-7xl mx-auto px-6 py-2 flex items-center gap-3 flex-wrap border-b border-zinc-200">
+        <div className="max-w-[1800px] mx-auto px-6 py-2 flex items-center gap-3 flex-wrap border-b border-zinc-200">
           <div className="flex items-center gap-3 flex-wrap">
             <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.key}</p>
             <div className="flex items-center gap-1.5"><span className="w-3 h-2.5 rounded-[3px] bg-[#f6c744] inline-block shadow-sm"/><span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.oneYellow}</span></div>
