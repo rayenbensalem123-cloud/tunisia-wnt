@@ -58,11 +58,11 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
         <h2 className="text-3xl font-[1000] italic uppercase tracking-tighter mb-2 leading-none">
           {coach ? tr.coach.edit : tr.coach.hire} <span className="text-[#E30613]">{tr.coach.staffWord}</span>
         </h2>
-        <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-8">{tr.coach.regSubtitle}</p>
+        <p className="text-[12px] font-black text-zinc-400 uppercase tracking-widest mb-8">{tr.coach.regSubtitle}</p>
 
         <form onSubmit={handleSubmit} className="space-y-4 relative">
           <div className="mb-6">
-            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-2 block">{tr.coach.staffPhoto}</label>
+            <label className="text-[11px] font-black text-zinc-400 uppercase ml-2 mb-2 block">{tr.coach.staffPhoto}</label>
             <div className="flex gap-4 items-center">
               <div {...photoDrop.dropProps} className={`w-24 h-24 bg-zinc-100 rounded-3xl border-2 border-dashed flex items-center justify-center overflow-hidden transition-all ${photoDrop.isDragging ? 'border-[#f6c744] bg-[#f6c744]/10 scale-105' : 'border-zinc-200'}`}>
                 {formData.image ? (
@@ -75,7 +75,7 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
                 <button 
                   type="button"
                   onClick={() => fileInputRef.current?.click()}
-                  className="w-full bg-zinc-50 border border-zinc-100 p-4 rounded-2xl font-black text-[10px] uppercase tracking-widest text-zinc-600 hover:bg-zinc-100 transition-all flex items-center justify-center gap-2"
+                  className="w-full bg-zinc-50 border border-zinc-100 p-4 rounded-2xl font-black text-[12px] uppercase tracking-widest text-zinc-600 hover:bg-zinc-100 transition-all flex items-center justify-center gap-2"
                 >
                   <Upload size={14} /> {tr.coach.selectPicture}
                 </button>
@@ -91,7 +91,7 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
           </div>
 
           <div>
-            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.fullName}</label>
+            <label className="text-[11px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.fullName}</label>
             <input 
               value={formData.name}
               placeholder={tr.coach.namePlaceholder} 
@@ -103,7 +103,7 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.role}</label>
+              <label className="text-[11px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.role}</label>
               {/* value stays a fixed English constant (matches how roles are
                   stored/filtered elsewhere); only the visible label is translated */}
               <Select
@@ -121,7 +121,7 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
               />
             </div>
             <div>
-              <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.nationality}</label>
+              <label className="text-[11px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.nationality}</label>
               <input 
                 value={formData.nationality}
                 placeholder="TUNISIA" 
@@ -132,7 +132,7 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
           </div>
 
           <div>
-            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.licenseType}</label>
+            <label className="text-[11px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.licenseType}</label>
             <input 
               value={formData.license}
               placeholder={tr.coach.licensePlaceholder} 
@@ -142,14 +142,14 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
           </div>
 
           <div>
-            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.formation}</label>
+            <label className="text-[11px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.formation}</label>
             <div className="flex flex-wrap gap-1.5">
               {["4-3-3","3-4-3","4-2-3-1","3-5-2","4-4-2","4-3-2-1","4-1-4-1"].map(f => (
                 <button
                   key={f}
                   type="button"
                   onClick={() => setFormData({...formData, formation: formData.formation === f ? "" : f})}
-                  className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-tight border transition-all ${
+                  className={`px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-tight border transition-all ${
                     formData.formation === f 
                       ? "bg-[#E30613] border-[#E30613] text-white" 
                       : "bg-zinc-50 border-zinc-100 text-zinc-500 hover:border-black hover:text-black"
@@ -160,19 +160,19 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
               ))}
             </div>
             {formData.formation && (
-              <p className="text-[8px] font-black text-[#E30613] uppercase mt-1 ml-2">✓ {formData.formation} — {tr.coach.preferredSetup}</p>
+              <p className="text-[10px] font-black text-[#E30613] uppercase mt-1 ml-2">✓ {formData.formation} — {tr.coach.preferredSetup}</p>
             )}
           </div>
 
           <div>
-            <label className="text-[9px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.formation}</label>
+            <label className="text-[11px] font-black text-zinc-400 uppercase ml-2 mb-1 block">{tr.coach.formation}</label>
             <div className="flex flex-wrap gap-1.5">
               {["4-3-3","4-4-2","4-2-3-1","3-5-2","3-4-3","4-1-4-1","4-3-2-1","5-3-2"].map(f => (
                 <button
                   type="button"
                   key={f}
                   onClick={() => setFormData({...formData, formation: formData.formation === f ? "" : f})}
-                  className={`px-3 py-2 rounded-xl text-[9px] font-black uppercase tracking-tight border transition-all ${
+                  className={`px-3 py-2 rounded-xl text-[11px] font-black uppercase tracking-tight border transition-all ${
                     formData.formation === f
                       ? "bg-[#E30613] border-[#E30613] text-white"
                       : "bg-zinc-50 border-zinc-100 text-zinc-500 hover:border-black hover:text-black"
@@ -183,11 +183,11 @@ export function CoachDialog({ open, onOpenChange, coach }: any) {
               ))}
             </div>
             {formData.formation && (
-              <p className="text-[8px] font-black text-[#E30613] uppercase ml-2 mt-1.5">✓ {tr.coach.prefers} {formData.formation}</p>
+              <p className="text-[10px] font-black text-[#E30613] uppercase ml-2 mt-1.5">✓ {tr.coach.prefers} {formData.formation}</p>
             )}
           </div>
 
-          <button type="submit" className="w-full bg-[#E30613] text-white py-5 rounded-2xl font-black text-[11px] uppercase tracking-tighter hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-xl">
+          <button type="submit" className="w-full bg-[#E30613] text-white py-5 rounded-2xl font-black text-[13px] uppercase tracking-tighter hover:brightness-110 transition-all flex items-center justify-center gap-2 shadow-xl">
             <ShieldCheck size={16} /> {tr.coach.confirmStaff}
           </button>
         </form>

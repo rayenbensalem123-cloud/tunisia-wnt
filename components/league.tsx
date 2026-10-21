@@ -272,7 +272,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
   const logoUrl = (x: LeagueTeam | null) => (x?.logoPath ? urls[x.logoPath] || defaultLeagueLogo(x.name) : defaultLeagueLogo(x?.name || ''))
   const portrait = (m: any) => (m.imagePath ? urls[String(m.imagePath)] || '' : String(m.image || ''))
   const input = 'w-full rounded-xl border border-[rgba(var(--line-rgb),.25)] bg-[var(--c-deep)] px-3.5 py-3 text-sm font-semibold text-[var(--c-text)] outline-none focus:border-[#f6c744]/70'
-  const label = 'mb-1 block text-[9px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]'
+  const label = 'mb-1 block text-[11px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]'
 
   const goBack = () => {
     if (mode === 'admin' && selTeamId) { setSelTeamId(null); setSelMember(null); setPlayerQuery(''); setPosFilter(''); setTeamTab('players'); return }
@@ -284,7 +284,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
     <div className="mb-6 flex items-center gap-2" role="tablist">
       {([['teams', mode === 'admin' ? t.teams : t.playersWord], ['matchdays', t.matchdays], ['stats', t.statsTab]] as const).map(([k, lab]) => (
         <button key={k} role="tab" aria-selected={tab === k} onClick={() => goTab(k)}
-          className={`px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[.18em] transition-all ring-1 ring-inset ${tab === k ? 'bg-[#E30613] text-white ring-[#E30613]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>{lab}</button>
+          className={`px-4 py-2.5 rounded-full text-[12px] font-black uppercase tracking-[.18em] transition-all ring-1 ring-inset ${tab === k ? 'bg-[#E30613] text-white ring-[#E30613]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>{lab}</button>
       ))}
     </div>
   )
@@ -303,7 +303,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
             <img src="/ftf-logo.png" className="h-10 shrink-0" alt="" />
             <div className="leading-tight min-w-0">
               <h1 className="text-xs sm:text-xl font-black italic uppercase tracking-wider leading-none truncate">{team && !showTeamGrid ? team.name : t.title}</h1>
-              <p className="text-[9px] font-black text-[#E30613] uppercase tracking-[0.3em] truncate">{t.title}</p>
+              <p className="text-[11px] font-black text-[#E30613] uppercase tracking-[0.3em] truncate">{t.title}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -351,11 +351,11 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
               <dl className="flex items-stretch gap-3">
                 <div className="min-w-[88px] rounded-2xl bg-black/25 px-4 py-3 ring-1 ring-inset ring-white/10 text-center">
                   <dd className="text-3xl font-black tabular-nums text-white leading-none">{teams.length}</dd>
-                  <dt className="mt-1.5 text-[9px] font-black uppercase tracking-[.22em] text-[#f6c744]">{t.teams}</dt>
+                  <dt className="mt-1.5 text-[11px] font-black uppercase tracking-[.22em] text-[#f6c744]">{t.teams}</dt>
                 </div>
                 <div className="min-w-[88px] rounded-2xl bg-black/25 px-4 py-3 ring-1 ring-inset ring-white/10 text-center">
                   <dd className="text-3xl font-black tabular-nums text-white leading-none">{league.length}</dd>
-                  <dt className="mt-1.5 text-[9px] font-black uppercase tracking-[.22em] text-[#f6c744]">{t.playersWord}</dt>
+                  <dt className="mt-1.5 text-[11px] font-black uppercase tracking-[.22em] text-[#f6c744]">{t.playersWord}</dt>
                 </div>
               </dl>
             </div>
@@ -365,27 +365,27 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
             <div className="flex items-center gap-2" role="group" aria-label={t.sortBy}>
               {([['name', t.sortName], ['size', t.sortSize]] as const).map(([k, lab]) => (
                 <button key={k} onClick={() => setSortBy(k)} aria-pressed={sortBy === k}
-                  className={`px-3.5 py-2 rounded-full text-[10px] font-black uppercase tracking-[.16em] transition-all ring-1 ring-inset ${sortBy === k ? 'bg-[#f6c744] text-[#0c1f3d] ring-[#f6c744]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>{lab}</button>
+                  className={`px-3.5 py-2 rounded-full text-[12px] font-black uppercase tracking-[.16em] transition-all ring-1 ring-inset ${sortBy === k ? 'bg-[#f6c744] text-[#0c1f3d] ring-[#f6c744]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>{lab}</button>
               ))}
-              {teamQuery && <span className="ml-1 text-[10px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)] tabular-nums">{visibleTeams.length}/{teams.length}</span>}
+              {teamQuery && <span className="ml-1 text-[12px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)] tabular-nums">{visibleTeams.length}/{teams.length}</span>}
             </div>
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <input value={teamQuery} onChange={e => setTeamQuery(e.target.value)} placeholder={t.searchTeams}
                 className="min-w-0 flex-1 sm:flex-none sm:w-52 px-3.5 py-2.5 rounded-xl bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.25)] text-[var(--c-text)] placeholder-[var(--c-textMid)] text-xs font-semibold outline-none focus:border-[#f6c744]/70" />
-              <button onClick={() => { setTeamErr(''); setTeamOpen(true) }} className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Plus size={14} />{t.addTeam}</button>
+              <button onClick={() => { setTeamErr(''); setTeamOpen(true) }} className="shrink-0 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Plus size={14} />{t.addTeam}</button>
             </div>
           </div>
           {loadedTeams && teams.length === 0 && (
-            <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><Users size={56} /><p className="text-[11px] font-black uppercase tracking-[.3em] text-center">{t.noTeams}</p></div>
+            <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><Users size={56} /><p className="text-[13px] font-black uppercase tracking-[.3em] text-center">{t.noTeams}</p></div>
           )}
           {loadedTeams && teams.length > 0 && visibleTeams.length === 0 && (
-            <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><p className="text-[11px] font-black uppercase tracking-[.3em] text-center">{t.noMatch}</p></div>
+            <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><p className="text-[13px] font-black uppercase tracking-[.3em] text-center">{t.noMatch}</p></div>
           )}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
             {visibleTeams.map((x, i) => (
               <div key={x.id} className="group relative animate-[fadeUp_0.5s_ease-out_both]" style={{ animationDelay: `${i * 60}ms` }}>
                 <LeagueTeamCard name={x.name} logoSrc={logoUrl(x)} count={countFor(x.id)} playersWord={t.playersWord} onOpen={() => openTeam(x.id)}>
-                  <button onClick={() => pickLogoFor(x.id)} title={t.changeLogo} className="absolute top-2 left-2 p-1.5 rounded-full bg-black/50 text-white/80 hover:bg-[#f6c744] hover:text-[#0c1f3d] opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100 transition-all">{logoBusy === x.id ? <span className="text-[8px] font-black px-1">…</span> : <Camera size={12} />}</button>
+                  <button onClick={() => pickLogoFor(x.id)} title={t.changeLogo} className="absolute top-2 left-2 p-1.5 rounded-full bg-black/50 text-white/80 hover:bg-[#f6c744] hover:text-[#0c1f3d] opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100 transition-all">{logoBusy === x.id ? <span className="text-[10px] font-black px-1">…</span> : <Camera size={12} />}</button>
                   <button onClick={() => void removeTeam(x)} title={t.deleteTeam} className="absolute top-2 right-2 p-1.5 rounded-full bg-black/50 text-white/70 hover:bg-[#e3062c] hover:text-white opacity-0 group-hover:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100 transition-all"><Trash2 size={12} /></button>
                 </LeagueTeamCard>
               </div>
@@ -397,7 +397,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
       {/* ── TEAM PAGE: player cards ── */}
       {!showTeamGrid && (
         <main className="max-w-[1400px] mx-auto px-4 sm:px-6 py-8">
-          {mode === 'club' && !loadedTeams && <p className="text-center text-[10px] font-black uppercase tracking-[.3em] text-[var(--c-textMid)] py-24">{t.loading}</p>}
+          {mode === 'club' && !loadedTeams && <p className="text-center text-[12px] font-black uppercase tracking-[.3em] text-[var(--c-textMid)] py-24">{t.loading}</p>}
           {mode === 'club' && loadedTeams && !team && (
             <p className="text-center text-sm text-[var(--c-textMid)] py-24">{t.noClub}</p>
           )}
@@ -405,15 +405,15 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
             <>
               <LeagueTeamHero name={team.name} logoSrc={logoUrl(team)} count={players.length} playersWord={t.playersWord}>
                 {mode === 'admin' && (logins[team.id]
-                  ? <span className="px-3 py-2 rounded-lg bg-black/25 ring-1 ring-inset ring-white/15 text-[10px] font-black uppercase tracking-[.18em] text-white/80">{t.loginLabel}: {logins[team.id]}</span>
-                  : <button onClick={() => { setLoginErr(''); setLoginOpen(true) }} className="px-3 py-2 rounded-lg bg-[#f6c744] text-[#0c1f3d] text-[10px] font-black uppercase tracking-[.18em] hover:bg-white transition-all">{t.createLogin}</button>)}
+                  ? <span className="px-3 py-2 rounded-lg bg-black/25 ring-1 ring-inset ring-white/15 text-[12px] font-black uppercase tracking-[.18em] text-white/80">{t.loginLabel}: {logins[team.id]}</span>
+                  : <button onClick={() => { setLoginErr(''); setLoginOpen(true) }} className="px-3 py-2 rounded-lg bg-[#f6c744] text-[#0c1f3d] text-[12px] font-black uppercase tracking-[.18em] hover:bg-white transition-all">{t.createLogin}</button>)}
                 {mode === 'admin' && <button onClick={() => pickLogoFor(team.id)} title={t.changeLogo} aria-label={t.changeLogo} className="p-2 rounded-lg bg-black/25 ring-1 ring-inset ring-white/15 text-white/85 hover:bg-white/25 transition-all"><Camera size={14} /></button>}
               </LeagueTeamHero>
               <LeagueNextMatch teamId={team.id} teams={mode === 'club' ? directory : teams} logoUrl={logoUrl} />
               <div className="mb-6 flex items-center gap-1 overflow-x-auto border-b border-[rgba(var(--line-rgb),.18)]" role="tablist" aria-label={team.name}>
                 {([['players', t.playersWord], ['matchdays', t.matchdays], ['standings', t.standings], ['stats', t.statsTab], ['calendar', t.calendar], ['cup', t.cup]] as const).map(([k, lab]) => (
                   <button key={k} role="tab" aria-selected={teamTab === k} onClick={() => goTeamTab(k)}
-                    className={`shrink-0 border-b-2 px-4 py-3 text-[11px] font-black uppercase tracking-[.16em] transition-all ${teamTab === k ? 'border-[#E30613] text-[var(--c-text)]' : 'border-transparent text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{lab}</button>
+                    className={`shrink-0 border-b-2 px-4 py-3 text-[13px] font-black uppercase tracking-[.16em] transition-all ${teamTab === k ? 'border-[#E30613] text-[var(--c-text)]' : 'border-transparent text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{lab}</button>
                 ))}
               </div>
               {/* The tab body is keyed on teamTab + pulse so it remounts on every
@@ -442,7 +442,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
                     .filter(([p, , n]) => p === '' || n > 0)
                     .map(([p, lab, n]) => (
                       <button key={p || 'all'} onClick={() => setPosFilter(p)} aria-pressed={posFilter === p}
-                        className={`px-3.5 py-2 rounded-full text-[10px] font-black uppercase tracking-[.16em] transition-all ring-1 ring-inset ${posFilter === p ? 'bg-[#f6c744] text-[#0c1f3d] ring-[#f6c744]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>
+                        className={`px-3.5 py-2 rounded-full text-[12px] font-black uppercase tracking-[.16em] transition-all ring-1 ring-inset ${posFilter === p ? 'bg-[#f6c744] text-[#0c1f3d] ring-[#f6c744]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>
                         {lab} <span className="opacity-60 tabular-nums">{n}</span>
                       </button>
                     ))}
@@ -450,14 +450,14 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
                 <div className="flex items-center gap-2 w-full sm:w-auto sm:shrink-0 justify-end">
                   <input value={playerQuery} onChange={e => setPlayerQuery(e.target.value)} placeholder={t.searchPlayers}
                     className="min-w-0 flex-1 sm:flex-none sm:w-52 px-3.5 py-2.5 rounded-xl bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.25)] text-[var(--c-text)] placeholder-[var(--c-textMid)] text-xs font-semibold outline-none focus:border-[#f6c744]/70" />
-                  <button onClick={openAdd} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Plus size={14} />{t.addPlayer}</button>
+                  <button onClick={openAdd} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Plus size={14} />{t.addPlayer}</button>
                 </div>
               </div>
               {players.length === 0 && (
-                <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><Users size={56} /><p className="text-[11px] font-black uppercase tracking-[.3em] text-center">{t.noPlayers}</p></div>
+                <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><Users size={56} /><p className="text-[13px] font-black uppercase tracking-[.3em] text-center">{t.noPlayers}</p></div>
               )}
               {players.length > 0 && visiblePlayers.length === 0 && (
-                <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><p className="text-[11px] font-black uppercase tracking-[.3em] text-center">{t.noMatch}</p></div>
+                <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><p className="text-[13px] font-black uppercase tracking-[.3em] text-center">{t.noMatch}</p></div>
               )}
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6">
                 {visiblePlayers.map((m, i) => (
@@ -492,7 +492,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
             </div>
             <div className="p-5">
               <h3 className="text-xl font-black uppercase tracking-tight">{selMember.name}</h3>
-              <p className="mt-1 text-[9px] font-black uppercase tracking-[.25em] text-[#E30613]">{team?.name}</p>
+              <p className="mt-1 text-[11px] font-black uppercase tracking-[.25em] text-[#E30613]">{team?.name}</p>
               <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 text-sm">
                 {([
                   [t.position, selMember.position || '—'],
@@ -505,7 +505,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
                 ))}
               </dl>
               <div className="mt-5 flex gap-2">
-                <button onClick={() => openEdit(selMember)} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest hover:border-[#f6c744]/60"><Pencil size={13} />{t.edit}</button>
+                <button onClick={() => openEdit(selMember)} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest hover:border-[#f6c744]/60"><Pencil size={13} />{t.edit}</button>
                 {mode === 'admin' && <button onClick={() => removePlayer(selMember)} className="px-4 py-2.5 rounded-xl border border-[#e3062c]/50 text-[#ff5f72] hover:bg-[#e3062c] hover:text-white transition-all"><Trash2 size={14} /></button>}
               </div>
             </div>
@@ -527,7 +527,7 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
               {(form.imagePath ? urls[form.imagePath] : form.image)
                 ? <img src={form.imagePath ? urls[form.imagePath] : form.image} alt="" className="h-28 w-28 object-cover rounded-full" />
                 : <Camera size={26} className="text-[var(--c-textMid)]" />}
-              <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{uploading ? t.uploading : t.photo}</span>
+              <span className="text-[10px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{uploading ? t.uploading : t.photo}</span>
             </button>
             <div className="space-y-3">
               <div><label className={label}>{t.fullName} *</label><input className={input} value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} maxLength={80} /></div>
@@ -544,8 +544,8 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
             </div>
             {formErr && <p role="alert" className="mt-3 text-xs text-[#ff5f72]">{formErr}</p>}
             <div className="mt-5 flex gap-2">
-              <button type="button" onClick={() => setFormOpen(false)} className="flex-1 px-4 py-3 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
-              <button type="submit" disabled={uploading} className="flex-1 px-4 py-3 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-60">{t.save}</button>
+              <button type="button" onClick={() => setFormOpen(false)} className="flex-1 px-4 py-3 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest">{t.cancel}</button>
+              <button type="submit" disabled={uploading} className="flex-1 px-4 py-3 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-60">{t.save}</button>
             </div>
           </form>
         </div>
@@ -565,8 +565,8 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
             </div>
             {loginErr && <p role="alert" className="mt-3 text-xs text-[#ff5f72]">{loginErr}</p>}
             <div className="mt-5 flex gap-2">
-              <button type="button" onClick={() => setLoginOpen(false)} className="flex-1 px-4 py-3 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
-              <button type="submit" disabled={loginBusy} className="flex-1 px-4 py-3 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-60">{t.createLogin}</button>
+              <button type="button" onClick={() => setLoginOpen(false)} className="flex-1 px-4 py-3 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest">{t.cancel}</button>
+              <button type="submit" disabled={loginBusy} className="flex-1 px-4 py-3 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-60">{t.createLogin}</button>
             </div>
           </form>
         </div>
@@ -583,18 +583,18 @@ export function LigueView({ mode, clubTeamId, members, setMembers, onBack, onLog
             <input ref={logoRef} type="file" accept="image/jpeg,image/png,image/webp" hidden onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) void onLogo(f) }} />
             <button type="button" onClick={() => logoRef.current?.click()} className="w-full mb-4 flex flex-col items-center gap-2 py-5 rounded-xl border border-dashed border-[rgba(var(--line-rgb),.35)] bg-[var(--c-deep)]">
               {teamForm.logoPath && urls[teamForm.logoPath] ? <img src={urls[teamForm.logoPath]} alt="" className="h-24 object-contain" /> : <Camera size={26} className="text-[var(--c-textMid)]" />}
-              <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{teamBusy ? t.uploading : t.logo}</span>
+              <span className="text-[10px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{teamBusy ? t.uploading : t.logo}</span>
             </button>
             <div className="space-y-3">
               <div><label className={label}>{t.teamName} *</label><input className={input} value={teamForm.name} onChange={e => setTeamForm({ ...teamForm, name: e.target.value })} maxLength={80} required /></div>
-              <p className="pt-1 text-[8px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t.clubLogin}</p>
+              <p className="pt-1 text-[10px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t.clubLogin}</p>
               <div><label className={label}>{t.username} *</label><input className={input} value={teamForm.username} onChange={e => setTeamForm({ ...teamForm, username: e.target.value })} autoCapitalize="none" autoComplete="off" required /></div>
               <div><label className={label}>{t.password} *</label><input className={input} type="text" value={teamForm.password} onChange={e => setTeamForm({ ...teamForm, password: e.target.value })} autoComplete="off" minLength={6} required /></div>
             </div>
             {teamErr && <p role="alert" className="mt-3 text-xs text-[#ff5f72]">{teamErr}</p>}
             <div className="mt-5 flex gap-2">
-              <button type="button" onClick={() => setTeamOpen(false)} className="flex-1 px-4 py-3 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
-              <button type="submit" disabled={teamBusy} className="flex-1 px-4 py-3 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-60">{t.createTeam}</button>
+              <button type="button" onClick={() => setTeamOpen(false)} className="flex-1 px-4 py-3 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest">{t.cancel}</button>
+              <button type="submit" disabled={teamBusy} className="flex-1 px-4 py-3 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-60">{t.createTeam}</button>
             </div>
           </form>
         </div>

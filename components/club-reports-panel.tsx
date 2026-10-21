@@ -66,7 +66,7 @@ export function ClubReportsPanel({ open, onClose, reports, members, teamCat, can
           </button>
           <div className="leading-tight min-w-0">
             <h1 className="text-sm font-black italic uppercase tracking-wider text-[var(--c-text)] truncate">{tr.clubReportsPage.title}</h1>
-            <p className="text-[8px] font-black text-[#7ec3ff] uppercase tracking-[0.3em]">{tr.clubReportsPage.subtitle}</p>
+            <p className="text-[10px] font-black text-[#7ec3ff] uppercase tracking-[0.3em]">{tr.clubReportsPage.subtitle}</p>
           </div>
         </div>
       </div>
@@ -75,7 +75,7 @@ export function ClubReportsPanel({ open, onClose, reports, members, teamCat, can
         <div className="mt-6 flex items-center gap-3 flex-wrap">
           <div className="flex p-1 rounded-xl bg-zinc-100 border border-zinc-200">
             {(["ALL", ...CATS] as string[]).map(c => (
-              <button key={c} onClick={() => setCatFilter(c)} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${catFilter === c ? "bg-[#E30613] text-white" : "text-zinc-500 hover:text-zinc-800"}`}>
+              <button key={c} onClick={() => setCatFilter(c)} className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${catFilter === c ? "bg-[#E30613] text-white" : "text-zinc-500 hover:text-zinc-800"}`}>
                 {c === "ALL" ? tr.clubReportsPage.allCategories : c === "U20" ? tr.header.u20 : c === "U17" ? tr.header.u17 : tr.header.seniors}
               </button>
             ))}
@@ -83,7 +83,7 @@ export function ClubReportsPanel({ open, onClose, reports, members, teamCat, can
           <div className="w-px h-6 bg-zinc-200"/>
           <div className="flex p-1 rounded-xl bg-zinc-100 border border-zinc-200">
             {(["ALL", "UNVERIFIED", "VERIFIED"] as const).map(s => (
-              <button key={s} onClick={() => setStatusFilter(s)} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${statusFilter === s ? "bg-[#E30613] text-white" : "text-zinc-500 hover:text-zinc-800"}`}>
+              <button key={s} onClick={() => setStatusFilter(s)} className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${statusFilter === s ? "bg-[#E30613] text-white" : "text-zinc-500 hover:text-zinc-800"}`}>
                 {s === "UNVERIFIED" && <span className="w-1.5 h-1.5 rounded-full bg-[#ff4f66] inline-block"/>}
                 {s === "VERIFIED" && <span className="w-1.5 h-1.5 rounded-full bg-[#2fd46b] inline-block"/>}
                 {s === "ALL" ? tr.clubReportsPage.allStatus : s === "UNVERIFIED" ? tr.clubReportsPage.unverified : tr.clubReportsPage.verified}
@@ -91,14 +91,14 @@ export function ClubReportsPanel({ open, onClose, reports, members, teamCat, can
             ))}
           </div>
           {unverifiedCount > 0 && (
-            <span className="text-[9px] font-black uppercase tracking-wider text-[#ff4f66]">{unverifiedCount} {tr.clubReportsPage.toReview}</span>
+            <span className="text-[11px] font-black uppercase tracking-wider text-[#ff4f66]">{unverifiedCount} {tr.clubReportsPage.toReview}</span>
           )}
         </div>
 
         {enriched.length === 0 && (
           <div className="mt-8 flex flex-col items-center justify-center py-20 gap-4 rounded-3xl border-2 border-dashed border-[rgba(var(--line-rgb),.18)] text-center">
             <ClipboardCheck size={28} className="text-[var(--c-textDim)]"/>
-            <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.clubReportsPage.none}</p>
+            <p className="text-[12px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.clubReportsPage.none}</p>
           </div>
         )}
 
@@ -108,14 +108,14 @@ export function ClubReportsPanel({ open, onClose, reports, members, teamCat, can
               <div className="flex items-start justify-between gap-2">
                 <button onClick={() => onSelectPlayer(member.id)} className="min-w-0 text-left">
                   <p className="text-[13px] font-black text-[var(--c-text)] truncate hover:underline">{member.name}</p>
-                  <p className="text-[10px] font-bold text-[var(--c-textDim)] mt-0.5">{r.opponent || tr.clubReports.unknownOpponent}{r.match_date ? ` · ${r.match_date}` : ""}{r.competition ? ` · ${r.competition}` : ""}</p>
+                  <p className="text-[12px] font-bold text-[var(--c-textDim)] mt-0.5">{r.opponent || tr.clubReports.unknownOpponent}{r.match_date ? ` · ${r.match_date}` : ""}{r.competition ? ` · ${r.competition}` : ""}</p>
                 </button>
                 <span title={r.verified ? `${tr.clubReports.verified}${r.verified_by_username ? ` · ${r.verified_by_username}` : ""}` : tr.clubReportsPage.unverified} className={`shrink-0 w-2.5 h-2.5 rounded-full mt-1 ${r.verified ? "bg-[#2fd46b] shadow-[0_0_8px_rgba(47,212,107,.6)]" : "bg-[#ff4f66] shadow-[0_0_8px_rgba(255,79,102,.5)]"}`}/>
               </div>
               {r.did_not_play ? (
-                <p className="mt-2 text-[11px] font-bold text-[var(--c-textDim)] italic">{tr.clubReports.didNotPlay}</p>
+                <p className="mt-2 text-[13px] font-bold text-[var(--c-textDim)] italic">{tr.clubReports.didNotPlay}</p>
               ) : (
-                <div className="flex flex-wrap gap-2.5 mt-2 text-[11px] font-bold text-[var(--c-textMid)]">
+                <div className="flex flex-wrap gap-2.5 mt-2 text-[13px] font-bold text-[var(--c-textMid)]">
                   {r.position_played && <span>{r.position_played}</span>}
                   <span>{r.minutes_played ?? 0}&apos; {tr.clubReports.mins}</span>
                   <span className="text-[#7fd6a8]">{r.goals || 0} {tr.clubReports.goals}</span>
@@ -126,17 +126,17 @@ export function ClubReportsPanel({ open, onClose, reports, members, teamCat, can
               {r.had_injury && (
                 <div className="mt-2 rounded-lg border border-[#ff4f66]/30 bg-[#ff4f66]/10 px-2 py-1 flex items-start gap-1.5">
                   <AlertTriangle size={11} className="text-[#ff4f66] shrink-0 mt-0.5"/>
-                  <p className="text-[10px] font-bold text-[#ff4f66]">{tr.clubReports.injuryFlag}</p>
+                  <p className="text-[12px] font-bold text-[#ff4f66]">{tr.clubReports.injuryFlag}</p>
                 </div>
               )}
               <div className="flex items-center gap-3 mt-3">
                 {canVerify && (
-                  <button onClick={async () => { const res = await onVerify(r.id, !r.verified); if (res.error) alert(res.error) }} className="text-[10px] font-black uppercase tracking-wider text-[#7fd6a8] hover:underline">
+                  <button onClick={async () => { const res = await onVerify(r.id, !r.verified); if (res.error) alert(res.error) }} className="text-[12px] font-black uppercase tracking-wider text-[#7fd6a8] hover:underline">
                     {r.verified ? tr.clubReports.unverify : tr.clubReports.verify}
                   </button>
                 )}
                 {canDelete && (
-                  <button onClick={() => onDelete(r.id)} className="text-[10px] font-black uppercase tracking-wider text-[#ff4f66] hover:underline flex items-center gap-1"><Trash2 size={11}/>{tr.common.remove}</button>
+                  <button onClick={() => onDelete(r.id)} className="text-[12px] font-black uppercase tracking-wider text-[#ff4f66] hover:underline flex items-center gap-1"><Trash2 size={11}/>{tr.common.remove}</button>
                 )}
               </div>
             </div>

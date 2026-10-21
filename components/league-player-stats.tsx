@@ -72,22 +72,22 @@ export function LeaguePlayerStats({ teams, logoUrl, admin, myTeamId }: Props) {
     return <p className="py-16 text-center text-sm text-[var(--c-textMid)]">{t.noSeasonsClub}</p>
   }
 
-  const th = 'px-2 py-3 text-[10px] font-black uppercase tracking-[.14em] text-[var(--c-textMid)] text-center'
-  const thStart = 'px-2 py-3 text-start text-[10px] font-black uppercase tracking-[.14em] text-[var(--c-textMid)]'
+  const th = 'px-2 py-3 text-[12px] font-black uppercase tracking-[.14em] text-[var(--c-textMid)] text-center'
+  const thStart = 'px-2 py-3 text-start text-[12px] font-black uppercase tracking-[.14em] text-[var(--c-textMid)]'
 
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
         {(['goals', 'assists'] as const).map((k) => (
           <button key={k} onClick={() => setKey(k)} aria-pressed={key === k}
-            className={`px-4 py-2.5 rounded-full text-[10px] font-black uppercase tracking-[.16em] transition-all ring-1 ring-inset ${key === k ? 'bg-[#E30613] text-white ring-[#E30613]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>
+            className={`px-4 py-2.5 rounded-full text-[12px] font-black uppercase tracking-[.16em] transition-all ring-1 ring-inset ${key === k ? 'bg-[#E30613] text-white ring-[#E30613]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`}>
             {k === 'goals' ? t.topScorers : t.topAssists}
           </button>
         ))}
       </div>
 
       {admin && (
-        <p className="rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-deep)] px-4 py-3 text-[10px] font-bold leading-relaxed text-[var(--c-textMid)]">
+        <p className="rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-deep)] px-4 py-3 text-[12px] font-bold leading-relaxed text-[var(--c-textMid)]">
           {t.statsFromResults}
         </p>
       )}
@@ -121,13 +121,13 @@ export function LeaguePlayerStats({ teams, logoUrl, admin, myTeamId }: Props) {
                   <tr key={r.memberId}
                     className={`border-t border-white/[.07] ${r.teamId != null && r.teamId === myTeamId ? 'bg-[#f6c744]/[.07]' : ''}`}>
                     <td className="px-3 py-2.5 text-center">
-                      <span className={`inline-grid place-items-center w-6 h-6 rounded-md text-[10px] font-black ${MEDALS[i] ?? 'bg-white/10 text-white/60'}`}>{i + 1}</span>
+                      <span className={`inline-grid place-items-center w-6 h-6 rounded-md text-[12px] font-black ${MEDALS[i] ?? 'bg-white/10 text-white/60'}`}>{i + 1}</span>
                     </td>
                     <td className="px-2 py-2.5 text-[13px] font-bold">{r.name}</td>
                     <td className="px-2 py-2.5 hidden sm:table-cell">
                       <span className="flex items-center gap-2">
                         <ClubMark team={team ?? undefined} src={logoUrl(team)} size={20} />
-                        <span className="text-[12px] text-white/70 truncate">{r.teamName ?? '—'}</span>
+                        <span className="text-[14px] text-white/70 truncate">{r.teamName ?? '—'}</span>
                       </span>
                     </td>
                     <td className="px-2 py-2.5 text-center text-sm font-semibold tabular-nums text-white/70">{r.appearances}</td>
@@ -142,7 +142,7 @@ export function LeaguePlayerStats({ teams, logoUrl, admin, myTeamId }: Props) {
                   divider, rather than disappearing. */}
               {board.rest.length > 0 && (
                 <tr className="border-t border-white/10">
-                  <td colSpan={8} className="px-3 pt-4 pb-1 text-[9px] font-black uppercase tracking-[.18em] text-white/35">
+                  <td colSpan={8} className="px-3 pt-4 pb-1 text-[11px] font-black uppercase tracking-[.18em] text-white/35">
                     {board.rest.length} — {t.noContribYet}
                   </td>
                 </tr>
@@ -150,8 +150,8 @@ export function LeaguePlayerStats({ teams, logoUrl, admin, myTeamId }: Props) {
               {board.rest.map((r) => (
                 <tr key={r.memberId} className="border-t border-white/[.05] opacity-60">
                   <td className="px-3 py-2 text-center text-xs text-white/30">—</td>
-                  <td className="px-2 py-2 text-[12px] text-white/70">{r.name}</td>
-                  <td className="px-2 py-2 text-[11px] text-white/45 hidden sm:table-cell truncate">{r.teamName ?? '—'}</td>
+                  <td className="px-2 py-2 text-[14px] text-white/70">{r.name}</td>
+                  <td className="px-2 py-2 text-[13px] text-white/45 hidden sm:table-cell truncate">{r.teamName ?? '—'}</td>
                   <td className="px-2 py-2 text-center text-xs tabular-nums">{r.appearances}</td>
                   <td className="px-2 py-2 text-center text-xs tabular-nums">{r.goals}</td>
                   <td className="px-2 py-2 text-center text-xs tabular-nums">{r.assists}</td>

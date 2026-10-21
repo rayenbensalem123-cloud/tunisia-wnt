@@ -107,11 +107,11 @@ export function LeagueCalendar({ admin, season, teams, fixtures, myTeamId, onlyT
           <h3 className="min-w-[10rem] text-center text-xl font-black italic uppercase tracking-tight">{monthFmt.format(new Date(cursor.y, cursor.m, 1))}</h3>
           <button onClick={() => shift(1)} aria-label={t.nextMonth} className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.25)] hover:border-[#f6c744]/60"><ChevronRight size={16} className="rtl:rotate-180" /></button>
         </div>
-        {admin && <button onClick={() => { setErr(''); setForm({ title: '', startsOn: '', endsOn: '' }) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest hover:border-[#f6c744]/60"><Plus size={14} />{t.addBreak}</button>}
+        {admin && <button onClick={() => { setErr(''); setForm({ title: '', startsOn: '', endsOn: '' }) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest hover:border-[#f6c744]/60"><Plus size={14} />{t.addBreak}</button>}
       </div>
 
       <div className="grid grid-cols-7 gap-1 sm:gap-1.5" role="grid" aria-label={monthFmt.format(new Date(cursor.y, cursor.m, 1))}>
-        {weekdays.map(w => <div key={w} className="pb-1 text-center text-[10px] font-black uppercase tracking-[.14em] text-[var(--c-textMid)]">{w}</div>)}
+        {weekdays.map(w => <div key={w} className="pb-1 text-center text-[12px] font-black uppercase tracking-[.14em] text-[var(--c-textMid)]">{w}</div>)}
         {cells.map((d, i) => {
           if (d == null) return <div key={`e${i}`} />
           const day = ymd(cursor.y, cursor.m, d)
@@ -126,16 +126,16 @@ export function LeagueCalendar({ admin, season, teams, fixtures, myTeamId, onlyT
               <span className={`text-xs font-black tabular-nums ${day === today ? 'inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#E30613] px-1' : 'text-white/80'}`}>{d}</span>
               {(isStart || isEnd) && <span className="absolute top-1.5 end-1.5 h-2 w-2 rounded-full bg-[#f6c744]" title={isStart ? t.seasonStarts : t.seasonEnds} />}
               <span className="mt-1 flex flex-wrap gap-1">
-                {leagueN > 0 && <span className={`rounded-md px-1.5 py-0.5 text-[9px] font-black ${items.some(x => x.mine && x.kind === 'league') ? 'bg-[#f6c744] text-[#0c1f3d]' : 'bg-white/15'}`}>{leagueN}</span>}
-                {cupN > 0 && <span className="rounded-md bg-[#E30613] px-1.5 py-0.5 text-[9px] font-black">{t.cup} {cupN}</span>}
+                {leagueN > 0 && <span className={`rounded-md px-1.5 py-0.5 text-[11px] font-black ${items.some(x => x.mine && x.kind === 'league') ? 'bg-[#f6c744] text-[#0c1f3d]' : 'bg-white/15'}`}>{leagueN}</span>}
+                {cupN > 0 && <span className="rounded-md bg-[#E30613] px-1.5 py-0.5 text-[11px] font-black">{t.cup} {cupN}</span>}
               </span>
-              {br && <span className="mt-1 hidden truncate text-[9px] font-bold text-white/55 sm:block">{br.title}</span>}
+              {br && <span className="mt-1 hidden truncate text-[11px] font-bold text-white/55 sm:block">{br.title}</span>}
             </button>
           )
         })}
       </div>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[var(--c-textMid)]">
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[var(--c-textMid)]">
         <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-white/40" />{t.leagueLabel}</span>
         <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#E30613]" />{t.cup}</span>
         <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-[#f6c744]" />{t.seasonStarts} / {t.seasonEnds}</span>
@@ -153,7 +153,7 @@ export function LeagueCalendar({ admin, season, teams, fixtures, myTeamId, onlyT
               <li key={it.key} className={`flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 ring-1 ring-inset ${it.mine ? 'ring-[#f6c744]/60 bg-[#f6c744]/10' : 'ring-white/10 bg-white/[.04]'}`}>
                 <span className="min-w-0 truncate text-sm font-bold">{it.home} <span className="text-white/40">–</span> {it.away}</span>
                 <span className="flex shrink-0 items-center gap-2 text-xs font-black tabular-nums">
-                  {it.kind === 'cup' && <span className="rounded bg-[#E30613] px-1.5 py-0.5 text-[9px]">{t.cup}</span>}
+                  {it.kind === 'cup' && <span className="rounded bg-[#E30613] px-1.5 py-0.5 text-[11px]">{t.cup}</span>}
                   <span dir="ltr">{it.score ?? it.time}</span>
                 </span>
               </li>
@@ -193,8 +193,8 @@ export function LeagueCalendar({ admin, season, teams, fixtures, myTeamId, onlyT
             </div>
             {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setForm(null)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
-              <button onClick={() => void submitBreak()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.save}</button>
+              <button onClick={() => setForm(null)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest">{t.cancel}</button>
+              <button onClick={() => void submitBreak()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.save}</button>
             </div>
           </div>
         </div>

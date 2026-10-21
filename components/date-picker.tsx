@@ -131,7 +131,7 @@ export default function DatePicker({
         aria-expanded={open}
         aria-haspopup="dialog"
         data-od-picker="date"
-        className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[12px] font-bold outline-none hover:border-[rgba(var(--line-rgb),.4)] focus:border-[#E30613]/50 transition-all text-left"
+        className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[14px] font-bold outline-none hover:border-[rgba(var(--line-rgb),.4)] focus:border-[#E30613]/50 transition-all text-left"
       >
         <span className={`flex items-center gap-2 min-w-0 ${value ? "" : "text-[var(--c-textFaint)]"}`}>
           <CalendarDays size={13} className="text-[#E30613] shrink-0" />
@@ -187,7 +187,7 @@ export default function DatePicker({
                     key={y}
                     type="button"
                     onClick={() => { setView(v => ({ ...v, y })); setYearMode(false) }}
-                    className={`py-1.5 rounded-lg text-[11px] font-black tabular-nums transition-all ${
+                    className={`py-1.5 rounded-lg text-[13px] font-black tabular-nums transition-all ${
                       y === view.y ? "bg-[#E30613] text-white" : y === today.getFullYear() ? "bg-[#E30613]/12 text-[#E30613]" : "bg-[var(--c-panel3)] text-[var(--c-textMid)] hover:text-[var(--c-text)]"
                     }`}
                   >
@@ -202,12 +202,12 @@ export default function DatePicker({
                     key={step}
                     type="button"
                     onClick={() => setView(v => ({ ...v, y: Math.min(YEAR_MAX, Math.max(YEAR_MIN, v.y + step)) }))}
-                    className="px-2 py-1 rounded-md bg-[var(--c-panel3)] text-[10px] font-black uppercase tracking-wider text-[var(--c-textMid)] hover:text-[#E30613] transition-all"
+                    className="px-2 py-1 rounded-md bg-[var(--c-panel3)] text-[12px] font-black uppercase tracking-wider text-[var(--c-textMid)] hover:text-[#E30613] transition-all"
                   >
                     {step} ans
                   </button>
                 ))}
-                <button type="button" onClick={() => { setView({ y: today.getFullYear(), m: today.getMonth() }); setYearMode(false) }} className="ms-auto px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-[#E30613] hover:bg-[#E30613]/10 transition-all">
+                <button type="button" onClick={() => { setView({ y: today.getFullYear(), m: today.getMonth() }); setYearMode(false) }} className="ms-auto px-2 py-1 rounded-md text-[12px] font-black uppercase tracking-wider text-[#E30613] hover:bg-[#E30613]/10 transition-all">
                   Aujourd&apos;hui
                 </button>
               </div>
@@ -232,7 +232,7 @@ export default function DatePicker({
 
               <div className="grid grid-cols-7 gap-0.5 mb-1">
                 {dow.map(d => (
-                  <span key={d} className="text-center text-[9px] font-black uppercase tracking-wider text-[var(--c-textFaint)] py-1">{d}</span>
+                  <span key={d} className="text-center text-[11px] font-black uppercase tracking-wider text-[var(--c-textFaint)] py-1">{d}</span>
                 ))}
               </div>
 
@@ -249,7 +249,7 @@ export default function DatePicker({
                       onClick={() => { onChange(ymd); setOpen(false) }}
                       aria-label={ymd}
                       aria-pressed={isSel}
-                      className={`aspect-square rounded-lg text-[11px] font-black tabular-nums transition-all ${
+                      className={`aspect-square rounded-lg text-[13px] font-black tabular-nums transition-all ${
                         isSel
                           ? "bg-[#E30613] text-white"
                           : outside
@@ -269,14 +269,14 @@ export default function DatePicker({
                 <button
                   type="button"
                   onClick={() => { onChange(todayYMD); setOpen(false) }}
-                  className="px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-[#E30613] hover:bg-[#E30613]/10 transition-all"
+                  className="px-2 py-1 rounded-md text-[12px] font-black uppercase tracking-wider text-[#E30613] hover:bg-[#E30613]/10 transition-all"
                 >
                   Aujourd&apos;hui
                 </button>
                 <button
                   type="button"
                   onClick={() => { onChange(""); setOpen(false) }}
-                  className="ms-auto px-2 py-1 rounded-md text-[10px] font-black uppercase tracking-wider text-[var(--c-textFaint)] hover:text-[var(--c-text)] transition-all"
+                  className="ms-auto px-2 py-1 rounded-md text-[12px] font-black uppercase tracking-wider text-[var(--c-textFaint)] hover:text-[var(--c-text)] transition-all"
                 >
                   Effacer
                 </button>

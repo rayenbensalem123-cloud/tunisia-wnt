@@ -19,10 +19,10 @@ export type PickerVariant = "field" | "big" | "zinc" | "stage" | "soft" | "mini"
 const TRIGGER_CLASS: Record<PickerVariant, string> = {
   field: "pm-field",
   big: "w-full rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.14)] px-4 py-4 text-xs font-bold text-[var(--c-text)]",
-  zinc: "w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[12px] font-bold",
-  stage: "w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[11px] font-bold",
+  zinc: "w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[14px] font-bold",
+  stage: "w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[13px] font-bold",
   soft: "w-full bg-zinc-50 border border-zinc-100 p-4 rounded-2xl font-bold text-xs uppercase",
-  mini: "px-2.5 py-1.5 rounded-lg bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.2)] text-[8px] font-bold text-[var(--c-textBlue)]",
+  mini: "px-2.5 py-1.5 rounded-lg bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.2)] text-[10px] font-bold text-[var(--c-textBlue)]",
 }
 
 const POPUP_FONT = "'Oswald','Arial Narrow',Arial,sans-serif"
@@ -178,7 +178,7 @@ const ageFrom = (b: Date) => {
 type CalView = "days" | "months" | "years"
 
 const navBtn = "p-1.5 rounded-full text-[var(--c-text)] hover:bg-[var(--c-panel4)] transition-all disabled:opacity-25 disabled:pointer-events-none"
-const headPill = "px-2 py-1 rounded-lg text-[11px] font-black uppercase tracking-wider text-[var(--c-text)] hover:bg-[var(--c-panel4)] hover:text-[#E30613] transition-all flex items-center gap-1"
+const headPill = "px-2 py-1 rounded-lg text-[13px] font-black uppercase tracking-wider text-[var(--c-text)] hover:bg-[var(--c-panel4)] hover:text-[#E30613] transition-all flex items-center gap-1"
 
 const CalendarPanel = ({
   selected, initial, onPick, minYear, maxYear, maxDate, startView = "days", footer,
@@ -214,8 +214,8 @@ const CalendarPanel = ({
     setM(nm); setY(ny)
   }
 
-  const cell = "aspect-square rounded-full text-[10px] font-bold transition-all flex items-center justify-center"
-  const big = "h-10 rounded-xl text-[11px] font-black uppercase tracking-wide transition-all flex items-center justify-center"
+  const cell = "aspect-square rounded-full text-[12px] font-bold transition-all flex items-center justify-center"
+  const big = "h-10 rounded-xl text-[13px] font-black uppercase tracking-wide transition-all flex items-center justify-center"
   const on = "text-white shadow-[0_4px_14px_-4px_rgba(227,6,44,.7)]"
   const onBg = { background: "linear-gradient(135deg,#ef183e,#bf0020)" } as React.CSSProperties
 
@@ -245,7 +245,7 @@ const CalendarPanel = ({
     header = (
       <div className="flex items-center justify-between mb-2">
         <button type="button" className={navBtn} onClick={() => setPageStart(p => Math.max(minYear, p - 12))} disabled={pageStart <= minYear} aria-label="Earlier years"><ChevronLeft size={14} /></button>
-        <span className="px-2 py-1 text-[11px] font-black uppercase tracking-wider text-[var(--c-text)]">{pageStart} – {last}</span>
+        <span className="px-2 py-1 text-[13px] font-black uppercase tracking-wider text-[var(--c-text)]">{pageStart} – {last}</span>
         <button type="button" className={navBtn} onClick={() => setPageStart(p => p + 12)} disabled={pageStart + 12 > maxYear} aria-label="Later years"><ChevronRight size={14} /></button>
       </div>
     )
@@ -263,7 +263,7 @@ const CalendarPanel = ({
       <>
         <div className="grid grid-cols-7 gap-0.5 mb-1">
           {["S", "M", "T", "W", "T", "F", "S"].map((d, i) => (
-            <div key={i} className="text-[8px] font-black text-[var(--c-textDim)] text-center py-1">{d}</div>
+            <div key={i} className="text-[10px] font-black text-[var(--c-textDim)] text-center py-1">{d}</div>
           ))}
         </div>
         <div className="grid grid-cols-7 gap-0.5">
@@ -341,7 +341,7 @@ const CalendarPanel = ({
   )
 }
 
-const footerBtn = "text-[8px] font-black uppercase tracking-widest transition-colors"
+const footerBtn = "text-[10px] font-black uppercase tracking-widest transition-colors"
 
 // ── DatePicker (value: YYYY-MM-DD) ───────────
 export const DatePicker = ({
@@ -426,8 +426,8 @@ export const AgeCalendar = ({
           onPick={d => { onChange(fmtDMY(d)); setOpen(false) }}
           footer={selected ? (
             <div className="mt-2 pt-2 border-t border-[rgba(var(--line-rgb),.14)] flex items-center justify-between px-1">
-              <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Born {fmtDMY(selected)}</span>
-              <span className="px-2 py-1 rounded-lg bg-[#E30613]/10 text-[#E30613] text-[10px] font-black">{ageFrom(selected)} YRS</span>
+              <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">Born {fmtDMY(selected)}</span>
+              <span className="px-2 py-1 rounded-lg bg-[#E30613]/10 text-[#E30613] text-[12px] font-black">{ageFrom(selected)} YRS</span>
             </div>
           ) : undefined}
         />
@@ -522,7 +522,7 @@ export const Select = ({
                 type="button" key={`${r.value}-${i}`} role="option" aria-selected={isSel} data-i={i}
                 onMouseEnter={() => setActive(i)}
                 onClick={() => pick(r.value)}
-                className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-left text-[11px] font-bold uppercase tracking-wide transition-colors ${
+                className={`flex items-center justify-between gap-2 px-3 py-2 rounded-lg text-left text-[13px] font-bold uppercase tracking-wide transition-colors ${
                   isSel ? "bg-[#E30613]/12 text-[#E30613]"
                     : i === active ? "bg-[var(--c-panel4)] text-[var(--c-text)]"
                     : isEmpty ? "text-[var(--c-textFaint)]" : "text-[var(--c-text)]"
@@ -533,7 +533,7 @@ export const Select = ({
               </button>
             )
           })}
-          {rows.length === 0 && <div className="px-3 py-2 text-[10px] font-bold text-[var(--c-textDim)]">No options</div>}
+          {rows.length === 0 && <div className="px-3 py-2 text-[12px] font-bold text-[var(--c-textDim)]">No options</div>}
         </div>
       </PopoverPortal>
     </div>
@@ -599,7 +599,7 @@ export const JerseyScale = ({
     <div ref={ref} className="relative">
       <PickerTrigger
         open={open} onClick={() => setOpen(o => !o)} variant={variant} filled={value !== ""}
-        icon={<span className="text-[7px] font-black uppercase tracking-widest text-[var(--c-textDim)] shrink-0">Nº</span>}
+        icon={<span className="text-[9px] font-black uppercase tracking-widest text-[var(--c-textDim)] shrink-0">Nº</span>}
         label={<span className={value !== "" ? "font-black italic text-[#E30613]" : ""}>{shown}</span>}
       />
       <PopoverPortal anchorRef={ref} open={open} onClose={() => setOpen(false)} width={236}>
@@ -620,13 +620,13 @@ export const JerseyScale = ({
         </div>
         <div className="relative h-3 mt-1 mb-2">
           {marks.map(mk => (
-            <span key={mk} className="absolute -translate-x-1/2 text-[7px] font-black text-[var(--c-textDim)]" style={{ left: `${(mk / 99) * 100}%` }}>{mk}</span>
+            <span key={mk} className="absolute -translate-x-1/2 text-[9px] font-black text-[var(--c-textDim)]" style={{ left: `${(mk / 99) * 100}%` }}>{mk}</span>
           ))}
         </div>
         <div className="flex flex-wrap gap-1">
           {[1, 5, 7, 8, 9, 10, 13, 17, 23, 66, 99].map(n => (
             <button key={n} type="button" onClick={() => { setNum(n); setOpen(false) }}
-              className={`px-2 py-1 rounded-md text-[9px] font-black transition-all ${idx === n && value !== "" ? "bg-[#E30613] text-white" : "bg-[var(--c-panel4)] text-[var(--c-textDim)] hover:bg-[var(--c-hover)]"}`}>{n}</button>
+              className={`px-2 py-1 rounded-md text-[11px] font-black transition-all ${idx === n && value !== "" ? "bg-[#E30613] text-white" : "bg-[var(--c-panel4)] text-[var(--c-textDim)] hover:bg-[var(--c-hover)]"}`}>{n}</button>
           ))}
         </div>
       </PopoverPortal>
@@ -645,7 +645,7 @@ export const MinuteBox = ({
 }) => (
   <label
     title={title}
-    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--c-panel4)] border border-[rgba(var(--line-rgb),.18)] focus-within:border-[#E30613]/60 text-[9px] font-black text-[var(--c-textDim)] transition-colors"
+    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[var(--c-panel4)] border border-[rgba(var(--line-rgb),.18)] focus-within:border-[#E30613]/60 text-[11px] font-black text-[var(--c-textDim)] transition-colors"
   >
     {label && <span className="uppercase tracking-wider">{label}</span>}
     <input

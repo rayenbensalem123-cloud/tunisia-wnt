@@ -39,7 +39,7 @@ export function LeagueNextMatch({ teamId, teams, logoUrl }: { teamId: number; te
 
   const opp = (f: LeagueFixture) => { const oid = f.homeTeamId === teamId ? f.awayTeamId : f.homeTeamId; return { x: byId(oid), home: f.homeTeamId === teamId } }
   const panel = 'flex-1 min-w-[240px] rounded-2xl border border-[rgba(var(--line-rgb),.22)] bg-gradient-to-br from-[#15294d] to-[#0c1730] p-4 text-white shadow-[0_10px_24px_rgba(2,8,23,.3)]'
-  const cap = 'mb-2.5 text-[9px] font-black uppercase tracking-[.25em] text-[#f6c744]'
+  const cap = 'mb-2.5 text-[11px] font-black uppercase tracking-[.25em] text-[#f6c744]'
 
   return (
     <div className="mb-6 flex flex-wrap gap-4">
@@ -97,13 +97,13 @@ export function LeagueRoundStrip({ teams, logoUrl, onOpen }: { teams: LeagueTeam
       <div className="flex flex-wrap items-center gap-x-8 gap-y-3">
         {nextDay != null && (
           <div className="shrink-0">
-            <p className="text-[9px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t.nextMatchday}</p>
+            <p className="text-[11px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t.nextMatchday}</p>
             <p className="mt-1 text-lg font-black leading-tight">{t.matchdayN.replace('{n}', String(nextDay))}{nextDate && <span className="ms-2 text-sm font-semibold text-[var(--c-textMid)]">{dateFmt.format(new Date(nextDate))}</span>}</p>
           </div>
         )}
         {latest.length > 0 && (
           <div className="min-w-0 flex-1">
-            <p className="text-[9px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t.latestResults}</p>
+            <p className="text-[11px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t.latestResults}</p>
             <ul className="mt-1.5 flex gap-2 overflow-hidden">
               {latest.map(f => (
                 <li key={f.id} className="flex shrink-0 items-center gap-2 rounded-lg bg-white/[.05] px-2.5 py-1.5 text-xs font-bold ring-1 ring-inset ring-white/10">

@@ -55,17 +55,17 @@ export function LeagueBell({ teamId, teams }: { teamId: number; teams: LeagueTea
     <div ref={box} className="relative">
       <button onClick={toggle} aria-label={t.notifTitle} aria-expanded={open} className="relative p-2.5 rounded-lg border border-[rgba(var(--line-rgb),.25)] hover:border-[#f6c744]/60 transition-all">
         <Bell size={15} />
-        {unread.length > 0 && <span className="absolute -top-1.5 -end-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-[#E30613] px-1 text-[9px] font-black text-white tabular-nums">{unread.length}</span>}
+        {unread.length > 0 && <span className="absolute -top-1.5 -end-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-[#E30613] px-1 text-[11px] font-black text-white tabular-nums">{unread.length}</span>}
       </button>
       {open && (
         <div role="region" aria-label={t.notifTitle} className="absolute end-0 top-full z-[400] mt-2 w-[min(92vw,22rem)] overflow-hidden rounded-2xl border border-[rgba(var(--line-rgb),.28)] bg-[var(--c-bg)] shadow-[0_16px_40px_rgba(2,8,23,.5)]">
-          <p className="border-b border-[rgba(var(--line-rgb),.18)] px-4 py-3 text-[9px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t.notifTitle}</p>
+          <p className="border-b border-[rgba(var(--line-rgb),.18)] px-4 py-3 text-[11px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t.notifTitle}</p>
           <ul className="max-h-80 overflow-y-auto">
             {items.length === 0 && <li className="px-4 py-6 text-center text-sm text-[var(--c-textMid)]">{t.notifNone}</li>}
             {items.map(n => (
               <li key={n.id} className={`border-b border-white/5 px-4 py-3 text-sm ${n.readAt ? 'text-[var(--c-textMid)]' : 'font-bold'}`}>
                 {text(n)}
-                <span className="mt-0.5 block text-[10px] font-semibold text-[var(--c-textMid)]">{new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(n.createdAt))}</span>
+                <span className="mt-0.5 block text-[12px] font-semibold text-[var(--c-textMid)]">{new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(n.createdAt))}</span>
               </li>
             ))}
           </ul>

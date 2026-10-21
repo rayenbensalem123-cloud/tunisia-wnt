@@ -68,14 +68,14 @@ function CardGrid({ card, lang, locked, states, lines, onToggle, onLine }: {
                 <span className={`absolute left-0 inset-y-0 w-[3px] ${accent}`} />
                 {isLocked && !st && <span className="absolute top-0 right-0 w-0 h-0 border-t-[18px] border-l-[18px] border-t-[#f6c744] border-l-transparent gm-pop" />}
                 <span className="flex items-start justify-between gap-1.5">
-                  <span className={`text-[10px] font-bold uppercase leading-[1.28] tracking-wide ${st === "yes" ? "text-[#7fd6a8]" : "text-[var(--c-text)]"}`}>{sq.label[lang]}</span>
+                  <span className={`text-[12px] font-bold uppercase leading-[1.28] tracking-wide ${st === "yes" ? "text-[#7fd6a8]" : "text-[var(--c-text)]"}`}>{sq.label[lang]}</span>
                   {sq.kind === "minute" && <Timer size={11} className="shrink-0 mt-0.5 text-[#f6c744]" aria-label={T.bgMinuteHint} />}
                 </span>
                 <span className="flex items-end justify-between mt-2 min-h-[20px]">
-                  <span className={`text-[11px] font-black tabular-nums ${isLocked ? "text-[#f6c744]" : "text-[var(--c-textDim)]"}`}>+{POINTS_SQUARE}</span>
+                  <span className={`text-[13px] font-black tabular-nums ${isLocked ? "text-[#f6c744]" : "text-[var(--c-textDim)]"}`}>+{POINTS_SQUARE}</span>
                   {st === "yes" && isLocked && <span className="gm-stamp" style={{ animationDelay: `${i * STEP_MS + 200}ms` }}><Check size={18} strokeWidth={3} className="text-[#7fd6a8]" /></span>}
                   {st === "no" && isLocked && <span className="gm-stamp" style={{ animationDelay: `${i * STEP_MS + 200}ms` }}><X size={16} strokeWidth={3} className="text-[#ff5f72]" /></span>}
-                  {st === "void" && <span className="text-[8px] font-black tracking-wider text-[var(--c-textDim)]">n/a</span>}
+                  {st === "void" && <span className="text-[10px] font-black tracking-wider text-[var(--c-textDim)]">n/a</span>}
                   {!st && isLocked && <Lock size={12} className="text-[#E30613]" />}
                 </span>
               </>
@@ -102,12 +102,12 @@ function CardGrid({ card, lang, locked, states, lines, onToggle, onLine }: {
       </div>
 
       {lines && lines.length > 0 && (
-        <p className="mt-2 text-[11px] font-black uppercase tracking-wide text-[#f6c744] gm-slide" style={{ animationDelay: `${260 + card.length * STEP_MS + 300}ms` }}>
+        <p className="mt-2 text-[13px] font-black uppercase tracking-wide text-[#f6c744] gm-slide" style={{ animationDelay: `${260 + card.length * STEP_MS + 300}ms` }}>
           {T.bgLineDone} +{lines.length * POINTS_LINE}
         </p>
       )}
       {states && (
-        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[9px] font-bold text-[var(--c-textDim)]">
+        <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] font-bold text-[var(--c-textDim)]">
           <span className="flex items-center gap-1"><Check size={10} className="text-[#7fd6a8]" />{T.bgYes}</span>
           <span className="flex items-center gap-1"><X size={10} className="text-[#ff5f72]" />{T.bgNo}</span>
           <span>n/a · {T.bgVoid}</span>
@@ -126,7 +126,7 @@ function LockPips({ used, T }: { used: number; T: ReturnType<typeof getT> }) {
           <span key={i} className={`w-3.5 h-3.5 rounded-full border-2 transition-all duration-200 ${i < used ? "bg-[#f6c744] border-[#f6c744] shadow-[0_0_10px_rgba(246,199,68,.65)] scale-110" : "border-[rgba(var(--line-rgb),.4)]"}`} />
         ))}
       </div>
-      <span className="text-[11px] font-black text-[var(--c-text)] tabular-nums">{fmt(T.bgLocked, { n: used, max: LOCK_LIMIT })}</span>
+      <span className="text-[13px] font-black text-[var(--c-text)] tabular-nums">{fmt(T.bgLocked, { n: used, max: LOCK_LIMIT })}</span>
     </div>
   )
 }
@@ -244,21 +244,21 @@ export function MatchBingo({ matches, user, lang }: Props) {
 
   const tabBtn = (k: typeof tab, label: string) => (
     <button key={k} onClick={() => { setTab(k); sfx.clue() }}
-      className={`flex-1 px-3 py-2 text-[10px] font-black uppercase tracking-wider border-b-2 transition-all ${tab === k ? "border-[#E30613] text-[var(--c-text)]" : "border-transparent text-[var(--c-textDim)] hover:text-[var(--c-text)]"}`}>{label}</button>
+      className={`flex-1 px-3 py-2 text-[12px] font-black uppercase tracking-wider border-b-2 transition-all ${tab === k ? "border-[#E30613] text-[var(--c-text)]" : "border-transparent text-[var(--c-textDim)] hover:text-[var(--c-text)]"}`}>{label}</button>
   )
   const empty = (msg: string) => (
-    <p className="rounded-xl border border-dashed border-[rgba(var(--line-rgb),.25)] px-4 py-4 text-[11px] font-bold text-[var(--c-textMid)] leading-relaxed">{msg}</p>
+    <p className="rounded-xl border border-dashed border-[rgba(var(--line-rgb),.25)] px-4 py-4 text-[13px] font-bold text-[var(--c-textMid)] leading-relaxed">{msg}</p>
   )
   const howTo = <p className="text-[10.5px] font-semibold text-[var(--c-textMid)] leading-relaxed">{fmt(T.bgHowTo, { n: LOCK_LIMIT, p: POINTS_SQUARE, l: POINTS_LINE })}</p>
-  const deviceNote = mode === "device" && <p className="mt-3 text-[9px] font-semibold text-[var(--c-textDim)] leading-relaxed">{T.bgDeviceOnly}</p>
+  const deviceNote = mode === "device" && <p className="mt-3 text-[11px] font-semibold text-[var(--c-textDim)] leading-relaxed">{T.bgDeviceOnly}</p>
 
   const fixtureChip = (key: string, opponent: string, date: string, active: boolean, onClick: () => void, tone: "red" | "gold") => (
     <button key={key} onClick={onClick}
       className={`text-left px-3 py-2 rounded-lg border-b-2 border border-transparent transition-all ${active
         ? (tone === "red" ? "bg-[#E30613]/12 border-b-[#E30613]" : "bg-[#f6c744]/12 border-b-[#f6c744]") + " text-[var(--c-text)]"
         : "bg-[var(--c-panel4)] border-b-transparent text-[var(--c-textMid)] hover:text-[var(--c-text)]"}`}>
-      <span className="block text-[11px] font-black uppercase leading-tight">{opponent}</span>
-      <span className="block text-[9px] font-bold text-[var(--c-textDim)] mt-0.5">{prettyDate(date)}</span>
+      <span className="block text-[13px] font-black uppercase leading-tight">{opponent}</span>
+      <span className="block text-[11px] font-bold text-[var(--c-textDim)] mt-0.5">{prettyDate(date)}</span>
     </button>
   )
 
@@ -282,7 +282,7 @@ export function MatchBingo({ matches, user, lang }: Props) {
               <div className="mt-3 flex items-center justify-between gap-3">
                 <div>
                   <LockPips used={draft.length} T={T} />
-                  <p className="mt-1 text-[10px] font-bold text-[#f6c744] tabular-nums">{fmt(T.bgUpTo, { n: draft.length * POINTS_SQUARE })}</p>
+                  <p className="mt-1 text-[12px] font-bold text-[#f6c744] tabular-nums">{fmt(T.bgUpTo, { n: draft.length * POINTS_SQUARE })}</p>
                 </div>
                 <button onClick={save} disabled={saving || !dirty} className="pm-btn pm-btn-red">
                   {saving ? T.bgSaving : savedFlash && !dirty ? <><Check size={13} />{T.bgSaved}</> : T.bgSave}
@@ -294,19 +294,19 @@ export function MatchBingo({ matches, user, lang }: Props) {
           {/* practice */}
           {playedList.length > 0 && (
             <div className="mt-6 pt-4 border-t border-[rgba(var(--line-rgb),.14)]">
-              <p className="text-[11px] font-black text-[var(--c-text)] mb-2">{T.bgPractice}</p>
+              <p className="text-[13px] font-black text-[var(--c-text)] mb-2">{T.bgPractice}</p>
               <div className="flex flex-wrap gap-1.5">
                 {playedList.slice(0, 8).map(m => fixtureChip(matchKey(m), m.opponent || "?", m.date || "", practiceKey === matchKey(m), () => { choosePractice(matchKey(m)); sfx.clue() }, "gold"))}
               </div>
               {practiceMatch && (
                 <div className="mt-3">
-                  <p className="text-[9px] font-semibold text-[var(--c-textDim)] mb-2">{T.bgPracticeNote}</p>
+                  <p className="text-[11px] font-semibold text-[var(--c-textDim)] mb-2">{T.bgPracticeNote}</p>
                   <CardGrid card={pCard} lang={lang} locked={pDraft} states={pStates} lines={pScore?.lines} onToggle={pToggle} onLine={celebrate} />
                   <div className="mt-3 flex items-center justify-between gap-3">
                     {pScore ? (
                       <div>
-                        <p className="text-2xl font-black italic text-[#f6c744] leading-none tabular-nums"><CountUp value={pScore.points} /> <span className="text-[10px] not-italic text-[var(--c-textDim)]">{T.waPts}</span></p>
-                        <p className="mt-1 text-[9px] font-bold text-[var(--c-textDim)]">{fmt(T.bgResultLine, { r: practiceMatch.result || "" })}</p>
+                        <p className="text-2xl font-black italic text-[#f6c744] leading-none tabular-nums"><CountUp value={pScore.points} /> <span className="text-[12px] not-italic text-[var(--c-textDim)]">{T.waPts}</span></p>
+                        <p className="mt-1 text-[11px] font-bold text-[var(--c-textDim)]">{fmt(T.bgResultLine, { r: practiceMatch.result || "" })}</p>
                       </div>
                     ) : <LockPips used={pDraft.length} T={T} />}
                     {revealed
@@ -327,7 +327,7 @@ export function MatchBingo({ matches, user, lang }: Props) {
           {results.length === 0 ? empty(T.bgNoResults) : (
             <>
               <div className="flex items-end justify-between mb-3 pb-3 border-b border-[rgba(var(--line-rgb),.14)]">
-                <span className="text-[11px] font-black text-[var(--c-textFaint)]">{T.bgTotal}</span>
+                <span className="text-[13px] font-black text-[var(--c-textFaint)]">{T.bgTotal}</span>
                 <span className="text-4xl font-black italic text-[#E30613] leading-none tabular-nums"><CountUp value={totalPts} /></span>
               </div>
               <div className="space-y-2">
@@ -337,14 +337,14 @@ export function MatchBingo({ matches, user, lang }: Props) {
                     <div key={r.e.matchKey} className="rounded-xl border border-[rgba(var(--line-rgb),.16)] bg-[var(--c-panel4)] overflow-hidden">
                       <button onClick={() => { setOpenKey(open ? "" : r.e.matchKey); sfx.clue() }} className="w-full flex items-center justify-between gap-3 px-3.5 py-3 text-left">
                         <span className="min-w-0">
-                          <span className="block text-[12px] font-black uppercase text-[var(--c-text)] truncate">{labelFor(r.e.matchKey)}</span>
-                          <span className="block text-[9px] font-bold text-[var(--c-textDim)] mt-0.5">
+                          <span className="block text-[14px] font-black uppercase text-[var(--c-text)] truncate">{labelFor(r.e.matchKey)}</span>
+                          <span className="block text-[11px] font-bold text-[var(--c-textDim)] mt-0.5">
                             {r.played ? fmt(T.bgResultLine, { r: r.played.result || "" }) : T.bgWaiting}
                           </span>
                         </span>
                         <span className="text-right shrink-0">
                           <span className="block text-xl font-black italic text-[#f6c744] leading-none tabular-nums">{r.sc ? r.sc.points : "—"}</span>
-                          {r.sc && <span className="block text-[8px] font-bold text-[var(--c-textDim)] mt-0.5">{fmt(T.bgLines, { n: r.sc.lines.length })}</span>}
+                          {r.sc && <span className="block text-[10px] font-bold text-[var(--c-textDim)] mt-0.5">{fmt(T.bgLines, { n: r.sc.lines.length })}</span>}
                         </span>
                       </button>
                       {open && (

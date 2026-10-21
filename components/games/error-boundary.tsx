@@ -13,7 +13,7 @@ export class GameErrorBoundary extends React.Component<
   render() {
     if (this.state.failed) {
       return (
-        <div className="rounded-xl border border-[#e3062c]/30 bg-[#e3062c]/10 px-4 py-3 text-[11px] font-bold text-[#ff5f72] leading-relaxed">
+        <div className="rounded-xl border border-[#e3062c]/30 bg-[#e3062c]/10 px-4 py-3 text-[13px] font-bold text-[#ff5f72] leading-relaxed">
           {this.props.message}
         </div>
       )

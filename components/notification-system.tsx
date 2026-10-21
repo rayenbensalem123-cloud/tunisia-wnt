@@ -97,7 +97,7 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember, pe
       >
         <Bell size={16} />
         {visibleNotifications.length > 0 && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#E30613] text-white rounded-full text-[7px] font-black flex items-center justify-center shadow-lg">
+          <span className="absolute -top-1 -right-1 w-4 h-4 bg-[#E30613] text-white rounded-full text-[9px] font-black flex items-center justify-center shadow-lg">
             {visibleNotifications.length > 9 ? "9+" : visibleNotifications.length}
           </span>
         )}
@@ -108,14 +108,14 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember, pe
           <div className="fixed inset-0 z-[180]" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-12 z-[190] w-80 rounded-2xl border border-zinc-200 bg-white shadow-2xl overflow-hidden text-zinc-900">
             <div className="px-4 py-3 border-b border-zinc-200 flex items-center justify-between">
-              <h3 className="text-[9px] font-black uppercase tracking-widest">{tr.notifications.title}</h3>
-              <span className={`text-[8px] font-black px-2 py-0.5 rounded-lg ${visibleNotifications.length > 0 ? 'bg-[#E30613]/10 text-[#E30613]' : 'bg-zinc-500/10 text-zinc-500'}`}>
+              <h3 className="text-[11px] font-black uppercase tracking-widest">{tr.notifications.title}</h3>
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-lg ${visibleNotifications.length > 0 ? 'bg-[#E30613]/10 text-[#E30613]' : 'bg-zinc-500/10 text-zinc-500'}`}>
                 {visibleNotifications.length}
               </span>
             </div>
             <div className="max-h-64 overflow-y-auto divide-y divide-zinc-200">
               {visibleNotifications.length === 0 && (
-                <div className="p-6 text-center text-[10px] font-black uppercase tracking-widest opacity-40">{tr.notifications.allClear}</div>
+                <div className="p-6 text-center text-[12px] font-black uppercase tracking-widest opacity-40">{tr.notifications.allClear}</div>
               )}
               {visibleNotifications.map(n => (
                 <button
@@ -148,8 +148,8 @@ export function NotificationBell({ members, matches, teamCat, onSelectMember, pe
                     {n.type === 'suspension' ? <Ban size={12} /> : n.type === 'warning' ? <AlertTriangle size={12} /> : n.type === 'approval' ? <UserPlus size={12} /> : n.type === 'clubReport' ? <ClipboardCheck size={12} /> : <Calendar size={12} />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-[9px] font-black uppercase truncate">{n.message}</p>
-                    <p className="text-[7px] uppercase mt-0.5 text-zinc-400">
+                    <p className="text-[11px] font-black uppercase truncate">{n.message}</p>
+                    <p className="text-[9px] uppercase mt-0.5 text-zinc-400">
                       {n.type === 'suspension' ? tr.notifications.cannotPlayNext : n.type === 'warning' ? tr.notifications.cafRule2Yellows : n.type === 'approval' ? tr.notifications.tapToReview : n.type === 'clubReport' ? tr.notifications.tapToReviewReport : tr.notifications.upcomingMatch}
                     </p>
                   </div>

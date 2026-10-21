@@ -21,7 +21,7 @@ export function LeagueStandings({ teams, fixtures, logoUrl, myTeamId }: Props) {
   const rows = useMemo(() => computeStandings(teams, fixtures), [teams, fixtures])
   const byId = useMemo(() => new Map(teams.map(x => [x.id, x])), [teams])
   const anyPlayed = fixtures.some(f => f.status === 'played')
-  const th = 'px-2 py-3 text-[10px] font-black uppercase tracking-[.14em] text-[var(--c-textMid)] text-center'
+  const th = 'px-2 py-3 text-[12px] font-black uppercase tracking-[.14em] text-[var(--c-textMid)] text-center'
   const num = 'px-2 py-3 text-center tabular-nums text-sm font-semibold'
 
   if (teams.length === 0) return <p className="py-16 text-center text-sm text-[var(--c-textMid)]">{t.needTwoTeams}</p>
@@ -78,7 +78,7 @@ export function LeagueStandings({ teams, fixtures, logoUrl, myTeamId }: Props) {
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-[11px] text-[var(--c-textMid)]">{anyPlayed ? t.tiebreakNote : t.noResultsYet}</p>
+      <p className="mt-3 text-[13px] text-[var(--c-textMid)]">{anyPlayed ? t.tiebreakNote : t.noResultsYet}</p>
     </div>
   )
 }

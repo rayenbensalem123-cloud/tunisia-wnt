@@ -111,7 +111,7 @@ export function LeagueCup({ admin, season, teams, logoUrl, myTeamId, onInfoSaved
       <div className={`flex items-center gap-2.5 px-3 py-2 ${win ? 'bg-white/[.07]' : ''}`}>
         {id != null ? <ClubMark team={x ?? undefined} src={logoUrl(x)} size={26} /> : <span className="h-[26px] w-[22px] rounded-md border border-dashed border-white/25" aria-hidden />}
         <span className={`min-w-0 flex-1 truncate text-[13px] ${id == null ? 'italic text-white/45' : win ? 'font-black' : 'font-semibold text-white/85'} ${id != null && id === myTeamId ? 'text-[#f6c744]' : ''}`}>{x?.name ?? t.tbd}</span>
-        {goals != null && <span className={`text-sm tabular-nums ${win ? 'font-black' : 'font-semibold text-white/70'}`} dir="ltr">{goals}{pens != null && <span className="ms-1 text-[10px] text-white/50">({pens})</span>}</span>}
+        {goals != null && <span className={`text-sm tabular-nums ${win ? 'font-black' : 'font-semibold text-white/70'}`} dir="ltr">{goals}{pens != null && <span className="ms-1 text-[12px] text-white/50">({pens})</span>}</span>}
       </div>
     )
   }
@@ -126,26 +126,26 @@ export function LeagueCup({ admin, season, teams, logoUrl, myTeamId, onInfoSaved
             <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-[#f6c744] text-[#0c1f3d]"><Trophy size={26} /></span>
             <div className="min-w-0">
               <h3 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tight leading-tight">{season.cupName || t.cup}</h3>
-              <p className="mt-1 text-[10px] font-black uppercase tracking-[.3em] text-[#f6c744]">{season.name}</p>
+              <p className="mt-1 text-[12px] font-black uppercase tracking-[.3em] text-[#f6c744]">{season.name}</p>
               {season.cupInfo && <p className="mt-3 max-w-2xl whitespace-pre-line text-sm leading-relaxed text-white/75">{season.cupInfo}</p>}
             </div>
           </div>
           <div className="flex items-center gap-2">
-            {admin && <button onClick={() => { setErr(''); setInfo({ name: season.cupName || '', text: season.cupInfo || '' }) }} className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-black/25 ring-1 ring-inset ring-white/15 text-[10px] font-black uppercase tracking-widest hover:bg-white/15"><Pencil size={13} />{t.editCupInfo}</button>}
-            {admin && <button onClick={openNew} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-[10px] font-black uppercase tracking-widest hover:bg-red-700"><Plus size={14} />{t.addCupMatch}</button>}
+            {admin && <button onClick={() => { setErr(''); setInfo({ name: season.cupName || '', text: season.cupInfo || '' }) }} className="inline-flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-black/25 ring-1 ring-inset ring-white/15 text-[12px] font-black uppercase tracking-widest hover:bg-white/15"><Pencil size={13} />{t.editCupInfo}</button>}
+            {admin && <button onClick={openNew} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-[12px] font-black uppercase tracking-widest hover:bg-red-700"><Plus size={14} />{t.addCupMatch}</button>}
           </div>
         </div>
         {champion != null && (
           <div className="relative mt-5 flex items-center gap-3 rounded-2xl bg-black/25 px-4 py-3 ring-1 ring-inset ring-[#f6c744]/40">
             <Trophy size={18} className="text-[#f6c744]" />
             <ClubMark team={byId.get(champion)} src={logoUrl(byId.get(champion) ?? null)} size={32} />
-            <div><p className="text-[9px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t.champion}</p><p className="text-lg font-black leading-tight">{byId.get(champion)?.name}</p></div>
+            <div><p className="text-[11px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t.champion}</p><p className="text-lg font-black leading-tight">{byId.get(champion)?.name}</p></div>
           </div>
         )}
       </section>
 
       {matches.length === 0 && (
-        <div className="py-16 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><Trophy size={48} /><p className="text-[11px] font-black uppercase tracking-[.3em] text-center">{t.noCup}</p></div>
+        <div className="py-16 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><Trophy size={48} /><p className="text-[13px] font-black uppercase tracking-[.3em] text-center">{t.noCup}</p></div>
       )}
 
       {/* rounds */}
@@ -153,7 +153,7 @@ export function LeagueCup({ admin, season, teams, logoUrl, myTeamId, onInfoSaved
         <div className="flex gap-5 overflow-x-auto pb-3 md:items-stretch">
           {rounds.map(r => (
             <section key={r} className="w-[78vw] max-w-[300px] shrink-0 md:w-[280px]" aria-label={t[roundKey(r)]}>
-              <h4 className="mb-3 text-[10px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t[roundKey(r)]}</h4>
+              <h4 className="mb-3 text-[12px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t[roundKey(r)]}</h4>
               <ul className="flex h-[calc(100%-1.75rem)] flex-col justify-around gap-3">
                 {matches.filter(m => m.round === r).map(m => {
                   const mine = myTeamId != null && (m.homeTeamId === myTeamId || m.awayTeamId === myTeamId)
@@ -163,7 +163,7 @@ export function LeagueCup({ admin, season, teams, logoUrl, myTeamId, onInfoSaved
                       <div className="h-px bg-white/10" />
                       {row(m, 'away')}
                       {(m.kickoff || m.status === 'postponed' || admin) && (
-                        <div className="flex items-center justify-between gap-2 border-t border-white/10 bg-black/20 px-3 py-1.5 text-[10px] text-white/55">
+                        <div className="flex items-center justify-between gap-2 border-t border-white/10 bg-black/20 px-3 py-1.5 text-[12px] text-white/55">
                           <span className="truncate" dir="ltr">{m.status === 'postponed' ? t.statusPostponed : m.kickoff ? when.format(new Date(m.kickoff)) : ''}{m.venue ? ` · ${m.venue}` : ''}</span>
                           {admin && (
                             <span className="flex shrink-0 items-center">
@@ -213,8 +213,8 @@ export function LeagueCup({ admin, season, teams, logoUrl, myTeamId, onInfoSaved
             </div>
             {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setForm(null)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
-              <button onClick={() => void submit()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.save}</button>
+              <button onClick={() => setForm(null)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest">{t.cancel}</button>
+              <button onClick={() => void submit()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.save}</button>
             </div>
           </div>
         </div>
@@ -232,8 +232,8 @@ export function LeagueCup({ admin, season, teams, logoUrl, myTeamId, onInfoSaved
             </div>
             {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setInfo(null)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
-              <button onClick={() => void saveInfo()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.save}</button>
+              <button onClick={() => setInfo(null)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest">{t.cancel}</button>
+              <button onClick={() => void saveInfo()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.save}</button>
             </div>
           </div>
         </div>

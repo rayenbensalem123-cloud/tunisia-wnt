@@ -18,9 +18,9 @@ export const todayIso = () => new Date().toISOString().slice(0, 10)
 export type Person = { id: number; name: string; birthdate?: string | null; teamCategory?: string }
 
 const CARD = 'bg-white rounded-xl border border-zinc-100 p-3 shadow-sm'
-const LABEL = 'text-[7px] font-black uppercase tracking-wider text-zinc-400'
+const LABEL = 'text-[9px] font-black uppercase tracking-wider text-zinc-400'
 const INPUT = 'w-full px-3 py-2 rounded-xl border border-[rgba(var(--line-rgb),.18)] bg-[var(--c-surface)] text-[var(--c-text)] text-xs font-bold outline-none focus:border-[#E30613]/50'
-const FIELD_LABEL = 'block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5'
+const FIELD_LABEL = 'block text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5'
 
 const statusTone = (s: PassportStatus['status']) =>
   s === 'ok' ? 'bg-emerald-500/10 text-emerald-700'
@@ -50,18 +50,18 @@ export function PassportCard({ memberId, expiry, canEdit, onSaved }: {
   return (
     <div className="rounded-xl border border-[rgba(var(--line-rgb),.16)] bg-[var(--c-deep)] p-3 space-y-2">
       <p className={FIELD_LABEL}>{tr.travel.passportTitle}</p>
-      <span className={`inline-block px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-wider ${statusTone(st.status)}`}>{label}</span>
+      <span className={`inline-block px-2 py-1 rounded-md text-[11px] font-black uppercase tracking-wider ${statusTone(st.status)}`}>{label}</span>
       {canEdit ? (
         <div className="flex items-center gap-2">
           <div className="flex-1"><DatePicker value={draft} onChange={setDraft} placeholder={tr.travel.passportExpiry}
             minYear={new Date().getFullYear() - 5} maxYear={new Date().getFullYear() + 15} /></div>
           <button type="button" onClick={save} disabled={draft === expiry}
-            className="px-3 py-2 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider disabled:opacity-40">{tr.travel.save}</button>
+            className="px-3 py-2 rounded-xl bg-[#E30613] text-white text-[11px] font-black uppercase tracking-wider disabled:opacity-40">{tr.travel.save}</button>
         </div>
       ) : (
-        <p className="text-[10px] font-semibold text-[var(--c-textDim)]">{tr.travel.noPermission}</p>
+        <p className="text-[12px] font-semibold text-[var(--c-textDim)]">{tr.travel.noPermission}</p>
       )}
-      {msg && <p className="text-[9px] font-black uppercase tracking-wider text-[var(--c-textDim)]">{msg}</p>}
+      {msg && <p className="text-[11px] font-black uppercase tracking-wider text-[var(--c-textDim)]">{msg}</p>}
     </div>
   )
 }
@@ -75,7 +75,7 @@ export function TravelAlertsCard({ people, expiries }: { people: Person[]; expir
   const short = rows.filter(r => r.st.status === 'short').sort((a, b) => (a.st as any).daysLeft - (b.st as any).daysLeft)
   const missing = rows.filter(r => r.st.status === 'missing')
   const clean = !expired.length && !short.length && !missing.length
-  const chip = (cls: string, text: string) => <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${cls}`}>{text}</span>
+  const chip = (cls: string, text: string) => <span className={`text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${cls}`}>{text}</span>
   return (
     <div className={CARD}>
       <div className="flex items-center justify-between mb-2">
@@ -85,16 +85,16 @@ export function TravelAlertsCard({ people, expiries }: { people: Person[]; expir
           {chip('bg-[#f6c744]/15 text-[#a9822e]', `${short.length} ${tr.travel.shortLabel}`)}
         </div>
       </div>
-      {clean ? <p className="text-[10px] text-zinc-400 py-2 text-center">{tr.travel.alertsEmpty}</p> : (
+      {clean ? <p className="text-[12px] text-zinc-400 py-2 text-center">{tr.travel.alertsEmpty}</p> : (
         <div className="space-y-1">
           {[...expired, ...short].map(({ p, st }) => (
-            <div key={p.id} className="flex items-center justify-between text-[11px]">
+            <div key={p.id} className="flex items-center justify-between text-[13px]">
               <span className="font-bold text-zinc-700">{p.name}</span>
               {chip(statusTone(st.status), st.status === 'expired' ? tr.travel.expiredLabel : fill(tr.travel.daysLeft, { n: (st as any).daysLeft }))}
             </div>
           ))}
           {missing.length > 0 && (
-            <p className="pt-1.5 text-[10px] text-zinc-500"><span className="font-black uppercase tracking-wider text-[8px] text-zinc-400">{tr.travel.missingLabel} ({missing.length}): </span>
+            <p className="pt-1.5 text-[12px] text-zinc-500"><span className="font-black uppercase tracking-wider text-[10px] text-zinc-400">{tr.travel.missingLabel} ({missing.length}): </span>
               {missing.map(r => r.p.name).join(', ')}</p>
           )}
         </div>
@@ -118,12 +118,12 @@ export function BirthdaysEligibilityCard({ people, category }: { people: Person[
     <div className={`${CARD} space-y-3`}>
       <div>
         <p className={`${LABEL} mb-2`}>{tr.travel.birthdaysTitle}</p>
-        {birthdays.length === 0 ? <p className="text-[10px] text-zinc-400">{tr.travel.noBirthdays}</p> : (
+        {birthdays.length === 0 ? <p className="text-[12px] text-zinc-400">{tr.travel.noBirthdays}</p> : (
           <div className="space-y-1">
             {birthdays.slice(0, 8).map(b => (
-              <div key={b.id} className="flex items-center justify-between text-[11px]">
+              <div key={b.id} className="flex items-center justify-between text-[13px]">
                 <span className="font-bold text-zinc-700">{b.name} <span className="font-semibold text-zinc-400">· {fill(tr.travel.turns, { n: b.turning })}</span></span>
-                <span className={`text-[9px] font-black uppercase tracking-wider ${b.daysAway === 0 ? 'text-[#E30613]' : 'text-zinc-400'}`}>
+                <span className={`text-[11px] font-black uppercase tracking-wider ${b.daysAway === 0 ? 'text-[#E30613]' : 'text-zinc-400'}`}>
                   {b.daysAway === 0 ? tr.travel.today : fill(tr.travel.inDays, { n: b.daysAway })}</span>
               </div>
             ))}
@@ -134,21 +134,21 @@ export function BirthdaysEligibilityCard({ people, category }: { people: Person[
         <div className="border-t border-zinc-100 pt-3 space-y-2">
           <div className="flex items-center justify-between">
             <p className={LABEL}>{tr.travel.eligibilityTitle} · U-{limit}</p>
-            <label className="flex items-center gap-1.5 text-[8px] font-black uppercase tracking-wider text-zinc-400">{tr.travel.tournamentYear}
-              <select value={year} onChange={e => setYear(Number(e.target.value))} className="px-1.5 py-1 rounded-md border border-zinc-200 bg-white text-[10px] font-bold text-zinc-700">
+            <label className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-zinc-400">{tr.travel.tournamentYear}
+              <select value={year} onChange={e => setYear(Number(e.target.value))} className="px-1.5 py-1 rounded-md border border-zinc-200 bg-white text-[12px] font-bold text-zinc-700">
                 {Array.from({ length: 6 }, (_, i) => thisYear + i).map(y => <option key={y} value={y}>{y}</option>)}
               </select>
             </label>
           </div>
-          {over.length === 0 && ageing.length === 0 && unknown.length === 0 && <p className="text-[10px] text-zinc-400">{tr.travel.allEligible}</p>}
+          {over.length === 0 && ageing.length === 0 && unknown.length === 0 && <p className="text-[12px] text-zinc-400">{tr.travel.allEligible}</p>}
           {[{ list: over, label: tr.travel.overAge, cls: 'bg-[#e3062c]/10 text-[#E30613]' }, { list: ageing, label: tr.travel.ageingOut, cls: 'bg-[#f6c744]/15 text-[#a9822e]' }].map(g => g.list.map(({ p, e }) => (
-            <div key={`${g.label}${p.id}`} className="flex items-center justify-between text-[11px]">
+            <div key={`${g.label}${p.id}`} className="flex items-center justify-between text-[13px]">
               <span className="font-bold text-zinc-700">{p.name} <span className="font-semibold text-zinc-400">· {fill(tr.travel.ageInYear, { n: (e as any).ageInYear, y: year })}</span></span>
-              <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${g.cls}`}>{g.label}</span>
+              <span className={`text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${g.cls}`}>{g.label}</span>
             </div>
           )))}
-          {unknown.length > 0 && <p className="text-[10px] text-zinc-500"><span className="font-black uppercase tracking-wider text-[8px] text-zinc-400">{tr.travel.noBirthdate} ({unknown.length}): </span>{unknown.map(x => x.p.name).join(', ')}</p>}
-          <p className="text-[9px] text-zinc-400 leading-snug">{tr.travel.ruleNote}</p>
+          {unknown.length > 0 && <p className="text-[12px] text-zinc-500"><span className="font-black uppercase tracking-wider text-[10px] text-zinc-400">{tr.travel.noBirthdate} ({unknown.length}): </span>{unknown.map(x => x.p.name).join(', ')}</p>}
+          <p className="text-[11px] text-zinc-400 leading-snug">{tr.travel.ruleNote}</p>
         </div>
       )}
     </div>
@@ -215,14 +215,14 @@ export function TripPanel({ type, eventId, startIso, endIso, people, canManage, 
   )
 
   if (!loaded) return null
-  if (!canManage && !hasPlan && !Object.keys(rows).length) return hideWhenEmpty ? null : <p className="text-[11px] font-semibold text-[var(--c-textDim)] py-4">{tr.travel.tripEmpty}</p>
+  if (!canManage && !hasPlan && !Object.keys(rows).length) return hideWhenEmpty ? null : <p className="text-[13px] font-semibold text-[var(--c-textDim)] py-4">{tr.travel.tripEmpty}</p>
 
   return (
     <div className="space-y-5">
-      {!canManage && <p className="text-[10px] font-semibold text-[var(--c-textDim)]">{tr.travel.readOnlyNote}</p>}
+      {!canManage && <p className="text-[12px] font-semibold text-[var(--c-textDim)]">{tr.travel.readOnlyNote}</p>}
       {(canManage || hasPlan) && (
         <section className="space-y-3">
-          <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{tr.travel.tripPlan}</h3>
+          <h3 className="text-[12px] font-black uppercase tracking-widest text-[var(--c-text)]">{tr.travel.tripPlan}</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {date('depart_date', tr.travel.departDate)}{date('return_date', tr.travel.returnDate)}
             {text('depart_from', tr.travel.departFrom)}{text('arrive_to', tr.travel.arriveTo)}
@@ -231,13 +231,13 @@ export function TripPanel({ type, eventId, startIso, endIso, people, canManage, 
             {date('check_in', tr.travel.checkIn)}{date('check_out', tr.travel.checkOut)}
           </div>
           {text('notes', tr.travel.notes)}
-          {canManage && <button type="button" onClick={savePlan} className="px-4 py-2 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider">{tr.travel.save}</button>}
+          {canManage && <button type="button" onClick={savePlan} className="px-4 py-2 rounded-xl bg-[#E30613] text-white text-[11px] font-black uppercase tracking-wider">{tr.travel.save}</button>}
         </section>
       )}
 
       <section className="space-y-2">
-        <h3 className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{canManage ? tr.travel.people : tr.travel.myTrip}</h3>
-        {people.length === 0 && <p className="text-[11px] font-semibold text-[var(--c-textDim)]">{tr.travel.noPeople}</p>}
+        <h3 className="text-[12px] font-black uppercase tracking-widest text-[var(--c-text)]">{canManage ? tr.travel.people : tr.travel.myTrip}</h3>
+        {people.length === 0 && <p className="text-[13px] font-semibold text-[var(--c-textDim)]">{tr.travel.noPeople}</p>}
         <div className="space-y-2">
           {people.filter(p => canManage || rows[p.id]).map(p => {
             const r = rowOf(p.id)
@@ -246,7 +246,7 @@ export function TripPanel({ type, eventId, startIso, endIso, people, canManage, 
               <div key={p.id} className="rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-deep)] p-3 space-y-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-xs font-black text-[var(--c-text)]">{p.name}</span>
-                  {ps && <span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${statusTone(ps.status)}`}>
+                  {ps && <span className={`text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${statusTone(ps.status)}`}>
                     {tr.travel.passport}: {ps.status === 'missing' ? tr.travel.missingLabel : ps.status === 'expired' ? tr.travel.expiredLabel : ps.status === 'short' ? tr.travel.shortLabel : 'OK'}</span>}
                 </div>
                 <div className="grid grid-cols-3 gap-2">
@@ -264,7 +264,7 @@ export function TripPanel({ type, eventId, startIso, endIso, people, canManage, 
           })}
         </div>
       </section>
-      {msg && <p className="text-[9px] font-black uppercase tracking-wider text-[var(--c-textDim)]">{msg}</p>}
+      {msg && <p className="text-[11px] font-black uppercase tracking-wider text-[var(--c-textDim)]">{msg}</p>}
     </div>
   )
 }

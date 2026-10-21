@@ -8,7 +8,7 @@ import ThemeToggle from "@/components/theme-toggle"
 import LanguageToggle from "@/components/language-toggle"
 
 const FIELD = "w-full rounded-xl border border-white/15 bg-black/25 pl-11 pr-4 py-3.5 text-sm font-semibold text-white outline-none transition-all placeholder:text-white/30 focus:border-[#e3062c]/80 focus:ring-4 focus:ring-[#e3062c]/15"
-const BTN = "mt-5 w-full rounded-xl bg-gradient-to-r from-[#e3062c] to-[#8f0319] py-3.5 text-[10px] font-black uppercase tracking-[.2em] text-white shadow-lg shadow-[#e3062c]/30 hover:shadow-[#e3062c]/50 transition-all disabled:opacity-45"
+const BTN = "mt-5 w-full rounded-xl bg-gradient-to-r from-[#e3062c] to-[#8f0319] py-3.5 text-[12px] font-black uppercase tracking-[.2em] text-white shadow-lg shadow-[#e3062c]/30 hover:shadow-[#e3062c]/50 transition-all disabled:opacity-45"
 
 const MIN = 6
 
@@ -47,10 +47,10 @@ function ResetPasswordForm() {
         <div className="backdrop-blur-xl bg-white/[0.07] border border-white/15 rounded-3xl shadow-2xl p-7 mt-8 w-full max-w-md">
           <div className="h-[3px] w-14 mx-auto rounded-full bg-gradient-to-r from-[#e3062c] to-[#f6c744]" />
           {!token ? (
-            <p className="mt-6 text-center text-[11px] font-bold text-white/85">{tr.resetPassword.invalidLink}</p>
+            <p className="mt-6 text-center text-[13px] font-bold text-white/85">{tr.resetPassword.invalidLink}</p>
           ) : done ? (
             <div className="mt-6 space-y-4 text-center">
-              <p className="text-[11px] font-bold text-white/85 leading-relaxed">{tr.resetPassword.success}</p>
+              <p className="text-[13px] font-bold text-white/85 leading-relaxed">{tr.resetPassword.success}</p>
               <a href="/" className={`${BTN} inline-block text-center`}>{tr.resetPassword.goToLogin}</a>
             </div>
           ) : (
@@ -63,7 +63,7 @@ function ResetPasswordForm() {
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><Key size={15} /></span>
                 <input type="password" autoComplete="new-password" placeholder={tr.passwordModal.confirmPassword} value={confirm} onChange={e => setConfirm(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} className={FIELD} />
               </div>
-              {err && <p className="text-center text-[9px] font-black uppercase tracking-widest text-[#ff4f66]">{err}</p>}
+              {err && <p className="text-center text-[11px] font-black uppercase tracking-widest text-[#ff4f66]">{err}</p>}
               <button disabled={busy} onClick={submit} className={BTN}>{busy ? "..." : tr.resetPassword.save}</button>
             </div>
           )}

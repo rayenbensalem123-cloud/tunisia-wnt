@@ -152,11 +152,11 @@ const LOGIN_CARD_STYLE = "backdrop-blur-xl bg-white/[0.07] border border-white/1
 const B_ADORN = "absolute inset-0 bg-[radial-gradient(1100px_480px_at_50%_-180px,rgba(23,60,120,.18),transparent_70%)] pointer-events-none"
 const B_FIELD = "w-full rounded-xl border border-white/15 bg-black/25 pl-11 pr-4 py-3.5 text-sm font-semibold text-white outline-none transition-all placeholder:text-white/30 focus:border-[#f6c744]/70 focus:ring-4 focus:ring-[#f6c744]/10"
 const B_FIELD_KEY = "w-full rounded-xl border border-white/15 bg-black/25 pl-11 pr-4 py-3.5 text-sm font-semibold text-white outline-none transition-all placeholder:text-white/30 focus:border-[#e3062c]/80 focus:ring-4 focus:ring-[#e3062c]/15"
-const B_BTN = "mt-5 w-full rounded-xl bg-gradient-to-r from-[#e3062c] to-[#8f0319] py-3.5 text-[10px] font-black uppercase tracking-[.2em] text-white shadow-lg shadow-[#e3062c]/30 hover:shadow-[#e3062c]/50 transition-all disabled:opacity-45"
+const B_BTN = "mt-5 w-full rounded-xl bg-gradient-to-r from-[#e3062c] to-[#8f0319] py-3.5 text-[12px] font-black uppercase tracking-[.2em] text-white shadow-lg shadow-[#e3062c]/30 hover:shadow-[#e3062c]/50 transition-all disabled:opacity-45"
 
 // ── Header & menu button styles (unified navy/gold) ──
 // Small "23'" chip for a recorded event minute (nothing is shown for older matches without minutes)
-const minuteChip=(m:any,k:string)=>m?.eventMinutes?.[k]!=null?<span className="px-1.5 py-0.5 rounded bg-[var(--c-panel4)] text-[9px] font-black text-[var(--c-text)]">{m.eventMinutes[k]}{"'"}</span>:null
+const minuteChip=(m:any,k:string)=>m?.eventMinutes?.[k]!=null?<span className="px-1.5 py-0.5 rounded bg-[var(--c-panel4)] text-[11px] font-black text-[var(--c-text)]">{m.eventMinutes[k]}{"'"}</span>:null
 // Post-match video library: turn a pasted YouTube/Vimeo link into an embeddable
 // player URL. Returns null for anything else so the UI can reject it up front
 // rather than silently rendering a broken iframe.
@@ -178,7 +178,7 @@ const toEmbedUrl=(raw:string):string|null=>{
     return null
   }catch{return null}
 }
-const HEADER_BTN = "flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] whitespace-nowrap"
+const HEADER_BTN = "flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[11px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] whitespace-nowrap"
 const HEADER_ICON_BTN = "p-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)]"
 
 const FedBg=()=>(
@@ -217,7 +217,7 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
         <div className="flex flex-col items-center text-center">
           <img src="/ftf-logo.png" className="h-20 drop-shadow-[0_12px_30px_rgba(0,0,0,.55)]" alt=""/>
           <h2 className="mt-8 text-3xl font-black uppercase tracking-tight text-white leading-none">Register</h2>
-          <p className="mt-3 text-[9px] font-bold uppercase tracking-[.4em] text-[#f6c744]">Fédération Tunisienne de Football</p>
+          <p className="mt-3 text-[11px] font-bold uppercase tracking-[.4em] text-[#f6c744]">Fédération Tunisienne de Football</p>
         </div>
         <div className={`${LOGIN_CARD_STYLE} mt-8 w-full max-w-md`}>
           <div className="h-[3px] w-14 mx-auto rounded-full bg-gradient-to-r from-[#e3062c] to-[#f6c744]"/>
@@ -239,21 +239,21 @@ const RegisterScreen = ({onBack}:{onBack:()=>void}) => {
               <input type="password" placeholder={tr.login.password} value={p} onChange={e=>setP(e.target.value)} className={`${B_FIELD_KEY} tracking-[.25em]`}/>
             </div>
             <div>
-              <div className="text-[8px] font-black uppercase tracking-widest text-white/45">I&apos;m joining as</div>
+              <div className="text-[10px] font-black uppercase tracking-widest text-white/45">I&apos;m joining as</div>
               <div className="mt-1.5 grid grid-cols-2 gap-2">
-                <button type="button" onClick={()=>setRole("staff")} className={`relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all ${role==="staff"?"border-[#f6c744] bg-[#f6c744] text-[#0c1f3d] shadow-[0_0_16px_rgba(246,199,68,.25)]":"border-white/15 bg-white/5 text-white/55 hover:border-white/35 hover:text-white"}`}>
+                <button type="button" onClick={()=>setRole("staff")} className={`relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border text-[11px] font-black uppercase tracking-widest transition-all ${role==="staff"?"border-[#f6c744] bg-[#f6c744] text-[#0c1f3d] shadow-[0_0_16px_rgba(246,199,68,.25)]":"border-white/15 bg-white/5 text-white/55 hover:border-white/35 hover:text-white"}`}>
                   <BriefcaseBusiness size={13}/>Staff
                 </button>
-                <button type="button" onClick={()=>setRole("player")} className={`relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border text-[9px] font-black uppercase tracking-widest transition-all ${role==="player"?"border-[#e3062c] bg-[#e3062c] text-white shadow-[0_0_16px_rgba(227,6,44,.3)]":"border-white/15 bg-white/5 text-white/55 hover:border-white/35 hover:text-white"}`}>
+                <button type="button" onClick={()=>setRole("player")} className={`relative flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg border text-[11px] font-black uppercase tracking-widest transition-all ${role==="player"?"border-[#e3062c] bg-[#e3062c] text-white shadow-[0_0_16px_rgba(227,6,44,.3)]":"border-white/15 bg-white/5 text-white/55 hover:border-white/35 hover:text-white"}`}>
                   ⚽ Player
                 </button>
               </div>
             </div>
-            {msg&&<p className="text-center text-[9px] font-black uppercase tracking-widest text-zinc-400">{msg}</p>}
+            {msg&&<p className="text-center text-[11px] font-black uppercase tracking-widest text-zinc-400">{msg}</p>}
             <button disabled={busy} className={B_BTN}>{busy?"...":"Register"}</button>
           </form>
-          <p className="mt-5 text-center text-[8px] font-bold uppercase tracking-widest text-white/45">After registering, wait for admin approval.</p>
-          <button onClick={onBack} className="mt-4 w-full text-[9px] font-black uppercase tracking-widest text-white/50 hover:text-white transition-all">← Back to Login</button>
+          <p className="mt-5 text-center text-[10px] font-bold uppercase tracking-widest text-white/45">After registering, wait for admin approval.</p>
+          <button onClick={onBack} className="mt-4 w-full text-[11px] font-black uppercase tracking-widest text-white/50 hover:text-white transition-all">← Back to Login</button>
         </div>
       </div>
     </div>
@@ -323,13 +323,13 @@ const ForgotPasswordScreen = ({onBack}:{onBack:()=>void}) => {
         <div className="flex flex-col items-center text-center">
           <img src="/ftf-logo.png" className="h-20 drop-shadow-[0_12px_30px_rgba(0,0,0,.55)]" alt=""/>
           <h2 className="mt-8 text-3xl font-black uppercase tracking-tight text-white leading-none">{tr.forgotPassword.title}</h2>
-          <p className="mt-3 text-[9px] font-bold uppercase tracking-[.4em] text-[#f6c744]">{tr.forgotPassword.subtitle}</p>
+          <p className="mt-3 text-[11px] font-bold uppercase tracking-[.4em] text-[#f6c744]">{tr.forgotPassword.subtitle}</p>
         </div>
         <div className={`${LOGIN_CARD_STYLE} mt-8 w-full max-w-md`}>
           <div className="h-[3px] w-14 mx-auto rounded-full bg-gradient-to-r from-[#e3062c] to-[#f6c744]"/>
           {msg ? (
             <div className="mt-6 space-y-4 text-center">
-              <p className="text-[11px] font-bold text-white/85 leading-relaxed">{msg}</p>
+              <p className="text-[13px] font-bold text-white/85 leading-relaxed">{msg}</p>
               <button onClick={onBack} className={B_BTN}>{tr.forgotPassword.backToLogin}</button>
             </div>
           ) : (
@@ -342,9 +342,9 @@ const ForgotPasswordScreen = ({onBack}:{onBack:()=>void}) => {
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><Mail size={15}/></span>
                 <input type="email" placeholder={tr.emailModal.emailLabel} value={email} onChange={e=>setEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&submit()} className={B_FIELD}/>
               </div>
-              {err&&<p className="text-center text-[9px] font-black uppercase tracking-widest text-[#ff4f66]">{err}</p>}
+              {err&&<p className="text-center text-[11px] font-black uppercase tracking-widest text-[#ff4f66]">{err}</p>}
               <button disabled={busy} onClick={submit} className={B_BTN}>{busy?"...":tr.forgotPassword.send}</button>
-              <button onClick={onBack} className="mt-1 w-full text-[9px] font-black uppercase tracking-widest text-white/50 hover:text-[#f6c744] transition-all">{tr.forgotPassword.backToLogin}</button>
+              <button onClick={onBack} className="mt-1 w-full text-[11px] font-black uppercase tracking-widest text-white/50 hover:text-[#f6c744] transition-all">{tr.forgotPassword.backToLogin}</button>
             </div>
           )}
         </div>
@@ -384,7 +384,7 @@ const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
         <div className="flex flex-col items-center text-center">
           <img src="/ftf-logo.png" className="h-20 drop-shadow-[0_12px_30px_rgba(0,0,0,.55)]" alt=""/>
           <h2 className="mt-8 text-3xl font-black uppercase tracking-tight text-white leading-none">{tr.login.systemLocked}</h2>
-          <p className="mt-3 text-[9px] font-bold uppercase tracking-[.4em] text-[#f6c744]">{tr.login.authRequired}</p>
+          <p className="mt-3 text-[11px] font-bold uppercase tracking-[.4em] text-[#f6c744]">{tr.login.authRequired}</p>
         </div>
         <div className={`${LOGIN_CARD_STYLE} mt-8 w-full max-w-md`}>
           <div className="h-[3px] w-14 mx-auto rounded-full bg-gradient-to-r from-[#e3062c] to-[#f6c744]"/>
@@ -397,13 +397,13 @@ const LoginScreen = ({onLogin}:{onLogin:()=>void}) => {
               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40"><Key size={15}/></span>
               <input type="password" placeholder={tr.login.accessKey} value={pw} onChange={e=>setPw(e.target.value)} onKeyDown={e=>e.key==="Enter"&&doLogin()} className={`${B_FIELD_KEY} tracking-[.25em] ${err?'border-[#ff4f66] ring-4 ring-[#ff4f66]/15':''}`}/>
             </div>
-            {err&&<p className="text-center text-[9px] font-black uppercase tracking-widest text-[#ff4f66]">{err}</p>}
+            {err&&<p className="text-center text-[11px] font-black uppercase tracking-widest text-[#ff4f66]">{err}</p>}
             <button disabled={busy} onClick={doLogin} className={B_BTN}>{busy?"...":tr.login.authorize}</button>
-            <button onClick={()=>setForgot(true)} className="mt-1 w-full text-[9px] font-black uppercase tracking-widest text-white/50 hover:text-[#f6c744] transition-all">{tr.forgotPassword.link}</button>
-            <button onClick={()=>setReg(true)} className="mt-1 w-full text-[9px] font-black uppercase tracking-widest text-white/50 hover:text-[#f6c744] transition-all">Register ↗</button>
+            <button onClick={()=>setForgot(true)} className="mt-1 w-full text-[11px] font-black uppercase tracking-widest text-white/50 hover:text-[#f6c744] transition-all">{tr.forgotPassword.link}</button>
+            <button onClick={()=>setReg(true)} className="mt-1 w-full text-[11px] font-black uppercase tracking-widest text-white/50 hover:text-[#f6c744] transition-all">Register ↗</button>
           </div>
         </div>
-        <p className="mt-7 text-center text-[8px] font-bold uppercase tracking-[.3em] text-white/45">Authorized federation members only</p>
+        <p className="mt-7 text-center text-[10px] font-bold uppercase tracking-[.3em] text-white/45">Authorized federation members only</p>
       </div>
     </div>
   )
@@ -436,7 +436,7 @@ const TeamSelector=({onSelect,showLeague}:{onSelect:(c:TeamCategory)=>void;showL
           </div>
           <div className="h-px w-10 bg-[#e3062c]"/>
           <h1 className="mt-4 text-3xl md:text-4xl font-black uppercase tracking-tight text-center leading-none text-[var(--c-text)]">{tr.teamSelect.eliteSquad}</h1>
-          <p className="mt-3 text-[9px] font-bold uppercase tracking-[.5em] text-[#f6c744]">{tr.teamSelect.selectCat}</p>
+          <p className="mt-3 text-[11px] font-bold uppercase tracking-[.5em] text-[#f6c744]">{tr.teamSelect.selectCat}</p>
         </div>
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 w-full max-w-6xl">
@@ -457,12 +457,12 @@ const TeamSelector=({onSelect,showLeague}:{onSelect:(c:TeamCategory)=>void;showL
                     <path d="M40 2 L78 18 L78 48 C78 68 40 88 40 88 C40 88 2 68 2 48 L2 18 Z" stroke="#f6c744" strokeWidth="3" strokeOpacity=".9"/>
                     <text x="40" y="50" textAnchor="middle" dominantBaseline="middle" fontSize="30" fontWeight="900" fill="#ffffff">{t.abbr}</text>
                   </svg>
-                  <span className="text-[8px] font-bold uppercase tracking-widest text-white/70 drop-shadow-[0_1px_4px_rgba(0,0,0,.7)]">{t.tag}</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-white/70 drop-shadow-[0_1px_4px_rgba(0,0,0,.7)]">{t.tag}</span>
                 </div>
                 <div className="mt-auto">
                   <h2 className={`${t.cat==="LIGUE"?"text-[24px]":"text-[30px]"} font-black uppercase tracking-tight text-white leading-none drop-shadow-[0_2px_12px_rgba(0,0,0,.65)]`}>{t.label}</h2>
-                  <p className="mt-1.5 text-[9px] font-bold uppercase tracking-[.28em] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,.7)]">{t.sub}</p>
-                  <div className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/25 text-[9px] font-black uppercase tracking-widest text-[#f6c744] group-hover:bg-[#e3062c] group-hover:border-[#ff5f72]/60 group-hover:text-white transition-colors duration-300">
+                  <p className="mt-1.5 text-[11px] font-bold uppercase tracking-[.28em] text-white/80 drop-shadow-[0_1px_4px_rgba(0,0,0,.7)]">{t.sub}</p>
+                  <div className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/10 backdrop-blur-sm border border-white/25 text-[11px] font-black uppercase tracking-widest text-[#f6c744] group-hover:bg-[#e3062c] group-hover:border-[#ff5f72]/60 group-hover:text-white transition-colors duration-300">
                     {tr.teamSelect.enter} <ChevronRight size={14} className="transition-transform duration-300 group-hover:translate-x-1"/>
                   </div>
                 </div>
@@ -472,7 +472,7 @@ const TeamSelector=({onSelect,showLeague}:{onSelect:(c:TeamCategory)=>void;showL
         </div>
       </div>
       <div className="relative z-10 text-center pb-6">
-        <p className="text-[8px] font-black uppercase tracking-[.5em] text-[#f6c744]/80">Fédération Tunisienne de Football</p>
+        <p className="text-[10px] font-black uppercase tracking-[.5em] text-[#f6c744]/80">Fédération Tunisienne de Football</p>
       </div>
     </div>
   )
@@ -1057,8 +1057,8 @@ export default function EliteSquadApp() {
     return(
       <div className="mb-4 rounded-xl border border-zinc-200 bg-zinc-50 p-3">
         <div className="flex items-center justify-between mb-2">
-          <p className={`text-[9px] font-black uppercase tracking-wider ${tMap[color]}`}>{title}</p>
-          <button onClick={onClose} className="text-[9px] font-bold text-zinc-400 hover:text-zinc-600">✕ Cancel</button>
+          <p className={`text-[11px] font-black uppercase tracking-wider ${tMap[color]}`}>{title}</p>
+          <button onClick={onClose} className="text-[11px] font-bold text-zinc-400 hover:text-zinc-600">✕ Cancel</button>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {players.filter(pid=>!filter||filter(pid)).map((pid:number)=>{
@@ -1115,7 +1115,7 @@ export default function EliteSquadApp() {
 
     const CARD="relative overflow-hidden bg-white rounded-xl border border-zinc-100 shadow-sm"
     const STRIP="absolute inset-x-0 top-0 h-[2px] bg-gradient-to-r from-[#8f0319] via-[#E30613] to-[#f6c744] opacity-70"
-    const LABEL="text-[7px] font-black uppercase tracking-[.22em] text-zinc-400"
+    const LABEL="text-[9px] font-black uppercase tracking-[.22em] text-zinc-400"
     const gRed="bg-gradient-to-br from-[#ff4f66] to-[#E30613] bg-clip-text text-transparent"
     const gGold="bg-gradient-to-br from-[#fff3c4] via-[#f6c744] to-[#a9822e] bg-clip-text text-transparent"
     const gBlue="bg-gradient-to-br from-[#7ec3ff] to-[#2B6CB0] bg-clip-text text-transparent"
@@ -1151,11 +1151,11 @@ export default function EliteSquadApp() {
             <div className={STRIP}/>
             <div className="flex items-center justify-between">
               <p className={LABEL}>Recent Form</p>
-              <p className="text-[9px] font-black text-zinc-500">{recent.filter(r=>r==="W").length}W · {recent.filter(r=>r==="D").length}D · {recent.filter(r=>r==="L").length}L</p>
+              <p className="text-[11px] font-black text-zinc-500">{recent.filter(r=>r==="W").length}W · {recent.filter(r=>r==="D").length}D · {recent.filter(r=>r==="L").length}L</p>
             </div>
             <div className="flex gap-1.5">
-              {recent.length===0&&<p className="text-[10px] text-zinc-400">No played matches yet</p>}
-              {recent.map((r,i)=><div key={i} className={`w-8 h-8 rounded-lg flex items-center justify-center text-[11px] font-black ${r==="W"?"bg-gradient-to-br from-[#fff3c4] to-[#f6c744] text-[#1a1408] shadow-[0_0_14px_rgba(246,199,68,.35)]":r==="D"?"bg-white/5 text-zinc-500 border border-[rgba(213,200,174,.22)]":"bg-gradient-to-br from-[#ff4f66] to-[#E30613] text-white shadow-[0_0_12px_rgba(227,6,44,.3)]"} hover:scale-110 transition-transform`}>{r}</div>)}
+              {recent.length===0&&<p className="text-[12px] text-zinc-400">No played matches yet</p>}
+              {recent.map((r,i)=><div key={i} className={`w-8 h-8 rounded-lg flex items-center justify-center text-[13px] font-black ${r==="W"?"bg-gradient-to-br from-[#fff3c4] to-[#f6c744] text-[#1a1408] shadow-[0_0_14px_rgba(246,199,68,.35)]":r==="D"?"bg-white/5 text-zinc-500 border border-[rgba(213,200,174,.22)]":"bg-gradient-to-br from-[#ff4f66] to-[#E30613] text-white shadow-[0_0_12px_rgba(227,6,44,.3)]"} hover:scale-110 transition-transform`}>{r}</div>)}
             </div>
           </div>
         </div>
@@ -1174,15 +1174,15 @@ export default function EliteSquadApp() {
               const pct=squad.length?Math.round(n/squad.length*100):0
               return(
                 <div key={pos} className="flex items-center gap-2.5 mb-2.5 last:mb-0">
-                  <span className="w-7 text-[7.5px] font-black tracking-[.1em] text-zinc-400">{tag}</span>
+                  <span className="w-7 text-[9.5px] font-black tracking-[.1em] text-zinc-400">{tag}</span>
                   <div className="flex-1 h-2 rounded-full bg-zinc-100 overflow-hidden">
                     <div className={`h-full rounded-full bg-gradient-to-r ${grad} transition-all duration-700`} style={{width:`${pct}%`}}/>
                   </div>
-                  <span className="w-5 text-right text-[12px] font-black">{n}</span>
+                  <span className="w-5 text-right text-[14px] font-black">{n}</span>
                 </div>
               )
             })}
-            {squad.length===0&&<p className="text-[10px] text-zinc-400 py-4 text-center">No players in this category</p>}
+            {squad.length===0&&<p className="text-[12px] text-zinc-400 py-4 text-center">No players in this category</p>}
           </div>
         </div>
 
@@ -1191,13 +1191,13 @@ export default function EliteSquadApp() {
           {boards.map(board=>(
             <div key={board.title} className={`${CARD} p-3.5`}>
               <div className={STRIP}/>
-              <p className="text-[8.5px] font-black uppercase tracking-[.2em] text-zinc-600 flex items-center gap-2 mb-1.5"><span className={`w-1.5 h-1.5 rounded-full ${board.color}`}/>{board.title}</p>
-              {board.data.length===0&&<p className="text-[10px] text-zinc-400 py-4 text-center">No data yet</p>}
+              <p className="text-[10.5px] font-black uppercase tracking-[.2em] text-zinc-600 flex items-center gap-2 mb-1.5"><span className={`w-1.5 h-1.5 rounded-full ${board.color}`}/>{board.title}</p>
+              {board.data.length===0&&<p className="text-[12px] text-zinc-400 py-4 text-center">No data yet</p>}
               {board.data.map((p,i)=>(
                 <div key={p.id} className="flex items-center gap-2.5 py-1.5 border-t border-zinc-100 first:border-t-0">
-                  <span className={`w-5.5 h-5.5 min-w-[22px] min-h-[22px] rounded-md flex items-center justify-center text-[9px] font-black ${medals[i]||"bg-zinc-100 text-zinc-400"}`}>{i+1}</span>
-                  <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#E30613]/10 text-[#E30613] shrink-0">{(p.position||"").slice(0,3)}</span>
-                  <span className="text-[11px] font-bold truncate text-zinc-800 flex-1">{p.name}</span>
+                  <span className={`w-5.5 h-5.5 min-w-[22px] min-h-[22px] rounded-md flex items-center justify-center text-[11px] font-black ${medals[i]||"bg-zinc-100 text-zinc-400"}`}>{i+1}</span>
+                  <span className="text-[8px] font-black px-1 py-0.5 rounded bg-[#E30613]/10 text-[#E30613] shrink-0">{(p.position||"").slice(0,3)}</span>
+                  <span className="text-[13px] font-bold truncate text-zinc-800 flex-1">{p.name}</span>
                   <span className={`text-[13px] font-black tabular-nums ${i===0?gGold:"text-zinc-500"}`}>{String((p as any)[board.key]||0)}</span>
                 </div>
               ))}
@@ -1213,19 +1213,19 @@ export default function EliteSquadApp() {
               <div className="flex items-center justify-between mb-2">
                 <p className={LABEL}>Player Welfare</p>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#e3062c]/10 text-[#E30613]">{activeInjuries.length} out</span>
-                  <span className="text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#f6c744]/15 text-[#a9822e]">{recoveringInjuries.length} recovering</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#e3062c]/10 text-[#E30613]">{activeInjuries.length} out</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded bg-[#f6c744]/15 text-[#a9822e]">{recoveringInjuries.length} recovering</span>
                 </div>
               </div>
               {activeInjuries.length===0&&recoveringInjuries.length===0?(
-                <p className="text-[10px] text-zinc-400 py-2 text-center">No active injuries in this squad</p>
+                <p className="text-[12px] text-zinc-400 py-2 text-center">No active injuries in this squad</p>
               ):(
                 <div className="space-y-1.5">
                   {[...activeInjuries,...recoveringInjuries].map((inj:any)=>{
                     const m:any=byId.get(inj.member_id)
                     return(
-                      <div key={inj.id} className="flex items-center gap-2 text-[10px] py-1 border-t border-zinc-100 first:border-t-0">
-                        <span className={`text-[6px] font-black px-1 py-0.5 rounded uppercase ${inj.status==="active"?'bg-[#e3062c]/10 text-[#E30613]':'bg-[#f6c744]/15 text-[#a9822e]'}`}>{inj.status}</span>
+                      <div key={inj.id} className="flex items-center gap-2 text-[12px] py-1 border-t border-zinc-100 first:border-t-0">
+                        <span className={`text-[8px] font-black px-1 py-0.5 rounded uppercase ${inj.status==="active"?'bg-[#e3062c]/10 text-[#E30613]':'bg-[#f6c744]/15 text-[#a9822e]'}`}>{inj.status}</span>
                         <span className="font-bold truncate text-zinc-800">{m?.name||"Unknown player"}</span>
                         <span className="text-zinc-400 truncate">{inj.injury_type}</span>
                         {inj.expected_return&&<span className="ml-auto font-black text-zinc-500 shrink-0">back {fmtDateWords(inj.expected_return)}</span>}
@@ -1266,8 +1266,8 @@ export default function EliteSquadApp() {
           <div className="w-2 h-2 rounded-full bg-[#E30613] animate-[loadDot_1.4s_ease-in-out_infinite] [animation-delay:.4s]"/>
         </div>
         <div className="flex flex-col items-center gap-1.5">
-          <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[var(--c-text)]">{tr.login.loadingDb}</p>
-          <p className="text-[7px] font-medium uppercase tracking-[0.25em] text-[#f6c744]/70">Fédération Tunisienne de Football</p>
+          <p className="text-[13px] font-bold uppercase tracking-[0.35em] text-[var(--c-text)]">{tr.login.loadingDb}</p>
+          <p className="text-[9px] font-medium uppercase tracking-[0.25em] text-[#f6c744]/70">Fédération Tunisienne de Football</p>
         </div>
       </div>
       <style>{`@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}@keyframes loadDot{0%,80%,100%{opacity:.2;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}`}</style>
@@ -1279,18 +1279,18 @@ export default function EliteSquadApp() {
       <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-[999] flex items-center gap-2 sm:gap-2.5 safe-top">
         <ThemeToggle className="p-2.5"/>
         <Dropdown trigger={
-          <button title="Language" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(246,199,68,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5"><Globe size={15}/><span className="hidden sm:inline">{lang.toUpperCase()}</span><ChevronDown size={12}/></button>
+          <button title="Language" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(246,199,68,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all text-[11px] font-black uppercase tracking-widest flex items-center gap-1.5"><Globe size={15}/><span className="hidden sm:inline">{lang.toUpperCase()}</span><ChevronDown size={12}/></button>
         }>
-          <div className="px-3.5 py-1.5 text-[8px] font-black uppercase tracking-widest text-zinc-400">Language</div>
+          <div className="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-400">Language</div>
           {(["en","fr","ar"]as const).map(l=>(
-            <button key={l} onClick={()=>setLang(l)} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-left transition-all ${lang===l?"text-[#a9822e] bg-[#fdf8ee]":"text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900"}`}>
+            <button key={l} onClick={()=>setLang(l)} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-left transition-all ${lang===l?"text-[#a9822e] bg-[#fdf8ee]":"text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900"}`}>
               <Globe size={13} className={lang===l?"text-[#a9822e]":"text-[#a9822e]/50"}/>
               <span>{l==="en"?"English":l==="fr"?"Français":"العربية"}</span>
               {lang===l&&<Check size={12} className="ml-auto"/>}
             </button>
           ))}
         </Dropdown>
-        <span className="hidden lg:inline px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.16)] bg-[#0d1f3c]/55 backdrop-blur-md text-[#f6c744]/90 text-[9px] font-black uppercase tracking-wider">{user?.username}</span>
+        <span className="hidden lg:inline px-3 py-2.5 rounded-lg border border-[rgba(246,199,68,.16)] bg-[#0d1f3c]/55 backdrop-blur-md text-[#f6c744]/90 text-[11px] font-black uppercase tracking-wider">{user?.username}</span>
         <button onClick={handleChangePassword} title="Change your password" className="p-2.5 rounded-lg border border-[rgba(148,170,210,.25)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#7ec3ff] hover:bg-[#f6c744] hover:text-[#0c1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.25)] transition-all"><Key size={15}/></button><button onClick={logout} title="Log out" className="p-2.5 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_16px_rgba(227,6,44,.35)] transition-all"><LogOut size={15}/></button>
       </div>
       <TeamSelector onSelect={selectCat} showLeague={user?.role==="admin"}/>
@@ -1329,8 +1329,8 @@ export default function EliteSquadApp() {
           </div>
           {/* Text */}
           <div className="flex flex-col items-center gap-1.5">
-            <p className="text-[11px] font-bold uppercase tracking-[0.35em] text-[var(--c-text)]">{tr.login.loadingDb}</p>
-            <p className="text-[7px] font-medium uppercase tracking-[0.25em] text-[#f6c744]/70">Fédération Tunisienne de Football</p>
+            <p className="text-[13px] font-bold uppercase tracking-[0.35em] text-[var(--c-text)]">{tr.login.loadingDb}</p>
+            <p className="text-[9px] font-medium uppercase tracking-[0.25em] text-[#f6c744]/70">Fédération Tunisienne de Football</p>
           </div>
         </div>
         <style>{`@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}@keyframes loadDot{0%,80%,100%{opacity:0.2;transform:scale(0.8)}40%{opacity:1;transform:scale(1)}}`}</style>
@@ -1348,7 +1348,7 @@ export default function EliteSquadApp() {
   // ── MAIN SQUAD VIEW ──
   return(
     <main className="ftf-portal min-h-screen bg-zinc-50 text-zinc-900 relative">
-      {!loaded&&<div className="fixed inset-0 z-[999] bg-white flex items-center justify-center"><div className="flex flex-col items-center gap-3"><div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin"/><p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Loading...</p></div></div>}
+      {!loaded&&<div className="fixed inset-0 z-[999] bg-white flex items-center justify-center"><div className="flex flex-col items-center gap-3"><div className="w-6 h-6 border-2 border-[#E30613] border-t-transparent rounded-full animate-spin"/><p className="text-[11px] font-black uppercase tracking-widest text-zinc-400">Loading...</p></div></div>}
       {/* Ambient rotating logo background */}
       <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
         <div className="absolute inset-0 flex items-center justify-center">
@@ -1382,19 +1382,19 @@ export default function EliteSquadApp() {
             <img src="/ftf-logo.png" className="h-10 shrink-0" alt=""/>
             <div className="leading-tight min-w-0">
               <h1 className="text-xs sm:text-xl font-black italic uppercase tracking-wider leading-none truncate">{tr.header.eliteSquad}</h1>
-              <p className="text-[9px] font-black text-[#E30613] uppercase tracking-[0.3em]">{catLabel(teamCat)}</p>
+              <p className="text-[11px] font-black text-[#E30613] uppercase tracking-[0.3em]">{catLabel(teamCat)}</p>
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap justify-end w-full lg:w-auto lg:grow lg:flex-nowrap">
             <div className="portal-search hidden sm:flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border w-44 transition-all focus-within:border-[#E30613]/50 focus-within:shadow-[0_0_0_3px_rgba(227,6,44,.1)]">
               <Search size={13} className="text-[var(--c-textDim)] shrink-0"/>
-              <input placeholder={tr.header.search} value={search} onChange={e=>setSearch(e.target.value)} className="bg-transparent text-[10px] font-bold outline-none w-full uppercase text-[var(--c-text)] placeholder-[var(--c-textMid)]"/>
+              <input placeholder={tr.header.search} value={search} onChange={e=>setSearch(e.target.value)} className="bg-transparent text-[12px] font-bold outline-none w-full uppercase text-[var(--c-text)] placeholder-[var(--c-textMid)]"/>
             </div>
             <button onClick={()=>setIsHistoryOpen(true)} title="Match history" className={HEADER_BTN}>
               <BookOpen size={14} className="text-[#f6c744]"/>
               <span className="hidden sm:inline">{tr.header.matches}</span>
-              {canManageUsers&&pendingMatches.length>0&&<span className="bg-amber-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingMatches.length}</span>}
-              {catMatches.length>0&&<span className="bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{catMatches.length}</span>}
+              {canManageUsers&&pendingMatches.length>0&&<span className="bg-amber-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black">{pendingMatches.length}</span>}
+              {catMatches.length>0&&<span className="bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black">{catMatches.length}</span>}
             </button>
             {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className={HEADER_BTN}>
               <Users size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">Add Match</span>
@@ -1408,13 +1408,13 @@ export default function EliteSquadApp() {
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
             <ThemeToggle className="p-2.5"/>
             <Dropdown trigger={
-              <button title={tr.common.language} className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)]">
+              <button title={tr.common.language} className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[11px] font-black uppercase tracking-widest transition-all fc-keep text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)]">
                 <Globe size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">{lang.toUpperCase()}</span><ChevronDown size={11}/>
               </button>
             }>
-              <div className="px-3.5 py-1.5 text-[8px] font-black uppercase tracking-widest text-zinc-400">{tr.common.language}</div>
+              <div className="px-3.5 py-1.5 text-[10px] font-black uppercase tracking-widest text-zinc-400">{tr.common.language}</div>
               {(["en","fr","ar"]as const).map(l=>(
-                <button key={l} onClick={()=>setLang(l)} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider transition-all text-left ${lang===l?"text-[#a9822e] bg-[#fdf8ee]":"text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900"}`}>
+                <button key={l} onClick={()=>setLang(l)} className={`w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider transition-all text-left ${lang===l?"text-[#a9822e] bg-[#fdf8ee]":"text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900"}`}>
                   <Globe size={13} className={lang===l?"text-[#a9822e]":"text-[#a9822e]/50"}/>
                   <span>{l==="en"?"English":l==="fr"?"Français":"العربية"}</span>
                   {lang===l&&<Check size={12} className="ml-auto"/>}
@@ -1430,20 +1430,20 @@ export default function EliteSquadApp() {
             <div className="hidden md:block w-px h-6 bg-zinc-200 mx-0.5"/>
 
             <Dropdown trigger={
-              <button title="Menu" className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(246,199,68,.35)] bg-[#0d1f3c]/75 backdrop-blur-md text-[9px] font-black uppercase tracking-widest transition-all fc-keep text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0d1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.22)]">
+              <button title="Menu" className="relative flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(246,199,68,.35)] bg-[#0d1f3c]/75 backdrop-blur-md text-[11px] font-black uppercase tracking-widest transition-all fc-keep text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0d1f3d] hover:border-[#f6c744] hover:shadow-[0_0_16px_rgba(246,199,68,.22)]">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 <span className="hidden sm:inline">{tr.common.menu}</span><ChevronDown size={11}/>
-                {canManageUsers&&pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[6px] font-black">{pendingCount}</span>}
+                {canManageUsers&&pendingCount>0&&<span className="absolute -top-1.5 -right-1.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[8px] font-black">{pendingCount}</span>}
               </button>
             }>
               {canManageUsers&&(<>
-                <button onClick={()=>setPendingReviewOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
-                  <Bell size={14} className="text-[#a9822e]"/>{tr.common.pendingApprovals}{pendingCount>0&&<span className="ml-auto bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{pendingCount}</span>}
+                <button onClick={()=>setPendingReviewOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                  <Bell size={14} className="text-[#a9822e]"/>{tr.common.pendingApprovals}{pendingCount>0&&<span className="ml-auto bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black">{pendingCount}</span>}
                 </button>
-                <button onClick={()=>setUsersOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <button onClick={()=>setUsersOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                   <Users size={14} className="text-[#a9822e]"/>{tr.common.manageUsers}
                 </button>
-                <button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <button onClick={async()=>{setActivityLogOpen(true);setActivityLog(await fetchActivityLog())}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                   <Activity size={14} className="text-[#a9822e]"/>{tr.common.activityLog}
                 </button>
                 <div className="h-px bg-zinc-200 my-1 mx-2"/>
@@ -1452,50 +1452,50 @@ export default function EliteSquadApp() {
                 fetchInjuriesAll={(p.viewMedical||canManageUsers)?fetchAllInjuries:undefined}
                 fetchClubReportsAll={(p.viewClubReports||canManageUsers)?fetchAllClubReports:undefined}
               /></div>}
-              <button onClick={()=>window.print()} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+              <button onClick={()=>window.print()} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#a9822e]"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                 {tr.common.print}
               </button>
-              <button onClick={()=>setUpcomingOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+              <button onClick={()=>setUpcomingOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Calendar size={14} className="text-[#a9822e]"/>Upcoming Matches
               </button>
-              {p.addMatch&&<button onClick={async()=>{setLabSlots({});setLabTemplateName("");setSquadLabOpen(true);setLabTemplates(await fetchSquadTemplates(teamCat))}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+              {p.addMatch&&<button onClick={async()=>{setLabSlots({});setLabTemplateName("");setSquadLabOpen(true);setLabTemplates(await fetchSquadTemplates(teamCat))}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Users size={14} className="text-[#a9822e]"/>Squad Lab
               </button>}
-              <button onClick={()=>setStagesOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+              <button onClick={()=>setStagesOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <CalendarRange size={14} className="text-[#a9822e]"/>Rassemblements (Camps)
               </button>
-              <button onClick={()=>{setMeetingsOpen(true);reloadMeetings()}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+              <button onClick={()=>{setMeetingsOpen(true);reloadMeetings()}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Video size={14} className="text-[#a9822e]"/>{tr.meetings.title}
               </button>
-              <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+              <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Newspaper size={14} className="text-[#a9822e]"/>Women&apos;s Football News
               </button>
-              {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+              {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[12px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <ListChecks size={14} className="text-[#a9822e]"/>Select Players (Passports)
               </button>}
-              {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+              {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[12px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <Plus size={14} className="text-[#a9822e]"/>Add Player / Staff
               </button>}
             </Dropdown>
 
             <Dropdown trigger={
               <button title="Account" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] transition-all fc-keep">
-                <div className="w-6 h-6 rounded-full border border-[#f6c744]/60 bg-gradient-to-br from-[#12305a] to-[#0c1f3d] text-[#f6c744] flex items-center justify-center text-[9px] font-black uppercase shrink-0">{(user?.username||"?")[0]}</div>
-                <span className="hidden sm:inline text-[8px] font-black uppercase tracking-wider">{user?.username}</span>
+                <div className="w-6 h-6 rounded-full border border-[#f6c744]/60 bg-gradient-to-br from-[#12305a] to-[#0c1f3d] text-[#f6c744] flex items-center justify-center text-[11px] font-black uppercase shrink-0">{(user?.username||"?")[0]}</div>
+                <span className="hidden sm:inline text-[10px] font-black uppercase tracking-wider">{user?.username}</span>
                 <ChevronDown size={11} className="text-[#a89c89]"/>
               </button>
             }>
-              <button onClick={handleChangePassword} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+              <button onClick={handleChangePassword} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Key size={14} className="text-[#a9822e]"/>Change Password
               </button>
-              <button onClick={()=>setEmailModalOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+              <button onClick={()=>setEmailModalOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Mail size={14} className="text-[#a9822e]"/>{tr.emailModal.menuLabel}
               </button>
-              <button onClick={async()=>{const d=await exportMyData();if(!d){alert(tr.account.downloadFailed);return}const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:"application/json"}));a.download=`my-data-${user?.username||"account"}.json`;a.click();URL.revokeObjectURL(a.href)}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+              <button onClick={async()=>{const d=await exportMyData();if(!d){alert(tr.account.downloadFailed);return}const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(d,null,2)],{type:"application/json"}));a.download=`my-data-${user?.username||"account"}.json`;a.click();URL.revokeObjectURL(a.href)}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Download size={14} className="text-[#a9822e]"/>{tr.account.downloadData}
               </button>
-              <button onClick={logout} className="flex items-center gap-2 px-3.5 py-2 text-[10px] font-bold text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all text-left">
+              <button onClick={logout} className="flex items-center gap-2 px-3.5 py-2 text-[12px] font-bold text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all text-left">
                 <LogOut size={14}/>Log Out
               </button>
             </Dropdown>
@@ -1506,31 +1506,31 @@ export default function EliteSquadApp() {
         </div>
         <div className="max-w-7xl mx-auto px-6 pb-3 flex items-center gap-3 flex-wrap">
           <div className="flex p-1 rounded-xl bg-zinc-100 border border-zinc-200">
-            <button onClick={()=>{setActiveTab("STATS");setFilterPos("ALL")}} className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeTab==="STATS"?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>Stats</button>
-            <button onClick={()=>{setActiveTab("PLAYERS");setFilterPos("ALL")}} className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeTab==="PLAYERS"?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>{tr.header.players}</button>
-            <button onClick={()=>{setActiveTab("COACHES");setFilterPos("ALL")}} className={`px-5 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${activeTab==="COACHES"?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>{tr.header.staff}</button>
+            <button onClick={()=>{setActiveTab("STATS");setFilterPos("ALL")}} className={`px-5 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activeTab==="STATS"?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>Stats</button>
+            <button onClick={()=>{setActiveTab("PLAYERS");setFilterPos("ALL")}} className={`px-5 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activeTab==="PLAYERS"?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>{tr.header.players}</button>
+            <button onClick={()=>{setActiveTab("COACHES");setFilterPos("ALL")}} className={`px-5 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activeTab==="COACHES"?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>{tr.header.staff}</button>
           </div>
           <div className="w-px h-6 bg-zinc-200"/>
           <div className="flex p-1 rounded-xl bg-zinc-100 border border-zinc-200">
             {(["SENIORS","U20","U17"] as TeamCategory[]).map(c=>(
-              <button key={c} onClick={()=>selectCat(c)} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest transition-all ${teamCat===c?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>
+              <button key={c} onClick={()=>selectCat(c)} className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${teamCat===c?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>
                 {c==="SENIORS"?tr.header.seniors:c==="U20"?tr.header.u20:tr.header.u17}
               </button>
             ))}
           </div>
           {(canVerifyClubReport()||p.viewClubReports)&&(<>
             <div className="w-px h-6 bg-zinc-200"/>
-            <button onClick={()=>setReportsOpen(true)} className="relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-widest border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 transition-all">
+            <button onClick={()=>setReportsOpen(true)} className="relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 transition-all">
               <ClipboardCheck size={13} className="text-[#a9822e]"/>{tr.clubReportsPage.title}
               {allClubReports.filter((r:any)=>!r.verified&&members.find((m:any)=>m.id===r.member_id)?.teamCategory===teamCat).length>0&&(
-                <span className="ml-0.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[7px] font-black">{allClubReports.filter((r:any)=>!r.verified&&members.find((m:any)=>m.id===r.member_id)?.teamCategory===teamCat).length}</span>
+                <span className="ml-0.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black">{allClubReports.filter((r:any)=>!r.verified&&members.find((m:any)=>m.id===r.member_id)?.teamCategory===teamCat).length}</span>
               )}
             </button>
           </>)}
           <div className="w-px h-6 bg-zinc-200"/>
           <div className="flex gap-1.5 flex-wrap">
             {(activeTab==="PLAYERS"?PLAYER_POSITIONS:["ALL",...COACH_POSITIONS]).map(pos=>(
-              <button key={pos} onClick={()=>setFilterPos(pos)} className={`px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-widest border transition-all ${filterPos===pos?'bg-[#E30613] border-[#E30613] text-white':'border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50'}`}>{pos}</button>
+              <button key={pos} onClick={()=>setFilterPos(pos)} className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest border transition-all ${filterPos===pos?'bg-[#E30613] border-[#E30613] text-white':'border-zinc-200 bg-white text-zinc-500 hover:bg-zinc-50'}`}>{pos}</button>
             ))}
           </div>
         </div>
@@ -1541,15 +1541,15 @@ export default function EliteSquadApp() {
       {activeTab==="PLAYERS"&&(
         <div className="max-w-7xl mx-auto px-6 py-2 flex items-center gap-3 flex-wrap border-b border-zinc-200">
           <div className="flex items-center gap-3 flex-wrap">
-            <p className="text-[7px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.key}</p>
-            <div className="flex items-center gap-1.5"><span className="w-3 h-2.5 rounded-[3px] bg-[#f6c744] inline-block shadow-sm"/><span className="text-[7px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.oneYellow}</span></div>
-            <div className="flex items-center gap-1.5"><span className="flex -space-x-1"><span className="w-3 h-2.5 rounded-[3px] bg-[#f6c744] inline-block shadow-sm"/><span className="w-3 h-2.5 rounded-[3px] bg-[#f6c744]/70 inline-block shadow-sm"/></span><span className="text-[7px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.twoYellows}</span></div>
-            <div className="flex items-center gap-1.5"><span className="w-3 h-2.5 rounded-[3px] bg-[#e3062c] inline-block shadow-sm"/><span className="text-[7px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.redCard}</span></div>
+            <p className="text-[9px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.key}</p>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-2.5 rounded-[3px] bg-[#f6c744] inline-block shadow-sm"/><span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.oneYellow}</span></div>
+            <div className="flex items-center gap-1.5"><span className="flex -space-x-1"><span className="w-3 h-2.5 rounded-[3px] bg-[#f6c744] inline-block shadow-sm"/><span className="w-3 h-2.5 rounded-[3px] bg-[#f6c744]/70 inline-block shadow-sm"/></span><span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.twoYellows}</span></div>
+            <div className="flex items-center gap-1.5"><span className="w-3 h-2.5 rounded-[3px] bg-[#e3062c] inline-block shadow-sm"/><span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">{tr.discipline.redCard}</span></div>
           </div>
-          <span className="text-[7px] text-zinc-300 italic hidden sm:block">{tr.discipline.cafRule}</span>
+          <span className="text-[9px] text-zinc-300 italic hidden sm:block">{tr.discipline.cafRule}</span>
           <div className="ml-auto flex items-center gap-2">
             <button onClick={async()=>{if(await askConfirm("Reset all yellow/red cards for all players in this category?")){setMembers((p:any[])=>p.map(m=>m.teamCategory===teamCat?{...m,yellowCards:0,redCards:0,suspended:false}:m))}}}
-              className="px-2 py-1 rounded-lg border border-zinc-200 text-[6px] font-black uppercase tracking-widest text-zinc-400 hover:text-[#ff4f66] hover:border-[#e3062c]/40 hover:bg-[#e3062c]/15 transition-all">Reset</button>
+              className="px-2 py-1 rounded-lg border border-zinc-200 text-[8px] font-black uppercase tracking-widest text-zinc-400 hover:text-[#ff4f66] hover:border-[#e3062c]/40 hover:bg-[#e3062c]/15 transition-all">Reset</button>
           </div>
         </div>
       )}
@@ -1560,7 +1560,7 @@ export default function EliteSquadApp() {
       {/* ─── PLAYER GRID ─── */}
       <div className="max-w-[1400px] mx-auto px-6 py-10 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {filtered.length===0&&(
-          <div className="col-span-6 flex flex-col items-center justify-center py-24 gap-6 text-zinc-300"><User size={64}/><p className="text-[11px] font-black uppercase tracking-[0.4em]">{tr.empty.noRecords}</p></div>
+          <div className="col-span-6 flex flex-col items-center justify-center py-24 gap-6 text-zinc-300"><User size={64}/><p className="text-[13px] font-black uppercase tracking-[0.4em]">{tr.empty.noRecords}</p></div>
         )}
         {(()=>{const numCounters: Record<string, number> = { GOALKEEPER: 0, DEFENDER: 0, MIDFIELDER: 0, FORWARD: 0, STAFF: 0 }
         return filtered.map((m,i)=>{
@@ -1576,7 +1576,7 @@ export default function EliteSquadApp() {
               {user?.role==="player"&&!!user.memberId&&m.id===user.memberId&&(
                 <div className="absolute inset-0 z-[5] rounded-[0.8rem] pointer-events-none transition-all duration-[550ms] [transition-timing-function:cubic-bezier(.16,.84,.44,1)] group-hover:scale-[1.07] group-hover:-translate-y-2">
                   <div className="absolute inset-0 rounded-[0.8rem] ring-1 ring-[#f6c744]/60 shadow-[0_0_24px_rgba(246,199,68,.25)] group-hover:ring-[#f6c744] group-hover:shadow-[0_0_34px_rgba(246,199,68,.4)] transition-all duration-300"/>
-                  <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-[#f6c744] text-[#0b1322] text-[6px] font-black uppercase tracking-[.2em] shadow-lg shadow-[#f6c744]/30">MY CARD</div>
+                  <div className="absolute top-2.5 right-2.5 px-2 py-0.5 rounded-full bg-[#f6c744] text-[#0b1322] text-[8px] font-black uppercase tracking-[.2em] shadow-lg shadow-[#f6c744]/30">MY CARD</div>
                 </div>
               )}
               {selectMode&&(
@@ -1588,7 +1588,7 @@ export default function EliteSquadApp() {
                 <div className={`absolute inset-0 z-[15] rounded-2xl pointer-events-none transition-all ${selectedIds.includes(m.id)?'ring-[3px] ring-[#e3062c] bg-[#e3062c]/10':'ring-2 ring-white/30'}`}/>
               )}
               {cs&&(
-                <div className={`absolute z-10 px-2 py-0.5 rounded-full text-[6px] font-black uppercase tracking-wider translate-x-3 translate-y-3 ${cs==="suspended"?'bg-red-600 text-white':'bg-yellow-400 text-yellow-900'}`}>
+                <div className={`absolute z-10 px-2 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider translate-x-3 translate-y-3 ${cs==="suspended"?'bg-red-600 text-white':'bg-yellow-400 text-yellow-900'}`}>
                   {cs==="suspended"?"BANNED":"WARN"}
                 </div>
               )}
@@ -1621,11 +1621,11 @@ export default function EliteSquadApp() {
       {/* ─── PASSPORT SELECTION EXPORT BAR ─── */}
       {selectMode&&(
         <div className="fixed bottom-5 left-1/2 -translate-x-1/2 z-[300] flex items-center gap-3 px-5 py-3 rounded-2xl bg-[var(--c-bg)] border border-[rgba(var(--line-rgb),.35)] shadow-2xl">
-          <span className="text-[9px] font-black uppercase tracking-[.2em] text-[var(--c-cream)]">{selectedIds.length} selected</span>
-          <button onClick={()=>setSelectedIds(filtered.map((m:any)=>m.id))} className="px-2.5 py-1.5 rounded-lg bg-white/10 text-[var(--c-cream)] text-[8px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">Select All</button>
-          <button onClick={exportSelectedPassports} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#e3062c] text-white text-[9px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Download size={11}/>Export</button>
-          <button onClick={exitSelectMode} className="px-2.5 py-1.5 rounded-lg bg-white/10 text-[var(--c-textMid)] text-[8px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">Cancel</button>
-          {exportMsg&&<span className="text-[8px] font-black uppercase tracking-widest text-[#f6c744]">{exportMsg}</span>}
+          <span className="text-[11px] font-black uppercase tracking-[.2em] text-[var(--c-cream)]">{selectedIds.length} selected</span>
+          <button onClick={()=>setSelectedIds(filtered.map((m:any)=>m.id))} className="px-2.5 py-1.5 rounded-lg bg-white/10 text-[var(--c-cream)] text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">Select All</button>
+          <button onClick={exportSelectedPassports} className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#e3062c] text-white text-[11px] font-black uppercase tracking-widest hover:bg-red-700 transition-all"><Download size={11}/>Export</button>
+          <button onClick={exitSelectMode} className="px-2.5 py-1.5 rounded-lg bg-white/10 text-[var(--c-textMid)] text-[10px] font-black uppercase tracking-widest hover:bg-white/20 transition-all">Cancel</button>
+          {exportMsg&&<span className="text-[10px] font-black uppercase tracking-widest text-[#f6c744]">{exportMsg}</span>}
         </div>
       )}
 
@@ -1661,12 +1661,12 @@ export default function EliteSquadApp() {
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="text-[9px] font-bold uppercase tracking-[.2em] text-[var(--c-textMid)] truncate">{catLabel(selMember.teamCategory)}{selMember.club?` · ${selMember.club}`:""}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-[.2em] text-[var(--c-textMid)] truncate">{catLabel(selMember.teamCategory)}{selMember.club?` · ${selMember.club}`:""}</p>
                     <h2 className={`mt-0.5 text-[22px] leading-[1.05] font-black uppercase tracking-tight truncate ${isOwnCard?'text-transparent bg-clip-text bg-gradient-to-r from-[#f6c744] via-[#fff3c4] to-[#f6c744]':'text-[var(--c-text)]'}`}>{titleCase(selMember.name)}</h2>
                     <div className="mt-1.5 flex items-center gap-2">
-                      <span className={`px-1.5 py-0.5 rounded-sm text-white text-[8px] font-black uppercase tracking-[.18em] ${isOwnCard?'bg-[#f6c744] text-[#0b1322]':'bg-[#e3062c]'}`}>{mcode}</span>
-                      <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{isPlayer?"TUNISIA WNT":"DELEGATION STAFF"}</span>
-                      {isOwnCard&&<span className="px-1.5 py-0.5 rounded-sm bg-[#e3062c] text-white text-[8px] font-black uppercase tracking-[.18em]">MY CARD</span>}
+                      <span className={`px-1.5 py-0.5 rounded-sm text-white text-[10px] font-black uppercase tracking-[.18em] ${isOwnCard?'bg-[#f6c744] text-[#0b1322]':'bg-[#e3062c]'}`}>{mcode}</span>
+                      <span className="text-[10px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{isPlayer?"TUNISIA WNT":"DELEGATION STAFF"}</span>
+                      {isOwnCard&&<span className="px-1.5 py-0.5 rounded-sm bg-[#e3062c] text-white text-[10px] font-black uppercase tracking-[.18em]">MY CARD</span>}
                     </div>
                   </div>
                 </div>
@@ -1681,37 +1681,37 @@ export default function EliteSquadApp() {
               <div className={`grid ${isPlayer?'grid-cols-5':'grid-cols-4'} border-b border-[rgba(var(--line-rgb),.12)] ${isOwnCard?'bg-[#f6c744]/[.05]':'bg-[var(--c-deep)]'} divide-x divide-[rgba(var(--line-rgb),.1)]`}>
                 <div className="py-3 px-1 text-center">
                   <p className={`text-lg font-black ${isOwnCard?'text-[#f6c744]':'text-[var(--c-text)]'}`}>{calculateAge(selMember.birthdate)}</p>
-                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.age}</p>
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.age}</p>
                 </div>
                 {isPlayer&&<div className="py-3 px-1 text-center">
                   <p className={`text-lg font-black ${isOwnCard?'text-[#f6c744]':'text-[var(--c-text)]'}`}>{capsFor(selMember)||"—"}</p>
-                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.caps}</p>
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.caps}</p>
                 </div>}
                 {isPlayer&&<div className="py-3 px-1 text-center">
                   <p className="text-lg font-black text-[#e3062c]">{selMember.goals||0}</p>
-                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.goals}</p>
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.goals}</p>
                 </div>}
                 {isPlayer&&<div className="py-3 px-1 text-center">
                   <p className={`text-lg font-black ${isOwnCard?'text-[#f6c744]':'text-[var(--c-text)]'}`}>{selMember.height||"—"}</p>
-                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Height</p>
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Height</p>
                 </div>}
                 {isPlayer&&<div className="py-3 px-1 text-center">
                   <p className={`text-lg font-black ${isOwnCard?'text-[#f6c744]':'text-[var(--c-text)]'}`}>{selMember.foot||"R"}</p>
-                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Foot</p>
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Foot</p>
                 </div>}
                 {!isPlayer&&<div className="py-3 px-1 text-center">
                   <p className="text-lg font-black text-[#e3062c] uppercase truncate">{selMember.position||'COACH'}</p>
-                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.responsibility}</p>
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.responsibility}</p>
                 </div>}
                 {!isPlayer&&<div className="py-3 px-1 text-center">
                   <p className="text-lg font-black text-[#f6c744]">{selMember.natMatches||"—"}</p>
-                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.license}</p>
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.license}</p>
                 </div>}
                 {/* Was captured by the "Preferred Tactics / Formation" picker in the
                     edit form but never saved or shown anywhere — now it is. */}
                 {!isPlayer&&<div className="py-3 px-1 text-center">
                   <p className="text-lg font-black text-[var(--c-text)]">{selMember.formation||"—"}</p>
-                  <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.coach.formationShort}</p>
+                  <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.coach.formationShort}</p>
                 </div>}
               </div>
 
@@ -1737,7 +1737,7 @@ export default function EliteSquadApp() {
                 {profileTab==="profile"&&(<>
                 {/* Status banner */}
                 {cs&&isPlayer&&(
-                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[12px] font-bold ${cs==="suspended"?'pm-err':'pm-warn'}`}>
+                  <div className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-[14px] font-bold ${cs==="suspended"?'pm-err':'pm-warn'}`}>
                     {cs==="suspended"?<Ban size={14}/>:<AlertTriangle size={14}/>}
                     {cs==="suspended"?tr.profile.suspended:tr.profile.oneMoreSuspended}
                   </div>
@@ -1752,29 +1752,29 @@ export default function EliteSquadApp() {
                       <div className="grid grid-cols-3 divide-x divide-[rgba(var(--line-rgb),.1)]">
                         <div className="text-center">
                           <p className="text-xl font-black text-[#f6c744]">{yc}</p>
-                          <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Yellow Cards</p>
+                          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Yellow Cards</p>
                         </div>
                         <div className="text-center">
                           <p className="text-xl font-black text-[#ff4f66]">{rc}</p>
-                          <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Red Cards</p>
+                          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Red Cards</p>
                         </div>
                         <div className="text-center">
                           <p className={`text-xl font-black ${cs==="suspended"?'text-[#ff4f66]':yc===0?'text-[#7fd6a8]':'text-[#f6c744]'}`}>{cs==="suspended"?"OUT":yc===0?"CLEAN":`${YELLOW_SUSPENSION-yc} LEFT`}</p>
-                          <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Status</p>
+                          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Status</p>
                         </div>
                       </div>
                       <div className="mt-3.5 h-1.5 rounded-full bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.1)] overflow-hidden">
                         <div className={`h-full rounded-full transition-all ${cs==="suspended"?'bg-[#e3062c]':yc===0?'bg-[#f6c744]/15':'bg-[#f6c744]'}`} style={{width:`${Math.min(100,ringPct*100)}%`}}/>
                       </div>
-                      <p className="mt-2 text-[7.5px] font-bold uppercase tracking-[.18em] text-[var(--c-textDim)]">{cs==="suspended"?"Currently suspended for the next fixture":yc===YELLOW_SUSPENSION-1?"One more yellow card triggers suspension":yc===0?"Clean disciplinary record":`${YELLOW_SUSPENSION-yc} more yellow cards until suspension`}</p>
+                      <p className="mt-2 text-[9.5px] font-bold uppercase tracking-[.18em] text-[var(--c-textDim)]">{cs==="suspended"?"Currently suspended for the next fixture":yc===YELLOW_SUSPENSION-1?"One more yellow card triggers suspension":yc===0?"Clean disciplinary record":`${YELLOW_SUSPENSION-yc} more yellow cards until suspension`}</p>
                     </div>
                     <div className="mt-2 rounded-lg border border-[rgba(var(--line-rgb),.1)] px-3 py-2.5 flex items-center justify-between bg-[var(--c-deep)]">
-                      <span className="text-[11px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.suspended}</span>
-                      <span className={`px-2 py-0.5 rounded-sm text-[9px] font-black uppercase tracking-wider ${selMember.suspended?'bg-[#e3062c] text-white':'bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textDim)]'}`}>{selMember.suspended?tr.profile.yes:tr.profile.no}</span>
+                      <span className="text-[13px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.profile.suspended}</span>
+                      <span className={`px-2 py-0.5 rounded-sm text-[11px] font-black uppercase tracking-wider ${selMember.suspended?'bg-[#e3062c] text-white':'bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textDim)]'}`}>{selMember.suspended?tr.profile.yes:tr.profile.no}</span>
                     </div>
                     {selMember.fifaConnectId&&<div className="mt-2 rounded-lg border border-[rgba(var(--line-rgb),.1)] px-3 py-2.5 flex items-center justify-between bg-[var(--c-deep)]">
-                      <span className="text-[11px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.form.fifaConnectId}</span>
-                      <span className="text-[11px] font-black text-[var(--c-text)] tracking-wider">{selMember.fifaConnectId}</span>
+                      <span className="text-[13px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">{tr.form.fifaConnectId}</span>
+                      <span className="text-[13px] font-black text-[var(--c-text)] tracking-wider">{selMember.fifaConnectId}</span>
                     </div>}
                   </section>
                   </>
@@ -1788,30 +1788,30 @@ export default function EliteSquadApp() {
                   <div className="space-y-3">
                     {sinceYear&&(
                       <div className="flex justify-center">
-                        <span className="text-[9px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full bg-[var(--c-deep)] border border-[rgba(246,199,68,.3)] text-[#f6c744]">With the federation since {sinceYear}</span>
+                        <span className="text-[11px] font-black uppercase tracking-wider px-3 py-1.5 rounded-full bg-[var(--c-deep)] border border-[rgba(246,199,68,.3)] text-[#f6c744]">With the federation since {sinceYear}</span>
                       </div>
                     )}
                     <div className="rounded-lg border border-[rgba(var(--line-rgb),.14)] p-3 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                       <div className="flex items-center gap-2.5">
                         <span className="w-8 h-8 rounded-lg bg-[#e3062c]/10 text-[#ff4f66] flex items-center justify-center shrink-0"><Award size={14}/></span>
-                        <div className="min-w-0"><p className="text-[13px] font-black text-[var(--c-text)] uppercase truncate">{selMember.position||'COACH'}</p><span className="text-[9px] text-[var(--c-textDim)] uppercase font-bold tracking-wider">{tr.profile.responsibility}</span></div>
+                        <div className="min-w-0"><p className="text-[13px] font-black text-[var(--c-text)] uppercase truncate">{selMember.position||'COACH'}</p><span className="text-[11px] text-[var(--c-textDim)] uppercase font-bold tracking-wider">{tr.profile.responsibility}</span></div>
                       </div>
                       <div className="flex items-center gap-2.5">
                         <span className="w-8 h-8 rounded-lg bg-[#f6c744]/10 text-[#f6c744] flex items-center justify-center shrink-0"><ShieldCheck size={14}/></span>
-                        <div className="min-w-0"><p className="text-[13px] font-black text-[var(--c-text)] uppercase truncate">{selMember.natMatches||'N/A'}</p><span className="text-[9px] text-[var(--c-textDim)] uppercase font-bold tracking-wider">{tr.profile.license}</span></div>
+                        <div className="min-w-0"><p className="text-[13px] font-black text-[var(--c-text)] uppercase truncate">{selMember.natMatches||'N/A'}</p><span className="text-[11px] text-[var(--c-textDim)] uppercase font-bold tracking-wider">{tr.profile.license}</span></div>
                       </div>
                       {selMember.nationality&&<div className="flex items-center gap-2.5">
                         <span className="w-8 h-8 rounded-lg bg-[#2a6d4a]/15 text-[#7fd6a8] flex items-center justify-center shrink-0"><Globe size={14}/></span>
                         <CountryFlag name={selMember.nationality} className="w-6 h-[15px] rounded-sm"/>
-                        <div className="min-w-0"><p className="text-[13px] font-black text-[var(--c-text)] uppercase truncate">{selMember.nationality}</p><span className="text-[9px] text-[var(--c-textDim)] uppercase font-bold tracking-wider">{tr.profile.nationality}</span></div>
+                        <div className="min-w-0"><p className="text-[13px] font-black text-[var(--c-text)] uppercase truncate">{selMember.nationality}</p><span className="text-[11px] text-[var(--c-textDim)] uppercase font-bold tracking-wider">{tr.profile.nationality}</span></div>
                       </div>}
                       {selMember.languages&&<div className="flex items-center gap-2.5">
                         <span className="w-8 h-8 rounded-lg bg-[var(--c-blue)]/15 text-[var(--c-blueSoft)] flex items-center justify-center shrink-0"><BookOpen size={14}/></span>
-                        <div className="min-w-0"><p className="text-[13px] font-black text-[var(--c-text)] uppercase truncate">{selMember.languages}</p><span className="text-[9px] text-[var(--c-textDim)] uppercase font-bold tracking-wider">{tr.profile.languages}</span></div>
+                        <div className="min-w-0"><p className="text-[13px] font-black text-[var(--c-text)] uppercase truncate">{selMember.languages}</p><span className="text-[11px] text-[var(--c-textDim)] uppercase font-bold tracking-wider">{tr.profile.languages}</span></div>
                       </div>}
                       {selMember.contract&&<div className="flex items-center gap-2.5">
                         <span className="w-8 h-8 rounded-lg bg-[var(--c-blue)]/15 text-[var(--c-blueSoft)] flex items-center justify-center shrink-0"><Calendar size={14}/></span>
-                        <div className="min-w-0"><p className="text-[13px] font-black text-[var(--c-text)] uppercase truncate">{selMember.contract}</p><span className="text-[9px] text-[var(--c-textDim)] uppercase font-bold tracking-wider">{tr.profile.contract}</span></div>
+                        <div className="min-w-0"><p className="text-[13px] font-black text-[var(--c-text)] uppercase truncate">{selMember.contract}</p><span className="text-[11px] text-[var(--c-textDim)] uppercase font-bold tracking-wider">{tr.profile.contract}</span></div>
                       </div>}
                     </div>
                   </div>
@@ -1827,12 +1827,12 @@ export default function EliteSquadApp() {
                         {selMember.history.filter((h:any)=>h&&h.year&&!h.year.startsWith("0000")).map((h:any,i:number)=>(
                           <div key={i} className={`flex items-center gap-2.5 px-3 py-2.5 ${i>0?'border-t border-[rgba(var(--line-rgb),.1)]':''}`}>
                             <span className="w-1.5 h-1.5 rounded-full bg-[#f6c744] shrink-0"/>
-                            <span className="text-[12px] font-black text-[#f6c744] w-12 shrink-0">{h.year}</span>
-                            <span className="text-[12px] font-medium text-[var(--c-textBlue)] truncate">{h.event}</span>
+                            <span className="text-[14px] font-black text-[#f6c744] w-12 shrink-0">{h.year}</span>
+                            <span className="text-[14px] font-medium text-[var(--c-textBlue)] truncate">{h.event}</span>
                           </div>
                         ))}
                       </div>
-                    ):<p className="text-[12px] text-[var(--c-textDim)] py-4 text-center">No career history</p>}
+                    ):<p className="text-[14px] text-[var(--c-textDim)] py-4 text-center">No career history</p>}
                   </div>
                 </section>
 
@@ -1855,15 +1855,15 @@ export default function EliteSquadApp() {
                         })),
                         ...legacy.map((s:string)=>({name:s,when:"",place:false,location:""})),
                       ]
-                      if(rows.length===0)return <p className="text-[12px] text-[var(--c-textDim)] py-4 text-center">No camps recorded</p>
+                      if(rows.length===0)return <p className="text-[14px] text-[var(--c-textDim)] py-4 text-center">No camps recorded</p>
                       return(
                         <div>
                           {rows.map((row,i)=>(
                             <div key={i} className={`flex items-center gap-2.5 px-3 py-2.5 ${i>0?'border-t border-[rgba(var(--line-rgb),.1)]':''}`}>
                               <span className="w-1.5 h-1.5 rounded-full bg-[#e3062c] shrink-0"/>
-                              <span className="text-[12px] font-medium text-[var(--c-textBlue)] truncate">{row.name}</span>
-                              {row.when&&<span className="text-[10px] font-bold text-[var(--c-textFaint)] uppercase tracking-wider ml-auto shrink-0">{row.when}</span>}
-                              {row.place&&<span className="text-[10px] text-[var(--c-textDim)] shrink-0 truncate">{row.location}</span>}
+                              <span className="text-[14px] font-medium text-[var(--c-textBlue)] truncate">{row.name}</span>
+                              {row.when&&<span className="text-[12px] font-bold text-[var(--c-textFaint)] uppercase tracking-wider ml-auto shrink-0">{row.when}</span>}
+                              {row.place&&<span className="text-[12px] text-[var(--c-textDim)] shrink-0 truncate">{row.location}</span>}
                             </div>
                           ))}
                         </div>
@@ -1877,28 +1877,28 @@ export default function EliteSquadApp() {
               {profileTab==="club"&&isPlayer&&canSeeClubReports(selMember)&&(
                 <div className="space-y-2.5">
                   {canAddClubReport(selMember)&&(
-                    <button onClick={()=>{setClubReportForm(initClubReportForm);setAddClubReportOpen(true)}} className="w-full py-2 rounded-lg border border-dashed border-[#e3062c]/40 text-[12px] font-black uppercase tracking-wider text-[#ff4f66] hover:bg-[#e3062c]/5 transition-all flex items-center justify-center gap-1.5">
+                    <button onClick={()=>{setClubReportForm(initClubReportForm);setAddClubReportOpen(true)}} className="w-full py-2 rounded-lg border border-dashed border-[#e3062c]/40 text-[14px] font-black uppercase tracking-wider text-[#ff4f66] hover:bg-[#e3062c]/5 transition-all flex items-center justify-center gap-1.5">
                       <Plus size={11}/>{tr.clubReports.logMatch}
                     </button>
                   )}
-                  {clubReports.length===0&&<p className="text-[12px] text-[var(--c-textDim)] py-6 text-center">{tr.clubReports.none}</p>}
+                  {clubReports.length===0&&<p className="text-[14px] text-[var(--c-textDim)] py-6 text-center">{tr.clubReports.none}</p>}
                   {clubReports.map((r:any)=>(
                     <div key={r.id} className="rounded-lg border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-deep)] p-3">
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <p className="text-[14px] font-bold text-[var(--c-text)]">{r.opponent||tr.clubReports.unknownOpponent}</p>
-                          <p className="text-[12px] text-[var(--c-textMid)] mt-0.5">{r.match_date||""}{r.competition?` · ${r.competition}`:""}{r.position_played?` · ${r.position_played}`:""}</p>
+                          <p className="text-[14px] text-[var(--c-textMid)] mt-0.5">{r.match_date||""}{r.competition?` · ${r.competition}`:""}{r.position_played?` · ${r.position_played}`:""}</p>
                         </div>
                         <div className="shrink-0 flex items-center gap-1.5">
-                          {typeof r.rating==="number"&&<span className="text-[11px] font-black px-2 py-1 rounded bg-[#f6c744]/15 text-[#c89a1e] border border-[#f6c744]/30">{r.rating}/10</span>}
-                          {r.result&&<span className="text-[11px] font-black uppercase px-2 py-1 rounded bg-[var(--c-surface)] text-[var(--c-textDim)] border border-[rgba(var(--line-rgb),.18)]">{r.result}</span>}
+                          {typeof r.rating==="number"&&<span className="text-[13px] font-black px-2 py-1 rounded bg-[#f6c744]/15 text-[#c89a1e] border border-[#f6c744]/30">{r.rating}/10</span>}
+                          {r.result&&<span className="text-[13px] font-black uppercase px-2 py-1 rounded bg-[var(--c-surface)] text-[var(--c-textDim)] border border-[rgba(var(--line-rgb),.18)]">{r.result}</span>}
                           {r.verified&&<span title={r.verified_by_username?`${tr.clubReports.verified} · ${tr.clubReports.verifiedBy} ${r.verified_by_username}`:tr.clubReports.verified} className="w-2.5 h-2.5 rounded-full bg-[#2fd46b] shadow-[0_0_8px_rgba(47,212,107,.6)] shrink-0"/>}
                         </div>
                       </div>
                       {r.did_not_play?(
-                        <p className="mt-2 text-[12px] font-bold text-[var(--c-textDim)] italic">{tr.clubReports.didNotPlay}</p>
+                        <p className="mt-2 text-[14px] font-bold text-[var(--c-textDim)] italic">{tr.clubReports.didNotPlay}</p>
                       ):(
-                        <div className="flex flex-wrap gap-3 mt-2 text-[12px] font-bold text-[var(--c-textMid)]">
+                        <div className="flex flex-wrap gap-3 mt-2 text-[14px] font-bold text-[var(--c-textMid)]">
                           {r.is_starting!=null&&<span className={r.is_starting?"text-[#7ec3ff]":"text-[var(--c-textDim)]"}>{r.is_starting?tr.clubReports.startedLabel:tr.clubReports.benchLabel}</span>}
                           <span>{r.minutes_played??0}&apos; {tr.clubReports.mins}</span>
                           <span className="text-[#7fd6a8]">{r.goals||0} {tr.clubReports.goals}</span>
@@ -1910,23 +1910,23 @@ export default function EliteSquadApp() {
                       {r.had_injury&&(
                         <div className="mt-2 rounded-lg border border-[#ff4f66]/30 bg-[#ff4f66]/10 px-2.5 py-1.5 flex items-start gap-1.5">
                           <AlertTriangle size={12} className="text-[#ff4f66] shrink-0 mt-0.5"/>
-                          <p className="text-[11px] font-bold text-[#ff4f66]">{tr.clubReports.injuryFlag}{r.injury_notes?` — ${r.injury_notes}`:""}</p>
+                          <p className="text-[13px] font-bold text-[#ff4f66]">{tr.clubReports.injuryFlag}{r.injury_notes?` — ${r.injury_notes}`:""}</p>
                         </div>
                       )}
-                      {r.notes&&<p className="text-[12px] text-[var(--c-textMid)] mt-1.5">{r.notes}</p>}
+                      {r.notes&&<p className="text-[14px] text-[var(--c-textMid)] mt-1.5">{r.notes}</p>}
                       {r.highlights_url&&(()=>{const embed=toEmbedUrl(r.highlights_url);return embed?(
                         <div className="mt-2 rounded-lg overflow-hidden aspect-video bg-black">
                           <iframe src={embed} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen/>
                         </div>
                       ):(
-                        <a href={r.highlights_url} target="_blank" rel="noreferrer" className="mt-2 inline-block text-[11px] font-black uppercase tracking-wider text-[#7ec3ff] hover:underline">{tr.clubReports.watchHighlights} ↗</a>
+                        <a href={r.highlights_url} target="_blank" rel="noreferrer" className="mt-2 inline-block text-[13px] font-black uppercase tracking-wider text-[#7ec3ff] hover:underline">{tr.clubReports.watchHighlights} ↗</a>
                       )})()}
                       <div className="flex items-center gap-3 mt-2">
                         {canAddClubReport(selMember)&&(
-                          <button onClick={async()=>{if(await askConfirm(tr.clubReports.confirmDelete)){const{error}=await deleteClubReport(r.id);if(error){alert("Failed: "+error);return}fetchClubReports(selMember.id).then(setClubReports)}}} className="text-[11px] font-black uppercase tracking-wider text-[#ff4f66] hover:underline">{tr.common.remove}</button>
+                          <button onClick={async()=>{if(await askConfirm(tr.clubReports.confirmDelete)){const{error}=await deleteClubReport(r.id);if(error){alert("Failed: "+error);return}fetchClubReports(selMember.id).then(setClubReports)}}} className="text-[13px] font-black uppercase tracking-wider text-[#ff4f66] hover:underline">{tr.common.remove}</button>
                         )}
                         {canVerifyClubReport()&&(
-                          <button onClick={async()=>{const{error}=await verifyClubReport(r.id,!r.verified,user?.username||"");if(error){alert("Failed: "+error);return}fetchClubReports(selMember.id).then(setClubReports)}} className="text-[11px] font-black uppercase tracking-wider text-[#7fd6a8] hover:underline">{r.verified?tr.clubReports.unverify:tr.clubReports.verify}</button>
+                          <button onClick={async()=>{const{error}=await verifyClubReport(r.id,!r.verified,user?.username||"");if(error){alert("Failed: "+error);return}fetchClubReports(selMember.id).then(setClubReports)}} className="text-[13px] font-black uppercase tracking-wider text-[#7fd6a8] hover:underline">{r.verified?tr.clubReports.unverify:tr.clubReports.verify}</button>
                         )}
                       </div>
                     </div>
@@ -1944,13 +1944,13 @@ export default function EliteSquadApp() {
                   {selMember.passportImage?(
                     <button type="button" onClick={()=>setPassportZoom(true)} className="group relative rounded-xl border border-[rgba(var(--line-rgb),.2)] bg-[var(--c-deep)] overflow-hidden max-w-full cursor-zoom-in" title="Click to zoom">
                       <img src={getPassportSrc(selMember,imgUrls)} onError={e=>{(e.target as HTMLImageElement).style.display='none'}} alt={`${selMember.name} passport`} className="max-h-[46vh] max-w-full object-contain" style={{imageRendering:"auto"}}/>
-                      <span className="absolute inset-x-0 bottom-0 py-1.5 text-[9px] font-black uppercase tracking-[.25em] text-center text-[#fff] bg-gradient-to-t from-black/80 to-transparent">{tr.profile.passport} · {titleCase(selMember.name)}</span>
+                      <span className="absolute inset-x-0 bottom-0 py-1.5 text-[11px] font-black uppercase tracking-[.25em] text-center text-[#fff] bg-gradient-to-t from-black/80 to-transparent">{tr.profile.passport} · {titleCase(selMember.name)}</span>
                     </button>
                   ):(
                     <div className="flex flex-col items-center gap-3 py-10 text-center">
                       <span className="w-14 h-14 rounded-2xl bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.16)] flex items-center justify-center text-[var(--c-textDim)]"><IdCard color="var(--c-textDim)" size={24}/></span>
-                      <p className="max-w-[260px] text-[12px] font-semibold text-[var(--c-textDim)]">{tr.profile.noPassport}</p>
-                      {p.editPlayer&&<button type="button" onClick={()=>{setEditingId(selMember.id);setForm({...selMember});setSelMember(null);setIsFormOpen(true)}} className="px-3 py-1.5 rounded-lg pm-btn-soft text-[11px] font-black uppercase tracking-wider">Upload Scan</button>}
+                      <p className="max-w-[260px] text-[14px] font-semibold text-[var(--c-textDim)]">{tr.profile.noPassport}</p>
+                      {p.editPlayer&&<button type="button" onClick={()=>{setEditingId(selMember.id);setForm({...selMember});setSelMember(null);setIsFormOpen(true)}} className="px-3 py-1.5 rounded-lg pm-btn-soft text-[13px] font-black uppercase tracking-wider">Upload Scan</button>}
                     </div>
                   )}
                 </div>
@@ -1959,11 +1959,11 @@ export default function EliteSquadApp() {
               {profileTab==="medical"&&(isPlayer?(
                 <div className="space-y-2.5">
                   {p.editMedical&&(
-                    <button onClick={()=>setAddInjuryOpen(true)} className="w-full py-2 rounded-lg border border-dashed border-[#e3062c]/40 text-[12px] font-black uppercase tracking-wider text-[#ff4f66] hover:bg-[#e3062c]/5 transition-all flex items-center justify-center gap-1.5">
+                    <button onClick={()=>setAddInjuryOpen(true)} className="w-full py-2 rounded-lg border border-dashed border-[#e3062c]/40 text-[14px] font-black uppercase tracking-wider text-[#ff4f66] hover:bg-[#e3062c]/5 transition-all flex items-center justify-center gap-1.5">
                       <Plus size={11}/>Log Injury
                     </button>
                   )}
-                  {injuries.length===0&&<p className="text-[12px] text-[var(--c-textDim)] py-6 text-center">No medical history on record</p>}
+                  {injuries.length===0&&<p className="text-[14px] text-[var(--c-textDim)] py-6 text-center">No medical history on record</p>}
                   {injuries.map((inj:any)=>{
                     const colors=inj.status==="active"?{bg:"bg-[#e3062c]/5",border:"border-[#e3062c]/40",text:"text-[#ff4f66]",pill:"bg-[#e3062c] text-white"}
                       :inj.status==="recovering"?{bg:"bg-[#f6c744]/5",border:"border-[#f6c744]/40",text:"text-[#f6c744]",pill:"bg-[#f6c744] text-[var(--c-bg)]"}
@@ -1973,17 +1973,17 @@ export default function EliteSquadApp() {
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <p className={`text-[14px] font-bold ${colors.text}`}>{inj.injury_type}</p>
-                            <p className="text-[12px] text-[var(--c-textMid)] mt-0.5">{inj.body_part?`${inj.body_part} · `:""}{inj.occurred_on?`occurred ${fmtDateWords(inj.occurred_on)}`:""}</p>
+                            <p className="text-[14px] text-[var(--c-textMid)] mt-0.5">{inj.body_part?`${inj.body_part} · `:""}{inj.occurred_on?`occurred ${fmtDateWords(inj.occurred_on)}`:""}</p>
                           </div>
-                          <span className={`shrink-0 text-[12px] font-black uppercase px-2 py-1 rounded ${colors.pill}`}>{inj.status}</span>
+                          <span className={`shrink-0 text-[14px] font-black uppercase px-2 py-1 rounded ${colors.pill}`}>{inj.status}</span>
                         </div>
-                        {inj.expected_return&&<p className="text-[12px] text-[var(--c-textDim)] mt-1.5">Expected return: {fmtDateWords(inj.expected_return)}</p>}
-                        {inj.notes&&<p className="text-[12px] text-[var(--c-textMid)] mt-1.5">{inj.notes}</p>}
-                        <p className="text-[11px] text-[var(--c-textDim)] mt-1.5">Logged by {inj.logged_by_username||"unknown"}</p>
+                        {inj.expected_return&&<p className="text-[14px] text-[var(--c-textDim)] mt-1.5">Expected return: {fmtDateWords(inj.expected_return)}</p>}
+                        {inj.notes&&<p className="text-[14px] text-[var(--c-textMid)] mt-1.5">{inj.notes}</p>}
+                        <p className="text-[13px] text-[var(--c-textDim)] mt-1.5">Logged by {inj.logged_by_username||"unknown"}</p>
                         {p.editMedical&&inj.status!=="recovered"&&(
                           <div className="flex gap-1.5 mt-2">
-                            {inj.status==="active"&&<button onClick={()=>{updateInjuryStatus(inj.id,"recovering").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg pm-btn-soft text-[11px] font-black uppercase tracking-wider">Mark Recovering</button>}
-                            <button onClick={()=>{updateInjuryStatus(inj.id,"recovered").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg pm-btn-ghost text-[11px] font-black uppercase tracking-wider">Mark Recovered</button>
+                            {inj.status==="active"&&<button onClick={()=>{updateInjuryStatus(inj.id,"recovering").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg pm-btn-soft text-[13px] font-black uppercase tracking-wider">Mark Recovering</button>}
+                            <button onClick={()=>{updateInjuryStatus(inj.id,"recovered").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg pm-btn-ghost text-[13px] font-black uppercase tracking-wider">Mark Recovered</button>
                           </div>
                         )}
                       </div>
@@ -2033,37 +2033,37 @@ export default function EliteSquadApp() {
                 return(
                 <div className="space-y-3">
                   {selMember.bioQuote?(
-                    <p className="text-[12px] italic text-[var(--c-textBlue)] text-center px-2 leading-snug">&quot;{selMember.bioQuote}&quot;</p>
+                    <p className="text-[14px] italic text-[var(--c-textBlue)] text-center px-2 leading-snug">&quot;{selMember.bioQuote}&quot;</p>
                   ):(
-                    <p className="text-[11px] text-[var(--c-textDim)] text-center px-2 italic">No coaching philosophy added yet</p>
+                    <p className="text-[13px] text-[var(--c-textDim)] text-center px-2 italic">No coaching philosophy added yet</p>
                   )}
                   <div className="grid grid-cols-3 divide-x divide-[rgba(var(--line-rgb),.1)] rounded-lg border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-deep)] overflow-hidden">
                     <div className="py-3.5 text-center">
                       <p className="text-xl font-black text-[var(--c-text)]">{String(catMatchesPlayed.length).padStart(2,'0')}</p>
-                      <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Overseen</p>
+                      <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Overseen</p>
                     </div>
                     <div className="py-3.5 text-center">
                       <p className="text-xl font-black"><span className="text-[#7fd6a8]">{wins}</span><span className="text-[var(--c-textDim)] mx-0.5">-</span><span className="text-[var(--c-textBlue)]">{draws}</span><span className="text-[var(--c-textDim)] mx-0.5">-</span><span className="text-[#ff4f66]">{losses}</span></p>
-                      <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">W-D-L</p>
+                      <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">W-D-L</p>
                     </div>
                     <div className="py-3.5 text-center">
                       <p className="text-xl font-black text-[#f6c744]">{catMatchesPlayed.length>0?Math.round((wins/catMatchesPlayed.length)*100):0}%</p>
-                      <p className="mt-0.5 text-[8px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Win Rate</p>
+                      <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[.18em] text-[var(--c-textMid)]">Win Rate</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-3">
                     <div className="rounded-lg border border-[rgba(227,6,44,.35)] bg-[#e3062c]/5 p-3 text-[var(--c-text)]">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-[#ff4f66]">Biggest Win</p>
+                      <p className="text-[11px] font-black uppercase tracking-wider text-[#ff4f66]">Biggest Win</p>
                       {biggestWin?(()=>{const bw=biggestWin as {opponent:string,result:string,diff:number};return(<>
                         <p className="text-lg font-black mt-0.5 text-[#ff4f66]">{bw.result}</p>
-                        <p className="text-[10px] font-bold text-[var(--c-textBlue)] truncate flex items-center gap-1.5"><span className="italic shrink-0">vs</span><CountryFlag name={bw.opponent} className="w-4 h-2.5 rounded-[2px]"/><span className="truncate">{bw.opponent}</span></p>
+                        <p className="text-[12px] font-bold text-[var(--c-textBlue)] truncate flex items-center gap-1.5"><span className="italic shrink-0">vs</span><CountryFlag name={bw.opponent} className="w-4 h-2.5 rounded-[2px]"/><span className="truncate">{bw.opponent}</span></p>
                       </>)})():(
-                        <p className="text-[10px] font-bold text-[var(--c-textDim)] mt-1.5">No wins recorded yet</p>
+                        <p className="text-[12px] font-bold text-[var(--c-textDim)] mt-1.5">No wins recorded yet</p>
                       )}
                     </div>
                     <div className="rounded-lg border border-[rgba(246,199,68,.35)] bg-[#f6c744]/5 p-3 text-[var(--c-text)] flex flex-col justify-center text-center">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-[#f6c744]">Preferred Formation</p>
+                      <p className="text-[11px] font-black uppercase tracking-wider text-[#f6c744]">Preferred Formation</p>
                       <p className="text-lg font-black mt-0.5 text-[#f6c744]">{signatureFormation||"—"}</p>
                     </div>
                   </div>
@@ -2071,7 +2071,7 @@ export default function EliteSquadApp() {
                   {milestones.length>0&&(
                     <div className="flex flex-wrap gap-1.5">
                       {milestones.map(ms=>(
-                        <span key={ms} className="text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[var(--c-deep)] border border-[rgba(246,199,68,.3)] text-[#f6c744]"><span className="mr-1">◆</span>{ms}</span>
+                        <span key={ms} className="text-[11px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[var(--c-deep)] border border-[rgba(246,199,68,.3)] text-[#f6c744]"><span className="mr-1">◆</span>{ms}</span>
                       ))}
                     </div>
                   )}
@@ -2096,13 +2096,13 @@ export default function EliteSquadApp() {
               <h2 className="text-sm font-black uppercase tracking-tight">Log Injury — {selMember.name}</h2>
               <button onClick={()=>setAddInjuryOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100"><X size={18}/></button>
             </div>
-            <input placeholder="Injury type (e.g. Hamstring strain)" value={injForm.injury_type} onChange={e=>setInjForm({...injForm,injury_type:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
-            <input placeholder="Body part (e.g. Left leg)" value={injForm.body_part} onChange={e=>setInjForm({...injForm,body_part:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+            <input placeholder="Injury type (e.g. Hamstring strain)" value={injForm.injury_type} onChange={e=>setInjForm({...injForm,injury_type:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
+            <input placeholder="Body part (e.g. Left leg)" value={injForm.body_part} onChange={e=>setInjForm({...injForm,body_part:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
             <div>
-              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">Severity</p>
+              <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">Severity</p>
               <div className="flex gap-1.5">
                 {["minor","moderate","severe"].map(sev=>(
-                  <button key={sev} type="button" onClick={()=>setInjForm({...injForm,severity:sev})} className={`flex-1 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${injForm.severity===sev?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>{sev}</button>
+                  <button key={sev} type="button" onClick={()=>setInjForm({...injForm,severity:sev})} className={`flex-1 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider transition-all ${injForm.severity===sev?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>{sev}</button>
                 ))}
               </div>
             </div>
@@ -2110,9 +2110,9 @@ export default function EliteSquadApp() {
               <div className="flex-1"><DatePicker variant="zinc" value={injForm.occurred_on} onChange={(v)=>setInjForm({...injForm,occurred_on:v})} placeholder="Date occurred"/></div>
               <div className="flex-1"><DatePicker variant="zinc" value={injForm.expected_return} onChange={(v)=>setInjForm({...injForm,expected_return:v})} placeholder="Expected return"/></div>
             </div>
-            <textarea placeholder="Notes (optional)" value={injForm.notes} onChange={e=>setInjForm({...injForm,notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none resize-none"/>
+            <textarea placeholder="Notes (optional)" value={injForm.notes} onChange={e=>setInjForm({...injForm,notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none resize-none"/>
             <div className="flex gap-2 pt-1">
-              <button onClick={()=>setAddInjuryOpen(false)} className="flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
+              <button onClick={()=>setAddInjuryOpen(false)} className="flex-1 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
               <button onClick={async()=>{
                 if(!injForm.injury_type.trim()){alert("Enter an injury type");return}
                 const {error}=await addInjury(selMember.id,injForm)
@@ -2120,7 +2120,7 @@ export default function EliteSquadApp() {
                 setAddInjuryOpen(false)
                 setInjForm({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""})
                 fetchInjuries(selMember.id).then(setInjuries)
-              }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">Save</button>
+              }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-xl text-[11px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">Save</button>
             </div>
           </div>
         </div>
@@ -2156,28 +2156,28 @@ export default function EliteSquadApp() {
               <button onClick={()=>setAddClubReportOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100"><X size={18}/></button>
             </div>
             <DatePicker variant="zinc" value={clubReportForm.match_date} onChange={(v)=>setClubReportForm({...clubReportForm,match_date:v})} placeholder={tr.form.date}/>
-            <input placeholder={tr.clubReports.opponentPh} value={clubReportForm.opponent} onChange={e=>setClubReportForm({...clubReportForm,opponent:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+            <input placeholder={tr.clubReports.opponentPh} value={clubReportForm.opponent} onChange={e=>setClubReportForm({...clubReportForm,opponent:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
             <div>
-              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.competitionLabel}</p>
+              <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.competitionLabel}</p>
               <Select value={compValue} onChange={v=>setClubReportForm({...clubReportForm,competition:v})}
                 options={compOptions} placeholder={tr.clubReports.competitionPh} className="mb-1.5"/>
-              {compValue==="__other__"&&<input placeholder={tr.clubReports.competitionOtherPh} value={clubReportForm.competitionOther||""} onChange={e=>setClubReportForm({...clubReportForm,competitionOther:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>}
+              {compValue==="__other__"&&<input placeholder={tr.clubReports.competitionOtherPh} value={clubReportForm.competitionOther||""} onChange={e=>setClubReportForm({...clubReportForm,competitionOther:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>}
             </div>
-            <input placeholder={tr.clubReports.resultPh} value={clubReportForm.result} onChange={e=>setClubReportForm({...clubReportForm,result:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+            <input placeholder={tr.clubReports.resultPh} value={clubReportForm.result} onChange={e=>setClubReportForm({...clubReportForm,result:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
             <div>
-              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.playedQuestion}</p>
+              <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.playedQuestion}</p>
               <div className="flex gap-2">
-                <button type="button" onClick={()=>setClubReportForm({...clubReportForm,did_not_play:"no"})} className={`flex-1 py-2 rounded-lg border text-[11px] font-black uppercase tracking-wider transition-all ${clubReportForm.did_not_play==="no"?"bg-[#E30613] border-[#E30613] text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.playedYes}</button>
-                <button type="button" onClick={()=>setClubReportForm({...clubReportForm,did_not_play:"yes"})} className={`flex-1 py-2 rounded-lg border text-[11px] font-black uppercase tracking-wider transition-all ${clubReportForm.did_not_play==="yes"?"bg-[#E30613] border-[#E30613] text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.playedNo}</button>
+                <button type="button" onClick={()=>setClubReportForm({...clubReportForm,did_not_play:"no"})} className={`flex-1 py-2 rounded-lg border text-[13px] font-black uppercase tracking-wider transition-all ${clubReportForm.did_not_play==="no"?"bg-[#E30613] border-[#E30613] text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.playedYes}</button>
+                <button type="button" onClick={()=>setClubReportForm({...clubReportForm,did_not_play:"yes"})} className={`flex-1 py-2 rounded-lg border text-[13px] font-black uppercase tracking-wider transition-all ${clubReportForm.did_not_play==="yes"?"bg-[#E30613] border-[#E30613] text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.playedNo}</button>
               </div>
             </div>
             {clubReportForm.did_not_play!=="yes"&&(<>
               <div>
-                <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.positionLabel}</p>
+                <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.positionLabel}</p>
                 <div className="flex flex-wrap gap-1.5">
                   {posOptions.map(posLabel=>(
                     <button key={posLabel} type="button" onClick={()=>togglePos(posLabel)}
-                      className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wide transition-all ${chosenPos.includes(posLabel)?'bg-[#E30613] border border-[#E30613] text-white':'bg-zinc-50 border border-zinc-200 text-zinc-500 hover:border-[#E30613]/40'}`}>
+                      className={`px-2.5 py-1.5 rounded-lg text-[12px] font-black uppercase tracking-wide transition-all ${chosenPos.includes(posLabel)?'bg-[#E30613] border border-[#E30613] text-white':'bg-zinc-50 border border-zinc-200 text-zinc-500 hover:border-[#E30613]/40'}`}>
                       {posLabel}
                     </button>
                   ))}
@@ -2185,57 +2185,57 @@ export default function EliteSquadApp() {
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.mins}</p>
-                  <input inputMode="numeric" placeholder="0" value={clubReportForm.minutes_played} onChange={e=>setN("minutes_played",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.mins}</p>
+                  <input inputMode="numeric" placeholder="0" value={clubReportForm.minutes_played} onChange={e=>setN("minutes_played",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
                 </div>
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.goals}</p>
-                  <input inputMode="numeric" placeholder="0" value={clubReportForm.goals} onChange={e=>setN("goals",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.goals}</p>
+                  <input inputMode="numeric" placeholder="0" value={clubReportForm.goals} onChange={e=>setN("goals",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
                 </div>
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.assists}</p>
-                  <input inputMode="numeric" placeholder="0" value={clubReportForm.assists} onChange={e=>setN("assists",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.assists}</p>
+                  <input inputMode="numeric" placeholder="0" value={clubReportForm.assists} onChange={e=>setN("assists",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
                 </div>
                 <div className="flex gap-2">
                   <div className="flex-1">
-                    <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">YC</p>
-                    <input inputMode="numeric" placeholder="0" value={clubReportForm.yellow_cards} onChange={e=>setN("yellow_cards",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+                    <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1">YC</p>
+                    <input inputMode="numeric" placeholder="0" value={clubReportForm.yellow_cards} onChange={e=>setN("yellow_cards",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
                   </div>
                   <div className="flex-1">
-                    <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">RC</p>
-                    <input inputMode="numeric" placeholder="0" value={clubReportForm.red_cards} onChange={e=>setN("red_cards",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+                    <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1">RC</p>
+                    <input inputMode="numeric" placeholder="0" value={clubReportForm.red_cards} onChange={e=>setN("red_cards",e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
                   </div>
                 </div>
               </div>
               <div>
-                <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.startingQuestion}</p>
+                <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.startingQuestion}</p>
                 <div className="flex gap-2">
-                  <button type="button" onClick={()=>setClubReportForm({...clubReportForm,is_starting:"yes"})} className={`flex-1 py-2 rounded-lg border text-[11px] font-black uppercase tracking-wider transition-all ${clubReportForm.is_starting==="yes"?"bg-[#E30613] border-[#E30613] text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.startedLabel}</button>
-                  <button type="button" onClick={()=>setClubReportForm({...clubReportForm,is_starting:"no"})} className={`flex-1 py-2 rounded-lg border text-[11px] font-black uppercase tracking-wider transition-all ${clubReportForm.is_starting==="no"?"bg-[#E30613] border-[#E30613] text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.benchLabel}</button>
+                  <button type="button" onClick={()=>setClubReportForm({...clubReportForm,is_starting:"yes"})} className={`flex-1 py-2 rounded-lg border text-[13px] font-black uppercase tracking-wider transition-all ${clubReportForm.is_starting==="yes"?"bg-[#E30613] border-[#E30613] text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.startedLabel}</button>
+                  <button type="button" onClick={()=>setClubReportForm({...clubReportForm,is_starting:"no"})} className={`flex-1 py-2 rounded-lg border text-[13px] font-black uppercase tracking-wider transition-all ${clubReportForm.is_starting==="no"?"bg-[#E30613] border-[#E30613] text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.benchLabel}</button>
                 </div>
               </div>
               <div>
-                <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.ratingLabel}</p>
-                <input inputMode="decimal" placeholder={tr.clubReports.ratingPh} value={clubReportForm.rating} onChange={e=>setRating(e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+                <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.ratingLabel}</p>
+                <input inputMode="decimal" placeholder={tr.clubReports.ratingPh} value={clubReportForm.rating} onChange={e=>setRating(e.target.value)} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
               </div>
               <div>
-                <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.highlightsLabel}</p>
-                <input placeholder={tr.clubReports.highlightsPh} value={clubReportForm.highlights_url} onChange={e=>setClubReportForm({...clubReportForm,highlights_url:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+                <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.highlightsLabel}</p>
+                <input placeholder={tr.clubReports.highlightsPh} value={clubReportForm.highlights_url} onChange={e=>setClubReportForm({...clubReportForm,highlights_url:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
               </div>
               <div>
-                <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.injuryQuestion}</p>
+                <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1">{tr.clubReports.injuryQuestion}</p>
                 <div className="flex gap-2">
-                  <button type="button" onClick={()=>setClubReportForm({...clubReportForm,had_injury:"no"})} className={`flex-1 py-2 rounded-lg border text-[11px] font-black uppercase tracking-wider transition-all ${clubReportForm.had_injury==="no"?"bg-zinc-800 border-zinc-800 text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.noLabel}</button>
-                  <button type="button" onClick={()=>setClubReportForm({...clubReportForm,had_injury:"yes"})} className={`flex-1 py-2 rounded-lg border text-[11px] font-black uppercase tracking-wider transition-all ${clubReportForm.had_injury==="yes"?"bg-[#ff4f66] border-[#ff4f66] text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.yesLabel}</button>
+                  <button type="button" onClick={()=>setClubReportForm({...clubReportForm,had_injury:"no"})} className={`flex-1 py-2 rounded-lg border text-[13px] font-black uppercase tracking-wider transition-all ${clubReportForm.had_injury==="no"?"bg-zinc-800 border-zinc-800 text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.noLabel}</button>
+                  <button type="button" onClick={()=>setClubReportForm({...clubReportForm,had_injury:"yes"})} className={`flex-1 py-2 rounded-lg border text-[13px] font-black uppercase tracking-wider transition-all ${clubReportForm.had_injury==="yes"?"bg-[#ff4f66] border-[#ff4f66] text-white":"bg-zinc-50 border-zinc-200 text-zinc-500"}`}>{tr.clubReports.yesLabel}</button>
                 </div>
               </div>
               {clubReportForm.had_injury==="yes"&&(
-                <textarea placeholder={tr.clubReports.injuryNotesPh} value={clubReportForm.injury_notes} onChange={e=>setClubReportForm({...clubReportForm,injury_notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-[#ff4f66]/40 text-[11px] font-bold outline-none resize-none"/>
+                <textarea placeholder={tr.clubReports.injuryNotesPh} value={clubReportForm.injury_notes} onChange={e=>setClubReportForm({...clubReportForm,injury_notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-[#ff4f66]/40 text-[13px] font-bold outline-none resize-none"/>
               )}
             </>)}
-            <textarea placeholder={tr.clubReports.notesPh} value={clubReportForm.notes} onChange={e=>setClubReportForm({...clubReportForm,notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[11px] font-bold outline-none resize-none"/>
+            <textarea placeholder={tr.clubReports.notesPh} value={clubReportForm.notes} onChange={e=>setClubReportForm({...clubReportForm,notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none resize-none"/>
             <div className="flex gap-2 pt-1">
-              <button onClick={()=>setAddClubReportOpen(false)} className="flex-1 py-2.5 rounded-xl text-[9px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">{tr.common.cancel}</button>
+              <button onClick={()=>setAddClubReportOpen(false)} className="flex-1 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">{tr.common.cancel}</button>
               <button onClick={async()=>{
                 if(!clubReportForm.opponent.trim()){alert(tr.clubReports.needOpponent);return}
                 const didNotPlay=clubReportForm.did_not_play==="yes"
@@ -2262,7 +2262,7 @@ export default function EliteSquadApp() {
                 setAddClubReportOpen(false)
                 setClubReportForm(initClubReportForm)
                 fetchClubReports(selMember.id).then(setClubReports)
-              }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-xl text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">{tr.common.save}</button>
+              }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-xl text-[11px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">{tr.common.save}</button>
             </div>
           </div>
         </div>
@@ -2291,7 +2291,7 @@ export default function EliteSquadApp() {
                   <input type="file" ref={fileRef} onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)handlePortraitFile(f)}}
 className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   {form.image?<img src={form.imagePath?(imgUrls[String(form.imagePath)]||form.image):form.image} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="w-14 h-14 rounded-lg object-cover" alt=""/>:<Camera size={20} className="text-[var(--c-textDim)]"/>}
-                  <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.portraitUpload}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.portraitUpload}</span>
                 </div>
                 {form.image&&<button type="button" onClick={e=>{e.stopPropagation();setForm({...form,image:""})}} className="absolute -top-1 -right-1 p-1.5 bg-[#e3062c] text-white rounded-full"><Trash2 size={11}/></button>}
               </div>
@@ -2299,7 +2299,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 <div onClick={()=>fileRef2.current?.click()} {...celebrationDrop.dropProps} className={`flex flex-col items-center gap-2 py-4 rounded-lg border border-dashed cursor-pointer bg-[var(--c-deep)] transition-all ${celebrationDrop.isDragging?'border-[#e3062c] bg-[#e3062c]/10 scale-[1.01]':'border-[rgba(var(--line-rgb),.25)] hover:border-[#e3062c]/60'}`}>
                   <input type="file" ref={fileRef2} onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)handleCelebrationFile(f)}} className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   {form.image2?<img src={form.image2Path?(imgUrls[String(form.image2Path)]||form.image2):form.image2} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="w-14 h-14 rounded-lg object-cover" alt=""/>:<Camera size={20} className="text-[var(--c-textDim)]"/>}
-                  <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.celebrationUpload}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.celebrationUpload}</span>
                 </div>
                 {form.image2&&<button type="button" onClick={e=>{e.stopPropagation();setForm({...form,image2:"",image2Path:""})}} className="absolute -top-1 -right-1 p-1.5 bg-[#e3062c] text-white rounded-full"><Trash2 size={11}/></button>}
               </div>
@@ -2309,7 +2309,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     <input type="file" ref={passRef} onChange={e=>{const f=e.target.files?.[0];e.target.value='';if(f)handlePassportFile(f)}}
  className="hidden" accept="image/jpeg,image/png"/>
                     {form.passportImage?<img src={getPassportSrc(form,imgUrls)} onError={e=>{const t=e.target as HTMLImageElement;if(t.src!==t.getAttribute('data-fallback')){t.setAttribute('data-fallback','/placeholder.jpg');t.src='/placeholder.jpg'}}} className="max-h-24 rounded-lg object-contain" alt=""/>:<IdCard size={20} className="text-[var(--c-textDim)]"/>}
-                    <span className="text-[8px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.passportUpload}</span>
+                    <span className="text-[10px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]">{tr.form.passportUpload}</span>
                   </div>
                   {form.passportImage&&<button type="button" onClick={e=>{e.stopPropagation();setForm({...form,passportImage:""})}} className="absolute -top-1 -right-1 p-1.5 bg-[#e3062c] text-white rounded-full"><Trash2 size={11}/></button>}
                 </div>
@@ -2365,7 +2365,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           className={`pm-chip ${form.formation===f?'pm-chip-on':''}`}>{f}</button>
                       ))}
                     </div>
-                    {form.formation&&<p className="text-[8px] font-black text-[var(--c-red)] uppercase ml-2 mt-1.5 tracking-tight">✓ Prefers {form.formation}</p>}
+                    {form.formation&&<p className="text-[10px] font-black text-[var(--c-red)] uppercase ml-2 mt-1.5 tracking-tight">✓ Prefers {form.formation}</p>}
                   </div>
                   <input placeholder={tr.form.languages} value={form.languages} onChange={e=>setForm({...form,languages:e.target.value})} className="pm-field"/>
                   <div className="col-span-2">
@@ -2394,13 +2394,13 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 <div className="max-h-[80px] overflow-y-auto space-y-1.5">
                   {form.history?.map((h:any,i:number)=>(
                     <div key={i} className="flex gap-1.5">
-                      <input placeholder={tr.form.year} value={h.year} onChange={e=>{const nh=[...form.history];nh[i].year=e.target.value;setForm({...form,history:nh})}} className="w-16 pm-field py-1.5 text-[10px]"/>
-                      <input placeholder={tr.form.event} value={h.event} onChange={e=>{const nh=[...form.history];nh[i].event=e.target.value;setForm({...form,history:nh})}} className="flex-1 pm-field py-1.5 text-[10px]"/>
+                      <input placeholder={tr.form.year} value={h.year} onChange={e=>{const nh=[...form.history];nh[i].year=e.target.value;setForm({...form,history:nh})}} className="w-16 pm-field py-1.5 text-[12px]"/>
+                      <input placeholder={tr.form.event} value={h.event} onChange={e=>{const nh=[...form.history];nh[i].event=e.target.value;setForm({...form,history:nh})}} className="flex-1 pm-field py-1.5 text-[12px]"/>
                       <button type="button" onClick={()=>setForm({...form,history:form.history.filter((_:any,idx:number)=>idx!==i)})} className="p-1 text-[var(--c-textMid)] hover:text-red-400"><X size={11}/></button>
                     </div>
                   ))}
                 </div>
-                <button type="button" onClick={()=>setForm({...form,history:[...(form.history||[]),{year:"",event:""}]})} className="w-full py-2 border border-dashed border-[#e3062c]/30 rounded-lg text-[7px] font-black text-[#e3062c] hover:bg-[#e3062c]/8 uppercase tracking-widest transition-all">{tr.form.addEntry}</button>
+                <button type="button" onClick={()=>setForm({...form,history:[...(form.history||[]),{year:"",event:""}]})} className="w-full py-2 border border-dashed border-[#e3062c]/30 rounded-lg text-[9px] font-black text-[#e3062c] hover:bg-[#e3062c]/8 uppercase tracking-widest transition-all">{tr.form.addEntry}</button>
               </div>
               <div className="pt-1 flex gap-2">
                 <button type="button" onClick={()=>setIsFormOpen(false)} className="pm-btn pm-btn-ghost flex-1 py-2.5">{tr.form.cancel}</button>
@@ -2418,7 +2418,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
         <div className="fixed inset-0 z-[500] flex items-center justify-center p-4 bg-black/90" onClick={()=>setPassportZoom(false)}>
           <button onClick={()=>setPassportZoom(false)} title="Close" className="absolute top-4 right-4 p-2.5 rounded-full bg-white/10 text-white hover:bg-[#e3062c] transition-all"><X size={18}/></button>
           <img src={getPassportSrc(selMember,imgUrls)} alt={`${selMember.name} passport`} className="max-h-[92vh] max-w-[92vw] object-contain rounded-lg shadow-2xl" onClick={e=>e.stopPropagation()}/>
-          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[.3em] text-white/70">{tr.profile.passport} · {titleCase(selMember.name)}</p>
+          <p className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[11px] font-black uppercase tracking-[.3em] text-white/70">{tr.profile.passport} · {titleCase(selMember.name)}</p>
         </div>
       )}
 
@@ -2431,7 +2431,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 shrink-0">
               <div>
                 <h2 className="text-2xl font-black uppercase tracking-tight">{tr.users.pendingTitle}</h2>
-                <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{pendingCount} {tr.users.awaitingReview}</p>
+                <p className="text-[10px] font-black text-[#E30613] uppercase tracking-[0.3em] mt-0.5">{pendingCount} {tr.users.awaitingReview}</p>
               </div>
               <button onClick={()=>setPendingReviewOpen(false)} title={tr.common.close} className="p-2 rounded-xl border border-zinc-200 hover:bg-red-500 hover:text-white transition-all"><X size={18}/></button>
             </div>
@@ -2456,19 +2456,19 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                         <div className="w-14 h-14 rounded-2xl bg-[#E30613]/10 border border-[#E30613]/20 flex items-center justify-center"><User size={22} className="text-[#E30613]"/></div>
                         <div>
                           <p className="text-lg font-black uppercase leading-tight">{u.firstName} {u.lastName}</p>
-                          <p className="text-[9px] font-medium tracking-wide text-zinc-500">@{u.username}</p>
-                          <p className="text-[8px] font-black uppercase tracking-wider text-amber-600">{tr.users.awaitingYourReview}</p>
+                          <p className="text-[11px] font-medium tracking-wide text-zinc-500">@{u.username}</p>
+                          <p className="text-[10px] font-black uppercase tracking-wider text-amber-600">{tr.users.awaitingYourReview}</p>
                         </div>
                       </div>
                     </div>
                     <div className="p-5 space-y-4">
-                      <p className="text-[7px] font-black uppercase text-zinc-500 tracking-wider">{tr.users.assignPermissions}</p>
+                      <p className="text-[9px] font-black uppercase text-zinc-500 tracking-wider">{tr.users.assignPermissions}</p>
                       <div className="flex flex-wrap gap-2">
                         {PERM_KEYS.map((key)=>{
                           const on=allUsers[realIdx]?.perms[key]
                           return(
                             <button key={key} onClick={()=>togglePerm(key)}
-                              className={`px-3.5 py-2 rounded-xl text-[7px] font-black uppercase tracking-wider border transition-all ${on?'bg-[#E30613] border-[#E30613] text-white shadow-md shadow-[#E30613]/30':'bg-white border-zinc-200 text-zinc-500 hover:border-[#E30613]/30'}`}>
+                              className={`px-3.5 py-2 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-all ${on?'bg-[#E30613] border-[#E30613] text-white shadow-md shadow-[#E30613]/30':'bg-white border-zinc-200 text-zinc-500 hover:border-[#E30613]/30'}`}>
                               {on&&<Check size={10} className="inline mr-1"/>}{tr.perms[key]}
                             </button>
                           )
@@ -2476,9 +2476,9 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                       </div>
                     </div>
                     <div className="flex gap-3 px-5 pb-5">
-                      <button onClick={doApprove} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>{tr.users.saveAndApprove}</button>
-                      <button onClick={doHold} className="flex-1 py-3 rounded-xl border border-zinc-300 bg-white text-zinc-500 text-[8px] font-black uppercase tracking-wider hover:bg-zinc-100 transition-all">{tr.common.hold}</button>
-                      <button onClick={doDelete} className="py-3 px-4 rounded-xl border border-[#e3062c]/40 text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all"><Trash2 size={12}/></button>
+                      <button onClick={doApprove} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[10px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>{tr.users.saveAndApprove}</button>
+                      <button onClick={doHold} className="flex-1 py-3 rounded-xl border border-zinc-300 bg-white text-zinc-500 text-[10px] font-black uppercase tracking-wider hover:bg-zinc-100 transition-all">{tr.common.hold}</button>
+                      <button onClick={doDelete} className="py-3 px-4 rounded-xl border border-[#e3062c]/40 text-[#ff4f66] text-[10px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all"><Trash2 size={12}/></button>
                     </div>
                   </div>
                 )
@@ -2486,7 +2486,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               {pendingCount===0&&(
                 <div className="flex flex-col items-center justify-center py-16 gap-4 text-zinc-300">
                   <Bell size={48}/>
-                  <p className="text-[11px] font-black uppercase tracking-[0.3em]">{tr.common.noPendingUsers}</p>
+                  <p className="text-[13px] font-black uppercase tracking-[0.3em]">{tr.common.noPendingUsers}</p>
                 </div>
               )}
             </div>
@@ -2503,7 +2503,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
             <div className="flex items-center justify-between px-6 py-5 border-b border-zinc-200 shrink-0">
               <div>
                 <h2 className="text-2xl font-black uppercase tracking-tight">{tr.match.pendingTitle}</h2>
-                <p className="text-[8px] font-black text-[#e3062c] uppercase tracking-[0.3em] mt-0.5">{pendingMatches.length} {tr.match.awaitingApproval}</p>
+                <p className="text-[10px] font-black text-[#e3062c] uppercase tracking-[0.3em] mt-0.5">{pendingMatches.length} {tr.match.awaitingApproval}</p>
               </div>
               <button onClick={()=>setPendingMatchesOpen(false)} title={tr.common.close} className="pm-close shrink-0"><X size={18}/></button>
             </div>
@@ -2516,27 +2516,27 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                         <div className="w-12 h-12 rounded-2xl bg-[#f6c744]/10 border border-[#f6c744]/30 flex items-center justify-center"><BookOpen size={18} className="text-[#f6c744]"/></div>
                         <div>
                           <div className="flex items-center gap-2"><CountryFlag name={m.opponent} className="w-6 h-4 rounded-sm"/><p className="font-black uppercase text-sm leading-tight">{m.opponent}</p></div>
-                          <p className="text-[8px] text-zinc-500 font-bold uppercase tracking-wider">{fmtDateWords(m.date)} · {m.competition||tr.match.friendly} · {tr.match.by} @{m.submittedBy}</p>
+                          <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">{fmtDateWords(m.date)} · {m.competition||tr.match.friendly} · {tr.match.by} @{m.submittedBy}</p>
                         </div>
                       </div>
-                      <span className="text-[9px] font-black text-[#f6c744] bg-[#f6c744]/15 border border-[#f6c744]/30 px-2.5 py-1 rounded-lg uppercase">{tr.users.pending}</span>
+                      <span className="text-[11px] font-black text-[#f6c744] bg-[#f6c744]/15 border border-[#f6c744]/30 px-2.5 py-1 rounded-lg uppercase">{tr.users.pending}</span>
                     </div>
                   </div>
-                  <div className="p-5 space-y-2 text-[9px] font-bold text-zinc-600">
+                  <div className="p-5 space-y-2 text-[11px] font-bold text-zinc-600">
                     {m.venue&&<p>{tr.match.venue2}: {m.venue}</p>}
                     {m.result&&<p>{tr.match.result}: {m.result}</p>}
                     <p>{tr.match.squad}: {m.squad?.length||0} · {tr.match.scorers2}: {m.scorers?.length||0}</p>
                   </div>
                   <div className="flex gap-3 px-5 pb-5">
-                    <button onClick={()=>approveMatch(m)} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>{tr.match.approveMatch}</button>
-                    <button onClick={()=>{reverseMatchCards(m);setMatches(p=>p.filter((x:any)=>x.id!==m.id));setPendingMatchesOpen(false)}} className="py-3 px-5 rounded-xl border border-[rgba(255,79,102,.35)] text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c]/10 transition-all"><Trash2 size={12} className="inline mr-1"/>{tr.match.reject}</button>
+                    <button onClick={()=>approveMatch(m)} className="flex-1 py-3 rounded-full bg-[#E30613] text-white text-[10px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-lg shadow-[#E30613]/30"><Check size={12} className="inline mr-1.5"/>{tr.match.approveMatch}</button>
+                    <button onClick={()=>{reverseMatchCards(m);setMatches(p=>p.filter((x:any)=>x.id!==m.id));setPendingMatchesOpen(false)}} className="py-3 px-5 rounded-xl border border-[rgba(255,79,102,.35)] text-[#ff4f66] text-[10px] font-black uppercase tracking-wider hover:bg-[#e3062c]/10 transition-all"><Trash2 size={12} className="inline mr-1"/>{tr.match.reject}</button>
                   </div>
                 </div>
               ))}
               {pendingMatches.length===0&&(
                 <div className="flex flex-col items-center justify-center py-16 gap-4 text-zinc-300">
                   <BookOpen size={48}/>
-                  <p className="text-[11px] font-black uppercase tracking-[0.3em]">{tr.match.noPendingMatches}</p>
+                  <p className="text-[13px] font-black uppercase tracking-[0.3em]">{tr.match.noPendingMatches}</p>
                 </div>
               )}
             </div>
@@ -2573,26 +2573,26 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   <div key={i} className="p-3 rounded-xl border border-zinc-200 bg-zinc-50">
                     <div className="flex items-center justify-between mb-2">
                       <div>
-                        <p className="text-[11px] font-black uppercase leading-tight">{u.username}{currentUser&&<span className="text-[#E30613] ml-2 text-[8px]">{tr.users.you}</span>}</p>
-                        <p className="text-[7px] font-black uppercase tracking-wider" style={{color:u.status==="active"?"#16a34a":"#E30613"}}>{u.status==="active"?tr.users.active:tr.users.pending}</p>
+                        <p className="text-[13px] font-black uppercase leading-tight">{u.username}{currentUser&&<span className="text-[#E30613] ml-2 text-[10px]">{tr.users.you}</span>}</p>
+                        <p className="text-[9px] font-black uppercase tracking-wider" style={{color:u.status==="active"?"#16a34a":"#E30613"}}>{u.status==="active"?tr.users.active:tr.users.pending}</p>
                       </div>
                       <div className="flex gap-1.5">
-                        {u.status==="pending"&&canManageUsers&&<button onClick={approveUser} className="px-3 py-1.5 rounded-lg border border-[#7fd6a8]/30 text-[#7fd6a8] text-[7px] font-black uppercase tracking-wider hover:bg-[#7fd6a8]/10 transition-all">{tr.common.approve}</button>}
+                        {u.status==="pending"&&canManageUsers&&<button onClick={approveUser} className="px-3 py-1.5 rounded-lg border border-[#7fd6a8]/30 text-[#7fd6a8] text-[9px] font-black uppercase tracking-wider hover:bg-[#7fd6a8]/10 transition-all">{tr.common.approve}</button>}
                         {canManageUsers&&!currentUser&&(<>
-                          <button onClick={()=>openPw('admin',u.username)} className="px-3 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">{tr.common.resetPw}</button>
-                          <button onClick={()=>{deleteProfile(u.username).then(reloadProfiles)}} className="px-3 py-1.5 rounded-lg border border-[#e3062c]/40 text-[#ff4f66] text-[7px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all">{tr.common.remove}</button>
+                          <button onClick={()=>openPw('admin',u.username)} className="px-3 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[9px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">{tr.common.resetPw}</button>
+                          <button onClick={()=>{deleteProfile(u.username).then(reloadProfiles)}} className="px-3 py-1.5 rounded-lg border border-[#e3062c]/40 text-[#ff4f66] text-[9px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all">{tr.common.remove}</button>
                         </>)}
                       </div>
                     </div>
                     {/* LINKED CARD — a 'player' account sees only this one row */}
                     {canManageUsers&&u.role==="player"&&(
                       <div className="mt-2 pt-2 border-t border-zinc-200">
-                        <p className="text-[6px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1.5">Linked player card</p>
+                        <p className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-1.5">Linked player card</p>
                         <div className="flex items-center gap-2">
                           <select
                             value={u.memberId??""}
                             onChange={e=>linkProfileToMember(u.username, e.target.value?Number(e.target.value):null).then(reloadProfiles)}
-                            className="flex-1 min-w-0 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[8px] font-black uppercase tracking-wider text-zinc-700 outline-none focus:border-[#E30613]/60"
+                            className="flex-1 min-w-0 rounded-lg border border-zinc-200 bg-white px-2.5 py-1.5 text-[10px] font-black uppercase tracking-wider text-zinc-700 outline-none focus:border-[#E30613]/60"
                           >
                             <option value="">— not linked —</option>
                             {members.map((m:any)=>(
@@ -2600,10 +2600,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                             ))}
                           </select>
                           {linkedMember&&(
-                            <button onClick={()=>setSelMember(linkedMember)} className="shrink-0 px-2.5 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[7px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">View</button>
+                            <button onClick={()=>setSelMember(linkedMember)} className="shrink-0 px-2.5 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[9px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">View</button>
                           )}
                         </div>
-                        {!u.memberId&&<p className="mt-1.5 text-[6px] font-bold uppercase tracking-wider text-[#E30613]">This player sees nothing until a card is linked</p>}
+                        {!u.memberId&&<p className="mt-1.5 text-[8px] font-bold uppercase tracking-wider text-[#E30613]">This player sees nothing until a card is linked</p>}
                       </div>
                     )}
                     {canManageUsers&&u.role!=="player"&&(
@@ -2612,7 +2612,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           const on=u.perms[key]
                           return(
                             <button key={key} onClick={()=>togglePerm(key)}
-                              className={`px-2.5 py-1 rounded-lg text-[6px] font-black uppercase tracking-wider border transition-all ${on?'bg-[#E30613]/15 border-[#E30613]/40 text-[#E30613]':'bg-zinc-100 border-zinc-200 text-zinc-400 hover:bg-zinc-200'}`}>
+                              className={`px-2.5 py-1 rounded-lg text-[8px] font-black uppercase tracking-wider border transition-all ${on?'bg-[#E30613]/15 border-[#E30613]/40 text-[#E30613]':'bg-zinc-100 border-zinc-200 text-zinc-400 hover:bg-zinc-200'}`}>
                               {tr.perms[key]}
                             </button>
                           )
@@ -2638,7 +2638,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               <button onClick={()=>setActivityLogOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100 transition-all"><X size={18}/></button>
             </div>
             <div className="p-4 overflow-y-auto space-y-1.5">
-              {activityLog.length===0&&<p className="text-[10px] text-zinc-400 text-center py-8">No activity yet</p>}
+              {activityLog.length===0&&<p className="text-[12px] text-zinc-400 text-center py-8">No activity yet</p>}
               {activityLog.map((a:any)=>{
                 const actionColor=a.action==="insert"?"text-[#7fd6a8]":a.action==="delete"?"text-[#ff4f66]":"text-[#7ec3ff]"
                 const actionVerb=a.action==="insert"?"added":a.action==="delete"?"deleted":"updated"
@@ -2681,17 +2681,17 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   <details key={a.id} className="group rounded-lg bg-zinc-50 border border-zinc-100 overflow-hidden">
                     <summary className="flex items-start justify-between gap-2 p-2.5 cursor-pointer list-none">
                       <div className="min-w-0">
-                        <p className="text-[11px] leading-snug">
+                        <p className="text-[13px] leading-snug">
                           {buildSentence()}
                         </p>
-                        <p className="text-[8px] text-zinc-400 mt-0.5">{dateStr} at {timeStr}</p>
+                        <p className="text-[10px] text-zinc-400 mt-0.5">{dateStr} at {timeStr}</p>
                       </div>
                       {changeEntries.length>0&&<ChevronDown size={13} className="shrink-0 text-zinc-400 mt-0.5 group-open:rotate-180 transition-transform"/>}
                     </summary>
                     {changeEntries.length>0&&(
                       <div className="px-2.5 pb-2.5 space-y-1 border-t border-zinc-200 pt-2 mt-0.5">
                         {changeEntries.map(([field,val]:any)=>(
-                          <div key={field} className="flex items-center gap-1.5 text-[9px]">
+                          <div key={field} className="flex items-center gap-1.5 text-[11px]">
                             <span className="font-bold text-zinc-500 shrink-0">{fieldLabel(field)}:</span>
                             <span className="text-[#ff4f66] line-through truncate">{fmtVal(val.from)}</span>
                             <span className="text-zinc-300">→</span>
@@ -2726,7 +2726,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   </div>
                   <div>
                     <span className="pm-title block">{G.gamesTitle}</span>
-                    <span className="block text-[8px] font-bold uppercase tracking-wider text-[var(--c-textFaint)] mt-0.5">{G.gamesSub}</span>
+                    <span className="block text-[10px] font-bold uppercase tracking-wider text-[var(--c-textFaint)] mt-0.5">{G.gamesSub}</span>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5">
@@ -2738,7 +2738,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 <div className="flex gap-1.5 mb-4">
                   {([["bingo",G.bgTitle],["whoami",G.waTitle]] as ["bingo"|"whoami",string][]).map(([k,label])=>(
                     <button key={k} onClick={()=>setGameTab(k)}
-                      className={`flex-1 px-3 py-2.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border ${gameTab===k?"bg-[#E30613]/12 border-[#E30613]/60 text-[#E30613]":"bg-[var(--c-panel4)] border-[rgba(var(--line-rgb),.16)] text-[var(--c-textMid)] hover:text-[var(--c-text)]"}`}>{label}</button>
+                      className={`flex-1 px-3 py-2.5 rounded-lg text-[12px] font-black uppercase tracking-wider transition-all border ${gameTab===k?"bg-[#E30613]/12 border-[#E30613]/60 text-[#E30613]":"bg-[var(--c-panel4)] border-[rgba(var(--line-rgb),.16)] text-[var(--c-textMid)] hover:text-[var(--c-text)]"}`}>{label}</button>
                   ))}
                 </div>
                 <GameErrorBoundary key={gameTab} message="This game hit a problem. Close and reopen Games to try again.">
@@ -2772,7 +2772,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 </div>
                 <div>
                   <h2 className="text-sm font-black uppercase tracking-tight text-[var(--c-text)]">Upcoming Matches</h2>
-                  <p className="text-[8px] font-bold uppercase tracking-wider text-[var(--c-textFaint)] mt-0.5">{upcoming.length} fixture{upcoming.length===1?"":"s"} scheduled</p>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--c-textFaint)] mt-0.5">{upcoming.length} fixture{upcoming.length===1?"":"s"} scheduled</p>
                 </div>
               </div>
               <button onClick={()=>setUpcomingOpen(false)} title="Close" className="w-7 h-7 rounded-lg bg-[var(--c-panel2)] border border-[rgba(var(--line-rgb),.18)] hover:bg-[#e3062c]/20 hover:text-[#ff5f72] hover:border-[#e3062c]/40 flex items-center justify-center transition-all"><X size={14} className="text-[var(--c-textFaint)]"/></button>
@@ -2786,8 +2786,8 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   <div className="w-16 h-16 rounded-2xl border border-dashed border-[rgba(246,199,68,.4)] bg-[#f6c744]/5 flex items-center justify-center mb-4">
                     <Calendar size={22} className="text-[#f6c744]"/>
                   </div>
-                  <p className="text-[12px] font-black uppercase tracking-widest text-[var(--c-text)]">No fixtures yet</p>
-                  <p className="text-[10px] text-[var(--c-textFaint)] mt-1.5 max-w-[220px]">Schedule an upcoming match and it will live here</p>
+                  <p className="text-[14px] font-black uppercase tracking-widest text-[var(--c-text)]">No fixtures yet</p>
+                  <p className="text-[12px] text-[var(--c-textFaint)] mt-1.5 max-w-[220px]">Schedule an upcoming match and it will live here</p>
                 </div>
               )}
 
@@ -2798,21 +2798,21 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   <div className="absolute inset-0" style={{background:"radial-gradient(600px 200px at 20% -10%, rgba(227,6,19,.25), transparent 60%)"}}/>
                   <div className="relative p-6">
                     <div className="flex items-center justify-between mb-5">
-                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E30613] text-white text-[8px] font-black uppercase tracking-[0.2em] shadow-lg shadow-[#E30613]/30">
+                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#E30613] text-white text-[10px] font-black uppercase tracking-[0.2em] shadow-lg shadow-[#E30613]/30">
                         Next Match {daysUntil(next.date)===0?"· Today":daysUntil(next.date)===1?"· Tomorrow":`· In ${daysUntil(next.date)} days`}
                       </span>
-                      <span className="px-2.5 py-1 rounded-full border border-[#f6c744]/40 text-[#f6c744] text-[8px] font-black uppercase tracking-wider">{next.competition||"Friendly"}</span>
+                      <span className="px-2.5 py-1 rounded-full border border-[#f6c744]/40 text-[#f6c744] text-[10px] font-black uppercase tracking-wider">{next.competition||"Friendly"}</span>
                     </div>
                     <p className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[26px] font-black uppercase tracking-tight text-white leading-none">
                       <span className="flex items-center gap-2.5"><CountryFlag name="Tunisia" className="w-8 h-[22px] rounded-md ring-white/20"/><span>Tunisia</span></span>
                       <span className="text-[#ff4f66] not-italic font-serif text-[30px]">vs</span>
                       <span className="flex items-center gap-2.5"><CountryFlag name={next.opponent} className="w-8 h-[22px] rounded-md ring-white/20"/><span>{next.opponent||"TBD"}</span></span>
                     </p>
-                    <p className="text-[10px] font-bold text-white/70 mt-3.5">{fmtDateWords(next.date)}</p>
+                    <p className="text-[12px] font-bold text-white/70 mt-3.5">{fmtDateWords(next.date)}</p>
                     <div className="flex items-center gap-2 mt-5">
-                      <MapPin size={11} className="text-[#f6c744]"/><span className="text-[10px] font-bold text-white/85">{next.venue||"Venue TBD"}</span>
-                      <View size={11} className="text-[#f6c744] ml-2"/><span className="text-[10px] font-bold text-white/85">{next.competition||"Friendly"}</span>
-                      {next.homeAway&&<><span className="w-px h-3 bg-white/20 mx-1"/><span className="text-[9px] font-black uppercase tracking-wider text-[#f6c744]">{homeAwayLabel(next.homeAway)}</span></>}
+                      <MapPin size={11} className="text-[#f6c744]"/><span className="text-[12px] font-bold text-white/85">{next.venue||"Venue TBD"}</span>
+                      <View size={11} className="text-[#f6c744] ml-2"/><span className="text-[12px] font-bold text-white/85">{next.competition||"Friendly"}</span>
+                      {next.homeAway&&<><span className="w-px h-3 bg-white/20 mx-1"/><span className="text-[11px] font-black uppercase tracking-wider text-[#f6c744]">{homeAwayLabel(next.homeAway)}</span></>}
                     </div>
                   </div>
                   <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-[#E30613]"/>
@@ -2824,19 +2824,19 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
 
               {rest.length>0&&(
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-[var(--c-textFaint)] mb-2.5">Also Coming Up</p>
+                  <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[var(--c-textFaint)] mb-2.5">Also Coming Up</p>
                   <div className="space-y-2">
                     {rest.map((m:any)=>(
                       <div key={m.id} className="flex items-center gap-4 p-3.5 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.14)] hover:border-[#E30613]/40 transition-all">
                         <div className="w-11 shrink-0 text-center rounded-xl bg-[var(--c-panel2)] border border-[rgba(var(--line-rgb),.16)] py-2">
-                          <p className="text-[7px] font-black uppercase text-[#f6c744]">{(m.date||"").split("-")[1]}</p>
+                          <p className="text-[9px] font-black uppercase text-[#f6c744]">{(m.date||"").split("-")[1]}</p>
                           <p className="text-lg font-black leading-none text-[var(--c-text)]">{(m.date||"").split("-")[2]}</p>
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="flex items-center gap-1.5 text-[13px] font-black text-[var(--c-text)] truncate"><CountryFlag name="Tunisia" className="w-5 h-3 rounded-[2px]"/><span className="shrink-0">Tunisia</span><span className="text-[#ff4f66] font-serif not-italic shrink-0">vs</span><CountryFlag name={m.opponent} className="w-5 h-3 rounded-[2px]"/><span className="truncate">{m.opponent||"TBD"}</span></p>
-                          <p className="text-[9px] text-[var(--c-textFaint)] mt-0.5 truncate">{m.competition||"Friendly"}{m.venue?` · ${m.venue}`:""}{m.homeAway?` · ${homeAwayLabel(m.homeAway)}`:""}</p>
+                          <p className="text-[11px] text-[var(--c-textFaint)] mt-0.5 truncate">{m.competition||"Friendly"}{m.venue?` · ${m.venue}`:""}{m.homeAway?` · ${homeAwayLabel(m.homeAway)}`:""}</p>
                         </div>
-                        <span className="shrink-0 text-[8px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f6c744]/10 border border-[#f6c744]/30 text-[#f6c744]">In {Math.max(0,daysUntil(m.date))}d</span>
+                        <span className="shrink-0 text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full bg-[#f6c744]/10 border border-[#f6c744]/30 text-[#f6c744]">In {Math.max(0,daysUntil(m.date))}d</span>
                       </div>
                     ))}
                   </div>
@@ -2859,14 +2859,14 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
             </div>
             <div className="p-5 overflow-y-auto space-y-2">
               <div className="flex items-center justify-end mb-1">
-                <span className="text-[8px] text-zinc-400">auto-updated</span>
+                <span className="text-[10px] text-zinc-400">auto-updated</span>
               </div>
-              {newsLoading&&<p className="text-[10px] text-zinc-400 py-6 text-center">Loading latest news…</p>}
-              {!newsLoading&&newsItems&&newsItems.length===0&&<p className="text-[10px] text-zinc-400 py-6 text-center">No news found right now</p>}
+              {newsLoading&&<p className="text-[12px] text-zinc-400 py-6 text-center">Loading latest news…</p>}
+              {!newsLoading&&newsItems&&newsItems.length===0&&<p className="text-[12px] text-zinc-400 py-6 text-center">No news found right now</p>}
               {!newsLoading&&newsItems&&newsItems.map((n:any,i:number)=>(
                 <a key={i} href={n.link} target="_blank" rel="noopener noreferrer" className="block p-3 rounded-lg bg-white border border-zinc-200/60 hover:border-[#E30613]/30 hover:bg-[#E30613]/5 transition-all">
-                  <p className="text-[11px] font-bold text-zinc-800 leading-snug">{n.title}</p>
-                  <p className="text-[9px] text-zinc-400 mt-1">{n.source}{n.pubDate?` · ${new Date(n.pubDate).toLocaleDateString()}`:""}</p>
+                  <p className="text-[13px] font-bold text-zinc-800 leading-snug">{n.title}</p>
+                  <p className="text-[11px] text-zinc-400 mt-1">{n.source}{n.pubDate?` · ${new Date(n.pubDate).toLocaleDateString()}`:""}</p>
                 </a>
               ))}
             </div>
@@ -2894,10 +2894,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               <div className="flex items-center justify-between flex-wrap gap-2">
                 <div className="flex flex-wrap gap-1.5">
                   {Object.keys(FORMATIONS).map(f=>(
-                    <button key={f} onClick={()=>{setLabFormation(f);setLabSlots({})}} className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${labFormation===f?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>{f}</button>
+                    <button key={f} onClick={()=>{setLabFormation(f);setLabSlots({})}} className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider transition-all ${labFormation===f?'bg-[#E30613] text-white':'bg-zinc-100 text-zinc-500 hover:bg-zinc-200/60'}`}>{f}</button>
                   ))}
                 </div>
-                <span className="text-[10px] font-bold text-zinc-500">{filledCount}/11 filled</span>
+                <span className="text-[12px] font-bold text-zinc-500">{filledCount}/11 filled</span>
               </div>
 
               <FormationPitch
@@ -2912,19 +2912,19 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               {labPickerSlot&&(
                 <div className="rounded-xl bg-white border border-zinc-200 p-3 space-y-1.5 max-h-52 overflow-y-auto">
                   <div className="flex items-center justify-between mb-1">
-                    <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400">Assign to {labPickerSlot.toUpperCase()}</p>
-                    <button onClick={()=>setLabPickerSlot(null)} className="text-[8px] font-bold text-zinc-400 hover:text-zinc-600">Cancel</button>
+                    <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400">Assign to {labPickerSlot.toUpperCase()}</p>
+                    <button onClick={()=>setLabPickerSlot(null)} className="text-[10px] font-bold text-zinc-400 hover:text-zinc-600">Cancel</button>
                   </div>
                   {labSlots[labPickerSlot]&&(
-                    <button onClick={()=>{setLabSlots({...labSlots,[labPickerSlot]:null});setLabPickerSlot(null)}} className="w-full flex items-center gap-2 p-2 rounded-lg bg-[#e3062c]/15 text-[#ff4f66] text-[11px] font-bold text-left">
+                    <button onClick={()=>{setLabSlots({...labSlots,[labPickerSlot]:null});setLabPickerSlot(null)}} className="w-full flex items-center gap-2 p-2 rounded-lg bg-[#e3062c]/15 text-[#ff4f66] text-[13px] font-bold text-left">
                       <X size={12}/>Remove {categoryPlayers.find((m:any)=>m.id===labSlots[labPickerSlot!])?.name}
                     </button>
                   )}
-                  {availableForPicker.length===0&&<p className="text-[10px] text-zinc-400 py-3 text-center">No available players left</p>}
+                  {availableForPicker.length===0&&<p className="text-[12px] text-zinc-400 py-3 text-center">No available players left</p>}
                   {availableForPicker.map((pl:any)=>(
                     <button key={pl.id} onClick={()=>{setLabSlots({...labSlots,[labPickerSlot]:pl.id});setLabPickerSlot(null)}} className="w-full flex items-center justify-between gap-2 p-2 rounded-lg hover:bg-zinc-50 text-left transition-all">
-                      <span className="text-[11px] font-bold">{pl.name}</span>
-                      <span className="text-[8px] font-black uppercase text-zinc-400">{pl.position}</span>
+                      <span className="text-[13px] font-bold">{pl.name}</span>
+                      <span className="text-[10px] font-black uppercase text-zinc-400">{pl.position}</span>
                     </button>
                   ))}
                 </div>
@@ -2932,26 +2932,26 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
 
               {/* Save as template */}
               <div className="flex gap-2">
-                <input placeholder="Name this lineup (e.g. vs Algeria - Plan A)" value={labTemplateName} onChange={e=>setLabTemplateName(e.target.value)} className="flex-1 p-2.5 bg-white rounded-lg border border-zinc-200 text-[11px] font-bold outline-none"/>
+                <input placeholder="Name this lineup (e.g. vs Algeria - Plan A)" value={labTemplateName} onChange={e=>setLabTemplateName(e.target.value)} className="flex-1 p-2.5 bg-white rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
                 <button onClick={async()=>{
                   if(!labTemplateName.trim()){alert("Name this lineup first");return}
                   const {error}=await saveSquadTemplate({teamCategory:teamCat!,name:labTemplateName.trim(),formation:labFormation,slots:labSlots})
                   if(error){alert("Failed: "+error);return}
                   setLabTemplateName("")
                   setLabTemplates(await fetchSquadTemplates(teamCat!))
-                }} className="px-4 py-2.5 bg-[#E30613] text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all shrink-0">Save</button>
+                }} className="px-4 py-2.5 bg-[#E30613] text-white rounded-full text-[11px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all shrink-0">Save</button>
               </div>
 
               {/* Saved templates */}
               {labTemplates.length>0&&(
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-2">Saved Lineups</p>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-2">Saved Lineups</p>
                   <div className="space-y-1.5">
                     {labTemplates.map((t:any)=>(
                       <div key={t.id} className="flex items-center justify-between gap-2 p-2.5 rounded-lg bg-white border border-zinc-200/60">
                         <button onClick={()=>{setLabFormation(t.formation);setLabSlots(t.slots||{})}} className="flex-1 text-left">
-                          <p className="text-[11px] font-bold text-zinc-800">{t.name}</p>
-                          <p className="text-[8px] text-zinc-400">{t.formation} · by {t.created_by_username||"unknown"}</p>
+                          <p className="text-[13px] font-bold text-zinc-800">{t.name}</p>
+                          <p className="text-[10px] text-zinc-400">{t.formation} · by {t.created_by_username||"unknown"}</p>
                         </button>
                         <button onClick={async()=>{if(await askConfirm(`Delete "${t.name}"?`)){await deleteSquadTemplate(t.id);setLabTemplates(await fetchSquadTemplates(teamCat!))}}} className="p-1.5 rounded-lg text-zinc-300 hover:text-[#ff4f66] hover:bg-[#e3062c]/15 transition-all"><Trash2 size={12}/></button>
                       </div>
@@ -2977,7 +2977,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   </div>
                   <div>
                     <h2 className="text-sm font-black uppercase tracking-tight text-[var(--c-text)]">{matchForm.id?tr.common.edit:tr.match.newMatch}</h2>
-                    <p className="text-[8px] font-bold uppercase tracking-wider text-[var(--c-textFaint)] mt-0.5">{["Opponent first","Lock the squad","Opposition lineup","Match actions"][matchStep]}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--c-textFaint)] mt-0.5">{["Opponent first","Lock the squad","Opposition lineup","Match actions"][matchStep]}</p>
                   </div>
                 </div>
                 <button onClick={()=>setIsMatchOpen(false)} title="Close" className="w-7 h-7 rounded-lg bg-[var(--c-panel2)] border border-[rgba(var(--line-rgb),.18)] hover:bg-[#e3062c]/20 hover:text-[#ff5f72] hover:border-[#e3062c]/40 flex items-center justify-center transition-all"><X size={14} className="text-[var(--c-textFaint)]"/></button>
@@ -2988,8 +2988,8 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 {["Info","Squad","Opponent","Actions"].map((label,i)=>(
                   <div key={i} className={`flex items-center ${i<=matchStep?"":"opacity-40"}`}>
 <div className="flex items-center gap-1.5">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[8px] font-black border transition-all ${i<matchStep?'bg-[#E30613] border-[#E30613] text-white':i===matchStep?'bg-[#E30613] border-[#E30613] text-white shadow-lg shadow-[#E30613]/30':'bg-[var(--c-surface)] border-[rgba(var(--line-rgb),.25)] text-[var(--c-textFaint)]'}`}>{i<matchStep?<Check size={10}/>:i+1}</div>
-                      <span className={`text-[8px] font-bold uppercase tracking-wider hidden sm:inline ${i<=matchStep?'text-[var(--c-text)]':'text-[var(--c-textDim)]'}`}>{label}</span>
+                      <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black border transition-all ${i<matchStep?'bg-[#E30613] border-[#E30613] text-white':i===matchStep?'bg-[#E30613] border-[#E30613] text-white shadow-lg shadow-[#E30613]/30':'bg-[var(--c-surface)] border-[rgba(var(--line-rgb),.25)] text-[var(--c-textFaint)]'}`}>{i<matchStep?<Check size={10}/>:i+1}</div>
+                      <span className={`text-[10px] font-bold uppercase tracking-wider hidden sm:inline ${i<=matchStep?'text-[var(--c-text)]':'text-[var(--c-textDim)]'}`}>{label}</span>
                     </div>
                     {i<3&&<span className={`h-px w-7 mx-2 ${i<matchStep?'bg-[#E30613]/60':'bg-[rgba(var(--line-rgb),.2)]'}`}/>}
                   </div>
@@ -3006,12 +3006,12 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
 
                   <div className="grid grid-cols-[1fr_220px] gap-3">
                     <div>
-                      <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Opponent</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Opponent</label>
                       <input placeholder="e.g. ALGERIA" value={matchForm.opponent} onChange={e=>setMatchForm({...matchForm,opponent:e.target.value.charAt(0).toUpperCase()+e.target.value.slice(1).toLowerCase()})}
                         className="w-full rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.14)] focus:border-[#E30613]/50 px-4 py-4 text-xl font-black uppercase tracking-tight outline-none text-[var(--c-text)] placeholder-[var(--c-textDim)] transition-all"/>
                     </div>
                     <div>
-                      <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Match Date</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Match Date</label>
                       <DatePicker variant="big" value={matchForm.date} onChange={(v)=>setMatchForm({...matchForm,date:v})} placeholder="Match date"/>
                     </div>
                   </div>
@@ -3019,11 +3019,11 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   {matchForm.opponent.trim().length>=3&&<HeadToHead compact matches={catMatches} members={members} opponent={matchForm.opponent} category={teamCat} excludeId={matchForm.id}/>}
 
                   <div>
-                    <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Competition</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Competition</label>
                     <div className="flex flex-wrap gap-1.5">
                       {COMPETITIONS.map(comp=>(
                         <button key={comp.label} type="button" onClick={()=>setMatchForm({...matchForm,competition:comp.value})}
-                          className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${matchForm.competition===comp.value?'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/20':'bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textFaint)] hover:bg-[var(--c-panel2)] hover:border-[#e3062c]/40'}`}>
+                          className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider transition-all ${matchForm.competition===comp.value?'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/20':'bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textFaint)] hover:bg-[var(--c-panel2)] hover:border-[#e3062c]/40'}`}>
                           {comp.label}
                         </button>
                       ))}
@@ -3031,11 +3031,11 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   </div>
 
                   <div>
-                    <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">{tr.match.homeAway}</label>
+                    <label className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">{tr.match.homeAway}</label>
                     <div className="flex flex-wrap gap-1.5">
                       {([["home",tr.match.home],["away",tr.match.away],["neutral",tr.match.neutral]] as const).map(([v,lbl])=>(
                         <button key={v} type="button" onClick={()=>setMatchForm({...matchForm,homeAway:v})}
-                          className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${matchForm.homeAway===v?'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/20':'bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textFaint)] hover:bg-[var(--c-panel2)] hover:border-[#e3062c]/40'}`}>
+                          className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider transition-all ${matchForm.homeAway===v?'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/20':'bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textFaint)] hover:bg-[var(--c-panel2)] hover:border-[#e3062c]/40'}`}>
                           {lbl}
                         </button>
                       ))}
@@ -3044,11 +3044,11 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
 
                   <div className="grid grid-cols-[1fr_auto] gap-3">
                     <div>
-                      <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Venue</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Venue</label>
                       <input placeholder="Stadium name" value={matchForm.venue} onChange={e=>setMatchForm({...matchForm,venue:e.target.value})} className="w-full p-3 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.14)] outline-none text-xs font-bold uppercase text-[var(--c-text)] placeholder-[var(--c-textDim)] focus:border-[#E30613]/50 transition-all"/>
                     </div>
                     <div>
-                      <label className="text-[8px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Score</label>
+                      <label className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-2 block">Score</label>
                       <div className="flex items-center gap-2 p-2.5 rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.14)]">
                         <NumBox value={matchForm.result.split('-')[0]||''} set={(v:string)=>{const a=matchForm.result.split('-')[1]||'';setMatchForm({...matchForm,result:a?v+'-'+a:v})}}/>
                         <span className="text-sm font-black text-[#ff4f66]">–</span>
@@ -3059,14 +3059,14 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
 
                   {/* ── MATCH STATS ── */}
                   <div className="rounded-2xl bg-[var(--c-raised)] border border-[rgba(var(--line-rgb),.14)] p-4">
-                    <p className="text-[8px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-3 flex items-center gap-2"><Activity size={11} className="text-[#f6c744]"/>Match Stats <span className="font-bold text-[var(--c-textDim)] normal-case tracking-normal">(optional)</span></p>
-                    <div className="grid grid-cols-[1fr_auto_1fr] gap-x-3 gap-y-2.5 items-center text-[10px] font-bold">
-                      <span className="flex items-center justify-end gap-1.5 text-right text-[var(--c-text)]"><CountryFlag name="Tunisia" className="w-5 h-3"/><span>Tunisia</span></span><span className="text-[7px] font-black text-[#ff4f66] text-center">vs</span><span className="flex items-center justify-start gap-1.5 text-left text-[var(--c-text)]"><CountryFlag name={matchForm.opponent} className="w-5 h-3"/><span>{matchForm.opponent||"Opponent"}</span></span>
-                      <NumBox align="r" max={100} value={matchForm.tunisiaPossession} set={(v:string)=>setMatchForm({...matchForm,tunisiaPossession:v})}/><span className="text-[7px] font-black text-[#f6c744]">Poss.</span><NumBox max={100} value={matchForm.opponentPossession} set={(v:string)=>setMatchForm({...matchForm,opponentPossession:v})}/>
-                      <NumBox align="r" value={matchForm.tunisiaShots} set={(v:string)=>setMatchForm({...matchForm,tunisiaShots:v})}/><span className="text-[7px] font-black text-[#f6c744]">Shots</span><NumBox value={matchForm.opponentShots} set={(v:string)=>setMatchForm({...matchForm,opponentShots:v})}/>
-                      <NumBox align="r" value={matchForm.tunisiaShotsOnTarget} set={(v:string)=>setMatchForm({...matchForm,tunisiaShotsOnTarget:v})}/><span className="text-[7px] font-black text-[#f6c744]">SOT</span><NumBox value={matchForm.opponentShotsOnTarget} set={(v:string)=>setMatchForm({...matchForm,opponentShotsOnTarget:v})}/>
-                      <NumBox align="r" value={matchForm.tunisiaCorners} set={(v:string)=>setMatchForm({...matchForm,tunisiaCorners:v})}/><span className="text-[7px] font-black text-[#f6c744]">Corn.</span><NumBox value={matchForm.opponentCorners} set={(v:string)=>setMatchForm({...matchForm,opponentCorners:v})}/>
-                      <NumBox align="r" value={matchForm.tunisiaFouls} set={(v:string)=>setMatchForm({...matchForm,tunisiaFouls:v})}/><span className="text-[7px] font-black text-[#f6c744]">Fouls</span><NumBox value={matchForm.opponentFouls} set={(v:string)=>setMatchForm({...matchForm,opponentFouls:v})}/>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[var(--c-textFaint)] mb-3 flex items-center gap-2"><Activity size={11} className="text-[#f6c744]"/>Match Stats <span className="font-bold text-[var(--c-textDim)] normal-case tracking-normal">(optional)</span></p>
+                    <div className="grid grid-cols-[1fr_auto_1fr] gap-x-3 gap-y-2.5 items-center text-[12px] font-bold">
+                      <span className="flex items-center justify-end gap-1.5 text-right text-[var(--c-text)]"><CountryFlag name="Tunisia" className="w-5 h-3"/><span>Tunisia</span></span><span className="text-[9px] font-black text-[#ff4f66] text-center">vs</span><span className="flex items-center justify-start gap-1.5 text-left text-[var(--c-text)]"><CountryFlag name={matchForm.opponent} className="w-5 h-3"/><span>{matchForm.opponent||"Opponent"}</span></span>
+                      <NumBox align="r" max={100} value={matchForm.tunisiaPossession} set={(v:string)=>setMatchForm({...matchForm,tunisiaPossession:v})}/><span className="text-[9px] font-black text-[#f6c744]">Poss.</span><NumBox max={100} value={matchForm.opponentPossession} set={(v:string)=>setMatchForm({...matchForm,opponentPossession:v})}/>
+                      <NumBox align="r" value={matchForm.tunisiaShots} set={(v:string)=>setMatchForm({...matchForm,tunisiaShots:v})}/><span className="text-[9px] font-black text-[#f6c744]">Shots</span><NumBox value={matchForm.opponentShots} set={(v:string)=>setMatchForm({...matchForm,opponentShots:v})}/>
+                      <NumBox align="r" value={matchForm.tunisiaShotsOnTarget} set={(v:string)=>setMatchForm({...matchForm,tunisiaShotsOnTarget:v})}/><span className="text-[9px] font-black text-[#f6c744]">SOT</span><NumBox value={matchForm.opponentShotsOnTarget} set={(v:string)=>setMatchForm({...matchForm,opponentShotsOnTarget:v})}/>
+                      <NumBox align="r" value={matchForm.tunisiaCorners} set={(v:string)=>setMatchForm({...matchForm,tunisiaCorners:v})}/><span className="text-[9px] font-black text-[#f6c744]">Corn.</span><NumBox value={matchForm.opponentCorners} set={(v:string)=>setMatchForm({...matchForm,opponentCorners:v})}/>
+                      <NumBox align="r" value={matchForm.tunisiaFouls} set={(v:string)=>setMatchForm({...matchForm,tunisiaFouls:v})}/><span className="text-[9px] font-black text-[#f6c744]">Fouls</span><NumBox value={matchForm.opponentFouls} set={(v:string)=>setMatchForm({...matchForm,opponentFouls:v})}/>
                     </div>
                   </div>
                 </div>
@@ -3078,15 +3078,15 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   <button type="button" onClick={async()=>{
                     const templates=await fetchSquadTemplates(teamCat!)
                     setLineupPicker({templates})
-                  }} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-[#f6c744]/40 bg-[#f6c744]/5 text-[#f6c744] text-[9px] font-black uppercase tracking-wider hover:bg-[#f6c744]/10 transition-all">
+                  }} className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-[#f6c744]/40 bg-[#f6c744]/5 text-[#f6c744] text-[11px] font-black uppercase tracking-wider hover:bg-[#f6c744]/10 transition-all">
                     <Users size={12}/>Load from Squad Lab
                   </button>
                   <div className="grid grid-cols-2 gap-4">
                     {/* Starting XI */}
                     <div className="bg-zinc-50 rounded-xl border border-zinc-100 p-4">
-                      <p className="text-[8px] font-black uppercase tracking-wider text-[#E30613] mb-3 flex items-center gap-2">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-[#E30613] mb-3 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[#E30613]"/> STARTING XI
-                        <span className="text-zinc-300 font-normal ml-auto text-[7px]">1–11</span>
+                        <span className="text-zinc-300 font-normal ml-auto text-[9px]">1–11</span>
                       </p>
                       <div className="space-y-1.5">
                         {matchForm.squad.slice(0,11).length>0?matchForm.squad.slice(0,11).map((pid:number,i:number)=>{
@@ -3094,21 +3094,21 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           if(!pl) return null
                           return(
                             <div key={pl.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white border border-zinc-200/60 text-xs">
-                              <span className="text-[8px] font-black text-zinc-300 w-4 shrink-0">{i+1}</span>
-                              <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#E30613]/10 text-[#E30613] shrink-0">{(pl.position||"").slice(0,3)}</span>
+                              <span className="text-[10px] font-black text-zinc-300 w-4 shrink-0">{i+1}</span>
+                              <span className="text-[8px] font-black px-1 py-0.5 rounded bg-[#E30613]/10 text-[#E30613] shrink-0">{(pl.position||"").slice(0,3)}</span>
                               <span className="font-bold truncate text-zinc-800">{pl.name}</span>
-                              <button onClick={()=>moveDown(pl.id,i)} className="ml-auto text-zinc-300 hover:text-red-500 text-[9px] leading-none">✕</button>
+                              <button onClick={()=>moveDown(pl.id,i)} className="ml-auto text-zinc-300 hover:text-red-500 text-[11px] leading-none">✕</button>
                             </div>
                           )
-                        }):<p className="text-[9px] text-zinc-400 text-center py-4">Add players from below</p>}
+                        }):<p className="text-[11px] text-zinc-400 text-center py-4">Add players from below</p>}
                       </div>
                     </div>
 
                     {/* Bench */}
                     <div className="bg-zinc-50 rounded-xl border border-zinc-100 p-4">
-                      <p className="text-[8px] font-black uppercase tracking-wider text-[#f6c744] mb-3 flex items-center gap-2">
+                      <p className="text-[10px] font-black uppercase tracking-wider text-[#f6c744] mb-3 flex items-center gap-2">
                         <span className="w-2 h-2 rounded-full bg-[#f6c744]"/> BENCH
-                        <span className="text-zinc-300 font-normal ml-auto text-[7px]">{matchForm.squad.slice(11).length} players</span>
+                        <span className="text-zinc-300 font-normal ml-auto text-[9px]">{matchForm.squad.slice(11).length} players</span>
                       </p>
                       <div className="space-y-1.5">
                         {matchForm.squad.slice(11).length>0?matchForm.squad.slice(11).map((pid:number,i:number)=>{
@@ -3116,12 +3116,12 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           if(!pl) return null
                           return(
                             <div key={pl.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-white border border-zinc-200/60 text-xs">
-                              <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#f6c744]/10 text-[#f6c744] shrink-0">BN</span>
+                              <span className="text-[8px] font-black px-1 py-0.5 rounded bg-[#f6c744]/10 text-[#f6c744] shrink-0">BN</span>
                               <span className="font-bold truncate flex-1 text-zinc-800">{pl.name}</span>
-                              <button onClick={()=>dropFromSquad(pl.id)} className="text-zinc-300 hover:text-red-500 text-[9px] leading-none" title="Remove from the squad">✕</button>
+                              <button onClick={()=>dropFromSquad(pl.id)} className="text-zinc-300 hover:text-red-500 text-[11px] leading-none" title="Remove from the squad">✕</button>
                             </div>
                           )
-                        }):<p className="text-[9px] text-zinc-400 text-center py-4">No subs yet</p>}
+                        }):<p className="text-[11px] text-zinc-400 text-center py-4">No subs yet</p>}
                       </div>
                     </div>
                   </div>
@@ -3129,32 +3129,32 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   {/* Available */}
                   {availableForMatch.length>0&&(
                     <div>
-                      <p className="text-[8px] font-black uppercase tracking-wider text-zinc-400 mb-2">Available Players</p>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-zinc-400 mb-2">Available Players</p>
                       <div className="flex flex-wrap gap-1.5">
                         {availableForMatch.map((pl:any)=>(
                           <div key={pl.id} onClick={()=>toggleSquad(pl.id)} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border border-zinc-200 bg-white text-xs text-zinc-500 cursor-pointer hover:border-[#E30613]/30 hover:bg-[#E30613]/5 hover:text-[#E30613] transition-all">
-                            <span className="text-[6px] font-black px-1 py-0.5 rounded bg-zinc-100 text-zinc-400">{(pl.position||"").slice(0,3)}</span>
+                            <span className="text-[8px] font-black px-1 py-0.5 rounded bg-zinc-100 text-zinc-400">{(pl.position||"").slice(0,3)}</span>
                             <span className="font-semibold">{pl.name}</span>
-                            <span className="text-zinc-300 text-[10px]">+</span>
+                            <span className="text-zinc-300 text-[12px]">+</span>
                           </div>
                         ))}
                       </div>
                     </div>
                   )}
-                  {matchForm.squad.length>0&&<p className="text-[8px] text-zinc-400 font-semibold text-center">{matchForm.squad.length}/11 selected {matchForm.squad.length<11&&`· Need ${11-matchForm.squad.length} more`}</p>}
+                  {matchForm.squad.length>0&&<p className="text-[10px] text-zinc-400 font-semibold text-center">{matchForm.squad.length}/11 selected {matchForm.squad.length<11&&`· Need ${11-matchForm.squad.length} more`}</p>}
                 </div>
               )}
 
               {/* ── STEP 3: OPPONENT SQUAD ── */}
               {matchStep===2&&(
                 <div>
-                  <p className="text-[8px] font-black uppercase tracking-wider text-zinc-500 mb-3">Opposition Lineup</p>
+                  <p className="text-[10px] font-black uppercase tracking-wider text-zinc-500 mb-3">Opposition Lineup</p>
                   <div className="grid grid-cols-2 gap-2">
                     {matchForm.opponentSquad.map((name:string,i:number)=>(
                       <div key={i} className="flex items-center gap-2 bg-zinc-50 rounded-lg border border-zinc-100 px-3 py-2">
-                        <span className="text-[8px] font-black text-zinc-300 w-4 shrink-0">{i+1}.</span>
+                        <span className="text-[10px] font-black text-zinc-300 w-4 shrink-0">{i+1}.</span>
                         <input value={name} onChange={e=>{const s=[...matchForm.opponentSquad];s[i]=e.target.value;setMatchForm({...matchForm,opponentSquad:s})}} placeholder={`Player ${i+1}`} className="flex-1 bg-transparent outline-none text-xs font-bold text-zinc-700 placeholder-zinc-300"/>
-                        <button onClick={()=>setMatchForm({...matchForm,opponentSquad:matchForm.opponentSquad.filter((_:any,idx:number)=>idx!==i)})} className="text-zinc-300 hover:text-red-500 text-[10px]">✕</button>
+                        <button onClick={()=>setMatchForm({...matchForm,opponentSquad:matchForm.opponentSquad.filter((_:any,idx:number)=>idx!==i)})} className="text-zinc-300 hover:text-red-500 text-[12px]">✕</button>
                       </div>
                     ))}
                     <button onClick={()=>setMatchForm({...matchForm,opponentSquad:[...matchForm.opponentSquad,""]})} className="col-span-full flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-lg border-2 border-dashed border-zinc-200 text-xs font-bold text-zinc-400 hover:border-[#E30613]/30 hover:text-[#E30613] transition-all">+ Add player</button>
@@ -3167,10 +3167,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 <div className="space-y-4">
                   {/* Action buttons */}
                   <div className="flex flex-wrap gap-2">
-                    <button onClick={()=>setActionPick("goal")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#7fd6a8]/10 border border-[#7fd6a8]/25 text-[#7fd6a8] text-[9px] font-black uppercase tracking-wider hover:bg-[#7fd6a8]/15 transition-all shadow-sm">⚽ Goal</button>
-                    <button onClick={()=>setActionPick("yellow")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#f6c744]/10 border border-[#f6c744]/25 text-[#f6c744] text-[9px] font-black uppercase tracking-wider hover:bg-[#f6c744]/15 transition-all shadow-sm">🟨 Yellow</button>
-                    <button onClick={()=>setActionPick("red")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#e3062c]/10 border border-[#e3062c]/35 text-[#ff4f66] text-[9px] font-black uppercase tracking-wider hover:bg-[#e3062c]/20 transition-all shadow-sm">🟥 Red</button>
-                    <button onClick={()=>{setActionPick("sub");setSubOutId(null)}} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#7ec3ff]/10 border border-[#7ec3ff]/25 text-[#7ec3ff] text-[9px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/15 transition-all shadow-sm">↔ Sub</button>
+                    <button onClick={()=>setActionPick("goal")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#7fd6a8]/10 border border-[#7fd6a8]/25 text-[#7fd6a8] text-[11px] font-black uppercase tracking-wider hover:bg-[#7fd6a8]/15 transition-all shadow-sm">⚽ Goal</button>
+                    <button onClick={()=>setActionPick("yellow")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#f6c744]/10 border border-[#f6c744]/25 text-[#f6c744] text-[11px] font-black uppercase tracking-wider hover:bg-[#f6c744]/15 transition-all shadow-sm">🟨 Yellow</button>
+                    <button onClick={()=>setActionPick("red")} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#e3062c]/10 border border-[#e3062c]/35 text-[#ff4f66] text-[11px] font-black uppercase tracking-wider hover:bg-[#e3062c]/20 transition-all shadow-sm">🟥 Red</button>
+                    <button onClick={()=>{setActionPick("sub");setSubOutId(null)}} className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[#7ec3ff]/10 border border-[#7ec3ff]/25 text-[#7ec3ff] text-[11px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/15 transition-all shadow-sm">↔ Sub</button>
                   </div>
 
                   {/* Pickers */}
@@ -3183,7 +3183,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   {/* Event cards */}
                   <div className="grid grid-cols-1 gap-2">
                     {matchForm.scorers.length>0&&<div className="bg-[#7fd6a8]/5 border border-[#7fd6a8]/15 rounded-xl p-3">
-                      <p className="text-[8px] font-black uppercase tracking-wider text-[#7fd6a8] mb-2">⚽ Goals</p>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-[#7fd6a8] mb-2">⚽ Goals</p>
                       <div className="space-y-1">
                         {matchForm.scorers.map((s:any)=>{
                           const pl=members.find((m:any)=>m.id===s.playerId)
@@ -3192,9 +3192,9 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                             <div key={s.playerId} className="flex flex-wrap items-center gap-2 px-3 py-1.5 rounded-lg bg-white border border-[#7fd6a8]/15 group">
                               <span className="font-bold text-xs flex-1 text-zinc-800">{pl.name}</span>
                               <div className="flex items-center gap-1">
-                                <span onClick={()=>editGoals(pl.id,-1)} className={`w-4 h-4 rounded flex items-center justify-center text-[9px] font-black cursor-pointer ${s.goals>1?'bg-[#7fd6a8]/25 text-[#7fd6a8]':'text-[#7fd6a8]/30'}`}>–</span>
+                                <span onClick={()=>editGoals(pl.id,-1)} className={`w-4 h-4 rounded flex items-center justify-center text-[11px] font-black cursor-pointer ${s.goals>1?'bg-[#7fd6a8]/25 text-[#7fd6a8]':'text-[#7fd6a8]/30'}`}>–</span>
                                 <span className="w-4 text-center text-xs font-black text-zinc-800">{s.goals}</span>
-                                <span onClick={()=>editGoals(pl.id,1)} className="w-4 h-4 rounded flex items-center justify-center text-[9px] font-black cursor-pointer bg-[#7fd6a8]/25 text-[#7fd6a8]">+</span>
+                                <span onClick={()=>editGoals(pl.id,1)} className="w-4 h-4 rounded flex items-center justify-center text-[11px] font-black cursor-pointer bg-[#7fd6a8]/25 text-[#7fd6a8]">+</span>
                               </div>
                               <button onClick={()=>removeGoal(pl.id)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
                               <div className="basis-full flex flex-wrap items-center gap-1.5">
@@ -3207,13 +3207,13 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     </div>}
 
                     {(matchForm.yellowCards.length>0||matchForm.redCards.length>0)&&<div className="bg-zinc-50/50 border border-zinc-100 rounded-xl p-3">
-                      <p className="text-[8px] font-black uppercase tracking-wider text-zinc-600 mb-2">🟨🟥 Cards</p>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-zinc-600 mb-2">🟨🟥 Cards</p>
                       <div className="flex flex-wrap gap-1.5">
                         {matchForm.yellowCards.map((pid:number)=>{
                           const pl=members.find((m:any)=>m.id===pid)
                           if(!pl)return null
                           return(
-                            <span key={"y"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#f6c744]/25 text-[10px] font-bold group">
+                            <span key={"y"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#f6c744]/25 text-[12px] font-bold group">
                               <span className="w-3 h-4 rounded-[2px] bg-yellow-400"/> {pl.name.split(' ').slice(-1)}
                               <MinuteBox title="Minute of the yellow card" value={matchForm.eventMinutes?.[`y:${pid}`]} onChange={v=>setMinute(`y:${pid}`,v)}/>
                               <button onClick={()=>toggleYellow(pid)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
@@ -3224,7 +3224,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                           const pl=members.find((m:any)=>m.id===pid)
                           if(!pl)return null
                           return(
-                            <span key={"r"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#e3062c]/30 text-[10px] font-bold group">
+                            <span key={"r"+pid} className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white border border-[#e3062c]/30 text-[12px] font-bold group">
                               <span className="w-3 h-4 rounded-[2px] bg-red-600"/> {pl.name.split(' ').slice(-1)}
                               <MinuteBox title="Minute of the red card" value={matchForm.eventMinutes?.[`r:${pid}`]} onChange={v=>setMinute(`r:${pid}`,v)}/>
                               <button onClick={()=>toggleRed(pid)} title="Close" className="opacity-0 group-hover:opacity-100 text-zinc-400 hover:text-red-500 transition-all"><X size={10}/></button>
@@ -3235,13 +3235,13 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     </div>}
 
                     {matchForm.subs.length>0&&<div className="bg-[#7ec3ff]/5 border border-[#7ec3ff]/15 rounded-xl p-3">
-                      <p className="text-[8px] font-black uppercase tracking-wider text-[#7ec3ff] mb-2">↔ Substitutions</p>
+                      <p className="text-[10px] font-black uppercase tracking-wider text-[#7ec3ff] mb-2">↔ Substitutions</p>
                       <div className="flex flex-wrap gap-1.5">
                         {matchForm.subs.map((s:any,i:number)=>{
                           const on=members.find((m:any)=>m.id===s.out)?.name||'?'
                           const inn=members.find((m:any)=>m.id===s["in"])?.name||'?'
                           return(
-                            <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-[#7ec3ff]/20 text-[10px] font-bold group">
+                            <div key={i} className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white border border-[#7ec3ff]/20 text-[12px] font-bold group">
                               <span className="text-red-500 line-through">{on}</span>
                               <span className="text-zinc-300">→</span>
                               <span className="text-[#7fd6a8]">{inn}</span>
@@ -3257,7 +3257,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   {matchForm.scorers.length===0&&matchForm.yellowCards.length===0&&matchForm.redCards.length===0&&matchForm.subs.length===0&&(
                     <div className="flex flex-col items-center justify-center py-8 opacity-40">
                       <p className="text-sm font-black text-zinc-400">No match events yet</p>
-                      <p className="text-[10px] text-zinc-400 mt-1">Use the buttons above to add goals, cards, and subs</p>
+                      <p className="text-[12px] text-zinc-400 mt-1">Use the buttons above to add goals, cards, and subs</p>
                     </div>
                   )}
                 </div>
@@ -3267,7 +3267,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
 
             {/* ── FOOTER ── */}
             <div className="px-6 py-4 border-t border-[rgba(var(--line-rgb),.14)] flex items-center justify-between">
-              <span className="text-[9px] font-bold text-[var(--c-textFaint)]">
+              <span className="text-[11px] font-bold text-[var(--c-textFaint)]">
                 {matchStep===1&&`👥 ${matchForm.squad.length} players in squad`}
                 {matchStep===2&&`📋 ${matchForm.opponentSquad.filter((n:string)=>n.trim()).length} opponent players`}
                 {matchStep===3&&`${matchForm.scorers.reduce((a:number,s:any)=>a+s.goals,0)}⚽ ${matchForm.yellowCards.length}🟨 ${matchForm.redCards.length}🟥${matchForm.subs.length>0&&` ${matchForm.subs.length}↔`}`}
@@ -3318,14 +3318,14 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
             </div>
             <div className="pm-body">
               {lineupPicker.templates.length===0?(
-                <p className="text-[12px] font-semibold text-[var(--c-textMid)] leading-relaxed">No saved lineups yet — build one in Squad Lab first.</p>
+                <p className="text-[14px] font-semibold text-[var(--c-textMid)] leading-relaxed">No saved lineups yet — build one in Squad Lab first.</p>
               ):(
                 <div className="flex flex-col gap-1.5 max-h-[50dvh] overflow-y-auto pk-scroll">
                   {lineupPicker.templates.map((t:any,i:number)=>(
                     <button key={t.id??i} type="button" onClick={()=>applyLineupTemplate(t)}
                       className="flex items-center justify-between gap-3 px-3.5 py-3 rounded-xl bg-[var(--c-panel4)] border border-[rgba(var(--line-rgb),.14)] hover:border-[#E30613]/50 hover:bg-[#E30613]/8 text-left transition-all">
-                      <span className="text-[12px] font-black uppercase tracking-wide text-[var(--c-text)] truncate">{t.name}</span>
-                      <span className="shrink-0 px-2 py-1 rounded-lg bg-[#f6c744]/12 text-[#f6c744] text-[10px] font-black">{t.formation}</span>
+                      <span className="text-[14px] font-black uppercase tracking-wide text-[var(--c-text)] truncate">{t.name}</span>
+                      <span className="shrink-0 px-2 py-1 rounded-lg bg-[#f6c744]/12 text-[#f6c744] text-[12px] font-black">{t.formation}</span>
                     </button>
                   ))}
                 </div>
@@ -3351,7 +3351,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               <button onClick={()=>{confirmState.resolve(false);setConfirmState(null)}} className="pm-close"><X size={14}/></button>
             </div>
             <div className="pm-body">
-              <p className="text-[12px] font-semibold text-[var(--c-text2)] leading-relaxed whitespace-pre-line">{confirmState.message}</p>
+              <p className="text-[14px] font-semibold text-[var(--c-text2)] leading-relaxed whitespace-pre-line">{confirmState.message}</p>
             </div>
             <div className="pm-foot">
               <button onClick={()=>{confirmState.resolve(false);setConfirmState(null)}} className="pm-btn pm-btn-ghost">Cancel</button>
@@ -3373,16 +3373,16 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               <button onClick={()=>setScheduleOpen(false)} title="Close" className="pm-close"><X size={18}/></button>
             </div>
 
-            <input placeholder="Opponent" value={scheduleForm.opponent} onChange={e=>setScheduleForm({...scheduleForm,opponent:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[12px] font-bold outline-none"/>
+            <input placeholder="Opponent" value={scheduleForm.opponent} onChange={e=>setScheduleForm({...scheduleForm,opponent:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[14px] font-bold outline-none"/>
 
             <DatePicker variant="zinc" value={scheduleForm.date} onChange={(v)=>setScheduleForm({...scheduleForm,date:v})} placeholder="Match date"/>
 
             <div>
-              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">Competition</p>
+              <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">Competition</p>
               <div className="flex flex-wrap gap-1.5">
                 {COMPETITIONS.map(comp=>(
                   <button key={comp.label} onClick={()=>setScheduleForm({...scheduleForm,competition:comp.value})}
-                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${scheduleForm.competition===comp.value?'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/20':'bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textFaint)] hover:bg-[var(--c-panel2)] hover:border-[#e3062c]/40'}`}>
+                    className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider transition-all ${scheduleForm.competition===comp.value?'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/20':'bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textFaint)] hover:bg-[var(--c-panel2)] hover:border-[#e3062c]/40'}`}>
                     {comp.label}
                   </button>
                 ))}
@@ -3390,21 +3390,21 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
             </div>
 
             <div>
-              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">{tr.match.homeAway}</p>
+              <p className="text-[11px] font-black uppercase tracking-wider text-zinc-400 mb-1.5">{tr.match.homeAway}</p>
               <div className="flex flex-wrap gap-1.5">
                 {([["home",tr.match.home],["away",tr.match.away],["neutral",tr.match.neutral]] as const).map(([v,lbl])=>(
                   <button key={v} onClick={()=>setScheduleForm({...scheduleForm,homeAway:v})}
-                    className={`px-3 py-1.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${scheduleForm.homeAway===v?'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/20':'bg-zinc-50 border border-zinc-200 text-zinc-500 hover:border-[#E30613]/40'}`}>
+                    className={`px-3 py-1.5 rounded-full text-[11px] font-black uppercase tracking-wider transition-all ${scheduleForm.homeAway===v?'bg-[#E30613] text-white shadow-lg shadow-[#E30613]/20':'bg-zinc-50 border border-zinc-200 text-zinc-500 hover:border-[#E30613]/40'}`}>
                     {lbl}
                   </button>
                 ))}
               </div>
             </div>
 
-            <input placeholder="Venue (optional)" value={scheduleForm.venue} onChange={e=>setScheduleForm({...scheduleForm,venue:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[12px] font-bold outline-none"/>
+            <input placeholder="Venue (optional)" value={scheduleForm.venue} onChange={e=>setScheduleForm({...scheduleForm,venue:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[14px] font-bold outline-none"/>
 
             <div className="flex gap-2 pt-1">
-              <button onClick={()=>setScheduleOpen(false)} className="flex-1 py-2.5 rounded-full text-[9px] font-black uppercase tracking-wider border border-[rgba(var(--line-rgb),.25)] bg-[var(--c-surface)] text-[var(--c-textBlue)] hover:bg-[var(--c-panel2)] hover:border-[rgba(var(--line-rgb),.4)] transition-all">Cancel</button>
+              <button onClick={()=>setScheduleOpen(false)} className="flex-1 py-2.5 rounded-full text-[11px] font-black uppercase tracking-wider border border-[rgba(var(--line-rgb),.25)] bg-[var(--c-surface)] text-[var(--c-textBlue)] hover:bg-[var(--c-panel2)] hover:border-[rgba(var(--line-rgb),.4)] transition-all">Cancel</button>
               <button onClick={()=>{
                 if(!scheduleForm.opponent.trim()){alert("Enter an opponent");return}
                 if(!scheduleForm.date){alert("Pick a date");return}
@@ -3413,7 +3413,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 setMatches((p:any)=>[...p,nm])
                 if(canManageUsers)approveMatch(nm)
                 setScheduleOpen(false)
-              }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-full text-[9px] font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/25 hover:bg-red-700 hover:scale-[1.02] transition-all">Save Fixture</button>
+              }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-full text-[11px] font-black uppercase tracking-wider shadow-lg shadow-[#E30613]/25 hover:bg-red-700 hover:scale-[1.02] transition-all">Save Fixture</button>
             </div>
           </div>
         </div>
@@ -3436,14 +3436,14 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 <div className="min-w-0">
                     <div className="flex items-center gap-3">
                       <h2 className="text-xl font-black uppercase tracking-tight text-[var(--c-text)]">{tr.history.matchHistory}</h2>
-                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#e3062c]/15 border border-[#e3062c]/30 text-[#ff4f66] text-[8px] font-black tracking-wider whitespace-nowrap"><Calendar size={10}/>{filteredMatches.length} {tr.history.matches}</span>
+                      <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#e3062c]/15 border border-[#e3062c]/30 text-[#ff4f66] text-[10px] font-black tracking-wider whitespace-nowrap"><Calendar size={10}/>{filteredMatches.length} {tr.history.matches}</span>
                     </div>
                   </div>
                 <div className="flex items-center gap-3 shrink-0">
                   {h2h&&<div className="flex items-center gap-1">
-                    <span className="w-9 h-7 rounded-lg bg-[#f6c744] text-[var(--c-bg)] text-[10px] font-black flex items-center justify-center">{h2h.w}W</span>
-                    <span className="w-9 h-7 rounded-lg bg-[rgba(var(--line-rgb),.1)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textBlue)] text-[10px] font-black flex items-center justify-center">{h2h.d}D</span>
-                    <span className="w-9 h-7 rounded-lg bg-[#e3062c] text-white text-[10px] font-black flex items-center justify-center">{h2h.l}L</span>
+                    <span className="w-9 h-7 rounded-lg bg-[#f6c744] text-[var(--c-bg)] text-[12px] font-black flex items-center justify-center">{h2h.w}W</span>
+                    <span className="w-9 h-7 rounded-lg bg-[rgba(var(--line-rgb),.1)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textBlue)] text-[12px] font-black flex items-center justify-center">{h2h.d}D</span>
+                    <span className="w-9 h-7 rounded-lg bg-[#e3062c] text-white text-[12px] font-black flex items-center justify-center">{h2h.l}L</span>
                   </div>}
                   {uniqueOpponents.length>0&&<Select variant="mini" value={opponentFilter} onChange={setOpponentFilter} placeholder="All opponents"
                     options={uniqueOpponents.map((o:any)=>({value:String(o),label:String(o)}))}/>}
@@ -3456,7 +3456,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               {filteredMatches.length===0&&(
                 <div className="flex flex-col items-center justify-center py-20 gap-4">
                   <div className="w-16 h-16 rounded-2xl bg-[#e3062c]/10 border border-[#e3062c]/25 flex items-center justify-center"><Calendar size={26} className="text-[#ff4f66]/70"/></div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 opacity-40">{tr.history.noMatches}</p>
+                  <p className="text-[12px] font-black uppercase tracking-[0.3em] text-zinc-400 opacity-40">{tr.history.noMatches}</p>
                 </div>
               )}
               {filteredMatches.map(match=>{
@@ -3473,11 +3473,11 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     {/* Scoreboard bar */}
                     <div className="flex items-center px-4 py-2.5 border-b border-[rgba(var(--line-rgb),.1)]">
                       <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                        <span className={`text-[8px] font-black tracking-wider px-2 py-0.5 rounded-md shrink-0 ${isWin?'bg-[#f6c744] text-[var(--c-bg)]':isLoss?'bg-[#e3062c] text-white':isDraw?'bg-[rgba(var(--line-rgb),.15)] text-[var(--c-textBlue)]':'bg-[rgba(var(--line-rgb),.1)] text-[var(--c-textDim)]'}`}>{isWin?'WIN':isLoss?'LOSS':isDraw?'DRAW':'—'}</span>
+                        <span className={`text-[10px] font-black tracking-wider px-2 py-0.5 rounded-md shrink-0 ${isWin?'bg-[#f6c744] text-[var(--c-bg)]':isLoss?'bg-[#e3062c] text-white':isDraw?'bg-[rgba(var(--line-rgb),.15)] text-[var(--c-textBlue)]':'bg-[rgba(var(--line-rgb),.1)] text-[var(--c-textDim)]'}`}>{isWin?'WIN':isLoss?'LOSS':isDraw?'DRAW':'—'}</span>
                         <div className="flex items-center gap-1.5 text-xs font-bold">
                           <span className="text-[var(--c-textBlue)]">{fmtDateWords(match.date)}</span>
                           {match.competition&&<><span className="text-[#3a4a63]">·</span><span className="text-[var(--c-textMid)]">{match.competition}</span></>}
-                          {match.homeAway&&<><span className="text-[#3a4a63]">·</span><span className={`text-[8px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${match.homeAway==='home'?'bg-[#f6c744]/25 text-[#a9822e]':'bg-[rgba(var(--line-rgb),.12)] text-[var(--c-textMid)]'}`}>{homeAwayLabel(match.homeAway)}</span></>}
+                          {match.homeAway&&<><span className="text-[#3a4a63]">·</span><span className={`text-[10px] font-black uppercase tracking-wider px-1.5 py-0.5 rounded ${match.homeAway==='home'?'bg-[#f6c744]/25 text-[#a9822e]':'bg-[rgba(var(--line-rgb),.12)] text-[var(--c-textMid)]'}`}>{homeAwayLabel(match.homeAway)}</span></>}
                         </div>
                       </div>
                       <ChevronDown size={12} className={`text-[var(--c-textDim)] transition-transform shrink-0 ${selMatch?.id===match.id?'rotate-180':''}`}/>
@@ -3485,18 +3485,18 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                     {/* Score */}
                     <div className="flex items-center justify-center gap-3 px-4 py-3.5">
                       <div className="flex items-center flex-1 justify-end gap-2 min-w-0">
-                        <span className="text-[8px] font-black text-[var(--c-textDim)] uppercase tracking-wider shrink-0">TUN</span>
+                        <span className="text-[10px] font-black text-[var(--c-textDim)] uppercase tracking-wider shrink-0">TUN</span>
                         <span className="text-sm font-black text-[var(--c-text)] truncate">Tunisia</span>
                         <CountryFlag name="Tunisia" className="w-5 h-3 rounded-[2px]"/>
                       </div>
                       <div className="flex flex-col items-center shrink-0">
                         <span className={`text-2xl font-black px-5 py-1.5 rounded-xl tracking-widest shadow-lg ${scoreBg}`}>{match.result||"—"}</span>
-                        <span className={`mt-1.5 text-[7px] font-black uppercase tracking-[0.2em] ${isWin?'text-[#f6c744]':isLoss?'text-[#ff4f66]':'text-[var(--c-textDim)]'}`}>{isWin?'Full-time win':isLoss?'Full-time loss':isDraw?'Full-time draw':'Final score'}</span>
+                        <span className={`mt-1.5 text-[9px] font-black uppercase tracking-[0.2em] ${isWin?'text-[#f6c744]':isLoss?'text-[#ff4f66]':'text-[var(--c-textDim)]'}`}>{isWin?'Full-time win':isLoss?'Full-time loss':isDraw?'Full-time draw':'Final score'}</span>
                       </div>
                       <div className="flex items-center flex-1 justify-start gap-2 min-w-0">
                         <CountryFlag name={match.opponent} className="w-5 h-3 rounded-[2px]"/>
                         <span className="text-sm font-black text-[var(--c-text)] truncate">{match.opponent||'Opponent'}</span>
-                        <span className="text-[8px] font-black text-[var(--c-textDim)] uppercase tracking-wider shrink-0">OPP</span>
+                        <span className="text-[10px] font-black text-[var(--c-textDim)] uppercase tracking-wider shrink-0">OPP</span>
                       </div>
                     </div>
                   </button>
@@ -3506,35 +3506,35 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                       {/* Lineup */}
                       {Array.isArray(match.squad)&&<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="bg-[var(--c-deep)] rounded-lg border border-[rgba(var(--line-rgb),.14)] p-3">
-                          <p className="text-[7px] font-black uppercase tracking-wider text-[#ff4f66] mb-2">STARTING XI</p>
+                          <p className="text-[9px] font-black uppercase tracking-wider text-[#ff4f66] mb-2">STARTING XI</p>
                           <div className="space-y-1">
                             {match.squad.slice(0,11).map((pid:number,i:number)=>{
                               const pl=members.find((m:any)=>m.id===pid)
                               if(!pl) return null
                               const isOut=match.subs?.find((s:any)=>s.out===pl.id)
                               return(
-                                <div key={pid} className="flex items-center gap-2 text-[10px]">
+                                <div key={pid} className="flex items-center gap-2 text-[12px]">
                                   <span className="text-zinc-300 font-black w-4 shrink-0 text-right">{i+1}</span>
-                                  <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#e3062c]/15 text-[#ff4f66]">{(pl.position||"").slice(0,3)}</span>
+                                  <span className="text-[8px] font-black px-1 py-0.5 rounded bg-[#e3062c]/15 text-[#ff4f66]">{(pl.position||"").slice(0,3)}</span>
                                   <span className={`font-bold truncate ${isOut?'line-through text-[var(--c-textDim)]':''}`}>{pl.name}</span>
-                                  {isOut&&<span className="text-[7px] font-black text-[#ff4f66] ml-auto">OUT</span>}
+                                  {isOut&&<span className="text-[9px] font-black text-[#ff4f66] ml-auto">OUT</span>}
                                 </div>
                               )
                             })}
                           </div>
                         </div>
                         <div className="bg-[var(--c-deep)] rounded-lg border border-[rgba(var(--line-rgb),.14)] p-3">
-                          <p className="text-[7px] font-black uppercase tracking-wider text-[#f6c744] mb-2">BENCH</p>
+                          <p className="text-[9px] font-black uppercase tracking-wider text-[#f6c744] mb-2">BENCH</p>
                           <div className="space-y-1">
                             {match.squad.slice(11).map((pid:number)=>{
                               const pl=members.find((m:any)=>m.id===pid)
                               if(!pl) return null
                               const isIn=match.subs?.find((s:any)=>s["in"]===pl.id)
                               return(
-                                <div key={pid} className="flex items-center gap-2 text-[10px]">
-                                  <span className="text-[6px] font-black px-1 py-0.5 rounded bg-[#f6c744]/15 text-[#f6c744]">BN</span>
+                                <div key={pid} className="flex items-center gap-2 text-[12px]">
+                                  <span className="text-[8px] font-black px-1 py-0.5 rounded bg-[#f6c744]/15 text-[#f6c744]">BN</span>
                                   <span className={`font-bold truncate ${isIn?'line-through text-[var(--c-textDim)]':''}`}>{pl.name}</span>
-                                  {isIn&&<span className="text-[7px] font-black text-[#7fd6a8] ml-auto">IN</span>}
+                                  {isIn&&<span className="text-[9px] font-black text-[#7fd6a8] ml-auto">IN</span>}
                                 </div>
                               )
                             })}
@@ -3544,10 +3544,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
 
                       {/* Opponent */}
                       {Array.isArray(match.opponentSquad)&&match.opponentSquad.length>0&&<div className="bg-[var(--c-deep)] rounded-lg border border-[rgba(var(--line-rgb),.14)] p-3">
-                        <p className="text-[7px] font-black uppercase tracking-wider text-zinc-500 mb-2">{match.opponent}</p>
+                        <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-2">{match.opponent}</p>
                         <div className="space-y-1">
                           {match.opponentSquad.map((name:string,i:number)=>(
-                            <div key={i} className="flex items-center gap-2 text-[10px]">
+                            <div key={i} className="flex items-center gap-2 text-[12px]">
                               <span className="text-zinc-300 font-black w-4 shrink-0 text-right">{i+1}</span>
                               <span className="font-bold truncate">{name}</span>
                             </div>
@@ -3557,16 +3557,16 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
 
                       {/* Events */}
                       <div className="bg-[var(--c-deep)] rounded-lg border border-[rgba(var(--line-rgb),.14)] p-3">
-                        <p className="text-[7px] font-black uppercase tracking-wider text-zinc-500 mb-3 flex items-center gap-2"><span className="w-3 h-[2px] rounded bg-[#f6c744]"/>MATCH EVENTS</p>
+                        <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-3 flex items-center gap-2"><span className="w-3 h-[2px] rounded bg-[#f6c744]"/>MATCH EVENTS</p>
                         <div className="space-y-1.5 relative before:absolute before:left-[9px] before:top-2 before:bottom-2 before:w-px before:bg-[rgba(var(--line-rgb),.15)]">
                           {(Array.isArray(match.scorers)?match.scorers:[]).map((s:any,si:number)=>{
                             const pl=members.find((m:any)=>m.id===s.playerId)
                             if(!pl) return null
                             return Array.from({length:s.goals}).map((_,gi)=>(
                               <div key={`g-${s.playerId}-${gi}`} className="flex items-center gap-3 pl-0 relative">
-                                <div className="w-[19px] h-[19px] rounded-full bg-[#f6c744]/15 border-2 border-[#f6c744] flex items-center justify-center shrink-0 z-10 text-[9px]">⚽</div>
+                                <div className="w-[19px] h-[19px] rounded-full bg-[#f6c744]/15 border-2 border-[#f6c744] flex items-center justify-center shrink-0 z-10 text-[11px]">⚽</div>
                                 <span className="font-bold text-xs text-zinc-800">{pl.name}</span>
-                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`g:${s.playerId}:${gi+1}`)}<span className="text-[7px] font-bold text-[#f6c744] uppercase tracking-wider">Goal</span></span>
+                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`g:${s.playerId}:${gi+1}`)}<span className="text-[9px] font-bold text-[#f6c744] uppercase tracking-wider">Goal</span></span>
                               </div>
                             ))
                           }).flat()}
@@ -3577,7 +3577,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <div key={`y-${pid}`} className="flex items-center gap-3 pl-0 relative">
                                 <div className="w-[19px] h-[19px] rounded-full bg-[#f6c744]/10 border-2 border-[#f6c744]/60 shrink-0 z-10"/>
                                 <span className="font-bold text-xs text-zinc-800">{pl.name}</span>
-                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`y:${pid}`)}<span className="text-[7px] font-bold text-[#f6c744] uppercase tracking-wider">Yellow</span></span>
+                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`y:${pid}`)}<span className="text-[9px] font-bold text-[#f6c744] uppercase tracking-wider">Yellow</span></span>
                               </div>
                             )
                           })}
@@ -3588,7 +3588,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                               <div key={`r-${pid}`} className="flex items-center gap-3 pl-0 relative">
                                 <div className="w-[19px] h-[19px] rounded-full bg-[#e3062c]/15 border-2 border-[#e3062c] shrink-0 z-10"/>
                                 <span className="font-bold text-xs text-zinc-800">{pl.name}</span>
-                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`r:${pid}`)}<span className="text-[7px] font-bold text-[#ff4f66] uppercase tracking-wider">Red</span></span>
+                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`r:${pid}`)}<span className="text-[9px] font-bold text-[#ff4f66] uppercase tracking-wider">Red</span></span>
                               </div>
                             )
                           })}
@@ -3597,83 +3597,83 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                             const inn=members.find((m:any)=>m.id===s["in"])?.name||'?'
                             return(
                               <div key={`s-${i}`} className="flex items-center gap-3 pl-0 relative">
-                                <div className="w-[19px] h-[19px] rounded-full bg-[var(--c-blue)]/20 border-2 border-[var(--c-blue)] flex items-center justify-center shrink-0 z-10 text-[9px]">↔</div>
+                                <div className="w-[19px] h-[19px] rounded-full bg-[var(--c-blue)]/20 border-2 border-[var(--c-blue)] flex items-center justify-center shrink-0 z-10 text-[11px]">↔</div>
                                 <span className="font-bold text-xs text-zinc-800"><span className="text-[#ff4f66] line-through">{on}</span> → <span className="text-[#7fd6a8]">{inn}</span></span>
-                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`s:${s.out}:${s["in"]}`)}<span className="text-[7px] font-bold text-[var(--c-blueSoft)] uppercase tracking-wider">Sub</span></span>
+                                <span className="ml-auto flex items-center gap-1.5">{minuteChip(match,`s:${s.out}:${s["in"]}`)}<span className="text-[9px] font-bold text-[var(--c-blueSoft)] uppercase tracking-wider">Sub</span></span>
                               </div>
                             )
                           })}
                           {(Array.isArray(match.opponentScorers)?match.opponentScorers:[]).map((s:any,si:number)=>Array.from({length:s.goals}).map((_,gi)=>(
                             <div key={`og-${si}-${gi}`} className="flex items-center gap-3 pl-0 relative">
-                              <div className="w-[19px] h-[19px] rounded-full bg-[#4a4f5e]/40 border-2 border-[var(--c-textMid)] flex items-center justify-center shrink-0 z-10 text-[9px]">⚽</div>
+                              <div className="w-[19px] h-[19px] rounded-full bg-[#4a4f5e]/40 border-2 border-[var(--c-textMid)] flex items-center justify-center shrink-0 z-10 text-[11px]">⚽</div>
                               <span className="font-bold text-xs text-zinc-600">{s.name}</span>
-                              <span className="text-[7px] font-bold text-[var(--c-textMid)] ml-auto uppercase tracking-wider">{match.opponent} Goal</span>
+                              <span className="text-[9px] font-bold text-[var(--c-textMid)] ml-auto uppercase tracking-wider">{match.opponent} Goal</span>
                             </div>
                           ))).flat()}
                           {(Array.isArray(match.opponentYellowCards)?match.opponentYellowCards:[]).map((name:string,i:number)=>(
                             <div key={`oy-${i}`} className="flex items-center gap-3 pl-0 relative">
                               <div className="w-[19px] h-[19px] rounded-full bg-[#f6c744]/10 border-2 border-[#f6c744]/60 shrink-0 z-10"/>
                               <span className="font-bold text-xs text-zinc-600">{name}</span>
-                              <span className="text-[7px] font-bold text-[#f6c744] ml-auto uppercase tracking-wider">{match.opponent} Yellow</span>
+                              <span className="text-[9px] font-bold text-[#f6c744] ml-auto uppercase tracking-wider">{match.opponent} Yellow</span>
                             </div>
                           ))}
                           {(Array.isArray(match.opponentRedCards)?match.opponentRedCards:[]).map((name:string,i:number)=>(
                             <div key={`or-${i}`} className="flex items-center gap-3 pl-0 relative">
                               <div className="w-[19px] h-[19px] rounded-full bg-[#e3062c]/15 border-2 border-[#e3062c] shrink-0 z-10"/>
                               <span className="font-bold text-xs text-zinc-600">{name}</span>
-                              <span className="text-[7px] font-bold text-[#ff4f66] ml-auto uppercase tracking-wider">{match.opponent} Red</span>
+                              <span className="text-[9px] font-bold text-[#ff4f66] ml-auto uppercase tracking-wider">{match.opponent} Red</span>
                             </div>
                           ))}
                           {(Array.isArray(match.opponentSubs)?match.opponentSubs:[]).map((s:any,i:number)=>(
                             <div key={`os-${i}`} className="flex items-center gap-3 pl-0 relative">
-                              <div className="w-[19px] h-[19px] rounded-full bg-[var(--c-blue)]/20 border-2 border-[var(--c-blue)] flex items-center justify-center shrink-0 z-10 text-[9px]">↔</div>
+                              <div className="w-[19px] h-[19px] rounded-full bg-[var(--c-blue)]/20 border-2 border-[var(--c-blue)] flex items-center justify-center shrink-0 z-10 text-[11px]">↔</div>
                               <span className="font-bold text-xs text-zinc-600"><span className="text-[#ff4f66] line-through">{s.out}</span> → <span className="text-[#7fd6a8]">{s.in}</span></span>
-                              <span className="text-[7px] font-bold text-[var(--c-blueSoft)] ml-auto uppercase tracking-wider">{match.opponent} Sub</span>
+                              <span className="text-[9px] font-bold text-[var(--c-blueSoft)] ml-auto uppercase tracking-wider">{match.opponent} Sub</span>
                             </div>
                           ))}
                           {(!match.scorers||match.scorers.length===0)&&(!match.yellowCards||match.yellowCards.length===0)&&(!match.redCards||match.redCards.length===0)&&(!match.subs||match.subs.length===0)&&(!match.opponentScorers||match.opponentScorers.length===0)&&(!match.opponentYellowCards||match.opponentYellowCards.length===0)&&(!match.opponentRedCards||match.opponentRedCards.length===0)&&(!match.opponentSubs||match.opponentSubs.length===0)&&(
-                            <div className="flex items-center justify-center py-6"><span className="text-[9px] text-zinc-400 font-semibold">No match events recorded</span></div>
+                            <div className="flex items-center justify-center py-6"><span className="text-[11px] text-zinc-400 font-semibold">No match events recorded</span></div>
                           )}
                       </div>
                     </div>
 
                       {/* Match Stats */}
                       {(match.tunisiaPossession||match.opponentPossession||match.tunisiaShots||match.opponentShots)&&<div className="bg-[var(--c-deep)] rounded-lg border border-[rgba(var(--line-rgb),.14)] p-3">
-                        <p className="text-[7px] font-black uppercase tracking-wider text-[var(--c-textMid)] mb-2 flex items-center gap-2"><span className="w-3 h-[2px] rounded bg-[#e3062c]"/>MATCH STATS</p>
-                        <div className="grid grid-cols-[1fr_auto_1fr] gap-x-3 gap-y-1 text-[10px] font-bold items-center">
-                          <span className="text-right text-zinc-700">{match.tunisiaPossession||"0"}%</span><span className="text-[7px] font-black text-zinc-400">Poss.</span><span className="text-zinc-500">{match.opponentPossession||"0"}%</span>
-                          <span className="text-right text-zinc-700">{match.tunisiaShots||"0"}</span><span className="text-[7px] font-black text-zinc-400">Shots</span><span className="text-zinc-500">{match.opponentShots||"0"}</span>
-                          <span className="text-right text-zinc-700">{match.tunisiaShotsOnTarget||"0"}</span><span className="text-[7px] font-black text-zinc-400">SOT</span><span className="text-zinc-500">{match.opponentShotsOnTarget||"0"}</span>
-                          <span className="text-right text-zinc-700">{match.tunisiaCorners||"0"}</span><span className="text-[7px] font-black text-zinc-400">Corn.</span><span className="text-zinc-500">{match.opponentCorners||"0"}</span>
-                          <span className="text-right text-zinc-700">{match.tunisiaFouls||"0"}</span><span className="text-[7px] font-black text-zinc-400">Fouls</span><span className="text-zinc-500">{match.opponentFouls||"0"}</span>
+                        <p className="text-[9px] font-black uppercase tracking-wider text-[var(--c-textMid)] mb-2 flex items-center gap-2"><span className="w-3 h-[2px] rounded bg-[#e3062c]"/>MATCH STATS</p>
+                        <div className="grid grid-cols-[1fr_auto_1fr] gap-x-3 gap-y-1 text-[12px] font-bold items-center">
+                          <span className="text-right text-zinc-700">{match.tunisiaPossession||"0"}%</span><span className="text-[9px] font-black text-zinc-400">Poss.</span><span className="text-zinc-500">{match.opponentPossession||"0"}%</span>
+                          <span className="text-right text-zinc-700">{match.tunisiaShots||"0"}</span><span className="text-[9px] font-black text-zinc-400">Shots</span><span className="text-zinc-500">{match.opponentShots||"0"}</span>
+                          <span className="text-right text-zinc-700">{match.tunisiaShotsOnTarget||"0"}</span><span className="text-[9px] font-black text-zinc-400">SOT</span><span className="text-zinc-500">{match.opponentShotsOnTarget||"0"}</span>
+                          <span className="text-right text-zinc-700">{match.tunisiaCorners||"0"}</span><span className="text-[9px] font-black text-zinc-400">Corn.</span><span className="text-zinc-500">{match.opponentCorners||"0"}</span>
+                          <span className="text-right text-zinc-700">{match.tunisiaFouls||"0"}</span><span className="text-[9px] font-black text-zinc-400">Fouls</span><span className="text-zinc-500">{match.opponentFouls||"0"}</span>
                         </div>
                       </div>}
 
                       {/* Post-match video library */}
                       <div className="bg-[var(--c-deep)] rounded-lg border border-[rgba(var(--line-rgb),.14)] p-3">
                         <div className="flex items-center justify-between mb-2">
-                          <p className="text-[7px] font-black uppercase tracking-wider text-zinc-500 flex items-center gap-2"><span className="w-3 h-[2px] rounded bg-[#7ec3ff]"/>{tr.videos.label}</p>
+                          <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500 flex items-center gap-2"><span className="w-3 h-[2px] rounded bg-[#7ec3ff]"/>{tr.videos.label}</p>
                           {(p.addMatch||canManageUsers)&&(
-                            <button onClick={()=>{setAddVideoFor(addVideoFor===match.id?null:match.id);setVideoDraft({title:"",url:""})}} className="flex items-center gap-1 text-[7px] font-black uppercase tracking-wider text-[#7ec3ff] hover:text-[#a9dcff] transition-all"><Plus size={10}/> {tr.videos.addVideo}</button>
+                            <button onClick={()=>{setAddVideoFor(addVideoFor===match.id?null:match.id);setVideoDraft({title:"",url:""})}} className="flex items-center gap-1 text-[9px] font-black uppercase tracking-wider text-[#7ec3ff] hover:text-[#a9dcff] transition-all"><Plus size={10}/> {tr.videos.addVideo}</button>
                           )}
                         </div>
                         {addVideoFor===match.id&&(
                           <div className="mb-3 p-2.5 rounded-lg bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.14)] space-y-2">
-                            <input value={videoDraft.title} onChange={e=>setVideoDraft({...videoDraft,title:e.target.value})} placeholder={tr.videos.titlePh} className="w-full px-2.5 py-2 rounded-lg bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
-                            <input value={videoDraft.url} onChange={e=>setVideoDraft({...videoDraft,url:e.target.value})} placeholder={tr.videos.urlPh} className="w-full px-2.5 py-2 rounded-lg bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
+                            <input value={videoDraft.title} onChange={e=>setVideoDraft({...videoDraft,title:e.target.value})} placeholder={tr.videos.titlePh} className="w-full px-2.5 py-2 rounded-lg bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[12px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
+                            <input value={videoDraft.url} onChange={e=>setVideoDraft({...videoDraft,url:e.target.value})} placeholder={tr.videos.urlPh} className="w-full px-2.5 py-2 rounded-lg bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[12px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
                             <div className="flex justify-end gap-2">
-                              <button onClick={()=>setAddVideoFor(null)} className="px-3 py-1.5 rounded-lg text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)]">{tr.common.cancel}</button>
+                              <button onClick={()=>setAddVideoFor(null)} className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider text-[var(--c-textDim)]">{tr.common.cancel}</button>
                               <button onClick={()=>{
                                 const embed=toEmbedUrl(videoDraft.url)
                                 if(!embed){alert(tr.videos.invalidUrl);return}
                                 setMatches((ms:any[])=>ms.map((x:any)=>x.id===match.id?{...x,videos:[...(x.videos||[]),{title:videoDraft.title.trim()||tr.videos.label,url:videoDraft.url.trim(),embed}]}:x))
                                 setAddVideoFor(null)
-                              }} className="px-3 py-1.5 rounded-lg bg-[#7ec3ff] text-[#0c1f3d] text-[8px] font-black uppercase tracking-wider">{tr.common.save}</button>
+                              }} className="px-3 py-1.5 rounded-lg bg-[#7ec3ff] text-[#0c1f3d] text-[10px] font-black uppercase tracking-wider">{tr.common.save}</button>
                             </div>
                           </div>
                         )}
                         {(!match.videos||match.videos.length===0)?(
-                          <p className="text-[9px] text-zinc-400 font-semibold text-center py-2">{tr.videos.none}</p>
+                          <p className="text-[11px] text-zinc-400 font-semibold text-center py-2">{tr.videos.none}</p>
                         ):(
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {match.videos.map((v:any,vi:number)=>(
@@ -3682,7 +3682,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                                   <iframe src={v.embed} title={v.title} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen/>
                                 </div>
                                 <div className="flex items-center justify-between gap-2 px-2.5 py-1.5">
-                                  <span className="text-[9px] font-bold text-[var(--c-text)] truncate">{v.title}</span>
+                                  <span className="text-[11px] font-bold text-[var(--c-text)] truncate">{v.title}</span>
                                   {(p.deleteMatch||canManageUsers)&&(
                                     <button onClick={async()=>{if(await askConfirm(tr.videos.confirmDelete))setMatches((ms:any[])=>ms.map((x:any)=>x.id===match.id?{...x,videos:(x.videos||[]).filter((_:any,j:number)=>j!==vi)}:x))}} className="shrink-0 text-[var(--c-textDim)] hover:text-[#ff4f66] transition-all"><Trash2 size={11}/></button>
                                   )}
@@ -3695,9 +3695,9 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
 
                       {/* Match Sheet + Modify + Delete */}
                       <div className="flex justify-end gap-2">
-                        <button onClick={()=>setMatchSheetTarget(match)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg pm-btn-soft text-[#ffbfca] text-[8px] font-black uppercase tracking-wider"><ClipboardCheck size={11}/> Match Sheet</button>
-                        {(p.addMatch||canManageUsers)&&<button onClick={()=>{setMatchForm({...initMatch,...match,eventMinutes:match.eventMinutes||{}});setMatchStep(0);setActionPick(null);setSubOutId(null);setIsMatchOpen(true)}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(var(--line-rgb),.22)] text-[var(--c-textBlue)] text-[8px] font-black uppercase tracking-wider hover:bg-[var(--c-surface)] transition-all"><Edit3 size={11}/> {tr.common.edit}</button>}
-                        {p.deleteMatch&&<button onClick={async()=>{if(await askConfirm(tr.history.delete+" this match?")){reverseMatchCards(match);setMatches(m=>m.filter((x:any)=>x.id!==match.id));setSelMatch(null)}}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(255,79,102,.35)] bg-[#e3062c]/10 text-[#ff4f66] text-[8px] font-black uppercase tracking-wider hover:bg-[#e3062c] hover:text-white transition-all"><Trash2 size={11}/> {tr.history.delete}</button>}
+                        <button onClick={()=>setMatchSheetTarget(match)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg pm-btn-soft text-[#ffbfca] text-[10px] font-black uppercase tracking-wider"><ClipboardCheck size={11}/> Match Sheet</button>
+                        {(p.addMatch||canManageUsers)&&<button onClick={()=>{setMatchForm({...initMatch,...match,eventMinutes:match.eventMinutes||{}});setMatchStep(0);setActionPick(null);setSubOutId(null);setIsMatchOpen(true)}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(var(--line-rgb),.22)] text-[var(--c-textBlue)] text-[10px] font-black uppercase tracking-wider hover:bg-[var(--c-surface)] transition-all"><Edit3 size={11}/> {tr.common.edit}</button>}
+                        {p.deleteMatch&&<button onClick={async()=>{if(await askConfirm(tr.history.delete+" this match?")){reverseMatchCards(match);setMatches(m=>m.filter((x:any)=>x.id!==match.id));setSelMatch(null)}}} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(255,79,102,.35)] bg-[#e3062c]/10 text-[#ff4f66] text-[10px] font-black uppercase tracking-wider hover:bg-[#e3062c] hover:text-white transition-all"><Trash2 size={11}/> {tr.history.delete}</button>}
                       </div>
                     </div>
                   )}
@@ -3733,9 +3733,9 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
           <div className="w-full max-w-3xl bg-[var(--c-cream2)] text-zinc-900 rounded-2xl shadow-2xl flex flex-col max-h-[92vh]">
 
             <div className="match-sheet-print-btn flex items-center justify-between px-6 py-3 border-b border-zinc-100 bg-[var(--c-cream3)] rounded-t-2xl sticky top-0">
-              <span className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Official Match Sheet</span>
+              <span className="text-[12px] font-black uppercase tracking-widest text-zinc-500">Official Match Sheet</span>
               <div className="flex gap-2">
-                <button onClick={()=>window.print()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">
+                <button onClick={()=>window.print()} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E30613] text-white text-[11px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
                   Print / Save PDF
                 </button>
@@ -3748,11 +3748,11 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               <div className="flex items-center gap-4 pb-4 border-b-2 border-zinc-900">
                 <img src="/ftf-logo.png" className="h-16 w-16 object-contain" alt=""/>
                 <div className="flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-500">Fédération Tunisienne de Football</p>
+                  <p className="text-[12px] font-bold uppercase tracking-[0.2em] text-zinc-500">Fédération Tunisienne de Football</p>
                   <h1 className="text-xl font-black uppercase tracking-tight">Official Match Sheet</h1>
-                  <p className="text-[10px] font-bold text-[#E30613] uppercase tracking-wider">{catLabel(match.teamCategory)} {match.competition&&`· ${match.competition}`}</p>
+                  <p className="text-[12px] font-bold text-[#E30613] uppercase tracking-wider">{catLabel(match.teamCategory)} {match.competition&&`· ${match.competition}`}</p>
                 </div>
-                <div className="text-right text-[10px] font-bold text-zinc-500">
+                <div className="text-right text-[12px] font-bold text-zinc-500">
                   <p>{fmtDateWords(match.date)||"—"}</p>
                   <p className="mt-0.5">{match.venue||"Venue TBC"}{match.homeAway?` · ${homeAwayLabel(match.homeAway)}`:""}</p>
                 </div>
@@ -3783,8 +3783,8 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                         const overallIdx=xi.findIndex((x:any)=>x.id===pl.id)
                         return(
                           <div key={pl.id} className="flex flex-col items-center">
-                            <div className="w-6 h-6 rounded-full bg-white text-zinc-900 flex items-center justify-center text-[9px] font-black shadow-md">{overallIdx+1}</div>
-                            <span className="text-[7px] font-bold text-white mt-0.5 max-w-[60px] text-center truncate drop-shadow">{pl.name}</span>
+                            <div className="w-6 h-6 rounded-full bg-white text-zinc-900 flex items-center justify-center text-[11px] font-black shadow-md">{overallIdx+1}</div>
+                            <span className="text-[9px] font-bold text-white mt-0.5 max-w-[60px] text-center truncate drop-shadow">{pl.name}</span>
                           </div>
                         )
                       })}
@@ -3797,10 +3797,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               {/* XI / Bench / Staff */}
               <div className="grid grid-cols-3 gap-4 mb-6">
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-wider text-[#E30613] mb-2 pb-1 border-b border-zinc-200">Starting XI</p>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-[#E30613] mb-2 pb-1 border-b border-zinc-200">Starting XI</p>
                   <div className="space-y-1">
                     {xi.map((pl:any,i:number)=>(
-                      <div key={pl.id} className="flex items-center gap-2 text-[11px]">
+                      <div key={pl.id} className="flex items-center gap-2 text-[13px]">
                         <span className="font-black text-zinc-300 w-4">{i+1}</span>
                         <span className="font-bold truncate">{pl.name}</span>
                       </div>
@@ -3808,44 +3808,44 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   </div>
                 </div>
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-wider text-amber-600 mb-2 pb-1 border-b border-zinc-200">Substitutes</p>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-amber-600 mb-2 pb-1 border-b border-zinc-200">Substitutes</p>
                   <div className="space-y-1">
                     {bench.map((pl:any,i:number)=>(
-                      <div key={pl.id} className="flex items-center gap-2 text-[11px]">
+                      <div key={pl.id} className="flex items-center gap-2 text-[13px]">
                         <span className="font-black text-zinc-300 w-4">{i+12}</span>
                         <span className="font-bold truncate">{pl.name}</span>
                       </div>
                     ))}
-                    {bench.length===0&&<p className="text-[10px] text-zinc-300 italic">None listed</p>}
+                    {bench.length===0&&<p className="text-[12px] text-zinc-300 italic">None listed</p>}
                   </div>
                 </div>
                 <div>
-                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-2 pb-1 border-b border-zinc-200">Coaching Staff</p>
+                  <p className="text-[11px] font-black uppercase tracking-wider text-zinc-500 mb-2 pb-1 border-b border-zinc-200">Coaching Staff</p>
                   <div className="space-y-1">
                     {staff.map((pl:any)=>(
-                      <div key={pl.id} className="text-[11px]">
+                      <div key={pl.id} className="text-[13px]">
                         <span className="font-bold truncate block">{pl.name}</span>
-                        <span className="text-[9px] text-zinc-400">{pl.position}</span>
+                        <span className="text-[11px] text-zinc-400">{pl.position}</span>
                       </div>
                     ))}
-                    {staff.length===0&&<p className="text-[10px] text-zinc-300 italic">None listed</p>}
+                    {staff.length===0&&<p className="text-[12px] text-zinc-300 italic">None listed</p>}
                   </div>
                 </div>
               </div>
 
               {/* Cards & scorers */}
-              <div className="grid grid-cols-3 gap-4 mb-6 text-[11px]">
+              <div className="grid grid-cols-3 gap-4 mb-6 text-[13px]">
                 <div className="bg-zinc-50 rounded-lg p-3">
-                  <p className="text-[9px] font-black uppercase tracking-wider text-zinc-500 mb-1.5">Scorers</p>
-                  {scorerNames.length>0?scorerNames.map((n:string,i:number)=><p key={i} className="font-bold">⚽ {n}</p>):<p className="text-zinc-300 italic text-[10px]">None</p>}
+                  <p className="text-[11px] font-black uppercase tracking-wider text-zinc-500 mb-1.5">Scorers</p>
+                  {scorerNames.length>0?scorerNames.map((n:string,i:number)=><p key={i} className="font-bold">⚽ {n}</p>):<p className="text-zinc-300 italic text-[12px]">None</p>}
                 </div>
                 <div className="bg-zinc-50 rounded-lg p-3">
-                  <p className="text-[9px] font-black uppercase tracking-wider text-yellow-600 mb-1.5">Yellow Cards</p>
-                  {(match.yellowCards||[]).length>0?(match.yellowCards||[]).map((pid:number)=>{const pl=members.find((m:any)=>m.id===pid);return pl&&<p key={pid} className="font-bold">🟨 {pl.name}</p>}):<p className="text-zinc-300 italic text-[10px]">None</p>}
+                  <p className="text-[11px] font-black uppercase tracking-wider text-yellow-600 mb-1.5">Yellow Cards</p>
+                  {(match.yellowCards||[]).length>0?(match.yellowCards||[]).map((pid:number)=>{const pl=members.find((m:any)=>m.id===pid);return pl&&<p key={pid} className="font-bold">🟨 {pl.name}</p>}):<p className="text-zinc-300 italic text-[12px]">None</p>}
                 </div>
                 <div className="bg-zinc-50 rounded-lg p-3">
-                  <p className="text-[9px] font-black uppercase tracking-wider text-red-600 mb-1.5">Red Cards</p>
-                  {(match.redCards||[]).length>0?(match.redCards||[]).map((pid:number)=>{const pl=members.find((m:any)=>m.id===pid);return pl&&<p key={pid} className="font-bold">🟥 {pl.name}</p>}):<p className="text-zinc-300 italic text-[10px]">None</p>}
+                  <p className="text-[11px] font-black uppercase tracking-wider text-red-600 mb-1.5">Red Cards</p>
+                  {(match.redCards||[]).length>0?(match.redCards||[]).map((pid:number)=>{const pl=members.find((m:any)=>m.id===pid);return pl&&<p key={pid} className="font-bold">🟥 {pl.name}</p>}):<p className="text-zinc-300 italic text-[12px]">None</p>}
                 </div>
               </div>
 
@@ -3853,11 +3853,11 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
               <div className="grid grid-cols-2 gap-8 pt-8 mt-4 border-t border-zinc-200">
                 <div>
                   <div className="h-12 border-b border-zinc-300"/>
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 mt-1">Team Official Signature</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 mt-1">Team Official Signature</p>
                 </div>
                 <div>
                   <div className="h-12 border-b border-zinc-300"/>
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 mt-1">Match Referee Signature</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-zinc-400 mt-1">Match Referee Signature</p>
                 </div>
               </div>
             </div>

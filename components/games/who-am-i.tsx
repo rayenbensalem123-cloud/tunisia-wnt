@@ -136,14 +136,14 @@ export function WhoAmI({ players, user, lang, getImage }: Props) {
 
   const renderBoard = () => (
     <div className="mt-6 pt-4 border-t border-[rgba(var(--line-rgb),.14)]">
-      <p className="text-[11px] font-black text-[var(--c-text)] mb-3">{T.waBoard}</p>
+      <p className="text-[13px] font-black text-[var(--c-text)] mb-3">{T.waBoard}</p>
       {board && board.rows.length > 0 ? (
         <Podium
           rows={board.rows.map(r => ({ key: r.username, name: r.username, value: String(r.best), sub: fmt(T.waPlays, { n: r.plays }) }))}
           you={user.username} youLabel={T.bgYou} unit={T.waPts}
         />
-      ) : <p className="text-[10px] text-[var(--c-textDim)] font-semibold">—</p>}
-      {board?.mode === "device" && <p className="mt-2 text-[9px] font-semibold text-[var(--c-textDim)] leading-relaxed">{T.bgDeviceOnly}</p>}
+      ) : <p className="text-[12px] text-[var(--c-textDim)] font-semibold">—</p>}
+      {board?.mode === "device" && <p className="mt-2 text-[11px] font-semibold text-[var(--c-textDim)] leading-relaxed">{T.bgDeviceOnly}</p>}
     </div>
   )
 
@@ -151,10 +151,10 @@ export function WhoAmI({ players, user, lang, getImage }: Props) {
   if (phase === "start") {
     return (
       <div>
-        <p className="text-[12px] font-semibold text-[var(--c-textMid)] leading-relaxed">{T.waDesc}</p>
+        <p className="text-[14px] font-semibold text-[var(--c-textMid)] leading-relaxed">{T.waDesc}</p>
         <p className="mt-3 text-[13px] font-black italic text-[#f6c744] tabular-nums">{BASE} → {MIN_PTS} {T.waPts}</p>
         {eligible.length < ROUND_SIZE ? (
-          <p className="mt-4 rounded-xl border border-[#f6c744]/30 bg-[#f6c744]/8 px-4 py-3 text-[11px] font-bold text-[#f6c744] leading-relaxed">{T.waNoData}</p>
+          <p className="mt-4 rounded-xl border border-[#f6c744]/30 bg-[#f6c744]/8 px-4 py-3 text-[13px] font-bold text-[#f6c744] leading-relaxed">{T.waNoData}</p>
         ) : (
           <button onClick={start} className="pm-btn pm-btn-red mt-4 w-full justify-center py-3">{T.waStart}</button>
         )}
@@ -170,10 +170,10 @@ export function WhoAmI({ players, user, lang, getImage }: Props) {
       <div>
         {burst > 0 && won && <Confetti key={burst} />}
         <div className="text-center">
-          <p className="text-[11px] font-black text-[var(--c-textFaint)]">{T.waDone}</p>
+          <p className="text-[13px] font-black text-[var(--c-textFaint)]">{T.waDone}</p>
           <p className="mt-1 text-7xl font-black italic text-[#E30613] leading-none tabular-nums"
              style={won ? { textShadow: "0 0 28px rgba(246,199,68,.45)" } : undefined}><CountUp value={totalScore} ms={1100} /></p>
-          <p className="mt-1.5 text-[10px] font-bold text-[var(--c-textDim)]">{fmt(T.waOutOf, { n: ROUND_SIZE * BASE })}</p>
+          <p className="mt-1.5 text-[12px] font-bold text-[var(--c-textDim)]">{fmt(T.waOutOf, { n: ROUND_SIZE * BASE })}</p>
         </div>
         <div className="mt-4 space-y-1.5">
           {round.map((p, i) => (
@@ -181,13 +181,13 @@ export function WhoAmI({ players, user, lang, getImage }: Props) {
               <span className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${scores[i] > 0 ? "bg-[#7fd6a8]/18 text-[#7fd6a8]" : "bg-[#e3062c]/15 text-[#ff5f72]"}`}>
                 {scores[i] > 0 ? <Check size={12} strokeWidth={3} /> : <X size={12} strokeWidth={3} />}
               </span>
-              <span className="flex-1 truncate text-[11px] font-bold uppercase text-[var(--c-text)]">{p.name}</span>
+              <span className="flex-1 truncate text-[13px] font-bold uppercase text-[var(--c-text)]">{p.name}</span>
               <span className={`text-sm font-black tabular-nums ${scores[i] > 0 ? "text-[#f6c744]" : "text-[var(--c-textDim)]"}`}>{scores[i] ?? 0}</span>
             </div>
           ))}
         </div>
         <button onClick={start} className="pm-btn pm-btn-red mt-5 w-full justify-center py-3"><RotateCcw size={13} />{T.waAgain}</button>
-        {saveMode === "device" && <p className="mt-2 text-[9px] font-semibold text-[var(--c-textDim)] leading-relaxed">{T.bgDeviceOnly}</p>}
+        {saveMode === "device" && <p className="mt-2 text-[11px] font-semibold text-[var(--c-textDim)] leading-relaxed">{T.bgDeviceOnly}</p>}
         {renderBoard()}
       </div>
     )
@@ -202,8 +202,8 @@ export function WhoAmI({ players, user, lang, getImage }: Props) {
 
       {/* round progress: one segment per player, coloured by outcome */}
       <div className="flex items-center justify-between mb-2">
-        <span className="text-[11px] font-black text-[var(--c-textFaint)]">{fmt(T.waRound, { n: idx + 1, t: round.length })}</span>
-        <span className="text-xl font-black italic text-[#f6c744] leading-none tabular-nums">{totalScore} <span className="text-[9px] not-italic text-[var(--c-textDim)]">{T.waPts}</span></span>
+        <span className="text-[13px] font-black text-[var(--c-textFaint)]">{fmt(T.waRound, { n: idx + 1, t: round.length })}</span>
+        <span className="text-xl font-black italic text-[#f6c744] leading-none tabular-nums">{totalScore} <span className="text-[11px] not-italic text-[var(--c-textDim)]">{T.waPts}</span></span>
       </div>
       <div className="flex gap-1 mb-4">
         {round.map((_, i) => (
@@ -215,7 +215,7 @@ export function WhoAmI({ players, user, lang, getImage }: Props) {
       {/* points on offer: drains as clues are revealed */}
       <div className="mb-3">
         <div className="flex items-end justify-between mb-1">
-          <span className="text-[10px] font-bold text-[var(--c-textDim)]">{fmt(T.waClue, { n: Math.min(shown, total), t: total })}</span>
+          <span className="text-[12px] font-bold text-[var(--c-textDim)]">{fmt(T.waClue, { n: Math.min(shown, total), t: total })}</span>
           <span className={`text-3xl font-black italic leading-none tabular-nums ${finished ? "text-[var(--c-textDim)]" : "text-[#f6c744]"}`}>{pts}</span>
         </div>
         <div className="h-2 rounded-full bg-[var(--c-panel4)] overflow-hidden" role="progressbar" aria-label={T.waTarget} aria-valuenow={pts} aria-valuemin={0} aria-valuemax={BASE}>
@@ -227,7 +227,7 @@ export function WhoAmI({ players, user, lang, getImage }: Props) {
         {visible.map(c => (
           <div key={c.key} className="gm-slide relative rounded-lg bg-[var(--c-panel4)] pl-3.5 pr-3 py-2.5 overflow-hidden">
             <span className="absolute left-0 inset-y-0 w-[3px] bg-[#E30613]" />
-            <p className="text-[9px] font-bold text-[var(--c-textDim)]">{(T as any)[`clue_${c.key}`]}</p>
+            <p className="text-[11px] font-bold text-[var(--c-textDim)]">{(T as any)[`clue_${c.key}`]}</p>
             <p className="mt-0.5 text-[15px] font-black uppercase leading-tight text-[var(--c-text)] truncate">{c.value}</p>
           </div>
         ))}
@@ -240,10 +240,10 @@ export function WhoAmI({ players, user, lang, getImage }: Props) {
             onError={e => { (e.target as HTMLImageElement).style.display = "none" }} />
         </div>
       )}
-      {!finished && photo && shown === clues.length && <p className="mt-2 text-[10px] font-semibold text-[var(--c-textDim)]">{T.waLastClue}</p>}
+      {!finished && photo && shown === clues.length && <p className="mt-2 text-[12px] font-semibold text-[var(--c-textDim)]">{T.waLastClue}</p>}
 
       {feedback && (
-        <div key={`${status}-${wrongTick}-${idx}`} className={`mt-3 flex items-center gap-2 rounded-xl px-3 py-2.5 text-[12px] font-black ${status === "guessing" ? "gm-shake" : "gm-pop"} ${
+        <div key={`${status}-${wrongTick}-${idx}`} className={`mt-3 flex items-center gap-2 rounded-xl px-3 py-2.5 text-[14px] font-black ${status === "guessing" ? "gm-shake" : "gm-pop"} ${
           status === "correct" ? "bg-[#7fd6a8]/12 border border-[#7fd6a8]/30 text-[#7fd6a8]"
             : status === "failed" ? "bg-[#e3062c]/10 border border-[#e3062c]/30 text-[#ff5f72]"
             : "bg-[#f6c744]/10 border border-[#f6c744]/30 text-[#f6c744]"}`}>
@@ -267,14 +267,14 @@ export function WhoAmI({ players, user, lang, getImage }: Props) {
           {query.trim() && (
             <div className="mt-1.5 rounded-xl border border-[rgba(var(--line-rgb),.16)] bg-[var(--c-raised)] overflow-hidden">
               {suggestions.length === 0
-                ? <p className="px-3 py-2 text-[10px] font-bold text-[var(--c-textDim)]">{T.waNoMatch}</p>
+                ? <p className="px-3 py-2 text-[12px] font-bold text-[var(--c-textDim)]">{T.waNoMatch}</p>
                 : suggestions.map(p => (
                   <button key={p.id} type="button" onClick={() => guess(p)}
-                    className="w-full text-left px-3 py-2.5 text-[12px] font-bold uppercase text-[var(--c-text)] hover:bg-[var(--c-panel4)] hover:text-[#E30613] transition-colors">{p.name}</button>
+                    className="w-full text-left px-3 py-2.5 text-[14px] font-bold uppercase text-[var(--c-text)] hover:bg-[var(--c-panel4)] hover:text-[#E30613] transition-colors">{p.name}</button>
                 ))}
             </div>
           )}
-          <button onClick={giveUp} className="mt-2 text-[10px] font-bold text-[var(--c-textDim)] hover:text-[#E30613] transition-colors">{T.waGiveUp}</button>
+          <button onClick={giveUp} className="mt-2 text-[12px] font-bold text-[var(--c-textDim)] hover:text-[#E30613] transition-colors">{T.waGiveUp}</button>
         </div>
       )}
     </div>

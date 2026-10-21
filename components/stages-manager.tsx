@@ -289,13 +289,13 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             <img src="/ftf-logo.png" className="h-9" alt="FTF"/>
             <div className="leading-tight min-w-0">
               <h1 className="text-sm font-black italic uppercase tracking-wider text-[var(--c-text)] truncate">{tr.stages.title}</h1>
-              <p className="text-[8px] font-black text-[#E30613] uppercase tracking-[0.3em]">{tr.stages.subtitle}</p>
+              <p className="text-[10px] font-black text-[#E30613] uppercase tracking-[0.3em]">{tr.stages.subtitle}</p>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-[rgba(var(--line-rgb),.16)] bg-[var(--c-panel3)]/80">
-              <div className="w-5 h-5 rounded-full bg-[#E30613] text-white flex items-center justify-center text-[8px] font-black uppercase">{(user?.username || "?")[0]}</div>
-              <span className="text-[8px] font-black uppercase tracking-wider text-[var(--c-textMid)]">{user?.username || "—"}</span>
+              <div className="w-5 h-5 rounded-full bg-[#E30613] text-white flex items-center justify-center text-[10px] font-black uppercase">{(user?.username || "?")[0]}</div>
+              <span className="text-[10px] font-black uppercase tracking-wider text-[var(--c-textMid)]">{user?.username || "—"}</span>
             </div>
             <ThemeToggle className="p-2"/>
           </div>
@@ -304,7 +304,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
 
       {/* Toast */}
       {msg && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[500] flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-500 text-white text-[10px] font-black uppercase tracking-wider shadow-2xl animate-[fadeUp_0.3s_ease-out_both]">
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[500] flex items-center gap-2 px-5 py-3 rounded-2xl bg-emerald-500 text-white text-[12px] font-black uppercase tracking-wider shadow-2xl animate-[fadeUp_0.3s_ease-out_both]">
           <Check size={14}/>{msg}
         </div>
       )}
@@ -325,21 +325,21 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                   {cover && (<><StoredImg url={cover} alt="" className="absolute inset-0 w-full h-full object-cover opacity-30"/><div className="absolute inset-0 bg-gradient-to-r from-[#0b1322] via-[#0b1322]/60 to-transparent"/></>)}
                   <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-6">
                     <div className="min-w-0">
-                      <span className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest ${st === "live" ? "bg-[#E30613]" : st === "upcoming" ? "bg-[#7ec3ff] text-[#0b1322]" : "bg-white/20"}`}>
+                      <span className={`inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-[11px] font-black uppercase tracking-widest ${st === "live" ? "bg-[#E30613]" : st === "upcoming" ? "bg-[#7ec3ff] text-[#0b1322]" : "bg-white/20"}`}>
                         {st === "live" && <span className="w-1.5 h-1.5 rounded-full bg-white"/>}
                         {st === "live" ? cs("liveNow") + " · " : st === "upcoming" ? cs("nextCamp") + " · " : cs("lastCamp") + " · "}{statusLine(featured)}
                       </span>
                       <h2 className="mt-4 text-4xl sm:text-5xl font-black italic uppercase tracking-tighter leading-[0.98]">{featured.name}</h2>
-                      <p className="mt-3 text-[12px] font-bold text-white/70">{catName(featured.teamCategory)} · {featured.location || tr.stages.venueDash} · {fmtDate(featured.startDate)} → {fmtDate(featured.endDate)}</p>
+                      <p className="mt-3 text-[14px] font-bold text-white/70">{catName(featured.teamCategory)} · {featured.location || tr.stages.venueDash} · {fmtDate(featured.startDate)} → {fmtDate(featured.endDate)}</p>
                       <div className="mt-5 flex gap-2.5 flex-wrap">
-                        <button onClick={() => featured.id && openDetail(featured)} className="px-6 py-3 rounded-xl bg-[#f6c744] text-[#0b1322] text-[10px] font-black uppercase tracking-wider hover:brightness-110 transition-all">{cs("openCamp")}</button>
+                        <button onClick={() => featured.id && openDetail(featured)} className="px-6 py-3 rounded-xl bg-[#f6c744] text-[#0b1322] text-[12px] font-black uppercase tracking-wider hover:brightness-110 transition-all">{cs("openCamp")}</button>
                       </div>
                     </div>
                     <div className="w-full lg:w-72 shrink-0 rounded-2xl bg-[#0b1322]/60 border border-white/10 p-5">
                       <div className="grid grid-cols-3 gap-2 text-center">
-                        <div><p className="text-2xl font-black italic text-[#f6c744] leading-none">{(featured.players || []).length}</p><p className="mt-1 text-[7px] font-black uppercase tracking-widest text-white/60">{tr.stages.playersLabel}</p></div>
-                        <div><p className="text-2xl font-black italic text-[#f6c744] leading-none">{(featured.staff || []).length}</p><p className="mt-1 text-[7px] font-black uppercase tracking-widest text-white/60">{tr.common.staff}</p></div>
-                        <div><p className="text-2xl font-black italic text-[#f6c744] leading-none">{reportsOf(featured)}</p><p className="mt-1 text-[7px] font-black uppercase tracking-widest text-white/60">{cs("reports")}</p></div>
+                        <div><p className="text-2xl font-black italic text-[#f6c744] leading-none">{(featured.players || []).length}</p><p className="mt-1 text-[9px] font-black uppercase tracking-widest text-white/60">{tr.stages.playersLabel}</p></div>
+                        <div><p className="text-2xl font-black italic text-[#f6c744] leading-none">{(featured.staff || []).length}</p><p className="mt-1 text-[9px] font-black uppercase tracking-widest text-white/60">{tr.common.staff}</p></div>
+                        <div><p className="text-2xl font-black italic text-[#f6c744] leading-none">{reportsOf(featured)}</p><p className="mt-1 text-[9px] font-black uppercase tracking-widest text-white/60">{cs("reports")}</p></div>
                       </div>
                       <div className="mt-4 h-1.5 rounded-full bg-white/15"><div className="h-full rounded-full bg-[#f6c744]" style={{ width: pct + "%" }}/></div>
                     </div>
@@ -350,7 +350,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
               <div className="relative overflow-hidden rounded-[28px] mt-6 px-7 sm:px-10 py-10 sm:py-12 bg-gradient-to-br from-[#142c52] via-[#0b1322] to-[#8a0f1c] text-white">
                 <div className="absolute -right-4 -top-8 text-[110px] sm:text-[150px] font-black italic uppercase tracking-tighter text-white/[0.05] select-none pointer-events-none">{tr.stages.heroTitle1}</div>
                 <div className="relative">
-                  <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f6c744]/15 border border-[#f6c744]/40 text-[#f6c744] text-[8px] font-black uppercase tracking-[0.25em]"><CalendarRange size={12}/> {tr.stages.portalBadge}</span>
+                  <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#f6c744]/15 border border-[#f6c744]/40 text-[#f6c744] text-[10px] font-black uppercase tracking-[0.25em]"><CalendarRange size={12}/> {tr.stages.portalBadge}</span>
                   <h2 className="mt-5 text-4xl sm:text-5xl font-black italic uppercase tracking-tighter leading-[0.95]">{tr.stages.heroTitle1} <span className="text-[#f6c744]">{tr.stages.heroTitle2}</span></h2>
                 </div>
               </div>
@@ -359,25 +359,25 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             {/* ─── FILTER + CREATE ─── */}
             <div className="mt-8 flex flex-col lg:flex-row lg:items-center gap-4 justify-between">
               <div className="flex p-1 rounded-2xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.14)] self-start">
-                <button onClick={() => setFiltCat("ALL")} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filtCat === "ALL" ? 'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25' : 'text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{tr.stages.all}</button>
+                <button onClick={() => setFiltCat("ALL")} className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${filtCat === "ALL" ? 'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25' : 'text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{tr.stages.all}</button>
                 {CATS.map(c => (
-                  <button key={c.value} onClick={() => setFiltCat(c.value)} className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all ${filtCat === c.value ? 'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25' : 'text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{c.label}</button>
+                  <button key={c.value} onClick={() => setFiltCat(c.value)} className={`px-4 py-2 rounded-xl text-[11px] font-black uppercase tracking-widest transition-all ${filtCat === c.value ? 'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25' : 'text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{c.label}</button>
                 ))}
               </div>
               <div className="flex items-center gap-2.5 flex-wrap">
-                <input value={q} onChange={e => setQ(e.target.value)} placeholder={cs("search")} className="w-56 sm:w-64 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
-                <select value={year} onChange={e => setYear(e.target.value)} className="px-3 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[10px] font-bold outline-none">
+                <input value={q} onChange={e => setQ(e.target.value)} placeholder={cs("search")} className="w-56 sm:w-64 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[12px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+                <select value={year} onChange={e => setYear(e.target.value)} className="px-3 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[12px] font-bold outline-none">
                   <option value="ALL">{cs("allYears")}</option>
                   {years.map(y => <option key={y} value={y}>{y}</option>)}
                 </select>
-                <p className="text-[9px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{filtered.length} {filtered.length > 1 ? tr.stages.campWordPlural : tr.stages.campWord}</p>
+                <p className="text-[11px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{filtered.length} {filtered.length > 1 ? tr.stages.campWordPlural : tr.stages.campWord}</p>
               </div>
             </div>
 
             {/* ─── SEASON TIMELINE ─── */}
             {filtered.length > 0 && (
               <div className="mt-5 rounded-2xl bg-[var(--c-panel2)]/55 border border-[rgba(var(--line-rgb),.14)] px-5 py-4">
-                <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">{cs("season")} {tlYear}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">{cs("season")} {tlYear}</p>
                 <div className="relative h-7">
                   <div className="absolute left-0 right-0 top-3 h-1.5 rounded-full bg-[rgba(var(--line-rgb),.14)]"/>
                   {filtered.filter(x => x.startDate && (x.startDate.startsWith(String(tlYear)) || (x.endDate || "").startsWith(String(tlYear)))).map(x => {
@@ -387,13 +387,13 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                     return <button key={x.id ?? x.name} title={x.name} onClick={() => x.id && openDetail(x)} className={`absolute top-1.5 h-4 rounded-full hover:scale-y-125 transition-transform ${st === "live" ? "bg-[#E30613]" : st === "upcoming" ? "bg-[#7ec3ff]" : "bg-[#5a6b8c]"}`} style={{ left: l + "%", width: Math.min(w, 100 - l) + "%" }}/>
                   })}
                 </div>
-                <div className="mt-1 flex justify-between text-[8px] font-bold text-[var(--c-textDim)]">{["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"].map((m, i) => <span key={i}>{m}</span>)}</div>
+                <div className="mt-1 flex justify-between text-[10px] font-bold text-[var(--c-textDim)]">{["J", "F", "M", "A", "M", "J", "J", "A", "S", "O", "N", "D"].map((m, i) => <span key={i}>{m}</span>)}</div>
               </div>
             )}
 
             {/* ─── CREATE CTA ─── */}
             {canManage && (
-              <button onClick={startCreate} className="group mt-5 w-full flex items-center justify-center gap-3 py-5 px-6 rounded-2xl bg-gradient-to-r from-[#b30510] via-[#E30613] to-[#ff2b3a] text-white text-[11px] font-black uppercase tracking-widest shadow-xl shadow-[#E30613]/30 hover:shadow-[#E30613]/55 hover:scale-[1.004] active:scale-[0.99] transition-all">
+              <button onClick={startCreate} className="group mt-5 w-full flex items-center justify-center gap-3 py-5 px-6 rounded-2xl bg-gradient-to-r from-[#b30510] via-[#E30613] to-[#ff2b3a] text-white text-[13px] font-black uppercase tracking-widest shadow-xl shadow-[#E30613]/30 hover:shadow-[#E30613]/55 hover:scale-[1.004] active:scale-[0.99] transition-all">
                 <span className="w-8 h-8 rounded-full bg-[#f6c744] text-[#7a4b00] flex items-center justify-center shadow-md shadow-black/25 group-hover:rotate-90 transition-transform duration-300">
                   <Plus size={16} strokeWidth={3}/>
                 </span>
@@ -409,10 +409,10 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                 </div>
                 <div>
                   <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">{tr.stages.emptyTitle}</p>
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">{tr.stages.emptySubtitle}</p>
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">{tr.stages.emptySubtitle}</p>
                 </div>
                 {canManage && (
-                  <button onClick={startCreate} className="mt-1 px-6 py-3 rounded-full bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-[#E30613]/25 hover:bg-red-700 transition-all">
+                  <button onClick={startCreate} className="mt-1 px-6 py-3 rounded-full bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-[#E30613]/25 hover:bg-red-700 transition-all">
                     <Plus size={15}/> {tr.stages.createFirst}
                   </button>
                 )}
@@ -435,44 +435,44 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
                       {(s.images || [])[0] && <StoredImg url={s.images[0]} alt="" className="absolute inset-0 w-full h-full object-cover object-top opacity-80"/>}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"/>
                       {(() => { const stt = stageStatus(s, tr).key; return (
-                        <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-wider ${stt === "live" ? "bg-[#E30613] text-white" : stt === "upcoming" ? "bg-[#7ec3ff] text-[#0b1322]" : "bg-black/50 text-white"}`}>{statusLine(s)}</span>
+                        <span className={`absolute top-3 left-3 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${stt === "live" ? "bg-[#E30613] text-white" : stt === "upcoming" ? "bg-[#7ec3ff] text-[#0b1322]" : "bg-black/50 text-white"}`}>{statusLine(s)}</span>
                       ) })()}
                     </div>
                     <div className="p-6">
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0">
-                          <span className="inline-block px-2.5 py-1 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[var(--acc-red)] text-[7px] font-black uppercase tracking-widest">{catName(s.teamCategory)}</span>
+                          <span className="inline-block px-2.5 py-1 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[var(--acc-red)] text-[9px] font-black uppercase tracking-widest">{catName(s.teamCategory)}</span>
                           <h3 className="mt-3 text-[15px] font-black uppercase tracking-tight text-[var(--c-text)] truncate">{s.name}</h3>
-                          <p className="mt-1.5 flex items-center gap-1.5 text-[9px] font-bold text-[var(--c-textDim)]">
+                          <p className="mt-1.5 flex items-center gap-1.5 text-[11px] font-bold text-[var(--c-textDim)]">
                             <MapPin size={11}/>{s.location || tr.stages.venueDash}
                           </p>
                         </div>
                         {d && (
                           <div className="shrink-0 text-center rounded-2xl bg-[#E30613]/10 border border-[#E30613]/25 px-3.5 py-2.5 min-w-[62px]">
                             <p className="text-[22px] font-black italic leading-none text-[#E30613]">{String(d.getDate()).padStart(2, "0")}</p>
-                            <p className="mt-1 text-[7px] font-black text-[var(--c-textMid)] uppercase tracking-widest">{MONTHS[d.getMonth()]}</p>
-                            <p className="text-[7px] font-bold text-[var(--c-textMid)]">{d.getFullYear()}</p>
+                            <p className="mt-1 text-[9px] font-black text-[var(--c-textMid)] uppercase tracking-widest">{MONTHS[d.getMonth()]}</p>
+                            <p className="text-[9px] font-bold text-[var(--c-textMid)]">{d.getFullYear()}</p>
                           </div>
                         )}
                       </div>
 
-                      <div className="mt-4 flex items-center gap-3 text-[9px] font-bold text-[var(--c-textDim)] flex-wrap">
+                      <div className="mt-4 flex items-center gap-3 text-[11px] font-bold text-[var(--c-textDim)] flex-wrap">
                         <span className="flex items-center gap-1.5"><Calendar size={11}/>{s.startDate ? fmtDate(s.startDate) : "—"} {s.endDate ? `→ ${fmtDate(s.endDate)}` : ""}</span>
                         {dur !== null && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.16)]">{dur} {tr.stages.daysAbbrev}</span>}
                       </div>
 
                       <div className="mt-4 flex gap-1.5 flex-wrap">
-                        {hasProgram && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">{tr.stages.program}</span>}
-                        {hasPlayers && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">{s.players.length} {tr.stages.playersWord}</span>}
-                        {hasStaff && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[7px] font-black uppercase tracking-wider">{tr.common.staff}</span>}
+                        {hasProgram && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[9px] font-black uppercase tracking-wider">{tr.stages.program}</span>}
+                        {hasPlayers && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[9px] font-black uppercase tracking-wider">{s.players.length} {tr.stages.playersWord}</span>}
+                        {hasStaff && <span className="px-2 py-0.5 rounded-md bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.18)] text-[var(--c-textMid)] text-[9px] font-black uppercase tracking-wider">{tr.common.staff}</span>}
                         {hasReport
-                          ? <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[7px] font-black uppercase tracking-wider">{(s.staff || []).length ? cs("reportsOf", { a: reportsOf(s), b: (s.staff || []).length }) : cs("reportsN", { a: reportsOf(s) })}</span>
-                          : stageStatus(s, tr).key === "done" && <span className="px-2 py-0.5 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[var(--acc-red)] text-[7px] font-black uppercase tracking-wider">{cs("noReport")}</span>}
-                        {hasPhotos && <span className="px-2 py-0.5 rounded-md bg-[#7ec3ff]/10 border border-[#7ec3ff]/30 text-[var(--acc-blue)] text-[7px] font-black uppercase tracking-wider">{s.images.length} {tr.stages.photosWord}</span>}
+                          ? <span className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[9px] font-black uppercase tracking-wider">{(s.staff || []).length ? cs("reportsOf", { a: reportsOf(s), b: (s.staff || []).length }) : cs("reportsN", { a: reportsOf(s) })}</span>
+                          : stageStatus(s, tr).key === "done" && <span className="px-2 py-0.5 rounded-md bg-[#E30613]/12 border border-[#E30613]/30 text-[var(--acc-red)] text-[9px] font-black uppercase tracking-wider">{cs("noReport")}</span>}
+                        {hasPhotos && <span className="px-2 py-0.5 rounded-md bg-[#7ec3ff]/10 border border-[#7ec3ff]/30 text-[var(--acc-blue)] text-[9px] font-black uppercase tracking-wider">{s.images.length} {tr.stages.photosWord}</span>}
                       </div>
 
                       <div className="mt-6 flex items-center gap-2">
-                        <button onClick={() => s.id && openDetail(s)} className="flex-1 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-md shadow-[#E30613]/20">
+                        <button onClick={() => s.id && openDetail(s)} className="flex-1 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[11px] font-black uppercase tracking-wider hover:bg-red-700 transition-all shadow-md shadow-[#E30613]/20">
                           {tr.stages.openFile}
                         </button>
                         {canManage && (
@@ -502,12 +502,12 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             {/* ─── EDIT HEADER ─── */}
             <div className="mt-6 flex items-end justify-between gap-4 flex-wrap">
               <div>
-                <p className="text-[8px] font-black uppercase tracking-[0.25em] text-[var(--c-textDim)]">{tr.stages.title} / {editing ? tr.stages.edit : tr.stages.new}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-[var(--c-textDim)]">{tr.stages.title} / {editing ? tr.stages.edit : tr.stages.new}</p>
                 <h2 className="mt-1 text-2xl font-black italic uppercase tracking-tight text-[var(--c-text)]">{editing ? tr.stages.editTitle : tr.stages.newTitle}</h2>
               </div>
               <div className="flex gap-2">
-                <button onClick={() => setView("list")} className="px-5 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]/40 text-[9px] font-black uppercase tracking-wider transition-all">{tr.common.cancel}</button>
-                <button onClick={save} disabled={!canSubmit || busy} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-40 shadow-lg shadow-[#E30613]/25">
+                <button onClick={() => setView("list")} className="px-5 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]/40 text-[11px] font-black uppercase tracking-wider transition-all">{tr.common.cancel}</button>
+                <button onClick={save} disabled={!canSubmit || busy} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#E30613] text-white text-[11px] font-black uppercase tracking-wider hover:bg-red-700 transition-all disabled:opacity-40 shadow-lg shadow-[#E30613]/25">
                   <Save size={14}/> {busy ? tr.stages.saving : editing ? tr.common.save : tr.stages.createCamp}
                 </button>
               </div>
@@ -516,32 +516,32 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             {/* ─── BASIC INFO ─── */}
             <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div className="sm:col-span-2">
-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.nameLabel}</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.nameLabel}</label>
                 <input
                   value={draft.name}
                   onChange={e => setDraft({ ...draft, name: e.target.value })}
                   placeholder={tr.stages.namePlaceholder}
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[13px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
               </div>
               <div>
-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.locationLabel}</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.locationLabel}</label>
                 <input
                   value={draft.location}
                   onChange={e => setDraft({ ...draft, location: e.target.value })}
                   placeholder={tr.stages.locationPlaceholder}
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[13px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
               </div>
               <div>
-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.categoryLabel}</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.categoryLabel}</label>
                 <Select variant="stage" allowEmpty={false} value={draft.teamCategory} onChange={v => setDraft({ ...draft, teamCategory: v })}
                   options={CATS.map(c => ({ value: c.value, label: c.label }))}/>
               </div>
               <div>
-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.startLabel}</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.startLabel}</label>
                 <DatePicker variant="stage" value={draft.startDate} onChange={v => setDraft({ ...draft, startDate: v })} placeholder={tr.stages.startLabel}/>
               </div>
               <div>
-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.endLabel}</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.endLabel}</label>
                 <DatePicker variant="stage" value={draft.endDate} onChange={v => setDraft({ ...draft, endDate: v })} placeholder={tr.stages.endLabel}/>
               </div>
             </div>
@@ -549,35 +549,35 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             {/* ─── STAY ─── */}
             <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               <div>
-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.countryLabel}</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.countryLabel}</label>
                 <input
                   value={draft.country}
                   onChange={e => setDraft({ ...draft, country: e.target.value })}
                   placeholder={tr.stages.countryPlaceholder}
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[13px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
               </div>
               <div>
-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.stateLabel}</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.stateLabel}</label>
                 <input
                   value={draft.state}
                   onChange={e => setDraft({ ...draft, state: e.target.value })}
                   placeholder={tr.stages.statePlaceholder}
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[13px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
               </div>
               <div>
-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.hotelLabel}</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.hotelLabel}</label>
                 <input
                   value={draft.hotel}
                   onChange={e => setDraft({ ...draft, hotel: e.target.value })}
                   placeholder={tr.stages.hotelPlaceholder}
-                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[13px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
               </div>
               <div>
-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.arrivalLabel}</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.arrivalLabel}</label>
                 <DatePicker variant="stage" value={draft.arrivalDate} onChange={v => setDraft({ ...draft, arrivalDate: v })} placeholder={tr.stages.arrivalLabel}/>
               </div>
               <div>
-                <label className="block text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.departureLabel}</label>
+                <label className="block text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-1.5">{tr.stages.departureLabel}</label>
                 <DatePicker variant="stage" value={draft.departureDate} onChange={v => setDraft({ ...draft, departureDate: v })} placeholder={tr.stages.departureLabel}/>
               </div>
             </div>
@@ -585,7 +585,7 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
             {/* ─── TABS ─── */}
             <div className="mt-6 flex gap-1.5 flex-wrap">
               {([["program",tr.stages.programTab],["players",tr.stages.callupsTab],["staff",tr.common.staff],["report",tr.stages.reportPdfTab],["photos",tr.stages.photosTab]] as [TabKey,string][]).map(([k,label]) => (
-                <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 rounded-lg text-[9px] font-black uppercase tracking-wider transition-all ${tab===k?'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25':'bg-[var(--c-panel3)] text-[var(--c-textMid)] border border-[rgba(var(--line-rgb),.16)] hover:text-[var(--c-text)]'}`}>{label}</button>
+                <button key={k} onClick={() => setTab(k)} className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all ${tab===k?'bg-[#E30613] text-white shadow-md shadow-[#E30613]/25':'bg-[var(--c-panel3)] text-[var(--c-textMid)] border border-[rgba(var(--line-rgb),.16)] hover:text-[var(--c-text)]'}`}>{label}</button>
               ))}
             </div>
 
@@ -609,12 +609,12 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
 
               {tab === "photos" && (
                 <div>
-                  <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">{tr.stages.photosSectionTitle}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-3">{tr.stages.photosSectionTitle}</p>
                   <label {...photosDrop.dropProps} className={`flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-7 cursor-pointer transition-all mb-4 ${photosDrop.isDragging ? 'border-[#f6c744] bg-[#f6c744]/10 scale-[1.01]' : 'border-[rgba(var(--line-rgb),.25)] bg-[var(--c-panel3)]/60 hover:border-[#f6c744]/50'}`}>
                     <input type="file" accept="image/*" multiple className="hidden" onChange={onPhotos}/>
                     <ImageIcon size={26} className="text-[var(--c-textDim)]"/>
-                    <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? `${tr.stages.uploading} ${progress}` : tr.stages.addPhotos}</span>
-                    <span className="text-[8px] text-[var(--c-textDim)]">{tr.stages.dropHintPhotos}</span>
+                    <span className="text-[12px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? `${tr.stages.uploading} ${progress}` : tr.stages.addPhotos}</span>
+                    <span className="text-[10px] text-[var(--c-textDim)]">{tr.stages.dropHintPhotos}</span>
                   </label>
                   <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
                     {(draft.images || []).map((img, i) => (
@@ -638,15 +638,15 @@ export function StagesManager({ open, onClose, stages, members, teamCat, canMana
         <div className="fixed inset-0 z-[450] flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-sm rounded-2xl bg-[var(--c-surface)] border border-[rgba(var(--line-rgb),.18)] shadow-2xl p-6">
             <h3 className="text-sm font-black uppercase tracking-tight text-[var(--c-text)] mb-2">{tr.stages.deleteConfirmTitle}</h3>
-            <p className="text-[10px] font-bold text-[var(--c-textDim)] mb-5">{tr.stages.deleteConfirmBody.replace('{name}', deleteTarget.name)}</p>
+            <p className="text-[12px] font-bold text-[var(--c-textDim)] mb-5">{tr.stages.deleteConfirmBody.replace('{name}', deleteTarget.name)}</p>
             <div className="flex gap-2">
-              <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] text-[9px] font-black uppercase tracking-wider transition-all">{tr.common.cancel}</button>
+              <button onClick={() => setDeleteTarget(null)} className="flex-1 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] text-[11px] font-black uppercase tracking-wider transition-all">{tr.common.cancel}</button>
               <button onClick={async () => {
                 if (deleteTarget.id && onDelete) await onDelete(deleteTarget.id)
                 onRefresh?.()
                 setDeleteTarget(null)
                 setView("list")
-              }} className="flex-1 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">{tr.common.delete}</button>
+              }} className="flex-1 py-2.5 rounded-xl bg-[#E30613] text-white text-[11px] font-black uppercase tracking-wider hover:bg-red-700 transition-all">{tr.common.delete}</button>
             </div>
           </div>
         </div>
@@ -727,15 +727,15 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
         <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#E30613] via-[#f6c744] to-[#E30613]"/>
         <div className="relative px-6 sm:px-10 pt-6 pb-8 min-h-[320px] flex flex-col justify-between gap-10">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <button onClick={onBack} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0b1322]/70 border border-white/15 text-white/90 text-[9px] font-black uppercase tracking-wider hover:bg-[#0b1322] transition-all">
+            <button onClick={onBack} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0b1322]/70 border border-white/15 text-white/90 text-[11px] font-black uppercase tracking-wider hover:bg-[#0b1322] transition-all">
               <ArrowLeft size={13}/> {tr.stages.allCamps}
             </button>
             <div className="flex gap-2">
-              <button onClick={() => window.print()} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0b1322]/70 border border-white/15 text-white/90 text-[9px] font-black uppercase tracking-wider hover:bg-[#0b1322] transition-all"><Download size={13}/> {cs("print")}</button>
+              <button onClick={() => window.print()} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0b1322]/70 border border-white/15 text-white/90 text-[11px] font-black uppercase tracking-wider hover:bg-[#0b1322] transition-all"><Download size={13}/> {cs("print")}</button>
               {canManage && (
                 <>
-                  <button onClick={onEdit} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider hover:bg-red-700 transition-all"><Pencil size={13}/> {tr.common.edit}</button>
-                  <button onClick={onDelete} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0b1322]/70 border border-[#ff4f66]/40 text-[#ff8a94] text-[9px] font-black uppercase tracking-wider hover:bg-[#E30613]/30 transition-all"><Trash2 size={13}/> {tr.common.delete}</button>
+                  <button onClick={onEdit} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[11px] font-black uppercase tracking-wider hover:bg-red-700 transition-all"><Pencil size={13}/> {tr.common.edit}</button>
+                  <button onClick={onDelete} className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-[#0b1322]/70 border border-[#ff4f66]/40 text-[#ff8a94] text-[11px] font-black uppercase tracking-wider hover:bg-[#E30613]/30 transition-all"><Trash2 size={13}/> {tr.common.delete}</button>
                 </>
               )}
             </div>
@@ -743,11 +743,11 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
           <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6">
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-3 py-1 rounded-full bg-[#E30613] text-[8px] font-black uppercase tracking-widest">{CATS.find(c => c.value === stage.teamCategory)?.label || stage.teamCategory}</span>
-                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${status.key === "live" ? "bg-[#f6c744] text-[#0b1322]" : status.key === "upcoming" ? "bg-[#7ec3ff] text-[#0b1322]" : "bg-white/20"}`}>{status.label}{status.key === "live" && dur ? ` · ${cs("dayOf", { a: Math.max(1, Math.round((Date.now() - new Date(stage.startDate + "T00:00:00").getTime()) / 86400000) + 1), b: dur })}` : ""}</span>
+                <span className="px-3 py-1 rounded-full bg-[#E30613] text-[10px] font-black uppercase tracking-widest">{CATS.find(c => c.value === stage.teamCategory)?.label || stage.teamCategory}</span>
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${status.key === "live" ? "bg-[#f6c744] text-[#0b1322]" : status.key === "upcoming" ? "bg-[#7ec3ff] text-[#0b1322]" : "bg-white/20"}`}>{status.label}{status.key === "live" && dur ? ` · ${cs("dayOf", { a: Math.max(1, Math.round((Date.now() - new Date(stage.startDate + "T00:00:00").getTime()) / 86400000) + 1), b: dur })}` : ""}</span>
               </div>
               <h2 className="mt-3 text-4xl sm:text-6xl font-black italic uppercase tracking-tighter leading-[0.98]">{stage.name}</h2>
-              <p className="mt-3 flex items-center gap-4 flex-wrap text-[11px] font-bold text-white/75">
+              <p className="mt-3 flex items-center gap-4 flex-wrap text-[13px] font-bold text-white/75">
                 <span className="flex items-center gap-1.5"><MapPin size={12}/>{stage.location || tr.stages.venueDash}</span>
                 <span className="flex items-center gap-1.5"><Calendar size={12}/>{fmtDate(stage.startDate)} → {fmtDate(stage.endDate)}</span>
                 {dur !== null && <span className="flex items-center gap-1.5"><Clock size={12}/>{dur} {tr.stages.daysWord}</span>}
@@ -762,7 +762,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
               ].map(x => (
                 <div key={x.label} className="rounded-2xl bg-[#0b1322]/70 border border-white/10 px-4 py-3 text-center min-w-[74px]">
                   <p className="text-2xl sm:text-3xl font-black italic leading-none text-[#f6c744]">{x.value}</p>
-                  <p className="mt-1.5 text-[7px] font-black uppercase tracking-widest text-white/60">{x.label}</p>
+                  <p className="mt-1.5 text-[9px] font-black uppercase tracking-widest text-white/60">{x.label}</p>
                 </div>
               ))}
             </div>
@@ -774,9 +774,9 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
       <div className="sticky top-16 z-[90] mt-4 flex gap-1 overflow-x-auto px-2 bg-[var(--c-bg)]/95 backdrop-blur border-b border-[rgba(var(--line-rgb),.14)]">
         {sections.map(([k, label, n]) => (
           <button key={k} onClick={() => jump(k)}
-            className={`shrink-0 flex items-center gap-2 px-4 py-3.5 text-[10px] font-black uppercase tracking-wider border-b-[3px] transition-all ${active === k ? 'border-[#f6c744] text-[var(--acc-gold)]' : 'border-transparent text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>
+            className={`shrink-0 flex items-center gap-2 px-4 py-3.5 text-[12px] font-black uppercase tracking-wider border-b-[3px] transition-all ${active === k ? 'border-[#f6c744] text-[var(--acc-gold)]' : 'border-transparent text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>
             {label}
-            <span className="px-1.5 py-0.5 rounded-md bg-[var(--c-panel2)] text-[7px] font-black text-[var(--c-textDim)]">{n}</span>
+            <span className="px-1.5 py-0.5 rounded-md bg-[var(--c-panel2)] text-[9px] font-black text-[var(--c-textDim)]">{n}</span>
           </button>
         ))}
       </div>
@@ -788,7 +788,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
           {(stage.program || []).length === 0 ? (
             <div className="flex flex-col items-center justify-center py-14 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
               <Calendar size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-              <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noProgramSaved}</p>
+              <p className="text-[12px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noProgramSaved}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
@@ -797,12 +797,12 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
                 const isToday = dayDate === new Date().toISOString().slice(0, 10)
                 return (
                   <div key={gi} className={`rounded-2xl p-4 ${isToday ? "bg-[#E30613] text-white" : "bg-[var(--c-panel3)]/55 border border-[rgba(var(--line-rgb),.14)]"}`}>
-                    <p className={`text-[9px] font-black uppercase tracking-widest ${isToday ? "text-white" : "text-[var(--acc-gold)]"}`}>{g.label}{isToday ? " · " + tr.stages.liveStatus : ""}</p>
+                    <p className={`text-[11px] font-black uppercase tracking-widest ${isToday ? "text-white" : "text-[var(--acc-gold)]"}`}>{g.label}{isToday ? " · " + tr.stages.liveStatus : ""}</p>
                     <div className="mt-3 space-y-2.5">
                       {g.items.map((it, ii) => (
                         <div key={ii}>
-                          <p className={`text-[11px] font-black uppercase leading-tight ${isToday ? "text-white" : "text-[var(--c-text)]"}`}>{it.time && <span className={`mr-1.5 ${isToday ? "text-white/80" : "text-[var(--acc-red)]"}`}>{it.time}</span>}{it.activity || tr.stages.sessionWord}</p>
-                          {it.details && <p className={`mt-0.5 text-[9px] font-bold leading-snug ${isToday ? "text-white/80" : "text-[var(--c-textDim)]"}`}>{it.details}</p>}
+                          <p className={`text-[13px] font-black uppercase leading-tight ${isToday ? "text-white" : "text-[var(--c-text)]"}`}>{it.time && <span className={`mr-1.5 ${isToday ? "text-white/80" : "text-[var(--acc-red)]"}`}>{it.time}</span>}{it.activity || tr.stages.sessionWord}</p>
+                          {it.details && <p className={`mt-0.5 text-[11px] font-bold leading-snug ${isToday ? "text-white/80" : "text-[var(--c-textDim)]"}`}>{it.details}</p>}
                         </div>
                       ))}
                     </div>
@@ -825,8 +825,8 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
               { label: tr.stages.departureLabel, value: fmtDate(stage.departureDate) },
             ].map(x => (
               <div key={x.label} className="rounded-2xl bg-[var(--c-panel3)]/55 border border-[rgba(var(--line-rgb),.14)] p-4">
-                <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{x.label}</p>
-                <p className="mt-1.5 text-[12px] font-black uppercase text-[var(--c-text)] truncate">{x.value || "—"}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{x.label}</p>
+                <p className="mt-1.5 text-[14px] font-black uppercase text-[var(--c-text)] truncate">{x.value || "—"}</p>
               </div>
             ))}
           </div>
@@ -839,7 +839,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
             {(stage.players || []).length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
                 <Users size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noPlayers}</p>
+                <p className="text-[12px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noPlayers}</p>
               </div>
             )}
             {(stage.players || []).length > 0 && (
@@ -849,7 +849,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
                   if (!grp.length) return null
                   return (
                     <div key={pos || "other"}>
-                      <p className="mb-3 text-[9px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{label} · {grp.length}</p>
+                      <p className="mb-3 text-[11px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{label} · {grp.length}</p>
                       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3">
                         {grp.map((m: any) => (
                           <div key={m.id} className="group">
@@ -859,10 +859,10 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
                               ) : (
                                 <div className="absolute inset-0 flex items-center justify-center text-[26px] font-black text-[var(--acc-gold)] uppercase">{(m.name || "?")[0]}</div>
                               )}
-                              {m.jerseyNumber ? <span className="absolute top-1.5 left-1.5 min-w-[22px] h-[22px] px-1 rounded-md bg-[#E30613] text-white text-[10px] font-black italic flex items-center justify-center">{m.jerseyNumber}</span> : null}
+                              {m.jerseyNumber ? <span className="absolute top-1.5 left-1.5 min-w-[22px] h-[22px] px-1 rounded-md bg-[#E30613] text-white text-[12px] font-black italic flex items-center justify-center">{m.jerseyNumber}</span> : null}
                             </div>
-                            <p className="mt-1.5 text-[10px] font-black uppercase text-[var(--c-text)] leading-tight">{m.name}</p>
-                            {m.club && <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase truncate">{m.club}</p>}
+                            <p className="mt-1.5 text-[12px] font-black uppercase text-[var(--c-text)] leading-tight">{m.name}</p>
+                            {m.club && <p className="text-[10px] font-bold text-[var(--c-textDim)] uppercase truncate">{m.club}</p>}
                           </div>
                         ))}
                       </div>
@@ -881,7 +881,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
             {(stage.staff || []).length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
                 <Briefcase size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noStaffSaved}</p>
+                <p className="text-[12px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noStaffSaved}</p>
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -892,9 +892,9 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
                   <div key={`${id}-${idx}`} className="flex items-center gap-3.5 rounded-2xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/50 p-4 hover:border-[#7ec3ff]/35 transition-all">
                     <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#7ec3ff]/20 to-[#E30613]/20 border border-[#7ec3ff]/25 flex items-center justify-center text-[15px] font-black text-[var(--acc-blue)] uppercase shrink-0">{(m?.name || "?")[0]}</div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
-                      <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase tracking-wider">{m?.role === "PLAYERS" ? tr.common.staff : (m?.role || "—")}</p>
-                      {role && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-[#7ec3ff]/12 border border-[#7ec3ff]/35 text-[var(--acc-blue)] text-[7px] font-black uppercase tracking-widest">{role}</span>}
+                      <p className="text-[13px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
+                      <p className="text-[10px] font-bold text-[var(--c-textDim)] uppercase tracking-wider">{m?.role === "PLAYERS" ? tr.common.staff : (m?.role || "—")}</p>
+                      {role && <span className="inline-block mt-1.5 px-2 py-0.5 rounded-md bg-[#7ec3ff]/12 border border-[#7ec3ff]/35 text-[var(--acc-blue)] text-[9px] font-black uppercase tracking-widest">{role}</span>}
                     </div>
                   </div>
                 )
@@ -916,7 +916,7 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
             {(stage.images || []).length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
                 <ImageIcon size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-                <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noPhotosSaved}</p>
+                <p className="text-[12px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.noPhotosSaved}</p>
               </div>
             )}
             {(stage.images || []).length > 0 && (
@@ -924,10 +924,10 @@ function StageDetail({ stage, members, canManage, onBack, onEdit, onDelete, tr, 
               <div className="max-w-5xl mx-auto">
                 <div className="flex items-end justify-between mb-4 pb-3 border-b border-[rgba(var(--line-rgb),.14)]">
                   <div>
-                    <p className="text-[8px] font-black uppercase tracking-widest text-[var(--acc-gold)]">{tr.stages.photosSectionTitle}</p>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-[var(--acc-gold)]">{tr.stages.photosSectionTitle}</p>
                     <p className="mt-1 text-[15px] font-black uppercase tracking-wide text-[var(--c-text)]">{stage.name}</p>
                   </div>
-                  <span className="text-[10px] font-black text-[var(--c-textDim)]">{(stage.images || []).length} {tr.stages.photosWord}</span>
+                  <span className="text-[12px] font-black text-[var(--c-textDim)]">{(stage.images || []).length} {tr.stages.photosWord}</span>
                 </div>
                 <div className="columns-2 sm:columns-3 lg:columns-4 gap-3">
                   {(stage.images || []).map((img, i) => (
@@ -985,21 +985,21 @@ function ReportsPanel({ reports, legacy, staff, waiting, canManage, edit, busy, 
       {items.length === 0 && !(waiting && waiting.length) && (
         <div className="flex flex-col items-center justify-center py-12 text-center rounded-2xl border border-dashed border-[rgba(var(--line-rgb),.2)]">
           <FileText size={30} className="text-[var(--c-textDim)] opacity-50 mb-3"/>
-          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{cs("noReportYet")}</p>
+          <p className="text-[12px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{cs("noReportYet")}</p>
         </div>
       )}
       <div className="flex flex-col gap-2">
         {items.map(r => (
           <div key={r.id} className="flex items-center gap-3 rounded-xl border border-emerald-500/25 bg-emerald-500/5 px-3.5 py-2.5">
-            <div className="w-8 h-10 rounded-md bg-[#E30613] text-white text-[10px] font-black flex items-center justify-center shrink-0">PDF</div>
+            <div className="w-8 h-10 rounded-md bg-[#E30613] text-white text-[12px] font-black flex items-center justify-center shrink-0">PDF</div>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{r.staffName || cs("campReport")}</p>
-              <p className="text-[8px] font-bold text-[var(--c-textDim)] uppercase tracking-wider truncate">{[r.role, r.addedAt].filter(Boolean).join(" · ") || r.name}</p>
-              <p className="text-[9px] text-[var(--c-textDim)] truncate">{r.name}</p>
+              <p className="text-[13px] font-black uppercase text-[var(--c-text)] truncate">{r.staffName || cs("campReport")}</p>
+              <p className="text-[10px] font-bold text-[var(--c-textDim)] uppercase tracking-wider truncate">{[r.role, r.addedAt].filter(Boolean).join(" · ") || r.name}</p>
+              <p className="text-[11px] text-[var(--c-textDim)] truncate">{r.name}</p>
             </div>
             <div className="flex items-center gap-1.5 shrink-0">
-              <button onClick={() => openStored(r.url)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/35 text-emerald-500 text-[8px] font-black uppercase tracking-wider hover:bg-emerald-500/25 transition-all"><Download size={11}/> {cs("open")}</button>
-              {canManage && edit && <button onClick={() => onRemove(r.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(var(--line-rgb),.2)] text-[var(--acc-red)] text-[8px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all"><Trash2 size={11}/> {cs("remove")}</button>}
+              <button onClick={() => openStored(r.url)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/35 text-emerald-500 text-[10px] font-black uppercase tracking-wider hover:bg-emerald-500/25 transition-all"><Download size={11}/> {cs("open")}</button>
+              {canManage && edit && <button onClick={() => onRemove(r.id)} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[rgba(var(--line-rgb),.2)] text-[var(--acc-red)] text-[10px] font-black uppercase tracking-wider hover:bg-[#E30613]/10 transition-all"><Trash2 size={11}/> {cs("remove")}</button>}
             </div>
           </div>
         ))}
@@ -1008,18 +1008,18 @@ function ReportsPanel({ reports, legacy, staff, waiting, canManage, edit, busy, 
             {canManage && edit && <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onAdd(f, String(w.id)) }}/>}
             <div className="w-8 h-10 rounded-md border border-dashed border-[rgba(var(--line-rgb),.35)] shrink-0"/>
             <div className="flex-1 min-w-0">
-              <p className="text-[11px] font-black uppercase text-[var(--c-text)] truncate">{w.name}</p>
-              <p className="text-[8px] font-bold uppercase tracking-wider text-[var(--acc-red)]">{w.role ? w.role + " · " : ""}{cs("waiting")}</p>
+              <p className="text-[13px] font-black uppercase text-[var(--c-text)] truncate">{w.name}</p>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-[var(--acc-red)]">{w.role ? w.role + " · " : ""}{cs("waiting")}</p>
             </div>
-            {canManage && edit && <span className="shrink-0 text-[8px] font-black uppercase tracking-wider text-[var(--acc-gold)]">{cs("upload")}</span>}
+            {canManage && edit && <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-[var(--acc-gold)]">{cs("upload")}</span>}
           </label>
         ))}
       </div>
       {canManage && edit && (
         <div className="rounded-2xl border border-[rgba(var(--line-rgb),.16)] bg-[var(--c-panel3)]/40 p-4 space-y-3">
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{cs("reportBy")}</span>
-            <select value={by} onChange={e => setBy(e.target.value)} className="px-3 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[10px] font-bold outline-none">
+            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{cs("reportBy")}</span>
+            <select value={by} onChange={e => setBy(e.target.value)} className="px-3 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[12px] font-bold outline-none">
               <option value="">{cs("campReportNoName")}</option>
               {staff.map(x => <option key={x.id} value={String(x.id)}>{x.name}{x.role ? ` · ${x.role}` : ""}</option>)}
             </select>
@@ -1027,9 +1027,9 @@ function ReportsPanel({ reports, legacy, staff, waiting, canManage, edit, busy, 
           <label {...drop.dropProps} className={`flex items-center justify-center gap-2 rounded-xl border-2 border-dashed px-4 py-6 cursor-pointer transition-all ${drop.isDragging ? 'border-[#E30613] bg-[#E30613]/10' : 'border-[rgba(var(--line-rgb),.25)] hover:border-[#E30613]/50'}`}>
             <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ""; if (f) onAdd(f, by) }}/>
             <FileText size={18} className="text-[var(--c-textDim)]"/>
-            <span className="text-[10px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? cs("uploading") : cs("dropPdf")}</span>
+            <span className="text-[12px] font-black uppercase tracking-widest text-[var(--c-text)]">{busy ? cs("uploading") : cs("dropPdf")}</span>
           </label>
-          {staff.length === 0 && <p className="text-[9px] font-bold text-[var(--c-textDim)]">{cs("tipStaff")}</p>}
+          {staff.length === 0 && <p className="text-[11px] font-bold text-[var(--c-textDim)]">{cs("tipStaff")}</p>}
         </div>
       )}
     </div>
@@ -1068,30 +1068,30 @@ function ProgramTab({ draft, setDraft, tr }: { draft: Stage; setDraft: React.Dis
   return (
     <div>
       <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
-        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.trainingProgramTitle}</p>
+        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.trainingProgramTitle}</p>
         <div className="flex gap-2">
-          <label {...progDrop.dropProps} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[8px] font-black uppercase tracking-wider cursor-pointer transition-all ${progDrop.isDragging ? 'border-[#E30613] bg-[#E30613]/20' : 'border-[#E30613]/40 bg-[#E30613]/10 text-[var(--acc-red)] hover:bg-[#E30613]/20'}`}>
+          <label {...progDrop.dropProps} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider cursor-pointer transition-all ${progDrop.isDragging ? 'border-[#E30613] bg-[#E30613]/20' : 'border-[#E30613]/40 bg-[#E30613]/10 text-[var(--acc-red)] hover:bg-[#E30613]/20'}`}>
             <input type="file" accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) importProgram(f) }}/>
             <FileText size={11}/> {importing ? cs("reading") : tr.stages.importProgramBtn}
           </label>
-          <button onClick={add} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--c-panel3)] border border-[#f6c744]/30 text-[var(--acc-gold)] text-[8px] font-black uppercase tracking-wider hover:border-[#f6c744]/60 transition-all"><Plus size={11}/> {tr.stages.addWord}</button>
+          <button onClick={add} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--c-panel3)] border border-[#f6c744]/30 text-[var(--acc-gold)] text-[10px] font-black uppercase tracking-wider hover:border-[#f6c744]/60 transition-all"><Plus size={11}/> {tr.stages.addWord}</button>
         </div>
       </div>
       {importMsg && (
-        <div className={`mb-3 rounded-xl border p-3 text-[10px] font-bold ${importMsg.ok ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-500' : 'border-[#E30613]/40 bg-[#E30613]/10 text-[var(--acc-red)]'}`}>
+        <div className={`mb-3 rounded-xl border p-3 text-[12px] font-bold ${importMsg.ok ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-500' : 'border-[#E30613]/40 bg-[#E30613]/10 text-[var(--acc-red)]'}`}>
           {importMsg.text}
         </div>
       )}
-      {items.length === 0 && <p className="text-[10px] font-bold text-[var(--c-textDim)] py-8 text-center border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">{tr.stages.noSessionsAddFirst}</p>}
+      {items.length === 0 && <p className="text-[12px] font-bold text-[var(--c-textDim)] py-8 text-center border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">{tr.stages.noSessionsAddFirst}</p>}
       <div className="space-y-2.5">
         {items.map((p, i) => (
           <div key={i} className="rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-3">
             <div className="grid grid-cols-[80px_100px_1fr_40px] gap-2.5 items-start">
-              <input value={p.day} onChange={e => upd(i, 'day', e.target.value)} placeholder={tr.stages.dayWord} className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
-              <input value={p.time} onChange={e => upd(i, 'time', e.target.value)} placeholder={tr.stages.timePlaceholder} className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+              <input value={p.day} onChange={e => upd(i, 'day', e.target.value)} placeholder={tr.stages.dayWord} className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[12px] font-bold outline-none focus:border-[#E30613]/50"/>
+              <input value={p.time} onChange={e => upd(i, 'time', e.target.value)} placeholder={tr.stages.timePlaceholder} className="px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[12px] font-bold outline-none focus:border-[#E30613]/50"/>
               <div className="space-y-2">
-                <input value={p.activity} onChange={e => upd(i, 'activity', e.target.value)} placeholder={tr.stages.activityPlaceholder} className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
-                <input value={p.details || ''} onChange={e => upd(i, 'details', e.target.value)} placeholder={tr.stages.detailsPlaceholder} className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50"/>
+                <input value={p.activity} onChange={e => upd(i, 'activity', e.target.value)} placeholder={tr.stages.activityPlaceholder} className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[12px] font-bold outline-none focus:border-[#E30613]/50"/>
+                <input value={p.details || ''} onChange={e => upd(i, 'details', e.target.value)} placeholder={tr.stages.detailsPlaceholder} className="w-full px-3 py-2.5 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[12px] font-bold outline-none focus:border-[#E30613]/50"/>
               </div>
               <button onClick={() => del(i)} className="p-2 rounded-lg text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><Trash2 size={14}/></button>
             </div>
@@ -1144,12 +1144,12 @@ function CallupImport({ all, setDraft }: { all: any[]; setDraft: React.Dispatch<
   const drop = useFileDrop(files => run(files[0]), isPdfFile)
   return (
     <div className="mb-4">
-      <label {...drop.dropProps} className={`flex items-center justify-center gap-2 px-4 py-5 rounded-xl border-2 border-dashed text-[var(--c-text)] text-[9px] font-black uppercase tracking-wider cursor-pointer transition-all ${drop.isDragging ? 'border-[#E30613] bg-[#E30613]/20' : 'border-[#E30613]/40 bg-[#E30613]/10 hover:bg-[#E30613]/20'}`}>
+      <label {...drop.dropProps} className={`flex items-center justify-center gap-2 px-4 py-5 rounded-xl border-2 border-dashed text-[var(--c-text)] text-[11px] font-black uppercase tracking-wider cursor-pointer transition-all ${drop.isDragging ? 'border-[#E30613] bg-[#E30613]/20' : 'border-[#E30613]/40 bg-[#E30613]/10 hover:bg-[#E30613]/20'}`}>
         <input type="file" accept="application/pdf,.pdf" className="hidden" onChange={e => { const f = e.target.files?.[0]; e.target.value = ''; if (f) run(f) }}/>
         <FileText size={13}/> {busy ? cs("reading") : cs("importBtn")}
       </label>
       {msg && (
-        <div className={`mt-3 rounded-xl border p-3 text-[10px] font-bold ${msg.ok ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-500' : 'border-[#E30613]/40 bg-[#E30613]/10 text-[var(--acc-red)]'}`}>
+        <div className={`mt-3 rounded-xl border p-3 text-[12px] font-bold ${msg.ok ? 'border-emerald-500/30 bg-emerald-500/5 text-emerald-500' : 'border-[#E30613]/40 bg-[#E30613]/10 text-[var(--acc-red)]'}`}>
           <p>{msg.text}</p>
           {msg.sample && msg.sample.length > 0 && <p className="mt-1.5 text-[var(--c-textDim)]">{cs("firstLines")} {msg.sample.join(' | ')}</p>}
           {msg.unmatched.length > 0 && <p className="mt-1.5 text-[var(--c-textDim)]">{cs("notFound", { n: msg.unmatched.length })} {msg.unmatched.join(' · ')}</p>}
@@ -1187,30 +1187,30 @@ function PlayersTab({ all, draft, setDraft, members, tr, otherCamps }: { otherCa
     <div>
       <CallupImport all={all} setDraft={setDraft}/>
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} {tr.stages.callupsCountLabel}{flagged > 0 && <span className="ml-2 text-[#f6c744]">⚠ {tr.travel.needAttention.replace('{n}', String(flagged))}</span>}</p>
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr.stages.searchPlaceholder} className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} {tr.stages.callupsCountLabel}{flagged > 0 && <span className="ml-2 text-[#f6c744]">⚠ {tr.travel.needAttention.replace('{n}', String(flagged))}</span>}</p>
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr.stages.searchPlaceholder} className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[12px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {pool.map(m => (
           <button key={m.id} onClick={() => toggle(m.id)} className="flex items-center gap-2.5 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-2.5 text-left hover:border-[#f6c744]/40 hover:bg-[var(--c-panel3)]/70 transition-all">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[var(--acc-gold)] uppercase shrink-0">{(m.name||"?")[0]}</div>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#f6c744]/25 to-[#E30613]/25 flex items-center justify-center text-[12px] font-black text-[var(--acc-gold)] uppercase shrink-0">{(m.name||"?")[0]}</div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m.name}{warnings(m).length > 0 && <span title={warnings(m).join(' · ')} className="ml-1 text-[#f6c744]">⚠</span>}</p>
-              <p className="text-[7px] font-bold text-[var(--c-textDim)] uppercase">{m.position || "—"}</p>
+              <p className="text-[12px] font-black uppercase text-[var(--c-text)] truncate">{m.name}{warnings(m).length > 0 && <span title={warnings(m).join(' · ')} className="ml-1 text-[#f6c744]">⚠</span>}</p>
+              <p className="text-[9px] font-bold text-[var(--c-textDim)] uppercase">{m.position || "—"}</p>
             </div>
             <span className="w-6 h-6 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[var(--acc-gold)]"><Plus size={11}/></span>
           </button>
         ))}
-        {pool.length === 0 && <p className="col-span-full text-[10px] font-bold text-[var(--c-textDim)] text-center py-8 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">{tr.stages.noPlayersAvailable}</p>}
+        {pool.length === 0 && <p className="col-span-full text-[12px] font-bold text-[var(--c-textDim)] text-center py-8 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">{tr.stages.noPlayersAvailable}</p>}
       </div>
       {list.length > 0 && (
         <div className="mt-5">
-          <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-2.5">{tr.stages.calledUpLabel} ({list.length})</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)] mb-2.5">{tr.stages.calledUpLabel} ({list.length})</p>
           <div className="flex flex-wrap gap-2">
             {list.map(id => {
               const m = members.find(x => x.id === id)
               return (
-                <span key={id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E30613]/12 border border-[#E30613]/40 text-[var(--c-text)] text-[9px] font-black uppercase tracking-wide">
+                <span key={id} className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E30613]/12 border border-[#E30613]/40 text-[var(--c-text)] text-[11px] font-black uppercase tracking-wide">
                   {m?.name || `#${id}`}
                   {warnings(m).length > 0 && <span title={warnings(m).join(' · ')} className="text-[#f6c744]">⚠</span>}
                   <button onClick={() => toggle(id)} className="hover:text-white transition-all"><X size={11}/></button>
@@ -1242,33 +1242,33 @@ function StaffTab({ all, draft, setDraft, members, tr }: { all: any[]; draft: St
     <div>
       <CallupImport all={all} setDraft={setDraft}/>
       <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-        <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} {tr.stages.staffCountLabel}</p>
-        <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr.stages.searchPlaceholder} className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[10px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
+        <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{list.length} {tr.stages.staffCountLabel}</p>
+        <input value={q} onChange={e => setQ(e.target.value)} placeholder={tr.stages.searchPlaceholder} className="w-56 px-3.5 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[12px] font-bold outline-none focus:border-[#E30613]/50 transition-all"/>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5">
         {pool.map(m => (
           <button key={m.id} onClick={() => toggle(m.id)} className="flex items-center gap-2.5 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-2.5 text-left hover:border-[#7ec3ff]/40 hover:bg-[var(--c-panel3)]/70 transition-all">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[var(--acc-blue)] uppercase shrink-0">{(m.name||"?")[0]}</div>
+            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[12px] font-black text-[var(--acc-blue)] uppercase shrink-0">{(m.name||"?")[0]}</div>
             <div className="flex-1 min-w-0">
-              <p className="text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m.name}</p>
-              <p className="text-[7px] font-bold text-[var(--c-textDim)] uppercase">{m.role || tr.common.staff}</p>
+              <p className="text-[12px] font-black uppercase text-[var(--c-text)] truncate">{m.name}</p>
+              <p className="text-[9px] font-bold text-[var(--c-textDim)] uppercase">{m.role || tr.common.staff}</p>
             </div>
             <span className="w-6 h-6 rounded-md border border-[rgba(var(--line-rgb),.25)] flex items-center justify-center text-[var(--acc-blue)]"><Plus size={11}/></span>
           </button>
         ))}
-        {pool.length === 0 && <p className="col-span-full text-[10px] font-bold text-[var(--c-textDim)] text-center py-8 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">{tr.stages.noStaffAvailable}</p>}
+        {pool.length === 0 && <p className="col-span-full text-[12px] font-bold text-[var(--c-textDim)] text-center py-8 border border-dashed border-[rgba(var(--line-rgb),.2)] rounded-xl">{tr.stages.noStaffAvailable}</p>}
       </div>
       {list.length > 0 && (
         <div className="mt-5 space-y-2.5">
-          <p className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.assignedStaff}</p>
+          <p className="text-[10px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{tr.stages.assignedStaff}</p>
           {list.map(id => {
             const m = members.find(x => x.id === id)
             const roleVal = (draft.staffRoles || []).find(r => r.memberId === id)?.role || ""
             return (
               <div key={id} className="flex items-center gap-3 rounded-xl border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-panel3)]/40 p-3 flex-wrap">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[10px] font-black text-[var(--acc-blue)] uppercase shrink-0">{(m?.name||"?")[0]}</div>
-                <p className="flex-1 min-w-32 text-[10px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
-                <input value={roleVal} onChange={e => setRole(id, e.target.value)} placeholder={tr.stages.rolePlaceholder} className="w-52 px-3 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[9px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#7ec3ff]/25 to-[#E30613]/25 flex items-center justify-center text-[12px] font-black text-[var(--acc-blue)] uppercase shrink-0">{(m?.name||"?")[0]}</div>
+                <p className="flex-1 min-w-32 text-[12px] font-black uppercase text-[var(--c-text)] truncate">{m?.name || `#${id}`}</p>
+                <input value={roleVal} onChange={e => setRole(id, e.target.value)} placeholder={tr.stages.rolePlaceholder} className="w-52 px-3 py-2 rounded-lg bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.2)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[11px] font-bold outline-none focus:border-[#7ec3ff]/50"/>
                 <button onClick={() => toggle(id)} className="p-1.5 rounded-lg text-[var(--c-textDim)] hover:bg-[#E30613] hover:text-white transition-all"><X size={13}/></button>
               </div>
             )

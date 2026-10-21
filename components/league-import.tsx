@@ -66,9 +66,9 @@ export function LeagueImport({ seasonId, seasonYear, seasonMonth, teams, existin
         )}
         {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}
         <div className="mt-5 flex justify-end gap-2">
-          <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
+          <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest">{t.cancel}</button>
           <button onClick={() => void go()} disabled={busy || !rows.length || bad.length > 0 || blocked} title={blocked ? t.importNeedsReplace : undefined}
-            className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-40">{busy ? '…' : t.importGo}</button>
+            className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-40">{busy ? '…' : t.importGo}</button>
         </div>
       </div>
     </div>

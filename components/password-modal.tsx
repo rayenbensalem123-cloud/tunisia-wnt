@@ -58,7 +58,7 @@ export function PasswordModal({ target, onClose, onSubmit }: Props) {
         </div>
         <form onSubmit={submit} className="p-5 space-y-3">
           <div>
-            <label className="block text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] mb-1.5">
+            <label className="block text-[10px] font-black uppercase tracking-wider text-[var(--c-textDim)] mb-1.5">
               {tr.passwordModal.newPassword.replace('{min}', String(MIN))}
             </label>
             <input
@@ -68,7 +68,7 @@ export function PasswordModal({ target, onClose, onSubmit }: Props) {
             />
           </div>
           <div>
-            <label className="block text-[8px] font-black uppercase tracking-wider text-[var(--c-textDim)] mb-1.5">
+            <label className="block text-[10px] font-black uppercase tracking-wider text-[var(--c-textDim)] mb-1.5">
               {tr.passwordModal.confirmPassword}
             </label>
             <input
@@ -77,17 +77,17 @@ export function PasswordModal({ target, onClose, onSubmit }: Props) {
               className="w-full px-3 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.18)] bg-[var(--c-surface)] text-[var(--c-text)] text-xs font-bold outline-none focus:border-[#E30613]/50"
             />
           </div>
-          {error && <p className="text-[8px] font-black uppercase tracking-wider text-[#ff4f66]">{error}</p>}
+          {error && <p className="text-[10px] font-black uppercase tracking-wider text-[#ff4f66]">{error}</p>}
           <div className="flex gap-2 pt-1">
             <button
               type="submit" disabled={busy}
-              className="flex-1 py-2.5 rounded-xl bg-[#E30613] text-white text-[9px] font-black uppercase tracking-wider disabled:opacity-50"
+              className="flex-1 py-2.5 rounded-xl bg-[#E30613] text-white text-[11px] font-black uppercase tracking-wider disabled:opacity-50"
             >
               {busy ? tr.passwordModal.saving : tr.passwordModal.save}
             </button>
             <button
               type="button" onClick={close}
-              className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.18)] text-[9px] font-black uppercase tracking-wider text-[var(--c-textDim)]"
+              className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.18)] text-[11px] font-black uppercase tracking-wider text-[var(--c-textDim)]"
             >
               {tr.passwordModal.cancel}
             </button>

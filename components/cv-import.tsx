@@ -61,7 +61,7 @@ export function CvImport({ role, form, setForm }: Props) {
     <div className="mb-3">
       {/* A real <label> around the file input opens the picker natively, with no script click. */}
       <label
-        className={`relative flex w-full cursor-pointer select-none items-center justify-center gap-2.5 rounded-xl border border-[#E30613]/50 bg-[#E30613]/10 px-4 py-3 text-[11px] font-black uppercase tracking-[.2em] text-[#ff4b57] transition-colors hover:bg-[#E30613]/20 active:scale-[.99] ${busy ? 'pointer-events-none opacity-60' : ''}`}
+        className={`relative flex w-full cursor-pointer select-none items-center justify-center gap-2.5 rounded-xl border border-[#E30613]/50 bg-[#E30613]/10 px-4 py-3 text-[13px] font-black uppercase tracking-[.2em] text-[#ff4b57] transition-colors hover:bg-[#E30613]/20 active:scale-[.99] ${busy ? 'pointer-events-none opacity-60' : ''}`}
       >
         <FileText size={16} strokeWidth={2.2} aria-hidden />
         <span>{busy ? t.reading : t.button}</span>

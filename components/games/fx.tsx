@@ -181,15 +181,15 @@ export function Podium({ rows, you, youLabel, unit }: { rows: PodiumRow[]; you: 
           return (
             <div key={r.key} className="flex-1 min-w-0 flex flex-col items-center gm-slide" style={{ animationDelay: `${rank * 120}ms` }}>
               {rank === 0 && <Trophy size={18} className="text-[#f6c744] mb-1" />}
-              <p className={`w-full text-center truncate text-[11px] font-black uppercase ${mine ? "text-[#f6c744]" : "text-[var(--c-text)]"}`}>
-                {r.name}{mine && <span className="ml-1 text-[8px] text-[#E30613]">{youLabel}</span>}
+              <p className={`w-full text-center truncate text-[13px] font-black uppercase ${mine ? "text-[#f6c744]" : "text-[var(--c-text)]"}`}>
+                {r.name}{mine && <span className="ml-1 text-[10px] text-[#E30613]">{youLabel}</span>}
               </p>
-              {r.sub && <p className="text-[9px] font-bold text-[var(--c-textDim)] mb-1.5">{r.sub}</p>}
+              {r.sub && <p className="text-[11px] font-bold text-[var(--c-textDim)] mb-1.5">{r.sub}</p>}
               <div className="w-full rounded-t-lg flex items-center justify-center" style={{ height: s.h, background: s.bg, color: s.fg }}>
                 <span className="text-3xl font-black italic leading-none tabular-nums">{rank + 1}</span>
               </div>
               <p className="w-full text-center py-1.5 rounded-b-lg bg-[var(--c-panel4)] text-[13px] font-black text-[var(--c-text)] tabular-nums">
-                {r.value} <span className="text-[8px] text-[var(--c-textDim)]">{unit}</span>
+                {r.value} <span className="text-[10px] text-[var(--c-textDim)]">{unit}</span>
               </p>
             </div>
           )
@@ -200,10 +200,10 @@ export function Podium({ rows, you, youLabel, unit }: { rows: PodiumRow[]; you: 
           {rows.slice(3).map((r, i) => {
             const mine = r.name === you
             return (
-              <div key={r.key} className={`flex items-center gap-3 px-3 py-2 text-[11px] font-bold ${i % 2 ? "bg-[var(--c-panel4)]/50" : ""} ${mine ? "text-[#f6c744]" : "text-[var(--c-text)]"}`}>
+              <div key={r.key} className={`flex items-center gap-3 px-3 py-2 text-[13px] font-bold ${i % 2 ? "bg-[var(--c-panel4)]/50" : ""} ${mine ? "text-[#f6c744]" : "text-[var(--c-text)]"}`}>
                 <span className="w-5 text-[var(--c-textDim)] font-black tabular-nums">{i + 4}</span>
-                <span className="flex-1 truncate uppercase">{r.name}{mine && <span className="ml-2 text-[8px] text-[#E30613]">{youLabel}</span>}</span>
-                {r.sub && <span className="text-[9px] text-[var(--c-textDim)]">{r.sub}</span>}
+                <span className="flex-1 truncate uppercase">{r.name}{mine && <span className="ml-2 text-[10px] text-[#E30613]">{youLabel}</span>}</span>
+                {r.sub && <span className="text-[11px] text-[var(--c-textDim)]">{r.sub}</span>}
                 <span className="font-black w-16 text-right tabular-nums">{r.value} {unit}</span>
               </div>
             )

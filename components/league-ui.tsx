@@ -4,9 +4,9 @@ import { hueOf, initialsOf } from '@/components/league-team-card'
 import type { LeagueTeam } from '@/lib/app-data'
 
 export const input = 'w-full rounded-xl border border-[rgba(var(--line-rgb),.25)] bg-[var(--c-deep)] px-3.5 py-3 text-sm font-semibold text-[var(--c-text)] outline-none focus:border-[#f6c744]/70'
-export const label = 'mb-1 block text-[9px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]'
+export const label = 'mb-1 block text-[11px] font-black uppercase tracking-[.2em] text-[var(--c-textMid)]'
 export const chip = (on: boolean) =>
-  `px-3.5 py-2 rounded-full text-[10px] font-black uppercase tracking-[.16em] transition-all ring-1 ring-inset ${on ? 'bg-[#f6c744] text-[#0c1f3d] ring-[#f6c744]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`
+  `px-3.5 py-2 rounded-full text-[12px] font-black uppercase tracking-[.16em] transition-all ring-1 ring-inset ${on ? 'bg-[#f6c744] text-[#0c1f3d] ring-[#f6c744]' : 'text-[var(--c-textMid)] ring-[rgba(var(--line-rgb),.3)] hover:ring-[#f6c744]/60 hover:text-[var(--c-text)]'}`
 
 /** ISO timestamp -> value for <input type="datetime-local"> in the viewer's time zone. */
 export const toLocalInput = (iso: string | null) => {

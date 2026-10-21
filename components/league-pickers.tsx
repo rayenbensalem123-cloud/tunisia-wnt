@@ -20,8 +20,8 @@ const parse = (v: string) => {
 }
 
 const TRIGGER = `${input} flex items-center justify-between gap-2 text-start transition-colors hover:border-[#f6c744]/50`
-const GOLD_BTN = 'flex-1 rounded-xl bg-[#f6c744] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[#0c1f3d] hover:bg-white transition-all'
-const GHOST_BTN = 'rounded-xl border border-[rgba(var(--line-rgb),.3)] px-4 py-3 text-[10px] font-black uppercase tracking-widest text-[var(--c-textMid)] hover:text-[var(--c-text)] hover:border-[#f6c744]/60 transition-all'
+const GOLD_BTN = 'flex-1 rounded-xl bg-[#f6c744] px-4 py-3 text-[12px] font-black uppercase tracking-widest text-[#0c1f3d] hover:bg-white transition-all'
+const GHOST_BTN = 'rounded-xl border border-[rgba(var(--line-rgb),.3)] px-4 py-3 text-[12px] font-black uppercase tracking-widest text-[var(--c-textMid)] hover:text-[var(--c-text)] hover:border-[#f6c744]/60 transition-all'
 
 function Sheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -37,7 +37,7 @@ function Sheet({ title, onClose, children }: { title: string; onClose: () => voi
       <div ref={ref} tabIndex={-1} role="dialog" aria-modal="true" aria-label={title} onClick={e => e.stopPropagation()}
         className="relative max-h-[92vh] w-full overflow-y-auto rounded-t-3xl border border-[rgba(var(--line-rgb),.28)] bg-[var(--c-bg)] text-[var(--c-text)] shadow-[0_-12px_50px_rgba(2,8,23,.6)] outline-none animate-[fadeUp_0.25s_ease-out_both] sm:max-w-[348px] sm:rounded-3xl">
         <span aria-hidden className="absolute inset-x-0 top-0 h-[3px] bg-gradient-to-r from-[#ff2747] to-[#a30420]" />
-        <p className="px-5 pb-1 pt-5 text-[9px] font-black uppercase tracking-[.25em] text-[#f6c744]">{title}</p>
+        <p className="px-5 pb-1 pt-5 text-[11px] font-black uppercase tracking-[.25em] text-[#f6c744]">{title}</p>
         {children}
       </div>
     </div>,
@@ -220,7 +220,7 @@ function MonthGrid({ value, onPick, minYear, maxYear, startYear, minDate, maxDat
       {view === 'days' && (
         <>
           <div className="mb-1 grid grid-cols-7 text-center">
-            {weekdays.map((w, i) => <span key={i} className="py-1 text-[10px] font-black uppercase text-[var(--c-textMid)]">{w}</span>)}
+            {weekdays.map((w, i) => <span key={i} className="py-1 text-[12px] font-black uppercase text-[var(--c-textMid)]">{w}</span>)}
           </div>
           <div className="grid grid-cols-7 gap-y-1">
             {cells.map((d, i) => {
@@ -347,7 +347,7 @@ export function DateTimeField({ id, value, onChange, title, className, disabled,
       {open && (
         <Sheet title={title ?? t.pickDateTime} onClose={() => setOpen(false)}>
           <MonthGrid value={day} minYear={minYear ?? y0 - 1} maxYear={maxYear ?? y0 + 5} onPick={setDay} />
-          <p className="px-5 pt-2 text-[9px] font-black uppercase tracking-[.25em] text-[var(--c-textMid)]">{t.pickTime}</p>
+          <p className="px-5 pt-2 text-[11px] font-black uppercase tracking-[.25em] text-[var(--c-textMid)]">{t.pickTime}</p>
           <TimeWheels hh={hh} mm={mm} rows={3} onHour={setHh} onMinute={setMm} />
           <Footer onClear={value ? () => { onChange(''); setOpen(false) } : undefined} onDone={commit} />
         </Sheet>

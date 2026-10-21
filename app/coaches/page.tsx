@@ -30,14 +30,14 @@ export default function CoachesPage() {
           <h1 className="text-4xl font-[1000] italic uppercase tracking-tighter">
             {tr.coach.squadStaffTitle1} <span className="text-[#E30613]">{tr.coach.squadStaffTitle2}</span>
           </h1>
-          <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mt-1">{tr.coach.pageSubtitle}</p>
+          <p className="text-[12px] font-black text-zinc-400 uppercase tracking-widest mt-1">{tr.coach.pageSubtitle}</p>
         </div>
 
         <NavSwitcher />
 
         <button 
           onClick={handleHire}
-          className="bg-[#E30613] text-white px-6 py-3 rounded-xl font-black uppercase text-[11px] flex items-center gap-2 hover:brightness-110 transition-all shadow-lg"
+          className="bg-[#E30613] text-white px-6 py-3 rounded-xl font-black uppercase text-[13px] flex items-center gap-2 hover:brightness-110 transition-all shadow-lg"
         >
           <UserPlus size={16} /> {tr.coach.hireStaff}
         </button>
@@ -48,9 +48,9 @@ export default function CoachesPage() {
           <div className="w-16 h-16 rounded-2xl bg-[var(--c-panel2)] border border-[rgba(var(--line-rgb),.18)] flex items-center justify-center"><Briefcase size={26} className="text-[#f6c744]"/></div>
           <div>
             <p className="text-[13px] font-black uppercase tracking-widest text-[var(--c-text)]">{tr.coach.noStaffRegistered}</p>
-            <p className="text-[9px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">{tr.coach.hireToBuildDelegation}</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--c-textMid)] mt-1.5">{tr.coach.hireToBuildDelegation}</p>
           </div>
-          <button onClick={handleHire} className="mt-2 px-6 py-3 rounded-full bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg">
+          <button onClick={handleHire} className="mt-2 px-6 py-3 rounded-full bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest flex items-center gap-2 shadow-lg">
             <UserPlus size={15} /> {tr.coach.hireStaff}
           </button>
         </div>
@@ -74,7 +74,7 @@ export default function CoachesPage() {
                   alt={coach.name} 
                 />
                 <div className="absolute top-4 left-4 bg-[var(--c-bg)] px-2 py-1 rounded-sm border border-[#e3062c]/45">
-                  <span className="text-[8px] font-black text-white uppercase tracking-widest">{coach.role}</span>
+                  <span className="text-[10px] font-black text-white uppercase tracking-widest">{coach.role}</span>
                 </div>
               </div>
 
@@ -85,20 +85,20 @@ export default function CoachesPage() {
                 </h3>
                 
                 <div className="flex items-center gap-2 mb-4">
-                   <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest">{coach.nationality || "TUNISIA"}</span>
+                   <span className="text-[11px] font-bold text-zinc-400 uppercase tracking-widest">{coach.nationality || "TUNISIA"}</span>
                    <span className="w-1 h-1 bg-zinc-300 rounded-full" />
-                   <span className="text-[9px] font-black text-[#E30613] uppercase tracking-widest italic">{tr.coach.staffWord}</span>
+                   <span className="text-[11px] font-black text-[#E30613] uppercase tracking-widest italic">{tr.coach.staffWord}</span>
                 </div>
 
                 {/* METADATA GRID FOR COACHES */}
                 <div className="w-full grid grid-cols-2 gap-0.5 bg-zinc-100 border border-zinc-200 rounded-lg overflow-hidden mb-6">
                    <div className="bg-white p-2 flex flex-col items-center">
-                      <span className="text-[7px] font-black text-zinc-400 uppercase tracking-tighter mb-0.5">{tr.coach.license}</span>
-                      <span className="text-[10px] font-black italic text-zinc-800 uppercase">{coach.license || "PRO"}</span>
+                      <span className="text-[9px] font-black text-zinc-400 uppercase tracking-tighter mb-0.5">{tr.coach.license}</span>
+                      <span className="text-[12px] font-black italic text-zinc-800 uppercase">{coach.license || "PRO"}</span>
                    </div>
                    <div className="bg-white p-2 flex flex-col items-center">
-                      <span className="text-[7px] font-black text-zinc-400 uppercase tracking-tighter mb-0.5">{tr.coach.exp}</span>
-                      <span className="text-[10px] font-black italic text-zinc-800 uppercase">10+ YRS</span>
+                      <span className="text-[9px] font-black text-zinc-400 uppercase tracking-tighter mb-0.5">{tr.coach.exp}</span>
+                      <span className="text-[12px] font-black italic text-zinc-800 uppercase">10+ YRS</span>
                    </div>
                 </div>
 
@@ -106,15 +106,15 @@ export default function CoachesPage() {
                 <div className="flex gap-2 mb-8">
                   <div className="flex items-center gap-1 px-2 py-0.5 bg-[#f6c744]/25 border border-[#f6c744]/45 rounded-full">
                     <Trophy className="w-2 h-2 text-[#d9a40a]" />
-                    <span className="text-[7px] font-black text-[#b8860b] uppercase tracking-tight">{coach.formation || "4-3-3"}</span>
+                    <span className="text-[9px] font-black text-[#b8860b] uppercase tracking-tight">{coach.formation || "4-3-3"}</span>
                   </div>
                   <div className="flex items-center gap-1 px-2 py-0.5 bg-zinc-100 border border-zinc-200 rounded-full">
                     <Globe2 className="w-2 h-2 text-zinc-400" />
-                    <span className="text-[7px] font-bold text-zinc-500 uppercase tracking-tight">{tr.coach.technical}</span>
+                    <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-tight">{tr.coach.technical}</span>
                   </div>
                   <div className="flex items-center gap-1 px-2 py-0.5 bg-[#e3062c]/15 border border-[#e3062c]/35 rounded-full">
                     <Activity className="w-2 h-2 text-[#ff5f72]" />
-                    <span className="text-[7px] font-black text-[#ff5f72] uppercase tracking-tight">{tr.coach.active}</span>
+                    <span className="text-[9px] font-black text-[#ff5f72] uppercase tracking-tight">{tr.coach.active}</span>
                   </div>
                 </div>
               </div>

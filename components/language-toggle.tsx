@@ -40,7 +40,7 @@ export default function LanguageToggle({ className = "", align = "right" }: { cl
                 setLang(l)
                 setOpen(false)
               }}
-              className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 text-left text-[10px] font-black uppercase tracking-widest transition-all hover:bg-white/10 ${lang === l ? "text-[#f6c744]" : "text-[#edeff4]"}`}
+              className={`w-full flex items-center justify-between gap-3 px-3.5 py-2.5 text-left text-[12px] font-black uppercase tracking-widest transition-all hover:bg-white/10 ${lang === l ? "text-[#f6c744]" : "text-[#edeff4]"}`}
             >
               <span>{t[l].lang.flag} {t[l].lang.name}</span>
               {lang === l && <Check size={14} className="text-[#f6c744]" />}

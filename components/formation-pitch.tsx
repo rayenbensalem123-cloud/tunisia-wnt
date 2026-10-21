@@ -94,13 +94,13 @@ export function FormationPitch({
           >
             <div
               className={`rounded-full flex items-center justify-center font-black shadow-md transition-all
-                ${compact ? "w-6 h-6 text-[9px]" : "w-9 h-9 text-[11px]"}
+                ${compact ? "w-6 h-6 text-[11px]" : "w-9 h-9 text-[13px]"}
                 ${player ? "bg-white text-zinc-900" : "bg-white/25 text-white border-2 border-dashed border-white/60"}
                 ${editable ? "hover:scale-110 cursor-pointer" : ""}`}
             >
               {player ? "" : slot.label}
             </div>
-            <span className={`font-bold text-white mt-0.5 text-center truncate drop-shadow ${compact ? "text-[6px] max-w-[44px]" : "text-[9px] max-w-[70px]"}`}>
+            <span className={`font-bold text-white mt-0.5 text-center truncate drop-shadow ${compact ? "text-[8px] max-w-[44px]" : "text-[11px] max-w-[70px]"}`}>
               {player ? player.name : (editable ? "Tap to add" : "")}
             </span>
           </button>

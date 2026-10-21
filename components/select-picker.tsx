@@ -115,7 +115,7 @@ export default function SelectPicker({
         aria-expanded={open}
         aria-label={selected?.label ?? placeholder}
         data-od-picker="select"
-        className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[12px] font-bold outline-none hover:border-[rgba(var(--line-rgb),.4)] focus:border-[#E30613]/50 disabled:opacity-50 transition-all text-left"
+        className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[14px] font-bold outline-none hover:border-[rgba(var(--line-rgb),.4)] focus:border-[#E30613]/50 disabled:opacity-50 transition-all text-left"
       >
         <span className={`truncate ${selected ? "" : "text-[var(--c-textFaint)]"}`}>{selected?.label ?? placeholder}</span>
         <ChevronDown size={13} className={`text-[var(--c-textDim)] shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
@@ -135,7 +135,7 @@ export default function SelectPicker({
                 onKeyDown={onKeyDown}
                 placeholder={lang === "fr" ? "Rechercher..." : lang === "ar" ? "بحث..." : "Search..."}
                 aria-label="Filtrer"
-                className="flex-1 bg-transparent text-[12px] font-bold text-[var(--c-text)] placeholder-[var(--c-textFaint)] outline-none min-w-0"
+                className="flex-1 bg-transparent text-[14px] font-bold text-[var(--c-text)] placeholder-[var(--c-textFaint)] outline-none min-w-0"
               />
               {q && (
                 <span role="button" tabIndex={0} aria-label="Effacer" onClick={() => setQ("")} onKeyDown={e => { if (e.key === "Enter") setQ("") }} className="cursor-pointer text-[var(--c-textFaint)] hover:text-[#E30613] transition-colors">
@@ -147,14 +147,14 @@ export default function SelectPicker({
 
           <div ref={listRef} role="listbox" className="max-h-56 overflow-y-auto overscroll-contain py-1">
             {filtered.length === 0 && (
-              <p className="px-3 py-4 text-center text-[11px] font-bold uppercase tracking-wider text-[var(--c-textFaint)]">
+              <p className="px-3 py-4 text-center text-[13px] font-bold uppercase tracking-wider text-[var(--c-textFaint)]">
                 {lang === "fr" ? "Aucun resultat" : lang === "ar" ? "لا نتائج" : "No results"}
               </p>
             )}
             {groups.map(({ g, list }) => (
               <React.Fragment key={g || "_"}>
                 {g !== "" && (
-                  <p className="px-3 pt-2 pb-1 text-[9px] font-black uppercase tracking-[0.14em] text-[var(--c-textFaint)] sticky top-0 bg-[var(--c-raised)]">{g}</p>
+                  <p className="px-3 pt-2 pb-1 text-[11px] font-black uppercase tracking-[0.14em] text-[var(--c-textFaint)] sticky top-0 bg-[var(--c-raised)]">{g}</p>
                 )}
                 {list.map(o => {
                   const idx = flatIndex(o)
@@ -169,7 +169,7 @@ export default function SelectPicker({
                       disabled={o.disabled}
                       onMouseEnter={() => setActive(idx)}
                       onClick={() => !o.disabled && commit(o.value)}
-                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-[12px] font-bold transition-colors ${
+                      className={`w-full flex items-center gap-2 px-3 py-2 text-left text-[14px] font-bold transition-colors ${
                         o.disabled ? "opacity-35 cursor-not-allowed" : on ? "text-[#E30613]" : "text-[var(--c-textMid)] hover:text-[var(--c-text)]"
                       } ${idx === active && !o.disabled ? "bg-[#E30613]/10" : ""}`}
                     >

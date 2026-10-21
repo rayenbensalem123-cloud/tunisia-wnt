@@ -133,7 +133,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             <div className="absolute inset-0 bg-[radial-gradient(120%_90%_at_20%_12%,var(--c-blueDk)_0%,var(--c-panel)_45%,var(--c-body)_100%)]" />
             <div className="absolute inset-0 opacity-[.13]" style={{backgroundImage:"repeating-linear-gradient(-55deg, transparent 0 14px, var(--c-cream) 14px 15px)"}} />
             <span className="absolute inset-0 flex items-center justify-center text-[2.6rem] font-black italic leading-none text-[var(--c-cream)]/[.22] select-none">{fullPosition ? "T" : code}</span>
-            <span className="absolute bottom-1.5 left-2 text-[6px] font-black uppercase tracking-[.3em] text-[var(--c-textWarm)]/70 select-none">TUNISIA WNT</span>
+            <span className="absolute bottom-1.5 left-2 text-[8px] font-black uppercase tracking-[.3em] text-[var(--c-textWarm)]/70 select-none">TUNISIA WNT</span>
           </div>
         ) : (
           <>
@@ -201,14 +201,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         // roster at all, so that used to be spelled out as its own line; it
         // no longer needs to be, which also frees up real space on the card.
         <div className="flex-1 px-3 py-3 flex flex-col min-w-0 relative">
-          <p className="text-[7px] text-[var(--c-textWarm2)] font-black uppercase tracking-[.22em] truncate">{club}</p>
+          <p className="text-[9px] text-[var(--c-textWarm2)] font-black uppercase tracking-[.22em] truncate">{club}</p>
           <h3 className="font-black text-[18px] leading-[1.05] uppercase mt-1 text-[var(--c-cream)] break-words">{titleCase(name)}</h3>
-          <span className="mt-1.5 text-[6.5px] font-black tracking-[.2em] text-[var(--c-cream)]/55 uppercase">{tr.coach.teamStaffBadge}</span>
+          <span className="mt-1.5 text-[8.5px] font-black tracking-[.2em] text-[var(--c-cream)]/55 uppercase">{tr.coach.teamStaffBadge}</span>
 
           <div className="mt-4 flex-1 flex flex-col justify-center gap-2 relative z-10">
             <div className="h-px w-8 bg-[#f6c744]/60" />
             <p className="text-[17px] leading-[1.15] font-black italic uppercase text-[#f6c744] break-words">{position || tr.common.none}</p>
-            <div className="flex items-center gap-2 flex-wrap text-[7px] font-black uppercase tracking-widest text-[var(--c-textWarm)]">
+            <div className="flex items-center gap-2 flex-wrap text-[9px] font-black uppercase tracking-widest text-[var(--c-textWarm)]">
               <span>{(nationality || "TUN").slice(0, 3)}</span>
               {license ? (
                 <span className="px-1.5 py-0.5 rounded-sm border border-[#f6c744]/30 bg-[#f6c744]/10 text-[#f6c744] tracking-wide">{license}</span>
@@ -222,19 +222,19 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
       ) : (
         // ── PLAYER CARD ──
         <div className="flex-1 px-3 py-3 flex flex-col min-w-0 relative">
-          <p className="text-[7px] text-[var(--c-textWarm2)] font-black uppercase tracking-[.22em] truncate">{club}</p>
+          <p className="text-[9px] text-[var(--c-textWarm2)] font-black uppercase tracking-[.22em] truncate">{club}</p>
           <h3 className="font-black text-[18px] leading-[1.05] uppercase mt-1 text-[var(--c-cream)] break-words">{titleCase(name)}</h3>
           <div className="mt-2 flex items-center gap-2">
-            <span className="px-1.5 py-0.5 rounded-sm bg-[#e3062c] text-white text-[6px] font-black uppercase tracking-[.18em]">{code}</span>
-            <span className="text-[6.5px] font-black tracking-[.2em] text-[var(--c-cream)]/55 uppercase">TUNISIA WNT</span>
+            <span className="px-1.5 py-0.5 rounded-sm bg-[#e3062c] text-white text-[8px] font-black uppercase tracking-[.18em]">{code}</span>
+            <span className="text-[8.5px] font-black tracking-[.2em] text-[var(--c-cream)]/55 uppercase">TUNISIA WNT</span>
           </div>
 
           <div className="mt-4 space-y-1.5 relative z-10">
             <div className="flex items-baseline gap-2">
               <span className="text-[22px] leading-none font-black italic text-[#e3062c] tracking-tight">№ {num}</span>
-              <span className="text-[6px] font-black uppercase tracking-[.24em] text-[var(--c-cream)]/45">NATIONAL</span>
+              <span className="text-[8px] font-black uppercase tracking-[.24em] text-[var(--c-cream)]/45">NATIONAL</span>
             </div>
-            <div className="flex items-center gap-2 text-[7px] font-black uppercase tracking-widest text-[var(--c-textWarm)]">
+            <div className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-[var(--c-textWarm)]">
               <span>{(nationality || "TUN").slice(0, 3)}</span>
               {height ? <span>• {height} cm</span> : null}
               {foot ? <span>• {foot}</span> : null}
@@ -242,11 +242,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             <div className="pt-1 flex items-center gap-2">
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border border-[var(--c-hover)] bg-[var(--c-panel4)]">
                 <span className="w-2 h-2 rounded-full bg-yellow-400" />
-                <span className="text-[6px] font-black uppercase tracking-widest text-[var(--c-textWarm)]">{yellows || 0} YC</span>
+                <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textWarm)]">{yellows || 0} YC</span>
               </span>
               <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-sm border border-[var(--c-hover)] bg-[var(--c-panel4)]">
                 <span className="w-2 h-2 rounded-full bg-[#e3062c]" />
-                <span className="text-[6px] font-black uppercase tracking-widest text-[var(--c-textWarm)]">{reds || 0} RC</span>
+                <span className="text-[8px] font-black uppercase tracking-widest text-[var(--c-textWarm)]">{reds || 0} RC</span>
               </span>
             </div>
           </div>
@@ -262,7 +262,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
           <div className="flex items-stretch bg-[var(--c-panel4)]">
             <div className="flex-1 flex flex-col items-center justify-center gap-1 py-2.5 px-1 min-w-0 text-center">
               <strong className="text-[22px] leading-none font-black text-[var(--c-cream)]">{String(age ?? "—")}</strong>
-              <span className="block text-[7.5px] text-[var(--c-textWarm)] font-black uppercase tracking-[.14em]">{tr.coach.ageStat}</span>
+              <span className="block text-[9.5px] text-[var(--c-textWarm)] font-black uppercase tracking-[.14em]">{tr.coach.ageStat}</span>
             </div>
           </div>
         ) : (
@@ -275,7 +275,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             ].map(([l, v, c], i) => (
               <div key={String(l)} className={`flex-1 flex flex-col items-center justify-center gap-1 py-2.5 px-1 min-w-0 text-center ${i ? "border-l border-[var(--c-hover)]" : ""}`}>
                 <strong className="text-[22px] leading-none font-black" style={{ color: String(c) }}>{String(v)}</strong>
-                <span className="block max-w-full truncate text-[7.5px] text-[var(--c-textWarm)] font-black uppercase tracking-[.14em]">{String(l)}</span>
+                <span className="block max-w-full truncate text-[9.5px] text-[var(--c-textWarm)] font-black uppercase tracking-[.14em]">{String(l)}</span>
               </div>
             ))}
           </div>

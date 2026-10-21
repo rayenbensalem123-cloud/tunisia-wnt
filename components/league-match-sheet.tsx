@@ -63,7 +63,7 @@ export function LeagueMatchSheet({ fixture, home, away, roster, lineup, squads, 
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-label={t.matchSheet} className="relative max-h-[92vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-[rgba(var(--line-rgb),.25)] bg-[var(--c-bg)] p-5 sm:p-6" onClick={e => e.stopPropagation()}>
         <button onClick={onClose} className="absolute top-3 right-3 rtl:left-3 rtl:right-auto p-2 rounded-full bg-black/30 text-white" aria-label={t.cancel}><X size={14} /></button>
-        <p className="text-[9px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t.matchSheet} · {t.matchdayN.replace('{n}', String(fixture.matchday))}</p>
+        <p className="text-[11px] font-black uppercase tracking-[.25em] text-[#f6c744]">{t.matchSheet} · {t.matchdayN.replace('{n}', String(fixture.matchday))}</p>
         <div className="mt-2 mb-5 flex items-center justify-center gap-3 text-center">
           <span className="flex min-w-0 flex-1 items-center justify-end gap-2 text-sm font-black"><span className="truncate">{home?.name}</span><ClubMark team={home} src={logoUrl(home ?? null)} size={30} /></span>
           <span className="shrink-0 text-xl font-black tabular-nums" dir="ltr">{fixture.status === 'played' ? `${fixture.homeGoals} – ${fixture.awayGoals}` : 'vs'}</span>
@@ -78,11 +78,11 @@ export function LeagueMatchSheet({ fixture, home, away, roster, lineup, squads, 
             const on = new Set(lineup.filter(l => l.teamId === id).map(l => l.memberId))
             return (
               <div key={id}>
-                <p className="mb-1.5 truncate text-[11px] font-black uppercase tracking-[.14em]">{team?.name}</p>
+                <p className="mb-1.5 truncate text-[13px] font-black uppercase tracking-[.14em]">{team?.name}</p>
                 {(() => {
                   const sq = squads.filter(q => q.teamId === id)
                   return (
-                    <div className="mb-2 flex items-center justify-between gap-2 text-[11px]">
+                    <div className="mb-2 flex items-center justify-between gap-2 text-[13px]">
                       <span className={sq.length ? 'font-bold text-emerald-300' : 'text-[var(--c-textMid)]'}>{sq.length ? t.squadSubmitted.replace('{n}', String(sq.length)) : t.squadNone}</span>
                       {sq.length > 0 && <button type="button" disabled={busy} onClick={() => void run(setLeagueLineup(fixture.id, id, sq.map(q => q.memberId)))} className="font-black uppercase tracking-[.14em] text-[#f6c744] hover:text-[var(--c-text)]">{t.useSquad}</button>}
                     </div>
@@ -110,7 +110,7 @@ export function LeagueMatchSheet({ fixture, home, away, roster, lineup, squads, 
               options={players.map(p => ({ value: String(p.id), label: `${p.name} · ${teamName(p.teamId)}` }))} /></div>
           <div><label className={label} htmlFor="ev-kind">{t.eventKind}</label><SelectField id="ev-kind" value={kind} onChange={v => setKind(v as EventKind)} title={t.eventKind} options={kinds} /></div>
           <div><label className={label} htmlFor="ev-min">{t.minuteWord}</label><NumberField id="ev-min" value={minute} onChange={setMinute} min={1} max={120} allowEmpty title={t.minuteWord} /></div>
-          <button type="button" onClick={() => void add()} disabled={busy || !playerId} className="col-span-2 sm:col-span-1 rounded-xl bg-[#E30613] px-5 py-3 text-[10px] font-black uppercase tracking-widest text-white hover:bg-red-700 disabled:opacity-40">{t.addEvent}</button>
+          <button type="button" onClick={() => void add()} disabled={busy || !playerId} className="col-span-2 sm:col-span-1 rounded-xl bg-[#E30613] px-5 py-3 text-[12px] font-black uppercase tracking-widest text-white hover:bg-red-700 disabled:opacity-40">{t.addEvent}</button>
         </div>
         {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}
 
@@ -126,7 +126,7 @@ export function LeagueMatchSheet({ fixture, home, away, roster, lineup, squads, 
           ))}
         </ul>
         {mismatch && <p className="mt-3 rounded-xl bg-[#f6c744]/10 px-3.5 py-2 text-xs font-bold text-[#f6c744]">{t.scoreMismatch.replace('{h}', String(goals(fixture.homeTeamId))).replace('{a}', String(goals(fixture.awayTeamId)))}</p>}
-        <div className="mt-5 flex justify-end"><button onClick={onClose} className="px-5 py-2.5 rounded-xl bg-[#f6c744] text-[10px] font-black uppercase tracking-widest text-[#0c1f3d] hover:bg-white">{t.done}</button></div>
+        <div className="mt-5 flex justify-end"><button onClick={onClose} className="px-5 py-2.5 rounded-xl bg-[#f6c744] text-[12px] font-black uppercase tracking-widest text-[#0c1f3d] hover:bg-white">{t.done}</button></div>
       </div>
     </div>
   )

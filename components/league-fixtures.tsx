@@ -182,13 +182,13 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
             {played ? (
               <p className="text-2xl sm:text-3xl font-black tabular-nums leading-none" dir="ltr">{f.homeGoals} <span className="text-white/40">–</span> {f.awayGoals}</p>
             ) : f.status === 'postponed' ? (
-              <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#ff9aa6]">{t.statusPostponed}</p>
+              <p className="text-[12px] font-black uppercase tracking-[.2em] text-[#ff9aa6]">{t.statusPostponed}</p>
             ) : d ? (
               <p className="text-xl sm:text-2xl font-black tabular-nums leading-none" dir="ltr">{timeFmt.format(d)}</p>
             ) : (
-              <p className="text-[10px] font-black uppercase tracking-[.2em] text-white/50">{t.dateTbd}</p>
+              <p className="text-[12px] font-black uppercase tracking-[.2em] text-white/50">{t.dateTbd}</p>
             )}
-            {d && <p className="mt-1.5 text-[10px] font-bold uppercase tracking-[.14em] text-white/60">{dateFmt.format(d)}</p>}
+            {d && <p className="mt-1.5 text-[12px] font-bold uppercase tracking-[.14em] text-white/60">{dateFmt.format(d)}</p>}
           </div>
           {side(f.awayTeamId, 'end')}
         </div>
@@ -197,7 +197,7 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
           if (!ev.length) return null
           const col = (id: number) => ev.filter(e => e.teamId === id && e.kind !== 'assist')
           const line = (id: number, end: boolean) => (
-            <ul className={`min-w-0 flex-1 space-y-0.5 text-[11px] text-white/75 ${end ? 'text-end' : ''}`}>
+            <ul className={`min-w-0 flex-1 space-y-0.5 text-[13px] text-white/75 ${end ? 'text-end' : ''}`}>
               {col(id).map(e => <li key={e.id} className="truncate"><span aria-hidden>{KIND_ICON[e.kind]}</span> {e.playerName}{e.minute != null && <span className="text-white/50" dir="ltr"> {e.minute}&apos;</span>}</li>)}
             </ul>
           )
@@ -218,8 +218,8 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
           return (
             <div className="mt-3 border-t border-white/10 pt-2">
               <button type="button" onClick={() => setHistOpen(prev => { const n = new Set(prev); if (n.has(f.id)) n.delete(f.id); else n.add(f.id); return n })} aria-expanded={open}
-                className="text-[10px] font-black uppercase tracking-[.18em] text-[#f6c744] hover:text-white">↻ {t.historyWord} ({ch.length})</button>
-              {open && <ul className="mt-1.5 space-y-1">{ch.map(c => <li key={c.id} className="text-[11px] text-white/75">{line(c)}{c.note && <span className="text-white/50"> — {c.note}</span>}</li>)}</ul>}
+                className="text-[12px] font-black uppercase tracking-[.18em] text-[#f6c744] hover:text-white">↻ {t.historyWord} ({ch.length})</button>
+              {open && <ul className="mt-1.5 space-y-1">{ch.map(c => <li key={c.id} className="text-[13px] text-white/75">{line(c)}{c.note && <span className="text-white/50"> — {c.note}</span>}</li>)}</ul>}
             </div>
           )
         })()}
@@ -227,13 +227,13 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
           const n = squads.filter(q => q.fixtureId === f.id && q.teamId === myTeamId).length
           return (
             <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-2.5">
-              <span className={`text-[11px] font-bold ${n ? 'text-emerald-300' : 'text-white/55'}`}>{n ? t.squadSubmitted.replace('{n}', String(n)) : t.squadNone}</span>
-              <button type="button" onClick={() => setSquadId(f.id)} className="rounded-lg bg-[#f6c744] px-3 py-1.5 text-[10px] font-black uppercase tracking-widest text-[#0c1f3d] hover:bg-white">{t.squadWord}</button>
+              <span className={`text-[13px] font-bold ${n ? 'text-emerald-300' : 'text-white/55'}`}>{n ? t.squadSubmitted.replace('{n}', String(n)) : t.squadNone}</span>
+              <button type="button" onClick={() => setSquadId(f.id)} className="rounded-lg bg-[#f6c744] px-3 py-1.5 text-[12px] font-black uppercase tracking-widest text-[#0c1f3d] hover:bg-white">{t.squadWord}</button>
             </div>
           )
         })()}
         {(f.venue || admin) && (
-          <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-2.5 text-[11px] text-white/55">
+          <div className="mt-3 flex items-center justify-between gap-2 border-t border-white/10 pt-2.5 text-[13px] text-white/55">
             <span className="truncate">{f.venue || ''}</span>
             {admin && (
               <span className="flex items-center gap-1 shrink-0">
@@ -270,7 +270,7 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
     setGenOpen(false); setMatchday(null); await loadFixtures(seasonId)
   }
 
-  if (!loaded) return <p className="py-24 text-center text-[10px] font-black uppercase tracking-[.3em] text-[var(--c-textMid)]">{t.loading}</p>
+  if (!loaded) return <p className="py-24 text-center text-[12px] font-black uppercase tracking-[.3em] text-[var(--c-textMid)]">{t.loading}</p>
 
   return (
     <div>
@@ -282,7 +282,7 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
               options={seasons.map(x => ({ value: String(x.id), label: `${x.name}${x.isCurrent ? ` · ${t.currentWord}` : ''}` }))} />
           )}
           {admin && season && !season.isCurrent && (
-            <button onClick={() => void makeCurrent()} className="px-3.5 py-2.5 rounded-xl border border-[#f6c744]/50 text-[10px] font-black uppercase tracking-[.16em] text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all">{t.setCurrent}</button>
+            <button onClick={() => void makeCurrent()} className="px-3.5 py-2.5 rounded-xl border border-[#f6c744]/50 text-[12px] font-black uppercase tracking-[.16em] text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all">{t.setCurrent}</button>
           )}
           {admin && season && (
             <button onClick={() => void removeSeason()} title={t.deleteSeason} aria-label={t.deleteSeason} className="p-2.5 rounded-xl border border-[rgba(var(--line-rgb),.25)] text-[var(--c-textMid)] hover:border-[#e3062c] hover:text-[#ff5f72] transition-all"><Trash2 size={14} /></button>
@@ -292,26 +292,26 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
           {mode === 'club' && !scoped && myTeamId != null && days.length > 0 && sub === 'matchdays' && (
             <button onClick={() => setOnlyMine(v => !v)} aria-pressed={onlyMine} className={chip(onlyMine)}>{onlyMine ? t.allMatches : t.myMatches}</button>
           )}
-          {admin && <button onClick={() => { setErr(''); setSeasonOpen(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest hover:border-[#f6c744]/60 transition-all"><Plus size={14} />{t.newSeason}</button>}
+          {admin && <button onClick={() => { setErr(''); setSeasonOpen(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest hover:border-[#f6c744]/60 transition-all"><Plus size={14} />{t.newSeason}</button>}
           {admin && season && sub === 'matchdays' && teams.length >= 2 && (
-            <button onClick={() => setImportOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#f6c744]/60 text-[#f6c744] text-[10px] font-black uppercase tracking-widest hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all"><ClipboardPaste size={14} />{t.importCalendar}</button>
+            <button onClick={() => setImportOpen(true)} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#f6c744]/60 text-[#f6c744] text-[12px] font-black uppercase tracking-widest hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all"><ClipboardPaste size={14} />{t.importCalendar}</button>
           )}
           {admin && season && sub === 'matchdays' && fixtures.length === 0 && teams.length >= 2 && (
-            <button onClick={() => { setErr(''); setGenOpen(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#f6c744]/60 text-[#f6c744] text-[10px] font-black uppercase tracking-widest hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all"><Wand2 size={14} />{t.generateFixtures}</button>
+            <button onClick={() => { setErr(''); setGenOpen(true) }} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-[#f6c744]/60 text-[#f6c744] text-[12px] font-black uppercase tracking-widest hover:bg-[#f6c744] hover:text-[#0c1f3d] transition-all"><Wand2 size={14} />{t.generateFixtures}</button>
           )}
-          {admin && season && sub === 'matchdays' && <button onClick={openNew} disabled={teams.length < 2} title={teams.length < 2 ? t.needTwoTeams : undefined} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-40 disabled:hover:bg-[#E30613] transition-all"><Plus size={14} />{t.addMatch}</button>}
+          {admin && season && sub === 'matchdays' && <button onClick={openNew} disabled={teams.length < 2} title={teams.length < 2 ? t.needTwoTeams : undefined} className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-40 disabled:hover:bg-[#E30613] transition-all"><Plus size={14} />{t.addMatch}</button>}
         </div>
       </div>
 
       {seasons.length === 0 && (
-        <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><CalendarDays size={56} /><p className="text-[11px] font-black uppercase tracking-[.3em] text-center">{admin ? t.noSeasons : t.noSeasonsClub}</p></div>
+        <div className="py-24 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><CalendarDays size={56} /><p className="text-[13px] font-black uppercase tracking-[.3em] text-center">{admin ? t.noSeasons : t.noSeasonsClub}</p></div>
       )}
 
       {season && !section && (
         <div className="mb-6 flex items-center gap-2 overflow-x-auto pb-1" role="tablist" aria-label={t.season}>
           {([['matchdays', t.matchdays], ['standings', t.standings], ['calendar', t.calendar], ['cup', t.cup]] as const).map(([k, lab]) => (
             <button key={k} role="tab" aria-selected={sub === k} onClick={() => setSub(k)}
-              className={`shrink-0 px-4 py-2.5 text-[11px] font-black uppercase tracking-[.16em] border-b-2 transition-all ${sub === k ? 'border-[#E30613] text-[var(--c-text)]' : 'border-transparent text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{lab}</button>
+              className={`shrink-0 px-4 py-2.5 text-[13px] font-black uppercase tracking-[.16em] border-b-2 transition-all ${sub === k ? 'border-[#E30613] text-[var(--c-text)]' : 'border-transparent text-[var(--c-textMid)] hover:text-[var(--c-text)]'}`}>{lab}</button>
           ))}
         </div>
       )}
@@ -326,14 +326,14 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
         const upcoming = fixtures.filter(f => f.status === 'scheduled'); const nd = upcoming.length ? Math.min(...upcoming.map(f => f.matchday)) : null
         const round = week.length ? week : fixtures.filter(f => f.matchday === nd)
         const mineAll = fixtures.filter(f => f.homeTeamId === myTeamId || f.awayTeamId === myTeamId).sort((a, b) => a.matchday - b.matchday)
-        const head = 'mb-3 text-[10px] font-black uppercase tracking-[.25em] text-[#f6c744]'
+        const head = 'mb-3 text-[12px] font-black uppercase tracking-[.25em] text-[#f6c744]'
         const nextMine = mineAll.find(f => f.status === 'scheduled')
         const banned = nextMine && myTeamId != null ? suspendedFor(suspensions, nextMine.id, myTeamId) : []
         return (
           <div className="space-y-8">
             {banned.length > 0 && (
               <section className="rounded-2xl border border-[#e3062c]/50 bg-[#3a0b18]/50 p-4">
-                <h3 className="mb-2 text-[10px] font-black uppercase tracking-[.25em] text-[#ff9aa6]">⛔ {t.suspendedNext}</h3>
+                <h3 className="mb-2 text-[12px] font-black uppercase tracking-[.25em] text-[#ff9aa6]">⛔ {t.suspendedNext}</h3>
                 <ul className="space-y-1">{banned.map(b => <li key={b.memberId} className="text-sm font-bold">{b.name} <span className="font-semibold text-[#ff9aa6]">· {b.reason === 'red' ? t.suspRed : t.suspYellows}</span></li>)}</ul>
               </section>
             )}
@@ -365,12 +365,12 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
           {shownDay != null && (
             <div className="mb-4 flex items-end justify-between gap-3">
               <h3 className="text-2xl sm:text-3xl font-black italic uppercase tracking-tight">{t.matchdayN.replace('{n}', String(shownDay))}</h3>
-              <p className="text-[10px] font-black uppercase tracking-[.3em] text-[#f6c744] tabular-nums">{season.name}</p>
+              <p className="text-[12px] font-black uppercase tracking-[.3em] text-[#f6c744] tabular-nums">{season.name}</p>
             </div>
           )}
 
           {days.length === 0 && (
-            <div className="py-20 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><CalendarDays size={48} /><p className="text-[11px] font-black uppercase tracking-[.3em] text-center">{t.noMatches}</p></div>
+            <div className="py-20 flex flex-col items-center gap-4 text-[var(--c-textMid)]"><CalendarDays size={48} /><p className="text-[13px] font-black uppercase tracking-[.3em] text-center">{t.noMatches}</p></div>
           )}
 
           <ul className="space-y-3">
@@ -404,8 +404,8 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
             </div>
             {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setForm(null)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
-              <button onClick={() => void submitMatch()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.save}</button>
+              <button onClick={() => setForm(null)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest">{t.cancel}</button>
+              <button onClick={() => void submitMatch()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.save}</button>
             </div>
           </div>
         </div>
@@ -430,8 +430,8 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
             </div>
             {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setGenOpen(false)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
-              <button onClick={() => void submitGenerate()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.genCreate}</button>
+              <button onClick={() => setGenOpen(false)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest">{t.cancel}</button>
+              <button onClick={() => void submitGenerate()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.genCreate}</button>
             </div>
           </div>
         </div>
@@ -476,8 +476,8 @@ export function LeagueFixtures({ mode, teams, logoUrl, myTeamId, section, scoped
             </div>
             {err && <p role="alert" className="mt-3 text-xs font-bold text-[#ff5f72]">{err}</p>}
             <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setSeasonOpen(false)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[10px] font-black uppercase tracking-widest">{t.cancel}</button>
-              <button onClick={() => void submitSeason()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[10px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.save}</button>
+              <button onClick={() => setSeasonOpen(false)} className="px-4 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.3)] text-[12px] font-black uppercase tracking-widest">{t.cancel}</button>
+              <button onClick={() => void submitSeason()} disabled={busy} className="px-5 py-2.5 rounded-xl bg-[#E30613] text-white text-[12px] font-black uppercase tracking-widest hover:bg-red-700 disabled:opacity-50">{busy ? '…' : t.save}</button>
             </div>
           </div>
         </div>
