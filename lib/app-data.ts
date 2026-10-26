@@ -388,6 +388,19 @@ export async function updateInjuryStatus(injuryId: number, status: 'active' | 'r
   return { error: error?.message || null }
 }
 
+// A medical report can be corrected after it has been written — including once
+// the player is marked recovered. Only the report's own fields change; who
+// logged it and when it was created stay untouched.
+export async function updateInjury(injuryId: number, payload: {
+  injury_type?: string; body_part?: string | null; severity?: string
+  occurred_on?: string | null; expected_return?: string | null; notes?: string | null
+}) {
+  const { error } = await supabase.from('injuries').update({
+    ...payload, updated_at: new Date().toISOString(),
+  }).eq('id', injuryId)
+  return { error: error?.message || null }
+}
+
 // ─────────────────────────────────────────────
 // CLUB MATCH REPORTS (a player's self-logged stats from matches played
 // with their CLUB, not the national team — minutes, goals, assists, cards)

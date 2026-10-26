@@ -26,7 +26,7 @@ import {
   fetchAllProfiles, updateProfile, deleteProfile,
   fetchMembers, fetchMatches, syncMembers, syncMatches, fetchCamps, syncCamps, saveCampRow, deleteCampRow,
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
-  fetchInjuries, addInjury, updateInjuryStatus,
+  fetchInjuries, addInjury, updateInjury, updateInjuryStatus,
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl,
   fetchClubReports, addClubReport, deleteClubReport, linkProfileToMember,
   fetchAllInjuries, fetchAllClubReports, fetchPassportExpiries, exportMyData,
@@ -574,6 +574,7 @@ export default function EliteSquadApp() {
     else setPassportExpiries({})
   },[user?.username])
   const [addInjuryOpen,setAddInjuryOpen]=useState(false)
+ const [editInjuryId,setEditInjuryId]=useState<number|null>(null)
   const [injForm,setInjForm]=useState({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""})
   // Club match reports — a player's own self-logged stats from matches
   // played with their CLUB (not the national team squad).
@@ -1959,7 +1960,7 @@ export default function EliteSquadApp() {
               {profileTab==="medical"&&(isPlayer?(
                 <div className="space-y-2.5">
                   {p.editMedical&&(
-                    <button onClick={()=>setAddInjuryOpen(true)} className="w-full py-2 rounded-lg border border-dashed border-[#e3062c]/40 text-[14px] font-black uppercase tracking-wider text-[#ff4f66] hover:bg-[#e3062c]/5 transition-all flex items-center justify-center gap-1.5">
+                    <button onClick={()=>{setInjForm({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""});setEditInjuryId(null);setAddInjuryOpen(true)}} className="w-full py-2 rounded-lg border border-dashed border-[#e3062c]/40 text-[14px] font-black uppercase tracking-wider text-[#ff4f66] hover:bg-[#e3062c]/5 transition-all flex items-center justify-center gap-1.5">
                       <Plus size={11}/>Log Injury
                     </button>
                   )}
@@ -1980,10 +1981,13 @@ export default function EliteSquadApp() {
                         {inj.expected_return&&<p className="text-[14px] text-[var(--c-textDim)] mt-1.5">Expected return: {fmtDateWords(inj.expected_return)}</p>}
                         {inj.notes&&<p className="text-[14px] text-[var(--c-textMid)] mt-1.5">{inj.notes}</p>}
                         <p className="text-[13px] text-[var(--c-textDim)] mt-1.5">Logged by {inj.logged_by_username||"unknown"}</p>
-                        {p.editMedical&&inj.status!=="recovered"&&(
+                        {p.editMedical&&(
                           <div className="flex gap-1.5 mt-2">
                             {inj.status==="active"&&<button onClick={()=>{updateInjuryStatus(inj.id,"recovering").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg pm-btn-soft text-[13px] font-black uppercase tracking-wider">Mark Recovering</button>}
-                            <button onClick={()=>{updateInjuryStatus(inj.id,"recovered").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg pm-btn-ghost text-[13px] font-black uppercase tracking-wider">Mark Recovered</button>
+                            {inj.status!=="recovered"&&<button onClick={()=>{updateInjuryStatus(inj.id,"recovered").then(()=>fetchInjuries(selMember.id).then(setInjuries))}} className="px-2.5 py-1 rounded-lg pm-btn-ghost text-[13px] font-black uppercase tracking-wider">Mark Recovered</button>}
+                            {/* Every report can be corrected afterwards — even a
+                                recovered one stays open to fixing. */}
+                            <button onClick={()=>{setInjForm({injury_type:inj.injury_type||"",body_part:inj.body_part||"",severity:inj.severity||"moderate",occurred_on:inj.occurred_on||"",expected_return:inj.expected_return||"",notes:inj.notes||""});setEditInjuryId(inj.id);setAddInjuryOpen(true)}} className="px-2.5 py-1 rounded-lg border border-[rgba(var(--line-rgb),.25)] text-[var(--c-textBlue)] text-[13px] font-black uppercase tracking-wider hover:bg-[var(--c-surface)] transition-all inline-flex items-center gap-1"><Edit3 size={10}/>Modify</button>
                           </div>
                         )}
                       </div>
@@ -2093,7 +2097,7 @@ export default function EliteSquadApp() {
         <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80">
           <div className="w-full max-w-sm rounded-2xl bg-[var(--c-cream2)] text-zinc-900 shadow-2xl p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-black uppercase tracking-tight">Log Injury — {selMember.name}</h2>
+              <h2 className="text-sm font-black uppercase tracking-tight">{editInjuryId?"Modify":"Log"} Injury — {selMember.name}</h2>
               <button onClick={()=>setAddInjuryOpen(false)} title="Close" className="p-1.5 rounded-lg hover:bg-zinc-100"><X size={18}/></button>
             </div>
             <input placeholder="Injury type (e.g. Hamstring strain)" value={injForm.injury_type} onChange={e=>setInjForm({...injForm,injury_type:e.target.value})} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none"/>
@@ -2113,13 +2117,25 @@ export default function EliteSquadApp() {
             <textarea placeholder="Notes (optional)" value={injForm.notes} onChange={e=>setInjForm({...injForm,notes:e.target.value})} rows={2} className="w-full p-2.5 bg-zinc-50 rounded-lg border border-zinc-200 text-[13px] font-bold outline-none resize-none"/>
             <div className="flex gap-2 pt-1">
               <button onClick={()=>setAddInjuryOpen(false)} className="flex-1 py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider border border-zinc-300 bg-zinc-100">Cancel</button>
-              <button onClick={async()=>{
+              <button onClick={()=>{
                 if(!injForm.injury_type.trim()){alert("Enter an injury type");return}
-                const {error}=await addInjury(selMember.id,injForm)
-                if(error){alert("Failed: "+error);return}
-                setAddInjuryOpen(false)
-                setInjForm({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""})
-                fetchInjuries(selMember.id).then(setInjuries)
+                const save=async()=>{
+                  const res=editInjuryId!=null
+                    ?await updateInjury(editInjuryId,{
+                        injury_type:injForm.injury_type.trim(),
+                        body_part:injForm.body_part.trim()||null,
+                        severity:injForm.severity,
+                        occurred_on:injForm.occurred_on||null,
+                        expected_return:injForm.expected_return||null,
+                        notes:injForm.notes.trim()||null,
+                      })
+                    :await addInjury(selMember.id,injForm)
+                  if(res.error){alert("Failed: "+res.error);return}
+                  setAddInjuryOpen(false);setEditInjuryId(null)
+                  setInjForm({injury_type:"",body_part:"",severity:"moderate",occurred_on:"",expected_return:"",notes:""})
+                  fetchInjuries(selMember.id).then(setInjuries)
+                }
+                save()
               }} className="flex-[2] py-2.5 bg-[#E30613] text-white rounded-xl text-[11px] font-black uppercase tracking-wider shadow-lg hover:scale-[1.02] transition-all">Save</button>
             </div>
           </div>
