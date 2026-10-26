@@ -933,8 +933,15 @@ export default function EliteSquadApp() {
   // selection screen entirely.
   const logout=()=>{
     setTeamCat(null);setFilterPos("ALL");setActiveTab("PLAYERS");setSearch("");setSelMember(null)
-    supabase.auth.signOut()
     setUser(null)
+    supabase.auth.signOut().finally(()=>{
+      // A deploy can land while this page was open; its code files are gone
+      // from the server by then, so the stale page keeps rendering but
+      // silently fails on any click (this is exactly the "logged out and
+      // can't press anything" report). Reloading on the way out fetches the
+      // current build, so the login screen is never shown from old code.
+      if(typeof window!=="undefined") window.location.reload()
+    })
   }
 
   const [squadLabOpen,setSquadLabOpen]=useState(false)
