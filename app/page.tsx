@@ -27,7 +27,7 @@ import {
   fetchAllProfiles, updateProfile, deleteProfile,
   fetchMembers, fetchMatches, syncMembers, syncMatches, fetchCamps, syncCamps, saveCampRow, deleteCampRow,
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
-  fetchInjuries, addInjury, updateInjury, updateInjuryStatus,
+  fetchInjuries, addInjury, updateInjury, updateInjuryStatus, deleteInjury,
   fetchMedicalFiles, addMedicalFile, deleteMedicalFile,
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl,
   fetchClubReports, addClubReport, deleteClubReport, linkProfileToMember,
@@ -696,9 +696,10 @@ export default function EliteSquadApp() {
     return !!user.perms?.viewMedical
   }
 
-  // ── Medical files: IRM pictures and PDF report documents ──
+  // ── Medical files: IRM pictures and PDF report documents, attached to a
+  // specific injury report ──
   // One file at a time, but dropping several queues them one by one.
-  const uploadMedicalFile=async(f:File)=>{
+  const uploadMedicalFile=async(f:File,injuryId:number|null)=>{
     if(!selMember)return
     const isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name)
     if(!isPdf&&!f.type.startsWith('image/')){alert("Only images or PDF files can be added here");return}
@@ -725,7 +726,7 @@ export default function EliteSquadApp() {
         if(!d.path){alert(d.error||'Upload failed');return}
         path=d.path
       }
-      const res=await addMedicalFile(selMember.id,path,name,isPdf?'pdf':'image')
+      const res=await addMedicalFile(selMember.id,path,name,isPdf?'pdf':'image',injuryId)
       if(res.error){alert('Save failed: '+res.error);return}
       fetchMedicalFiles(selMember.id).then(setMedFiles)
     }catch{alert('Upload failed')}
@@ -737,6 +738,32 @@ export default function EliteSquadApp() {
     if(res.error){alert('Delete failed: '+res.error);return}
     if(selMember)fetchMedicalFiles(selMember.id).then(setMedFiles)
   }
+  const removeInjury=async(inj:any)=>{
+    if(!(await askConfirm(`Delete the "${inj.injury_type||'injury'}" report and its attached files? This cannot be undone.`)))return
+    const res=await deleteInjury(inj.id,medFiles.filter((f:any)=>f.injury_id===inj.id).map((f:any)=>String(f.file_path)))
+    if(res.error){alert('Delete failed: '+res.error);return}
+    if(selMember){
+      fetchInjuries(selMember.id).then(setInjuries)
+      fetchMedicalFiles(selMember.id).then(setMedFiles)
+    }
+  }
+  // One medical-file row, reused inside injury cards and the unlinked group.
+  const medFileRow=(mf:any)=>(
+    <div key={mf.id} className="flex items-center gap-2 rounded-lg border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-deep)] p-1.5">
+      {mf.file_type==='image'&&medThumbs[mf.file_path]?(
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={medThumbs[mf.file_path]} alt={mf.file_name||""} onClick={()=>openStored(mf.file_path)} className="w-10 h-10 rounded object-cover cursor-zoom-in shrink-0"/>
+      ):(
+        <button onClick={()=>openStored(mf.file_path)} className="w-10 h-10 rounded bg-[var(--c-surface)] flex items-center justify-center shrink-0"><FileText size={14} className="text-[var(--c-textDim)]"/></button>
+      )}
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-bold truncate" title={mf.file_name||""}>{(mf.file_name||String(mf.file_path||"").split("/").pop()||"file").replace(/^\d+-[a-z0-9]+-/i,"")}</p>
+        <p className="text-[13px] text-[var(--c-textDim)]">{fmtDateWords((mf.created_at||"").slice(0,10))}{mf.uploaded_by_username?` · ${mf.uploaded_by_username}`:""}</p>
+      </div>
+      <button onClick={()=>openStored(mf.file_path)} className="px-2 py-1 rounded pm-btn-soft text-[13px] font-black uppercase tracking-wider shrink-0">View</button>
+      {p.editMedical&&<button onClick={()=>removeMedicalFile(mf)} title="Delete file" className="p-1.5 rounded border border-[#e3062c]/40 text-[#ff4f66] hover:bg-[#e3062c]/10 transition-all shrink-0"><Trash2 size={11}/></button>}
+    </div>
+  )
   // IRM pictures show as small previews: sign each image once and keep it.
   useEffect(()=>{
     if(profileTab!=='medical'||!selMember)return
@@ -2046,59 +2073,42 @@ export default function EliteSquadApp() {
                             {/* Every report can be corrected afterwards — even a
                                 recovered one stays open to fixing. */}
                             <button onClick={()=>{setInjForm({injury_type:inj.injury_type||"",body_part:inj.body_part||"",severity:inj.severity||"moderate",occurred_on:inj.occurred_on||"",expected_return:inj.expected_return||"",notes:inj.notes||""});setEditInjuryId(inj.id);setAddInjuryOpen(true)}} className="px-2.5 py-1 rounded-lg border border-[rgba(var(--line-rgb),.25)] text-[var(--c-textBlue)] text-[13px] font-black uppercase tracking-wider hover:bg-[var(--c-surface)] transition-all inline-flex items-center gap-1"><Edit3 size={10}/>Modify</button>
+                            <button onClick={()=>removeInjury(inj)} className="px-2.5 py-1 rounded-lg border border-[#e3062c]/40 text-[#ff4f66] text-[13px] font-black uppercase tracking-wider hover:bg-[#e3062c]/10 transition-all inline-flex items-center gap-1"><Trash2 size={10}/>Delete</button>
                           </div>
                         )}
-                      </div>
-                    )
-                  })}
-                  {/* ─── Medical files: IRM pictures and PDF reports.
-                          Drag a file onto the box (or tap it) to add,
-                          View opens it, the bin removes it. ─── */}
-                  <div className="mt-3 pt-3 border-t border-[rgba(var(--line-rgb),.14)]">
-                    <p className="text-[13px] font-black uppercase tracking-wider text-[var(--c-textMid)] mb-2">Medical Files</p>
-                    {p.editMedical&&(
-                      <label
-                        onDragOver={e=>{e.preventDefault();setMedDrag(true)}}
-                        onDragLeave={()=>setMedDrag(false)}
-                        onDrop={e=>{e.preventDefault();setMedDrag(false);const files=Array.from(e.dataTransfer.files||[]);if(files.length>0){(async()=>{for(const f of files)await uploadMedicalFile(f)})()}}}
-                        className={`flex flex-col items-center justify-center gap-0.5 p-4 rounded-lg border border-dashed text-center cursor-pointer transition-all ${medDrag?'border-[#e3062c] bg-[#e3062c]/10':'border-[#e3062c]/40 hover:bg-[#e3062c]/5'}`}>
-                        <input type="file" accept="image/*,.pdf" multiple className="hidden" disabled={medBusy}
-                          onChange={async e=>{const files=Array.from(e.target.files||[]);e.target.value="";for(const f of files)await uploadMedicalFile(f)}}/>
-                        <Upload size={15} className="text-[#ff4f66]"/>
-                        <span className="text-[14px] font-black uppercase tracking-wider text-[#ff4f66]">{medBusy?"Uploading…":"Drop IRM / PDF files here"}</span>
-                        <span className="text-[13px] text-[var(--c-textDim)]">or tap to choose — images and PDF, max 20 MB each</span>
-                      </label>
-                    )}
-                    {medFiles.length===0?(
-                      <p className="text-[14px] text-[var(--c-textDim)] py-3 text-center">No files added yet</p>
-                    ):(
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
-                        {medFiles.map((mf:any)=>{
-                          const niceName=(mf.file_name||String(mf.file_path||"").split("/").pop()||"file").replace(/^\d+-[a-z0-9]+-/i,"")
-                          return(
-                          <div key={mf.id} className="rounded-lg border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-deep)] p-2 flex flex-col gap-1.5">
-                            {mf.file_type==='image'?(medThumbs[mf.file_path]?(
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img src={medThumbs[mf.file_path]} alt={niceName} onClick={()=>openStored(mf.file_path)} className="w-full h-28 object-cover rounded cursor-zoom-in"/>
-                            ):(<div className="w-full h-28 rounded" style={{background:"rgba(128,128,128,.12)"}}/>)):(
-                              <button onClick={()=>openStored(mf.file_path)} className="w-full h-28 rounded flex flex-col items-center justify-center gap-1 hover:bg-[var(--c-surface)] transition-all">
-                                <FileText size={24} className="text-[var(--c-textDim)]"/>
-                                <span className="text-[13px] font-black uppercase tracking-wider text-[var(--c-textMid)]">PDF</span>
-                              </button>
+                        {(()=>{const injFiles=medFiles.filter((x:any)=>x.injury_id===inj.id);return(
+                          <div className="mt-2 pt-2 border-t border-[rgba(var(--line-rgb),.12)]">
+                            <p className="text-[13px] font-black uppercase tracking-wider text-[var(--c-textMid)] mb-1.5">Files</p>
+                            {injFiles.length===0?(
+                              <p className="text-[13px] text-[var(--c-textDim)]">No IRM / PDF attached to this report</p>
+                            ):(
+                              <div className="space-y-1.5">{injFiles.map((mf:any)=>medFileRow(mf))}</div>
                             )}
-                            <p className="text-[13px] font-bold text-[var(--c-text)] truncate" title={niceName}>{niceName}</p>
-                            <p className="text-[13px] text-[var(--c-textDim)]">{fmtDateWords((mf.created_at||"").slice(0,10))}{mf.uploaded_by_username?` · ${mf.uploaded_by_username}`:""}</p>
-                            <div className="flex gap-1.5 mt-auto">
-                              <button onClick={()=>openStored(mf.file_path)} className="flex-1 py-1 rounded pm-btn-soft text-[13px] font-black uppercase tracking-wider">View</button>
-                              {p.editMedical&&(
-                                <button onClick={()=>removeMedicalFile(mf)} title="Delete file" className="p-1.5 rounded border border-[#e3062c]/40 text-[#ff4f66] hover:bg-[#e3062c]/10 transition-all"><Trash2 size={11}/></button>
-                              )}
-                            </div>
+                            {p.editMedical&&(
+                              <label
+                                onDragOver={e=>{e.preventDefault();setMedDrag(true)}}
+                                onDragLeave={()=>setMedDrag(false)}
+                                onDrop={e=>{e.preventDefault();setMedDrag(false);const files=Array.from(e.dataTransfer.files||[]);if(files.length>0){(async()=>{for(const f of files)await uploadMedicalFile(f,inj.id)})()}}}
+                                className={`mt-2 flex items-center justify-center gap-1.5 p-2 rounded-lg border border-dashed text-center cursor-pointer transition-all ${medDrag?'border-[#e3062c] bg-[#e3062c]/10':'border-[#e3062c]/40 hover:bg-[#e3062c]/5'}`}>
+                                <input type="file" accept="image/*,.pdf" multiple className="hidden" disabled={medBusy}
+                                  onChange={async e=>{const files=Array.from(e.target.files||[]);e.target.value="";for(const f of files)await uploadMedicalFile(f,inj.id)}}/>
+                                <Upload size={11} className="text-[#ff4f66]"/>
+                                <span className="text-[13px] font-black uppercase tracking-wider text-[#ff4f66]">{medBusy?"Uploading…":"Add IRM / PDF (drop or tap)"}</span>
+                              </label>
+                            )}
                           </div>
                         )})}
                       </div>
-                    )}
-                  </div>
+                    )
+                  })}
+                  {/* Files uploaded before the per-report linking (they belong to
+                      no injury report) stay reachable here rather than vanishing. */}
+                  {medFiles.filter((mf:any)=>!mf.injury_id).length>0&&(
+                    <div className="pt-2 border-t border-[rgba(var(--line-rgb),.14)]">
+                      <p className="text-[13px] font-black uppercase tracking-wider text-[var(--c-textMid)] mb-1.5">Other Medical Files</p>
+                      <div className="space-y-1.5">{medFiles.filter((mf:any)=>!mf.injury_id).map((mf:any)=>medFileRow(mf))}</div>
+                    </div>
+                  )}
                 </div>
               ):(()=>{
                 const catMatchesPlayed=matches.filter((m:any)=>m.teamCategory===selMember.teamCategory&&m.result)

@@ -417,7 +417,7 @@ export async function fetchMedicalFiles(memberId: number) {
   return data
 }
 
-export async function addMedicalFile(memberId: number, filePath: string, fileName: string, fileType: 'image' | 'pdf') {
+export async function addMedicalFile(memberId: number, filePath: string, fileName: string, fileType: 'image' | 'pdf', injuryId: number | null = null) {
   const { data: sessionData } = await supabase.auth.getSession()
   const uid = sessionData.session?.user.id
   let username: string | null = null
@@ -427,7 +427,7 @@ export async function addMedicalFile(memberId: number, filePath: string, fileNam
   }
   const { error } = await supabase.from('medical_files').insert({
     member_id: memberId, file_path: filePath, file_name: fileName,
-    file_type: fileType, uploaded_by: uid, uploaded_by_username: username,
+    file_type: fileType, injury_id: injuryId, uploaded_by: uid, uploaded_by_username: username,
   })
   return { error: errorMessage(error) }
 }
@@ -439,6 +439,15 @@ export async function deleteMedicalFile(filePath: string) {
   const { error: storageError } = await supabase.storage.from('members').remove([filePath])
   const { error } = await supabase.from('medical_files').delete().eq('file_path', filePath)
   return { error: errorMessage(storageError || error) }
+}
+
+// Deleting a report also clears its attached files from storage first — the
+// database row itself disappears through the cascade, but the file bytes in
+// the bucket need their own removal.
+export async function deleteInjury(injuryId: number, filePaths: string[] = []) {
+  if (filePaths.length) await supabase.storage.from('members').remove(filePaths)
+  const { error } = await supabase.from('injuries').delete().eq('id', injuryId)
+  return { error: errorMessage(error) }
 }
 
 // ─────────────────────────────────────────────
