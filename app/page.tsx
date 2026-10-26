@@ -702,16 +702,30 @@ export default function EliteSquadApp() {
     if(!selMember)return
     const isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name)
     if(!isPdf&&!f.type.startsWith('image/')){alert("Only images or PDF files can be added here");return}
-    if(f.size>5*1024*1024){alert("File too large (max 5 MB)");return}
+    if(f.size>20*1024*1024){alert("File too large (max 20 MB)");return}
     setMedBusy(true)
     try{
-      let blob:File|Blob=f,name=f.name
-      if(!isPdf&&f.type!=='image/gif'){blob=await compressImage(f,2400,0.85);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}
-      const fd=new FormData();fd.append('file',blob,name);fd.append('folder','medical');fd.append('memberId',String(selMember.id))
-      const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd})
-      const d=await r.json()
-      if(!d.path){alert(d.error||'Upload failed');return}
-      const res=await addMedicalFile(selMember.id,d.path,name,isPdf?'pdf':'image')
+      let blob:File|Blob=f,name=f.name,contentType=f.type
+      if(!isPdf&&f.type!=='image/gif'){blob=await compressImage(f,2400,0.85);name=f.name.replace(/\.[^.]+$/,'')+'.jpg';contentType='image/jpeg'}
+      let path:string
+      // Files over ~4 MB skip the app's upload API: Vercel refuses request
+      // bodies above ~4.5 MB, so any bigger scan would fail there. They go
+      // straight to the file storage with the signed-in session instead —
+      // the same row-level rule decides who may write in both paths.
+      if(blob.size>4*1024*1024){
+        path=`medical/${selMember.id}/${Date.now()}-${Math.random().toString(36).slice(2,8)}-${name.replace(/[^a-zA-Z0-9._-]/g,'_').slice(-60)}`
+        const { error: stErr } = await supabase.storage.from('members').upload(path, blob, {
+          contentType: contentType||(isPdf?'application/pdf':'application/octet-stream'),
+        })
+        if(stErr){alert('Upload failed: '+stErr.message);return}
+      }else{
+        const fd=new FormData();fd.append('file',blob,name);fd.append('folder','medical');fd.append('memberId',String(selMember.id))
+        const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd})
+        const d=await r.json()
+        if(!d.path){alert(d.error||'Upload failed');return}
+        path=d.path
+      }
+      const res=await addMedicalFile(selMember.id,path,name,isPdf?'pdf':'image')
       if(res.error){alert('Save failed: '+res.error);return}
       fetchMedicalFiles(selMember.id).then(setMedFiles)
     }catch{alert('Upload failed')}
@@ -2052,7 +2066,7 @@ export default function EliteSquadApp() {
                           onChange={async e=>{const files=Array.from(e.target.files||[]);e.target.value="";for(const f of files)await uploadMedicalFile(f)}}/>
                         <Upload size={15} className="text-[#ff4f66]"/>
                         <span className="text-[14px] font-black uppercase tracking-wider text-[#ff4f66]">{medBusy?"Uploading…":"Drop IRM / PDF files here"}</span>
-                        <span className="text-[13px] text-[var(--c-textDim)]">or tap to choose — images and PDF, max 5 MB each</span>
+                        <span className="text-[13px] text-[var(--c-textDim)]">or tap to choose — images and PDF, max 20 MB each</span>
                       </label>
                     )}
                     {medFiles.length===0?(
