@@ -2458,12 +2458,17 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 const togglePerm=(perm:keyof UserPerms)=>{
                   updateProfile(u.username,{permissions:{...allUsers[realIdx].perms,[perm]:!allUsers[realIdx].perms[perm]}}).then(reloadProfiles)
                 }
-                const doApprove=()=>{
-                  updateProfile(u.username,{status:"active"}).then(reloadProfiles)
+                const doApprove=async()=>{
+                  const res=await updateProfile(u.username,{status:"active"})
+                  if(res.error){alert("Approve failed: "+res.error);return}
+                  await reloadProfiles()
                 }
                 const doHold=()=>{ setPendingReviewOpen(false) }
-                const doDelete=()=>{
-                  deleteProfile(u.username).then(reloadProfiles)
+                const doDelete=async()=>{
+                  if(!(await askConfirm(`Delete @${u.username}'s registration? This cannot be undone.`)))return
+                  const res=await deleteProfile(u.username)
+                  if(res.error){alert("Delete failed: "+res.error);return}
+                  await reloadProfiles()
                 }
                 return(
                   <div key={u.username} className="rounded-xl border border-zinc-200 bg-zinc-50 overflow-hidden">
@@ -2581,8 +2586,10 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   updateProfile(u.username,{permissions:newPerms}).then(reloadProfiles)
                   if(currentUser) setUser({...user!,perms:newPerms})
                 }
-                const approveUser=()=>{
-                  updateProfile(u.username,{status:"active"}).then(reloadProfiles)
+                const approveUser=async()=>{
+                  const res=await updateProfile(u.username,{status:"active"})
+                  if(res.error){alert("Approve failed: "+res.error);return}
+                  await reloadProfiles()
                 }
                 const linkedMember=members.find((m:any)=>m.id===u.memberId)
                 return(
@@ -2596,7 +2603,12 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                         {u.status==="pending"&&canManageUsers&&<button onClick={approveUser} className="px-3 py-1.5 rounded-lg border border-[#7fd6a8]/30 text-[#7fd6a8] text-[9px] font-black uppercase tracking-wider hover:bg-[#7fd6a8]/10 transition-all">{tr.common.approve}</button>}
                         {canManageUsers&&!currentUser&&(<>
                           <button onClick={()=>openPw('admin',u.username)} className="px-3 py-1.5 rounded-lg border border-[#7ec3ff]/30 text-[#7ec3ff] text-[9px] font-black uppercase tracking-wider hover:bg-[#7ec3ff]/10 transition-all">{tr.common.resetPw}</button>
-                          <button onClick={()=>{deleteProfile(u.username).then(reloadProfiles)}} className="px-3 py-1.5 rounded-lg border border-[#e3062c]/40 text-[#ff4f66] text-[9px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all">{tr.common.remove}</button>
+                          <button onClick={async()=>{
+                            if(!(await askConfirm(`Delete @${u.username}? This cannot be undone.`)))return
+                            const res=await deleteProfile(u.username)
+                            if(res.error){alert("Delete failed: "+res.error);return}
+                            await reloadProfiles()
+                          }} className="px-3 py-1.5 rounded-lg border border-[#e3062c]/40 text-[#ff4f66] text-[9px] font-black uppercase tracking-wider hover:bg-[#e3062c]/15 transition-all">{tr.common.remove}</button>
                         </>)}
                       </div>
                     </div>
