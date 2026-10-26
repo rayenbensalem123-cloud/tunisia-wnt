@@ -402,6 +402,46 @@ export async function updateInjury(injuryId: number, payload: {
 }
 
 // ─────────────────────────────────────────────
+// MEDICAL FILES (IRM images and PDF reports attached to a player card)
+// The file itself lives in the private storage bucket under medical/<member>/;
+// the row here remembers who uploaded what, when. Reading follows the same
+// rule as injuries: medical staff, or the player's own files.
+// ─────────────────────────────────────────────
+export async function fetchMedicalFiles(memberId: number) {
+  const { data, error } = await supabase
+    .from('medical_files')
+    .select('*')
+    .eq('member_id', memberId)
+    .order('created_at', { ascending: false })
+  if (error) { console.error('fetchMedicalFiles', error); return [] }
+  return data
+}
+
+export async function addMedicalFile(memberId: number, filePath: string, fileName: string, fileType: 'image' | 'pdf') {
+  const { data: sessionData } = await supabase.auth.getSession()
+  const uid = sessionData.session?.user.id
+  let username: string | null = null
+  if (uid) {
+    const { data: profile } = await supabase.from('profiles').select('username').eq('id', uid).maybeSingle()
+    username = profile?.username || null
+  }
+  const { error } = await supabase.from('medical_files').insert({
+    member_id: memberId, file_path: filePath, file_name: fileName,
+    file_type: fileType, uploaded_by: uid, uploaded_by_username: username,
+  })
+  return { error: errorMessage(error) }
+}
+
+// Deleting means both halves: the file in the bucket and the note about it.
+// The storage removal is attempted even if the row is the one that would fail,
+// so an orphan row never keeps a file alive on disk.
+export async function deleteMedicalFile(filePath: string) {
+  const { error: storageError } = await supabase.storage.from('members').remove([filePath])
+  const { error } = await supabase.from('medical_files').delete().eq('file_path', filePath)
+  return { error: errorMessage(storageError || error) }
+}
+
+// ─────────────────────────────────────────────
 // CLUB MATCH REPORTS (a player's self-logged stats from matches played
 // with their CLUB, not the national team — minutes, goals, assists, cards)
 // ─────────────────────────────────────────────

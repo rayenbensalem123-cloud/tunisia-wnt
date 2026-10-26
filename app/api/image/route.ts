@@ -56,6 +56,20 @@ async function mayReadObject(
   const vm = prof.permissions?.viewMedical as boolean | string | undefined
   if (prof.role === 'admin' || vm === true || vm === 'true') return true
 
+  // Medical documents (IRM scans, PDF reports) are private per member, like a
+  // passport: the medical_files row decides ownership. An unknown path reads
+  // as nobody's, and a player only ever reads her own files.
+  if (path.startsWith('medical/')) {
+    const { data: rows } = await c
+      .from('medical_files')
+      .select('member_id')
+      .eq('file_path', path)
+      .limit(1)
+    const owner = rows?.[0]?.member_id
+    if (!owner) return false
+    return prof.role === 'player' && prof.member_id != null && prof.member_id === owner
+  }
+
   const { data: owners } = await c
     .from('members')
     .select('id')

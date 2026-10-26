@@ -3,7 +3,7 @@ import { requireActiveUser, safeError, userClient } from '@/lib/api-auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 
 const MAX_BYTES = 5 * 1024 * 1024 // 5 MB
-const ALLOWED_FOLDERS = ['passports', 'images', 'camps', 'camps-reports', 'camps-photos', 'league']
+const ALLOWED_FOLDERS = ['passports', 'images', 'camps', 'camps-reports', 'camps-photos', 'league', 'medical']
 
 const IMAGE_TYPES: Record<string, string> = {
   'image/jpeg': 'jpg',
@@ -18,7 +18,8 @@ const DOC_TYPES: Record<string, string> = {
 
 function folderAllows(folder: string, type: string): boolean {
   if (folder === 'images' || folder === 'camps' || folder === 'camps-photos' || folder === 'league') return type in IMAGE_TYPES
-  if (folder === 'passports') return type in IMAGE_TYPES || type in DOC_TYPES
+  // IRM pictures and PDF reports: both belong under medical/.
+  if (folder === 'passports' || folder === 'medical') return type in IMAGE_TYPES || type in DOC_TYPES
   return type in DOC_TYPES
 }
 
@@ -62,7 +63,15 @@ export async function POST(req: Request) {
     // Ligue Féminine images live under league/<team id>/ (a club's own player photos)
     // or league/logos/ (team logos, admin only). The server decides the prefix from
     // WHO is calling, never from a client-supplied path.
+    // Medical documents always land under medical/<member id>/ so both the
+    // storage policy (has_permission('editMedical')) and the signed-URL read
+    // rule in /api/image can tell whose file a path belongs to.
     let prefix = folder
+    if (folder === 'medical') {
+      const memberId = Number(form.get('memberId'))
+      if (!Number.isInteger(memberId) || memberId <= 0) return NextResponse.json({ error: 'Player required' }, { status: 400 })
+      prefix = `medical/${memberId}`
+    }
     if (folder === 'league') {
       if (auth.caller.role === 'club') {
         const { data: me } = await userClient(auth.token).from('profiles').select('league_team_id').eq('id', auth.caller.id).maybeSingle()

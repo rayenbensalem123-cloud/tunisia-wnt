@@ -5,8 +5,9 @@ import {
   LogOut, Goal, History, Trash2, Trophy,
   Star, ClipboardCheck, Award, ShieldCheck, Briefcase, BriefcaseBusiness,
   ChevronRight, AlertTriangle, Ban, BookOpen, Save,
-  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange, Minus, Gamepad2, Video, Mail
+  Users, Calendar, ChevronUp, ChevronDown, ChevronLeft, Globe, MapPin, Bell, Key, Activity, Newspaper, IdCard, ListChecks, Download, View, CalendarRange, Minus, Gamepad2, Video, Mail, FileText, Upload
 } from "lucide-react"
+import { openStored } from "@/components/stored-file"
 import { useTranslate } from "@/lib/language-context"
 import { NotificationBell } from "@/components/notification-system"
 import { PasswordModal, type PasswordTarget } from "@/components/password-modal"
@@ -27,6 +28,7 @@ import {
   fetchMembers, fetchMatches, syncMembers, syncMatches, fetchCamps, syncCamps, saveCampRow, deleteCampRow,
   subscribeRealtime, changeMyPassword, adminResetPassword, fetchActivityLog,
   fetchInjuries, addInjury, updateInjury, updateInjuryStatus,
+  fetchMedicalFiles, addMedicalFile, deleteMedicalFile,
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl,
   fetchClubReports, addClubReport, deleteClubReport, linkProfileToMember,
   fetchAllInjuries, fetchAllClubReports, fetchPassportExpiries, exportMyData,
@@ -568,6 +570,10 @@ export default function EliteSquadApp() {
   const [selMember,setSelMember]=useState<any>(null)
   const [profileTab,setProfileTab]=useState<"profile"|"medical"|"passport"|"club">("profile")
   const [injuries,setInjuries]=useState<any[]>([])
+  const [medFiles,setMedFiles]=useState<any[]>([])
+  const [medThumbs,setMedThumbs]=useState<Record<string,string>>({})
+  const [medDrag,setMedDrag]=useState(false)
+  const [medBusy,setMedBusy]=useState(false)
   const [passportExpiries,setPassportExpiries]=useState<Record<number,string>>({})
   useEffect(()=>{
     if(user) fetchPassportExpiries().then(setPassportExpiries)
@@ -592,6 +598,8 @@ export default function EliteSquadApp() {
     // but not asking keeps the answer honest if the policy is ever widened.
     if(selMember&&canSeePrivate(selMember)) fetchInjuries(selMember.id).then(setInjuries)
     else setInjuries([])
+    if(selMember&&canSeePrivate(selMember)) fetchMedicalFiles(selMember.id).then(setMedFiles)
+    else setMedFiles([])
     if(canSeeClubReports(selMember)) fetchClubReports(selMember.id).then(setClubReports)
     else setClubReports([])
   },[selMember?.id])
@@ -687,6 +695,42 @@ export default function EliteSquadApp() {
     if(user.role==="player")return !!user.memberId&&m.id===user.memberId
     return !!user.perms?.viewMedical
   }
+
+  // ── Medical files: IRM pictures and PDF report documents ──
+  // One file at a time, but dropping several queues them one by one.
+  const uploadMedicalFile=async(f:File)=>{
+    if(!selMember)return
+    const isPdf=f.type==='application/pdf'||/\.pdf$/i.test(f.name)
+    if(!isPdf&&!f.type.startsWith('image/')){alert("Only images or PDF files can be added here");return}
+    if(f.size>5*1024*1024){alert("File too large (max 5 MB)");return}
+    setMedBusy(true)
+    try{
+      let blob:File|Blob=f,name=f.name
+      if(!isPdf&&f.type!=='image/gif'){blob=await compressImage(f,2400,0.85);name=f.name.replace(/\.[^.]+$/,'')+'.jpg'}
+      const fd=new FormData();fd.append('file',blob,name);fd.append('folder','medical');fd.append('memberId',String(selMember.id))
+      const r=await fetch('/api/upload',{method:'POST',headers:await authHeaders(),body:fd})
+      const d=await r.json()
+      if(!d.path){alert(d.error||'Upload failed');return}
+      const res=await addMedicalFile(selMember.id,d.path,name,isPdf?'pdf':'image')
+      if(res.error){alert('Save failed: '+res.error);return}
+      fetchMedicalFiles(selMember.id).then(setMedFiles)
+    }catch{alert('Upload failed')}
+    finally{setMedBusy(false)}
+  }
+  const removeMedicalFile=async(mf:any)=>{
+    if(!(await askConfirm(`Delete "${mf.file_name||'this file'}"? This cannot be undone.`)))return
+    const res=await deleteMedicalFile(mf.file_path)
+    if(res.error){alert('Delete failed: '+res.error);return}
+    if(selMember)fetchMedicalFiles(selMember.id).then(setMedFiles)
+  }
+  // IRM pictures show as small previews: sign each image once and keep it.
+  useEffect(()=>{
+    if(profileTab!=='medical'||!selMember)return
+    medFiles.filter((mf:any)=>mf.file_type==='image').forEach((mf:any)=>{
+      if(medThumbs[mf.file_path])return
+      signedImageUrl(mf.file_path).then(u=>{if(u)setMedThumbs(prev=>({...prev,[mf.file_path]:u}))})
+    })
+  },[profileTab,selMember?.id,medFiles])
 
   // Private-bucket images: mint short-lived signed URLs with the signed-in
   // user's own session. An <img> tag cannot send an Authorization header, so
@@ -1993,6 +2037,54 @@ export default function EliteSquadApp() {
                       </div>
                     )
                   })}
+                  {/* ─── Medical files: IRM pictures and PDF reports.
+                          Drag a file onto the box (or tap it) to add,
+                          View opens it, the bin removes it. ─── */}
+                  <div className="mt-3 pt-3 border-t border-[rgba(var(--line-rgb),.14)]">
+                    <p className="text-[13px] font-black uppercase tracking-wider text-[var(--c-textMid)] mb-2">Medical Files</p>
+                    {p.editMedical&&(
+                      <label
+                        onDragOver={e=>{e.preventDefault();setMedDrag(true)}}
+                        onDragLeave={()=>setMedDrag(false)}
+                        onDrop={e=>{e.preventDefault();setMedDrag(false);const files=Array.from(e.dataTransfer.files||[]);if(files.length>0){(async()=>{for(const f of files)await uploadMedicalFile(f)})()}}}
+                        className={`flex flex-col items-center justify-center gap-0.5 p-4 rounded-lg border border-dashed text-center cursor-pointer transition-all ${medDrag?'border-[#e3062c] bg-[#e3062c]/10':'border-[#e3062c]/40 hover:bg-[#e3062c]/5'}`}>
+                        <input type="file" accept="image/*,.pdf" multiple className="hidden" disabled={medBusy}
+                          onChange={async e=>{const files=Array.from(e.target.files||[]);e.target.value="";for(const f of files)await uploadMedicalFile(f)}}/>
+                        <Upload size={15} className="text-[#ff4f66]"/>
+                        <span className="text-[14px] font-black uppercase tracking-wider text-[#ff4f66]">{medBusy?"Uploading…":"Drop IRM / PDF files here"}</span>
+                        <span className="text-[13px] text-[var(--c-textDim)]">or tap to choose — images and PDF, max 5 MB each</span>
+                      </label>
+                    )}
+                    {medFiles.length===0?(
+                      <p className="text-[14px] text-[var(--c-textDim)] py-3 text-center">No files added yet</p>
+                    ):(
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
+                        {medFiles.map((mf:any)=>{
+                          const niceName=(mf.file_name||String(mf.file_path||"").split("/").pop()||"file").replace(/^\d+-[a-z0-9]+-/i,"")
+                          return(
+                          <div key={mf.id} className="rounded-lg border border-[rgba(var(--line-rgb),.14)] bg-[var(--c-deep)] p-2 flex flex-col gap-1.5">
+                            {mf.file_type==='image'?(medThumbs[mf.file_path]?(
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={medThumbs[mf.file_path]} alt={niceName} onClick={()=>openStored(mf.file_path)} className="w-full h-28 object-cover rounded cursor-zoom-in"/>
+                            ):(<div className="w-full h-28 rounded" style={{background:"rgba(128,128,128,.12)"}}/>)):(
+                              <button onClick={()=>openStored(mf.file_path)} className="w-full h-28 rounded flex flex-col items-center justify-center gap-1 hover:bg-[var(--c-surface)] transition-all">
+                                <FileText size={24} className="text-[var(--c-textDim)]"/>
+                                <span className="text-[13px] font-black uppercase tracking-wider text-[var(--c-textMid)]">PDF</span>
+                              </button>
+                            )}
+                            <p className="text-[13px] font-bold text-[var(--c-text)] truncate" title={niceName}>{niceName}</p>
+                            <p className="text-[13px] text-[var(--c-textDim)]">{fmtDateWords((mf.created_at||"").slice(0,10))}{mf.uploaded_by_username?` · ${mf.uploaded_by_username}`:""}</p>
+                            <div className="flex gap-1.5 mt-auto">
+                              <button onClick={()=>openStored(mf.file_path)} className="flex-1 py-1 rounded pm-btn-soft text-[13px] font-black uppercase tracking-wider">View</button>
+                              {p.editMedical&&(
+                                <button onClick={()=>removeMedicalFile(mf)} title="Delete file" className="p-1.5 rounded border border-[#e3062c]/40 text-[#ff4f66] hover:bg-[#e3062c]/10 transition-all"><Trash2 size={11}/></button>
+                              )}
+                            </div>
+                          </div>
+                        )})}
+                      </div>
+                    )}
+                  </div>
                 </div>
               ):(()=>{
                 const catMatchesPlayed=matches.filter((m:any)=>m.teamCategory===selMember.teamCategory&&m.result)
