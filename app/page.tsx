@@ -1423,7 +1423,17 @@ export default function EliteSquadApp() {
       </div>
     </div>
   )
-  if(authChecked&&!user) return <LoginScreen onLogin={()=>{setBuffering(true);(async()=>{await loadMyUser();await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()]);setLoaded(true)})().finally(()=>setTimeout(()=>{setBuffering(false);beginFadeIn()},2500))}}/>
+  if(authChecked&&!user) return <LoginScreen onLogin={()=>{setBuffering(true);setLoaded(false);
+    // Same guarantee the first load has: even if a database call stalls on the
+    // way back in, the loading screen clears instead of hanging forever.
+    const watchdog=setTimeout(()=>setLoaded(true),4000)
+    ;(async()=>{
+      await loadMyUser()
+      try{await Promise.all([reloadMembers(),reloadMatches(),reloadProfiles()])}
+      catch(e){console.error("re-login data load failed",e)}
+      clearTimeout(watchdog)
+      setLoaded(true)
+    })().finally(()=>setTimeout(()=>{setBuffering(false);beginFadeIn()},2500))}}/>
   // Ligue Féminine. A club account lives entirely inside its own team page; only an
   // admin can open the grid of clubs. Both are separate screens, so nothing below
   // (national-team data, medical, camps...) is ever rendered for a club login.
