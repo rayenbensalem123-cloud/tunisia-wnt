@@ -542,7 +542,22 @@ export async function fetchAllProfiles() {
 
 export async function updateProfile(username: string, patch: any) {
   const { error } = await supabase.from('profiles').update(patch).eq('username', username)
-  return { error }
+  return { error: errorMessage(error) }
+}
+
+// PostgREST errors are plain objects: concatenating one into an alert shows
+// "[object Object]" and hides the reason. Pull the message out, or serialize
+// the whole thing so failures always name their cause.
+function errorMessage(error: unknown): string | null {
+  if (!error) return null
+  if (typeof error === "string") return error
+  if (error instanceof Error) return error.message
+  const e = error as { message?: string; hint?: string; details?: string }
+  try {
+    return [e.message, e.hint, e.details].filter(Boolean).join(" · ") || JSON.stringify(error)
+  } catch {
+    return String(error)
+  }
 }
 
 /**
@@ -557,7 +572,7 @@ export async function linkProfileToMember(username: string, memberId: number | n
 
 export async function deleteProfile(username: string) {
   const { error } = await supabase.from('profiles').delete().eq('username', username)
-  return { error }
+  return { error: errorMessage(error) }
 }
 
 // ─────────────────────────────────────────────
