@@ -879,7 +879,10 @@ export default function EliteSquadApp() {
       beginFadeIn()
     })()
     const { data: sub } = supabase.auth.onAuthStateChange((event)=>{
-      if(event==="SIGNED_OUT") logout()
+      // A sign-out triggered from inside registerUser() is bookkeeping for a
+      // pending account — there is no real user session to wind down, so the
+      // logout routine should not react to it.
+      if(event==="SIGNED_OUT"&&userRef.current&&!loggingOutRef.current) logout()
     })
     return ()=>{sub.subscription.unsubscribe()}
   },[])
@@ -931,14 +934,24 @@ export default function EliteSquadApp() {
   // survives a sign-out, so without this an admin who picked SENIORS, logged out
   // and logged back in would land straight in SENIORS — skipping the category
   // selection screen entirely.
+  const loggingOutRef=useRef(false)
+  const userRef=useRef<any>(null)
+  userRef.current=user
   const logout=()=>{
+    // supabase.auth.signOut() fires the library's SIGNED_OUT event, and the
+    // auth listener below calls logout() again on it — which signed out
+    // again, firing again... an endless loop that pegs the page until the
+    // browser declares it unresponsive. This flag makes the re-entry a
+    // no-op, so sign-out can only ever run once per click.
+    if(loggingOutRef.current)return
+    loggingOutRef.current=true
     setTeamCat(null);setFilterPos("ALL");setActiveTab("PLAYERS");setSearch("");setSelMember(null)
     setUser(null)
     supabase.auth.signOut().finally(()=>{
+      loggingOutRef.current=false
       // A deploy can land while this page was open; its code files are gone
       // from the server by then, so the stale page keeps rendering but
-      // silently fails on any click (this is exactly the "logged out and
-      // can't press anything" report). Reloading on the way out fetches the
+      // silently fails on any click. Reloading on the way out fetches the
       // current build, so the login screen is never shown from old code.
       if(typeof window!=="undefined") window.location.reload()
     })
