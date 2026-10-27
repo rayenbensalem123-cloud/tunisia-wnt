@@ -440,8 +440,9 @@ const TeamSelector=({onSelect,showLeague}:{onSelect:(c:TeamCategory)=>void;showL
           <h1 className="mt-4 text-3xl md:text-4xl font-black uppercase tracking-tight text-center leading-none text-[var(--c-text)]">{tr.teamSelect.eliteSquad}</h1>
           <p className="mt-3 text-[11px] font-bold uppercase tracking-[.5em] text-[#f6c744]">{tr.teamSelect.selectCat}</p>
         </div>
-        {/* Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5 w-full max-w-6xl">
+        {/* Cards — sized to the teams actually shown so a row always fills:
+                players see 3 teams → 3 columns; admins see 4 → 4 columns. */}
+        <div className={`grid grid-cols-1 gap-5 w-full max-w-6xl ${teams.length<=3?'lg:grid-cols-3':'md:grid-cols-2 lg:grid-cols-4'}`}>
           {teams.map((t,i)=>(
             <button key={t.cat} onClick={()=>onSelect(t.cat)} className="group relative h-[340px] rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-1.5 text-left border border-[rgba(var(--line-rgb),.18)] bg-[#101b33] hover:border-[#f6c744]/60 hover:shadow-[0_22px_60px_rgba(0,0,0,.6),0_0_28px_rgba(246,199,68,.12)] animate-[fadeUp_0.55s_ease-out_both]" style={{animationDelay:`${i*130+200}ms`}}>
               {/* Full-box background photo */}
