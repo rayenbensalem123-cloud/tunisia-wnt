@@ -510,37 +510,108 @@ export async function verifyClubReport(id: number, verified: boolean, byUsername
 }
 
 // ─────────────────────────────────────────────
-// MEETINGS (Zoom-backed) — scheduling and recording lookup go through the
-// /api/zoom/* routes, which hold the Zoom secret server-side. These two are
-// plain RLS-protected reads/writes like everything else above.
+// STREAM & VIDEOS — match replays, highlights, training clips, live streams.
+// A row is a link (YouTube/Vimeo/Twitch/.mp4) or an upload in the private
+// 'videos' bucket. Uploads go straight from the browser to Storage with the
+// signed-in user's own session (Vercel API routes cap bodies at ~4.5 MB), and
+// RLS decides who may read or write: see migrations/0029_video_library.sql.
 // ─────────────────────────────────────────────
-export async function fetchMeetings() {
-  const { data, error } = await supabase.from('meetings').select('*').order('scheduled_at', { ascending: false })
-  if (error) { console.error('fetchMeetings', error); return [] }
-  return data
+export type LibraryVideo = {
+  id: number
+  title: string
+  description: string
+  kind: 'match' | 'highlight' | 'training' | 'live'
+  team_category: string | null
+  source: 'link' | 'upload'
+  url: string | null
+  file_path: string | null
+  file_name: string | null
+  size_bytes: number | null
+  created_by_username: string | null
+  created_at: string
 }
 
-export async function deleteMeeting(id: number) {
-  const { error } = await supabase.from('meetings').delete().eq('id', id)
+export const VIDEO_MAX_BYTES = 50 * 1024 * 1024 // matches the bucket limit
+export const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
+
+export async function fetchLibraryVideos(): Promise<LibraryVideo[]> {
+  const { data, error } = await supabase.from('library_videos').select('*').order('created_at', { ascending: false })
+  if (error) { console.error('fetchLibraryVideos', error); return [] }
+  return data as LibraryVideo[]
+}
+
+async function currentUsername(): Promise<string | null> {
+  const { data } = await supabase.auth.getUser()
+  const id = data.user?.id
+  if (!id) return null
+  const { data: p } = await supabase.from('profiles').select('username').eq('id', id).maybeSingle()
+  return p?.username ?? null
+}
+
+export async function addLibraryVideo(v: {
+  title: string; description?: string; kind: LibraryVideo['kind']; teamCategory?: string | null
+  source: 'link' | 'upload'; url?: string; filePath?: string; fileName?: string; sizeBytes?: number
+}) {
+  const { error } = await supabase.from('library_videos').insert({
+    title: v.title.trim(),
+    description: (v.description || '').trim(),
+    kind: v.kind,
+    team_category: v.teamCategory || null,
+    source: v.source,
+    url: v.source === 'link' ? (v.url || '').trim() : null,
+    file_path: v.source === 'upload' ? v.filePath : null,
+    file_name: v.fileName ?? null,
+    size_bytes: v.sizeBytes ?? null,
+    created_by_username: await currentUsername(),
+  })
   return { error: error?.message || null }
 }
 
-async function authedPost(path: string, body: any) {
+export async function setLibraryVideoKind(id: number, kind: LibraryVideo['kind']) {
+  const { error } = await supabase.from('library_videos').update({ kind }).eq('id', id)
+  return { error: error?.message || null }
+}
+
+export async function deleteLibraryVideo(v: Pick<LibraryVideo, 'id' | 'file_path'>) {
+  const { error } = await supabase.from('library_videos').delete().eq('id', v.id)
+  if (error) return { error: error.message }
+  if (v.file_path) await supabase.storage.from('videos').remove([v.file_path])
+  return { error: null }
+}
+
+/** Upload one clip with progress (supabase-js has no progress hook, so use XHR against the storage REST API). */
+export async function uploadLibraryVideo(file: File, onProgress: (pct: number) => void): Promise<{ path?: string; error?: string }> {
+  if (!VIDEO_TYPES.includes(file.type)) return { error: 'Use an MP4, MOV or WebM file.' }
+  if (file.size > VIDEO_MAX_BYTES) return { error: 'tooBig' }
   const { data: sessionData } = await supabase.auth.getSession()
   const token = sessionData.session?.access_token
   if (!token) return { error: 'Not signed in' }
-  const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) return { error: data.error || `Request failed (${res.status})` }
-  return data
+  const ext = file.type === 'video/webm' ? 'webm' : file.type === 'video/quicktime' ? 'mov' : 'mp4'
+  const path = `library/${crypto.randomUUID()}.${ext}`
+  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/videos/${path}`
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', url)
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`)
+    xhr.setRequestHeader('apikey', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
+    xhr.setRequestHeader('Content-Type', file.type)
+    xhr.setRequestHeader('x-upsert', 'false')
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)) }
+    xhr.onerror = () => resolve({ error: 'Network error during upload' })
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) { resolve({ path }); return }
+      let msg = `Upload failed (${xhr.status})`
+      try { msg = JSON.parse(xhr.responseText).message || msg } catch {}
+      resolve({ error: msg })
+    }
+    xhr.send(file)
+  })
 }
 
-export async function scheduleMeeting(payload: { title: string; scheduledAt: string; teamCategory?: string | null }) {
-  return authedPost('/api/zoom/schedule', payload)
-}
-
-export async function checkMeetingRecording(meetingId: number) {
-  return authedPost('/api/zoom/recording', { meetingId })
+/** Short-lived link for playing an uploaded clip. */
+export async function signedVideoUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage.from('videos').createSignedUrl(path, 3 * 3600)
+  return error || !data?.signedUrl ? '' : data.signedUrl
 }
 
 // ─────────────────────────────────────────────

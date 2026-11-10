@@ -32,7 +32,7 @@ import {
   fetchSquadTemplates, saveSquadTemplate, deleteSquadTemplate, signedImageUrls, signedImageUrl,
   fetchClubReports, addClubReport, deleteClubReport, linkProfileToMember,
   fetchAllInjuries, fetchAllClubReports, fetchPassportExpiries, exportMyData,
-  fetchMeetings, deleteMeeting, scheduleMeeting, checkMeetingRecording,
+  fetchLibraryVideos, addLibraryVideo, deleteLibraryVideo, setLibraryVideoKind,
   updateMyEmail, requestPasswordReset, verifyClubReport
 } from "@/lib/app-data"
 import { StagesManager } from "@/components/stages-manager"
@@ -41,7 +41,7 @@ import { CvImport } from "@/components/cv-import"
 import { LigueView } from "@/components/league"
 import { PerformanceCard } from "@/components/performance"
 import { summarize } from "@/lib/match-stats"
-import { MeetingsPanel } from "@/components/meetings-panel"
+import { VideoLibrary } from "@/components/video-library"
 import { ClubReportsPanel } from "@/components/club-reports-panel"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
 import { cleanEventMinutes } from "@/lib/bingo-logic"
@@ -125,7 +125,7 @@ interface UserPerms {
   viewMedical: boolean; editMedical: boolean
   addCamps: boolean
   viewClubReports: boolean
-  manageMeetings: boolean
+  manageVideos: boolean
   manageTravel: boolean
 }
 interface AppUser {
@@ -135,8 +135,8 @@ interface AppUser {
   perms: UserPerms
 }
 
-const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false, addCamps:false, viewClubReports:false, manageMeetings:false, manageTravel:false }
-const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true, viewClubReports:true, manageMeetings:true, manageTravel:true }
+const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false, addCamps:false, viewClubReports:false, manageVideos:false, manageTravel:false }
+const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true, viewClubReports:true, manageVideos:true, manageTravel:true }
 
 // Maps a DB profiles row -> the shape the UI already expects
 const profileToAppUser = (p: any): AppUser => ({
@@ -486,7 +486,7 @@ const TeamSelector=({onSelect,showLeague}:{onSelect:(c:TeamCategory)=>void;showL
 // Just the keys — the display label is looked up from tr.perms at render time
 // (this array lives outside the component, so it can't call useTranslate()).
 const PERM_KEYS: (keyof UserPerms)[] = [
-  "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps","viewClubReports","manageMeetings","manageTravel",
+  "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps","viewClubReports","manageVideos","manageTravel",
 ]
 
 // ═════════════════════════════════════════════
@@ -530,7 +530,7 @@ export default function EliteSquadApp() {
   const [imgUrls,setImgUrls]=useState<Record<string,string>>({})
   const [matches,setMatches]=useState<any[]>([])
   const [camps,setCamps]=useState<any[]>([])
-  const [meetings,setMeetings]=useState<any[]>([])
+  const [libraryVideos,setLibraryVideos]=useState<any[]>([])
   const membersSnapshot=useRef<Map<any,any>>(new Map())
   const matchesSnapshot=useRef<Map<any,any>>(new Map())
   const campsSnapshot=useRef<Map<any,any>>(new Map())
@@ -849,10 +849,9 @@ export default function EliteSquadApp() {
     setCamps(data)
     setTimeout(()=>{applyingRemote.current=false},0)
   }
-  // Meetings have no local-edit diff-sync like camps/matches — they're only
-  // ever written through scheduleMeeting/deleteMeeting (direct RLS calls or
-  // the Zoom API route), so a plain reload after each action is enough.
-  const reloadMeetings=async()=>setMeetings(await fetchMeetings())
+  // The video library has no local-edit diff-sync like camps/matches: it is only
+  // written through addLibraryVideo/deleteLibraryVideo, so a reload after each action is enough.
+  const reloadVideos=async()=>setLibraryVideos(await fetchLibraryVideos())
   // All club-match reports across the roster, used only to drive the "new
   // club report to review" notification for staff. RLS already limits what
   // comes back for a caller without viewClubReports/editPlayer/addPlayer/
@@ -873,7 +872,7 @@ export default function EliteSquadApp() {
       clearTimeout(watchdog)
       setAuthChecked(true)
       try{
-        await Promise.all([reloadMembers(),reloadMatches(),reloadCamps(),reloadMeetings(),reloadClubReports()])
+        await Promise.all([reloadMembers(),reloadMatches(),reloadCamps(),reloadVideos(),reloadClubReports()])
         await reloadProfiles()
       }catch(e){console.error("initial data load failed",e)}
       setLoaded(true)
@@ -965,7 +964,7 @@ export default function EliteSquadApp() {
   const [labTemplates,setLabTemplates]=useState<any[]>([])
   const [labTemplateName,setLabTemplateName]=useState("")
   const [stagesOpen,setStagesOpen]=useState(false)
-  const [meetingsOpen,setMeetingsOpen]=useState(false)
+  const [videosOpen,setVideosOpen]=useState(false)
   const [reportsOpen,setReportsOpen]=useState(false)
   const filtered=useMemo(()=>members.filter(m=>
     m.role===activeTab&&m.teamCategory===teamCat&&
@@ -1475,11 +1474,11 @@ export default function EliteSquadApp() {
 
       {stagesOpen ? (
         <StagesManager open onClose={()=>setStagesOpen(false)} stages={camps} members={members} teamCat={teamCat} canManage={!!(canManageUsers||p.addCamps)} onSave={async(stage)=>{const isNew=!(camps||[]).some((c:any)=>(c.id||0)===stage.id);const payload=isNew?{...stage,createdByUsername:user?.username}:stage;const res=await saveCampRow(payload,isNew);if(res.error){alert('Could not save the camp: '+res.error);return false}await reloadCamps();return true}} onDelete={async(id)=>{const res=await deleteCampRow(id);if(res.error){alert('Could not delete the camp: '+res.error);return false}await reloadCamps();return true}} onRefresh={reloadCamps} user={user}/>
-      ) : meetingsOpen ? (
-        <MeetingsPanel open onClose={()=>setMeetingsOpen(false)} meetings={meetings} canManage={!!(canManageUsers||p.manageMeetings)} teamCat={teamCat}
-          onSchedule={async(payload)=>{const res=await scheduleMeeting(payload);await reloadMeetings();return res}}
-          onDelete={async(id)=>{const res=await deleteMeeting(id);if(res.error)alert(res.error);await reloadMeetings()}}
-          onCheckRecording={async(id)=>{const res=await checkMeetingRecording(id);if(res.recordingUrl)await reloadMeetings();return res}}
+      ) : videosOpen ? (
+        <VideoLibrary onClose={()=>setVideosOpen(false)} videos={libraryVideos} canManage={!!(canManageUsers||p.manageVideos)} teamCat={teamCat}
+          onAdd={async(v)=>{const res=await addLibraryVideo(v);await reloadVideos();return res}}
+          onDelete={async(v)=>{if(!(await askConfirm(tr.library.confirmDelete)))return;const res=await deleteLibraryVideo(v);if(res.error)alert(res.error);await reloadVideos()}}
+          onEndStream={async(v)=>{if(!(await askConfirm(tr.library.endStreamConfirm)))return;const res=await setLibraryVideoKind(v.id,"match");if(res.error)alert(res.error);await reloadVideos()}}
           tr={tr}/>
       ) : reportsOpen ? (
         <ClubReportsPanel open onClose={()=>setReportsOpen(false)} reports={allClubReports} members={members} teamCat={teamCat}
@@ -1582,8 +1581,8 @@ export default function EliteSquadApp() {
               <button onClick={()=>setStagesOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <CalendarRange size={14} className="text-[#a9822e]"/>Rassemblements (Camps)
               </button>
-              <button onClick={()=>{setMeetingsOpen(true);reloadMeetings()}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
-                <Video size={14} className="text-[#a9822e]"/>{tr.meetings.title}
+              <button onClick={()=>{setVideosOpen(true);reloadVideos()}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+                <Video size={14} className="text-[#a9822e]"/>{tr.library.title}
               </button>
               <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Newspaper size={14} className="text-[#a9822e]"/>Women&apos;s Football News

@@ -51,7 +51,7 @@ An admin can grant any combination of these to a staff account:
 
 `addPlayer`, `editPlayer`, `deletePlayer`, `addMatch`, `deleteMatch`,
 `exportData`, `viewMedical`, `editMedical`, `addCamps`, `viewClubReports`,
-`manageMeetings`, `manageTravel` (passport expiry dates and trip logistics: edit only)
+`manageVideos`, `manageTravel` (passport expiry dates and trip logistics: edit only)
 
 None of these are granted by default — a new staff account starts with no
 access to sensitive data until an admin deliberately turns a flag on.

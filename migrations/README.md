@@ -33,7 +33,7 @@ that baseline, in order.
 | `0001_games.sql` | Yes — says so in its header; uses `if not exists` throughout. |
 | `0002_player_accounts.sql` | Yes — says so in its header; uses `if not exists` / `create or replace` throughout. |
 | `0003_activity_log_triggers.sql` | Yes — says so in its header ("every statement below is idempotent"). |
-| `0004_meetings.sql` | **No**, despite the general convention. It has no re-run note, and its `create policy ...` / `create trigger ...` statements have no `if not exists` guard — running it twice fails with "policy/trigger already exists". Drop the four policies and the trigger first if you need to re-apply it. |
+| `0004_meetings.sql` (retired by 0029) | **No**, despite the general convention. It has no re-run note, and its `create policy ...` / `create trigger ...` statements have no `if not exists` guard — running it twice fails with "policy/trigger already exists". Drop the four policies and the trigger first if you need to re-apply it. |
 | `0005_password_reset.sql` | Yes in practice — no explicit header claim, but every statement is `... if not exists`. |
 | `0006_club_reports_v2.sql` | Mostly, but **not fully**: the `alter table ... add column if not exists` and `create or replace function` lines are safe, but the trailing `create trigger trg_guard_club_report_verification ...` has no guard and fails on a second run. Drop that trigger first if re-applying. |
 | `0007_celebration_photo.sql` | Yes — says so in its header; `add column if not exists`. |
@@ -54,6 +54,7 @@ that baseline, in order.
 | `0022_league_recount_grants.sql` | Yes — `REVOKE` / `GRANT` only. Closes `league_recount_player` and `league_recount_season` to anonymous callers: 0021 made them `SECURITY DEFINER` and PostgreSQL grants `EXECUTE` on a new function to `PUBLIC`, so a logged-out visitor could reach a write path that runs over row level security. Needs 0021 first. |
 | `0023_league_changes_notifications_squads.sql` | Yes — `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Adds the match change history (with an optional reason), club notifications and matchday squads. A club reads only its own notifications and squad. Needs 0015 and 0020 first. |
 | `0024_player_medical.sql` | Yes — `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Adds `player_medical` (availability, medical note, checkup, log, fitness, minutes per national-team player) for the phone app. Everyone active reads it; the admin or an account with the `editMedical` permission writes it. The app works without it. |
+| `0029_video_library.sql` | Yes — every statement is guarded (`IF NOT EXISTS`, `DROP ... IF EXISTS`, `ON CONFLICT`). Adds the Stream & Videos library and the `manageVideos` permission; drops the old `meetings` table only if it is empty. |
 
 ### RLS helpers and the setup file
 
