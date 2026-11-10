@@ -1,9 +1,9 @@
 "use client"
 import React, { useEffect, useMemo, useRef, useState } from "react"
-import { ChevronLeft, Plus, Trash2, Link2, Upload, Play, X, Radio, ExternalLink, Square } from "lucide-react"
+import { ChevronLeft, Plus, Trash2, Link2, Upload, Play, X, Radio, ExternalLink, Square, Lock, KeyRound, Copy, Check, Eye, EyeOff } from "lucide-react"
 import { Select } from "@/components/pickers"
 import { videoPlayback } from "@/lib/video-embed"
-import { signedVideoUrl, uploadLibraryVideo, VIDEO_MAX_BYTES, type LibraryVideo } from "@/lib/app-data"
+import { signedVideoUrl, uploadLibraryVideo, VIDEO_MAX_BYTES, startLiveStream, getStreamCredentials, getStreamPlayerSrc, type LibraryVideo } from "@/lib/app-data"
 
 type Kind = LibraryVideo["kind"]
 type NewVideo = {
@@ -19,6 +19,7 @@ type Props = {
   onAdd: (v: NewVideo) => Promise<{ error?: string | null }>
   onDelete: (v: LibraryVideo) => Promise<void>
   onEndStream: (v: LibraryVideo) => Promise<void>
+  onReload: () => Promise<void>
   tr: any
 }
 
@@ -46,6 +47,8 @@ function youtubeThumb(url: string | null): string | null {
 function Player({ v, onClose, tr }: { v: LibraryVideo; onClose: () => void; tr: any }) {
   const [src, setSrc] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
+  const [streamSrc, setStreamSrc] = useState<string | null>(null)
+  const [streamErr, setStreamErr] = useState<string | null>(null)
   const playback = useMemo(() => (v.source === "link" ? videoPlayback(v.url || "") : null), [v])
 
   useEffect(() => {
@@ -53,8 +56,16 @@ function Player({ v, onClose, tr }: { v: LibraryVideo; onClose: () => void; tr: 
     if (v.source === "upload" && v.file_path) {
       signedVideoUrl(v.file_path).then(u => { if (!alive) return; u ? setSrc(u) : setFailed(true) })
     }
+    if (v.source === "stream") {
+      // The server checks the viewer is a signed-in active account and hands back a short-lived link.
+      getStreamPlayerSrc(v.id).then(r => {
+        if (!alive) return
+        if (r.src) setStreamSrc(r.src)
+        else setStreamErr(r.error === "processing" ? tr.library.processing : r.error === "not_configured" ? tr.library.notSetUp : tr.library.loadFail)
+      })
+    }
     return () => { alive = false }
-  }, [v])
+  }, [v, tr])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose() }
@@ -74,7 +85,11 @@ function Player({ v, onClose, tr }: { v: LibraryVideo; onClose: () => void; tr: 
           <button onClick={onClose} title={tr.library.close} className="shrink-0 p-2 rounded-full bg-white/10 text-white hover:bg-white/20 transition-all"><X size={16} /></button>
         </div>
         <div className="aspect-video w-full rounded-2xl overflow-hidden bg-black border border-white/10">
-          {playback?.type === "iframe" ? (
+          {streamSrc ? (
+            <iframe src={streamSrc} title={v.title} className="w-full h-full" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen />
+          ) : streamErr ? (
+            <div className="w-full h-full flex items-center justify-center text-center px-6"><p className="text-[12px] font-bold text-white/80">{streamErr}</p></div>
+          ) : playback?.type === "iframe" ? (
             <iframe src={playback.src} title={v.title} className="w-full h-full" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
           ) : fileSrc ? (
             <video src={fileSrc} controls autoPlay playsInline className="w-full h-full bg-black" />
@@ -101,7 +116,7 @@ function LiveBadge({ tr }: { tr: any }) {
   )
 }
 
-export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDelete, onEndStream, tr }: Props) {
+export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDelete, onEndStream, onReload, tr }: Props) {
   const L = tr.library
   const [filter, setFilter] = useState<"all" | Kind>("all")
   const [formOpen, setFormOpen] = useState(false)
@@ -116,6 +131,37 @@ export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDel
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [playing, setPlaying] = useState<LibraryVideo | null>(null)
+  // Private live stream (admin): create form + the one-time codes panel
+  const [liveOpen, setLiveOpen] = useState(false)
+  const [liveTitle, setLiveTitle] = useState("")
+  const [liveDesc, setLiveDesc] = useState("")
+  const [liveCat, setLiveCat] = useState(teamCat || "SENIORS")
+  const [liveBusy, setLiveBusy] = useState(false)
+  const [liveErr, setLiveErr] = useState<string | null>(null)
+  const [creds, setCreds] = useState<{ title: string; url: string; key: string } | null>(null)
+  const [showKey, setShowKey] = useState(false)
+  const [copied, setCopied] = useState<"url" | "key" | null>(null)
+
+  const apiMsg = (r: { error?: string }) => (r.error === "not_configured" ? L.notSetUp : r.error || L.loadFail)
+  const startLive = async () => {
+    setLiveErr(null)
+    if (!liveTitle.trim()) { setLiveErr(L.needTitle); return }
+    setLiveBusy(true)
+    const r = await startLiveStream({ title: liveTitle, description: liveDesc, teamCategory: liveCat })
+    setLiveBusy(false)
+    if (!r.id) { setLiveErr(apiMsg(r)); return }
+    setCreds({ title: liveTitle.trim(), url: r.url, key: r.key }); setShowKey(false)
+    setLiveTitle(""); setLiveDesc(""); setLiveOpen(false)
+    await onReload()
+  }
+  const showCodes = async (v: LibraryVideo) => {
+    const r = await getStreamCredentials(v.id)
+    if (!r.key) { alert(apiMsg(r)); return }
+    setCreds({ title: v.title, url: r.url, key: r.key }); setShowKey(false)
+  }
+  const copy = async (what: "url" | "key", text: string) => {
+    try { await navigator.clipboard.writeText(text); setCopied(what); setTimeout(() => setCopied(null), 1500) } catch { /* clipboard blocked */ }
+  }
   const fileRef = useRef<HTMLInputElement>(null)
 
   const live = videos.filter(v => v.kind === "live")
@@ -167,6 +213,7 @@ export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDel
                 {v.team_category && <span className="px-1.5 py-0.5 rounded bg-[var(--c-panel3)] text-[9px] font-black uppercase tracking-wider">{v.team_category}</span>}
                 <span>{new Date(v.created_at).toLocaleDateString()}</span>
                 {v.source === "upload" && v.size_bytes ? <span>{formatSize(v.size_bytes)}</span> : null}
+                {v.source === "stream" && <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[var(--c-panel3)] text-[9px] font-black uppercase tracking-wider"><Lock size={9} />{L.membersOnly}</span>}
               </p>
             </div>
             {canManage && (
@@ -176,6 +223,11 @@ export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDel
           {v.description && <p className="text-[11px] font-bold text-[var(--c-textDim)] line-clamp-2">{v.description}</p>}
           <div className="mt-auto flex items-center justify-between gap-2 pt-1">
             {v.created_by_username ? <p className="text-[9px] font-bold text-[var(--c-textFaint)] uppercase tracking-wider truncate">{L.addedBy} {v.created_by_username}</p> : <span />}
+            {canManage && isLive && v.source === "stream" && (
+              <button onClick={() => showCodes(v)} className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[rgba(var(--line-rgb),.3)] text-[var(--c-textDim)] text-[9px] font-black uppercase tracking-wider hover:text-[var(--c-text)] transition-all">
+                <KeyRound size={9} /> {L.streamKey}
+              </button>
+            )}
             {canManage && isLive && (
               <button onClick={() => onEndStream(v)} className="shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#E30613]/50 text-[#ff6b7a] text-[9px] font-black uppercase tracking-wider hover:bg-[#E30613] hover:text-white transition-all">
                 <Square size={9} fill="currentColor" /> {L.endStream}
@@ -213,9 +265,61 @@ export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDel
 
       <div className="max-w-5xl mx-auto px-6 pb-20 w-full">
         {canManage && (
-          <button onClick={() => setFormOpen(v => !v)} className="mt-6 w-full flex items-center justify-center gap-3 py-5 px-6 rounded-2xl bg-gradient-to-r from-[#1a5fc4] via-[#2d8cff] to-[#5fb0ff] text-white text-[13px] font-black uppercase tracking-widest shadow-xl shadow-[#2d8cff]/25 hover:shadow-[#2d8cff]/45 transition-all">
-            <Plus size={16} strokeWidth={3} /> {L.add}
-          </button>
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <button onClick={() => { setFormOpen(v => !v); setLiveOpen(false) }} className="flex items-center justify-center gap-3 py-5 px-6 rounded-2xl bg-gradient-to-r from-[#1a5fc4] via-[#2d8cff] to-[#5fb0ff] text-white text-[13px] font-black uppercase tracking-widest shadow-xl shadow-[#2d8cff]/25 hover:shadow-[#2d8cff]/45 transition-all">
+              <Plus size={16} strokeWidth={3} /> {L.add}
+            </button>
+            <button onClick={() => { setLiveOpen(v => !v); setFormOpen(false) }} className="flex items-center justify-center gap-3 py-5 px-6 rounded-2xl bg-gradient-to-r from-[#9c0410] via-[#E30613] to-[#ff4f5e] text-white text-[13px] font-black uppercase tracking-widest shadow-xl shadow-[#E30613]/25 hover:shadow-[#E30613]/45 transition-all">
+              <Radio size={16} strokeWidth={3} /> {L.goLive}
+            </button>
+          </div>
+        )}
+
+        {liveOpen && canManage && (
+          <div className="mt-4 rounded-2xl border border-[#E30613]/35 bg-[var(--c-panel2)]/60 p-5 space-y-3">
+            <p className="text-[11px] font-bold text-[var(--c-textDim)] flex items-center gap-2"><Lock size={12} /> {L.privateNote}</p>
+            <input value={liveTitle} onChange={e => setLiveTitle(e.target.value)} placeholder={L.titleLabel} maxLength={120} aria-label={L.titleLabel}
+              className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[13px] font-bold outline-none focus:border-[#E30613]/50 transition-all" />
+            <Select variant="stage" allowEmpty={false} value={liveCat} onChange={setLiveCat} options={CATS} />
+            <input value={liveDesc} onChange={e => setLiveDesc(e.target.value)} placeholder={L.descLabel} maxLength={300} aria-label={L.descLabel}
+              className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[13px] font-bold outline-none focus:border-[#E30613]/50 transition-all" />
+            {liveErr && <p role="alert" className="text-[11px] font-bold text-[#ff4f66]">{liveErr}</p>}
+            <div className="flex justify-end gap-2">
+              <button onClick={() => { setLiveOpen(false); setLiveErr(null) }} disabled={liveBusy} className="px-5 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] text-[11px] font-black uppercase tracking-wider disabled:opacity-40">{tr.common.cancel}</button>
+              <button onClick={startLive} disabled={liveBusy} className="px-6 py-2.5 rounded-xl bg-[#E30613] text-white text-[11px] font-black uppercase tracking-wider disabled:opacity-40">{liveBusy ? L.creating : L.createStream}</button>
+            </div>
+          </div>
+        )}
+
+        {creds && canManage && (
+          <div className="mt-4 rounded-2xl border border-[#E30613]/45 bg-[var(--c-panel2)]/70 p-5 space-y-4" role="region" aria-label={L.connectTitle}>
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[13px] font-black uppercase tracking-tight text-[var(--c-text)] truncate">{creds.title}</p>
+                <p className="mt-0.5 text-[11px] font-bold text-[var(--c-textDim)]">{L.connectTitle}</p>
+              </div>
+              <button onClick={() => setCreds(null)} title={L.close} className="shrink-0 p-1.5 rounded-lg text-[var(--c-textDim)] hover:text-[var(--c-text)] hover:bg-[var(--c-panel3)]"><X size={14} /></button>
+            </div>
+            {([["url", L.serverUrl, creds.url], ["key", L.streamKey, creds.key]] as const).map(([k, label, val]) => (
+              <div key={k}>
+                <p className="mb-1.5 text-[10px] font-black uppercase tracking-wider text-[var(--c-textDim)]">{label}</p>
+                <div className="flex gap-2">
+                  <input readOnly value={k === "key" && !showKey ? "•".repeat(Math.min(val.length, 28)) : val} aria-label={label} onFocus={e => e.currentTarget.select()}
+                    className="min-w-0 flex-1 px-3 py-2.5 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] text-[12px] font-bold font-mono outline-none" />
+                  {k === "key" && (
+                    <button onClick={() => setShowKey(s => !s)} title={showKey ? L.hide : L.reveal} className="shrink-0 px-3 rounded-xl border border-[rgba(var(--line-rgb),.22)] text-[var(--c-textDim)] hover:text-[var(--c-text)]">{showKey ? <EyeOff size={14} /> : <Eye size={14} />}</button>
+                  )}
+                  <button onClick={() => copy(k, val)} className="shrink-0 flex items-center gap-1.5 px-3.5 rounded-xl bg-[#2d8cff] text-white text-[10px] font-black uppercase tracking-wider">
+                    {copied === k ? <Check size={13} /> : <Copy size={13} />} {copied === k ? L.copied : L.copy}
+                  </button>
+                </div>
+              </div>
+            ))}
+            <ol className="list-decimal pl-5 space-y-1 text-[11px] font-bold text-[var(--c-textDim)]">
+              <li>{L.step1}</li><li>{L.step2}</li><li>{L.step3}</li>
+            </ol>
+            <p className="text-[11px] font-bold text-[#f6c744]">{L.keyWarn}</p>
+          </div>
         )}
 
         {formOpen && canManage && (

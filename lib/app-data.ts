@@ -522,13 +522,14 @@ export type LibraryVideo = {
   description: string
   kind: 'match' | 'highlight' | 'training' | 'live'
   team_category: string | null
-  source: 'link' | 'upload'
+  source: 'link' | 'upload' | 'stream'
   url: string | null
   file_path: string | null
   file_name: string | null
   size_bytes: number | null
   created_by_username: string | null
   created_at: string
+  live_input_uid: string | null
 }
 
 // Client-side ceiling. The real limit is the smaller of this and the bucket/global
@@ -574,12 +575,44 @@ export async function setLibraryVideoKind(id: number, kind: LibraryVideo['kind']
   return { error: error?.message || null }
 }
 
-export async function deleteLibraryVideo(v: Pick<LibraryVideo, 'id' | 'file_path'>) {
+export async function deleteLibraryVideo(v: Pick<LibraryVideo, 'id' | 'file_path'> & { source?: LibraryVideo['source'] }) {
+  if (v.source === 'stream') {
+    // Also deletes the live input and its recordings at Cloudflare, so it goes through the server.
+    const r = await streamCall<{ ok?: boolean }>('remove', { id: v.id })
+    return { error: r.error || null }
+  }
   const { error } = await supabase.from('library_videos').delete().eq('id', v.id)
   if (error) return { error: error.message }
   if (v.file_path) await supabase.storage.from('videos').remove([v.file_path])
   return { error: null }
 }
+
+// ── Private live streaming (Cloudflare Stream, via our own API routes) ──
+// The browser never sees any Cloudflare secret. Each call carries the user's session token;
+// the server checks it, and RLS decides what the user may read or change.
+export type StreamResult<T> = T & { error?: string; status?: number }
+
+async function streamCall<T>(path: 'start' | 'credentials' | 'play' | 'remove', body: object): Promise<StreamResult<T>> {
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  if (!token) return { error: 'Not signed in', status: 401 } as StreamResult<T>
+  try {
+    const res = await fetch(`/api/stream/${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    })
+    const json = await res.json().catch(() => ({}))
+    return res.ok ? (json as StreamResult<T>) : ({ ...json, error: json.error || `Error ${res.status}`, status: res.status } as StreamResult<T>)
+  } catch {
+    return { error: 'Network error', status: 0 } as StreamResult<T>
+  }
+}
+
+export const startLiveStream = (v: { title: string; description?: string; teamCategory?: string | null }) =>
+  streamCall<{ id: number; url: string; key: string }>('start', v)
+export const getStreamCredentials = (id: number) => streamCall<{ url: string; key: string }>('credentials', { id })
+export const getStreamPlayerSrc = (id: number) => streamCall<{ src: string }>('play', { id })
 
 /**
  * Upload one video with progress using Supabase's resumable (TUS) endpoint: the file is sent in

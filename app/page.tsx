@@ -1477,6 +1477,7 @@ export default function EliteSquadApp() {
         <VideoLibrary onClose={()=>setVideosOpen(false)} videos={libraryVideos} canManage={!!canManageUsers} teamCat={teamCat}
           onAdd={async(v)=>{const res=await addLibraryVideo(v);await reloadVideos();return res}}
           onDelete={async(v)=>{if(!(await askConfirm(tr.library.confirmDelete)))return;const res=await deleteLibraryVideo(v);if(res.error)alert(res.error);await reloadVideos()}}
+          onReload={reloadVideos}
           onEndStream={async(v)=>{if(!(await askConfirm(tr.library.endStreamConfirm)))return;const res=await setLibraryVideoKind(v.id,"match");if(res.error)alert(res.error);await reloadVideos()}}
           tr={tr}/>
       ) : reportsOpen ? (
