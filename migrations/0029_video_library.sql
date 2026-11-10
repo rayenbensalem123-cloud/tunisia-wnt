@@ -9,10 +9,8 @@
 --                    Twitch or a direct .mp4 address — best for full matches
 --                    and live streams) or an UPLOAD (a file in the private
 --                    "videos" storage bucket — best for short highlights).
---   videos bucket  : private; every active account can watch, only accounts
---                    with the Manage videos permission can add or remove.
---   manageVideos   : the new permission. Accounts that had Manage meetings
---                    get it automatically.
+--   videos bucket  : private; every active account can watch, only admins can
+--                    add or remove.
 --
 -- File size: the bucket is capped at 50 MB per file, which is the maximum on
 -- Supabase's free plan. On a paid plan raise it in Storage → Settings and
@@ -60,14 +58,14 @@ CREATE POLICY library_videos_select ON public.library_videos
   FOR SELECT TO authenticated USING (public.library_can_view());
 DROP POLICY IF EXISTS library_videos_insert ON public.library_videos;
 CREATE POLICY library_videos_insert ON public.library_videos
-  FOR INSERT TO authenticated WITH CHECK (public.has_permission('manageVideos'));
+  FOR INSERT TO authenticated WITH CHECK (public.current_active_admin());
 DROP POLICY IF EXISTS library_videos_update ON public.library_videos;
 CREATE POLICY library_videos_update ON public.library_videos
-  FOR UPDATE TO authenticated USING (public.has_permission('manageVideos'))
-  WITH CHECK (public.has_permission('manageVideos'));
+  FOR UPDATE TO authenticated USING (public.current_active_admin())
+  WITH CHECK (public.current_active_admin());
 DROP POLICY IF EXISTS library_videos_delete ON public.library_videos;
 CREATE POLICY library_videos_delete ON public.library_videos
-  FOR DELETE TO authenticated USING (public.has_permission('manageVideos'));
+  FOR DELETE TO authenticated USING (public.current_active_admin());
 
 -- 3. Private storage bucket for uploaded clips.
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
@@ -80,14 +78,14 @@ CREATE POLICY "videos_storage_select" ON storage.objects
   FOR SELECT USING (bucket_id = 'videos' AND public.library_can_view());
 DROP POLICY IF EXISTS "videos_storage_insert" ON storage.objects;
 CREATE POLICY "videos_storage_insert" ON storage.objects
-  FOR INSERT WITH CHECK (bucket_id = 'videos' AND public.has_permission('manageVideos'));
+  FOR INSERT WITH CHECK (bucket_id = 'videos' AND public.current_active_admin());
 DROP POLICY IF EXISTS "videos_storage_update" ON storage.objects;
 CREATE POLICY "videos_storage_update" ON storage.objects
-  FOR UPDATE USING (bucket_id = 'videos' AND public.has_permission('manageVideos'))
-  WITH CHECK (bucket_id = 'videos' AND public.has_permission('manageVideos'));
+  FOR UPDATE USING (bucket_id = 'videos' AND public.current_active_admin())
+  WITH CHECK (bucket_id = 'videos' AND public.current_active_admin());
 DROP POLICY IF EXISTS "videos_storage_delete" ON storage.objects;
 CREATE POLICY "videos_storage_delete" ON storage.objects
-  FOR DELETE USING (bucket_id = 'videos' AND public.has_permission('manageVideos'));
+  FOR DELETE USING (bucket_id = 'videos' AND public.current_active_admin());
 
 -- 4. Audit log: allow the new table name (the old 'meetings' value stays so
 --    history rows written earlier remain valid).
@@ -101,13 +99,7 @@ DROP TRIGGER IF EXISTS trg_log_library_videos ON public.library_videos;
 CREATE TRIGGER trg_log_library_videos AFTER INSERT OR UPDATE OR DELETE ON public.library_videos
   FOR EACH ROW EXECUTE FUNCTION public.log_activity();
 
--- 5. Carry the permission over: whoever managed meetings now manages videos.
-UPDATE public.profiles
-   SET permissions = coalesce(permissions, '{}'::jsonb) || '{"manageVideos": true}'::jsonb
- WHERE permissions ->> 'manageMeetings' = 'true'
-   AND coalesce(permissions ->> 'manageVideos', 'false') <> 'true';
-
--- 6. Retire the Zoom meetings table, but only if it is empty.
+-- 5. Retire the Zoom meetings table, but only if it is empty.
 DO $$
 BEGIN
   IF to_regclass('public.meetings') IS NOT NULL THEN

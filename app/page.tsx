@@ -125,7 +125,6 @@ interface UserPerms {
   viewMedical: boolean; editMedical: boolean
   addCamps: boolean
   viewClubReports: boolean
-  manageVideos: boolean
   manageTravel: boolean
 }
 interface AppUser {
@@ -135,8 +134,8 @@ interface AppUser {
   perms: UserPerms
 }
 
-const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false, addCamps:false, viewClubReports:false, manageVideos:false, manageTravel:false }
-const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true, viewClubReports:true, manageVideos:true, manageTravel:true }
+const DEFAULT_PERMS: UserPerms = { addPlayer:false, editPlayer:false, deletePlayer:false, addMatch:false, deleteMatch:false, exportData:false, viewMedical:false, editMedical:false, addCamps:false, viewClubReports:false,  manageTravel:false }
+const FULL_PERMS: UserPerms = { addPlayer:true, editPlayer:true, deletePlayer:true, addMatch:true, deleteMatch:true, exportData:true, viewMedical:true, editMedical:true, addCamps:true, viewClubReports:true,  manageTravel:true }
 
 // Maps a DB profiles row -> the shape the UI already expects
 const profileToAppUser = (p: any): AppUser => ({
@@ -486,7 +485,7 @@ const TeamSelector=({onSelect,showLeague}:{onSelect:(c:TeamCategory)=>void;showL
 // Just the keys — the display label is looked up from tr.perms at render time
 // (this array lives outside the component, so it can't call useTranslate()).
 const PERM_KEYS: (keyof UserPerms)[] = [
-  "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps","viewClubReports","manageVideos","manageTravel",
+  "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps","viewClubReports","manageTravel",
 ]
 
 // ═════════════════════════════════════════════
@@ -1475,7 +1474,7 @@ export default function EliteSquadApp() {
       {stagesOpen ? (
         <StagesManager open onClose={()=>setStagesOpen(false)} stages={camps} members={members} teamCat={teamCat} canManage={!!(canManageUsers||p.addCamps)} onSave={async(stage)=>{const isNew=!(camps||[]).some((c:any)=>(c.id||0)===stage.id);const payload=isNew?{...stage,createdByUsername:user?.username}:stage;const res=await saveCampRow(payload,isNew);if(res.error){alert('Could not save the camp: '+res.error);return false}await reloadCamps();return true}} onDelete={async(id)=>{const res=await deleteCampRow(id);if(res.error){alert('Could not delete the camp: '+res.error);return false}await reloadCamps();return true}} onRefresh={reloadCamps} user={user}/>
       ) : videosOpen ? (
-        <VideoLibrary onClose={()=>setVideosOpen(false)} videos={libraryVideos} canManage={!!(canManageUsers||p.manageVideos)} teamCat={teamCat}
+        <VideoLibrary onClose={()=>setVideosOpen(false)} videos={libraryVideos} canManage={!!canManageUsers} teamCat={teamCat}
           onAdd={async(v)=>{const res=await addLibraryVideo(v);await reloadVideos();return res}}
           onDelete={async(v)=>{if(!(await askConfirm(tr.library.confirmDelete)))return;const res=await deleteLibraryVideo(v);if(res.error)alert(res.error);await reloadVideos()}}
           onEndStream={async(v)=>{if(!(await askConfirm(tr.library.endStreamConfirm)))return;const res=await setLibraryVideoKind(v.id,"match");if(res.error)alert(res.error);await reloadVideos()}}

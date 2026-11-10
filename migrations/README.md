@@ -54,7 +54,7 @@ that baseline, in order.
 | `0022_league_recount_grants.sql` | Yes — `REVOKE` / `GRANT` only. Closes `league_recount_player` and `league_recount_season` to anonymous callers: 0021 made them `SECURITY DEFINER` and PostgreSQL grants `EXECUTE` on a new function to `PUBLIC`, so a logged-out visitor could reach a write path that runs over row level security. Needs 0021 first. |
 | `0023_league_changes_notifications_squads.sql` | Yes — `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Adds the match change history (with an optional reason), club notifications and matchday squads. A club reads only its own notifications and squad. Needs 0015 and 0020 first. |
 | `0024_player_medical.sql` | Yes — `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Adds `player_medical` (availability, medical note, checkup, log, fitness, minutes per national-team player) for the phone app. Everyone active reads it; the admin or an account with the `editMedical` permission writes it. The app works without it. |
-| `0029_video_library.sql` | Yes — every statement is guarded (`IF NOT EXISTS`, `DROP ... IF EXISTS`, `ON CONFLICT`). Adds the Stream & Videos library and the `manageVideos` permission; drops the old `meetings` table only if it is empty. |
+| `0029_video_library.sql` | Yes — every statement is guarded (`IF NOT EXISTS`, `DROP ... IF EXISTS`, `ON CONFLICT`). Adds the Stream & Videos library; admin-only; drops the old `meetings` table only if it is empty. |
 
 ### RLS helpers and the setup file
 

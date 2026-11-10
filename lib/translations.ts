@@ -192,7 +192,7 @@ const t = {
       addPlayer: "Add Player", editPlayer: "Edit Player", deletePlayer: "Delete Player",
       addMatch: "Add Match", deleteMatch: "Delete Match", exportData: "Export Data",
       viewMedical: "View Medical", editMedical: "Edit Medical", addCamps: "Manage Camps",
-      viewClubReports: "View Club Reports", manageVideos: "Manage Videos", manageTravel: "Manage Travel & Documents",
+      viewClubReports: "View Club Reports", manageTravel: "Manage Travel & Documents",
     },
     clubReports: {
       tab: "Club", logMatch: "Log Club Match", none: "No club matches logged yet",
@@ -601,7 +601,7 @@ const t = {
       addPlayer: "Ajouter Joueuse", editPlayer: "Modifier Joueuse", deletePlayer: "Supprimer Joueuse",
       addMatch: "Ajouter Match", deleteMatch: "Supprimer Match", exportData: "Exporter Données",
       viewMedical: "Voir Médical", editMedical: "Modifier Médical", addCamps: "Gérer Rassemblements",
-      viewClubReports: "Voir rapports de club", manageVideos: "Gérer les vidéos", manageTravel: "Gérer voyages et documents",
+      viewClubReports: "Voir rapports de club", manageTravel: "Gérer voyages et documents",
     },
     clubReports: {
       tab: "Club", logMatch: "Ajouter un match de club", none: "Aucun match de club enregistré",
@@ -1010,7 +1010,7 @@ const t = {
       addPlayer: "إضافة لاعبة", editPlayer: "تعديل لاعبة", deletePlayer: "حذف لاعبة",
       addMatch: "إضافة مباراة", deleteMatch: "حذف مباراة", exportData: "تصدير البيانات",
       viewMedical: "عرض الطبي", editMedical: "تعديل الطبي", addCamps: "إدارة المعسكرات",
-      viewClubReports: "عرض تقارير النادي", manageVideos: "إدارة الفيديو", manageTravel: "إدارة السفر والوثائق",
+      viewClubReports: "عرض تقارير النادي", manageTravel: "إدارة السفر والوثائق",
     },
     clubReports: {
       tab: "النادي", logMatch: "تسجيل مباراة نادي", none: "لا توجد مباريات نادٍ مسجلة",
