@@ -55,6 +55,7 @@ that baseline, in order.
 | `0023_league_changes_notifications_squads.sql` | Yes — `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Adds the match change history (with an optional reason), club notifications and matchday squads. A club reads only its own notifications and squad. Needs 0015 and 0020 first. |
 | `0024_player_medical.sql` | Yes — `IF NOT EXISTS` / `OR REPLACE` / `DROP … IF EXISTS`. Adds `player_medical` (availability, medical note, checkup, log, fitness, minutes per national-team player) for the phone app. Everyone active reads it; the admin or an account with the `editMedical` permission writes it. The app works without it. |
 | `0029_video_library.sql` | Yes — every statement is guarded (`IF NOT EXISTS`, `DROP ... IF EXISTS`, `ON CONFLICT`). Adds the Stream & Videos library; admin-only; drops the old `meetings` table only if it is empty. |
+| `0030_video_bucket_5gb.sql` | Yes — plain `UPDATE`. Raises the `videos` bucket to 5 GB; the global Storage limit must be raised first (Pro plan). |
 
 ### RLS helpers and the setup file
 

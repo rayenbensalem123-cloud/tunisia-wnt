@@ -29,7 +29,11 @@ const CATS = [
 ]
 const KINDS: Kind[] = ["live", "match", "highlight", "training"]
 
-const formatSize = (b: number | null) => (b ? `${(b / 1024 / 1024).toFixed(b > 10 * 1024 * 1024 ? 0 : 1)} MB` : "")
+const formatSize = (b: number | null) => {
+  if (!b) return ""
+  if (b >= 1024 ** 3) return `${(b / 1024 ** 3).toFixed(1)} GB`
+  return `${(b / 1024 / 1024).toFixed(b > 10 * 1024 * 1024 ? 0 : 1)} MB`
+}
 
 // Preview picture for YouTube links; everything else gets a plain tile.
 function youtubeThumb(url: string | null): string | null {
@@ -135,7 +139,7 @@ export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDel
       if (file.size > VIDEO_MAX_BYTES) { setErr(L.tooBig); return }
       setBusy(true); setProgress(0)
       const up = await uploadLibraryVideo(file, setProgress)
-      if (!up.path) { setBusy(false); setProgress(null); setErr(up.error === "tooBig" ? L.tooBig : up.error || L.loadFail); return }
+      if (!up.path) { setBusy(false); setProgress(null); setErr(up.error === "tooBig" ? L.tooBig : up.error === "serverLimit" ? L.serverLimit : up.error || L.loadFail); return }
       const res = await onAdd({ title, description: desc, kind, teamCategory: cat, source: "upload", filePath: up.path, fileName: file.name, sizeBytes: file.size })
       setBusy(false); setProgress(null)
       if (res.error) { setErr(res.error); return }

@@ -531,7 +531,9 @@ export type LibraryVideo = {
   created_at: string
 }
 
-export const VIDEO_MAX_BYTES = 50 * 1024 * 1024 // matches the bucket limit
+// Client-side ceiling. The real limit is the smaller of this and the bucket/global
+// Storage limit (50 MB on Supabase Free; raise it under Storage -> Settings on Pro).
+export const VIDEO_MAX_BYTES = 5 * 1024 * 1024 * 1024
 export const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
 
 export async function fetchLibraryVideos(): Promise<LibraryVideo[]> {
@@ -579,7 +581,12 @@ export async function deleteLibraryVideo(v: Pick<LibraryVideo, 'id' | 'file_path
   return { error: null }
 }
 
-/** Upload one clip with progress (supabase-js has no progress hook, so use XHR against the storage REST API). */
+/**
+ * Upload one video with progress using Supabase's resumable (TUS) endpoint: the file is sent in
+ * 6 MB chunks, so large matches work and a dropped connection resumes instead of restarting.
+ * Goes straight from the browser to Storage with the signed-in user's session; RLS on the
+ * 'videos' bucket decides who may write (admins only).
+ */
 export async function uploadLibraryVideo(file: File, onProgress: (pct: number) => void): Promise<{ path?: string; error?: string }> {
   if (!VIDEO_TYPES.includes(file.type)) return { error: 'Use an MP4, MOV or WebM file.' }
   if (file.size > VIDEO_MAX_BYTES) return { error: 'tooBig' }
@@ -588,23 +595,27 @@ export async function uploadLibraryVideo(file: File, onProgress: (pct: number) =
   if (!token) return { error: 'Not signed in' }
   const ext = file.type === 'video/webm' ? 'webm' : file.type === 'video/quicktime' ? 'mov' : 'mp4'
   const path = `library/${crypto.randomUUID()}.${ext}`
-  const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/videos/${path}`
+  // Large uploads should use the dedicated storage hostname.
+  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace('.supabase.co', '.storage.supabase.co')
+  const { Upload } = await import('tus-js-client')
   return new Promise((resolve) => {
-    const xhr = new XMLHttpRequest()
-    xhr.open('POST', url)
-    xhr.setRequestHeader('Authorization', `Bearer ${token}`)
-    xhr.setRequestHeader('apikey', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!)
-    xhr.setRequestHeader('Content-Type', file.type)
-    xhr.setRequestHeader('x-upsert', 'false')
-    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100)) }
-    xhr.onerror = () => resolve({ error: 'Network error during upload' })
-    xhr.onload = () => {
-      if (xhr.status >= 200 && xhr.status < 300) { resolve({ path }); return }
-      let msg = `Upload failed (${xhr.status})`
-      try { msg = JSON.parse(xhr.responseText).message || msg } catch {}
-      resolve({ error: msg })
-    }
-    xhr.send(file)
+    const upload = new Upload(file, {
+      endpoint: `${base}/storage/v1/upload/resumable`,
+      retryDelays: [0, 3000, 5000, 10000, 20000],
+      headers: { authorization: `Bearer ${token}`, apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, 'x-upsert': 'false' },
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      metadata: { bucketName: 'videos', objectName: path, contentType: file.type, cacheControl: '3600' },
+      chunkSize: 6 * 1024 * 1024, // required by Supabase
+      onError: (err) => {
+        const text = String(err?.message || err)
+        const tooLarge = /413|exceeded|maximum allowed size|too large/i.test(text)
+        resolve({ error: tooLarge ? 'serverLimit' : text })
+      },
+      onProgress: (sent, total) => onProgress(Math.round((sent / total) * 100)),
+      onSuccess: () => resolve({ path }),
+    })
+    upload.start()
   })
 }
 
