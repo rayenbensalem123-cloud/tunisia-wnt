@@ -147,11 +147,11 @@ export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDel
     reset(); setFormOpen(false)
   }
 
-  const Card = ({ v }: { v: LibraryVideo }) => {
+  const Card = ({ v, wide }: { v: LibraryVideo; wide?: boolean }) => {
     const thumb = youtubeThumb(v.url)
     const isLive = v.kind === "live"
     return (
-      <div className={`rounded-2xl border bg-[var(--c-panel2)]/50 overflow-hidden flex flex-col ${isLive ? "border-[#E30613]/50" : "border-[rgba(var(--line-rgb),.14)]"}`}>
+      <div className={`w-full sm:w-[calc(50%-0.375rem)] ${wide ? "" : "lg:w-[calc(33.333%-0.5rem)]"} rounded-2xl border bg-[var(--c-panel2)]/50 overflow-hidden flex flex-col ${isLive ? "border-[#E30613]/50" : "border-[rgba(var(--line-rgb),.14)]"}`}>
         <button onClick={() => setPlaying(v)} aria-label={`${L.watch}: ${v.title}`}
           className="group relative aspect-video w-full bg-gradient-to-br from-[#0d1f3c] to-[#1a2f55] flex items-center justify-center overflow-hidden">
           {thumb && <img src={thumb} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = "none" }} className="absolute inset-0 w-full h-full object-cover opacity-90" />}
@@ -271,7 +271,7 @@ export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDel
         )}
 
         {!empty && (
-          <div className="mt-6 flex gap-2 flex-wrap">
+          <div className="mt-6 flex gap-2 flex-wrap justify-center">
             {chip("all", L.all)}
             {KINDS.map(k => chip(k, L.kinds[k]))}
           </div>
@@ -286,10 +286,10 @@ export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDel
         )}
 
         {showLive && live.length > 0 && (
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3">{live.map(v => <Card key={v.id} v={v} />)}</div>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">{live.map(v => <Card key={v.id} v={v} wide />)}</div>
         )}
         {shown.length > 0 && (
-          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{shown.map(v => <Card key={v.id} v={v} />)}</div>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">{shown.map(v => <Card key={v.id} v={v} />)}</div>
         )}
         {nothingShown && <p className="mt-10 text-center text-[12px] font-black uppercase tracking-widest text-[var(--c-textDim)]">{L.noneFiltered}</p>}
       </div>

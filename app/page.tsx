@@ -1501,6 +1501,7 @@ export default function EliteSquadApp() {
             </div>
           </div>
           <div className="flex items-center gap-1.5 flex-wrap justify-end w-full lg:w-auto lg:grow lg:flex-nowrap min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap justify-center grow min-w-0 lg:flex-nowrap">
             <div className="portal-search hidden sm:flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border w-44 transition-all focus-within:border-[#E30613]/50 focus-within:shadow-[0_0_0_3px_rgba(227,6,44,.1)]">
               <Search size={13} className="text-[var(--c-textDim)] shrink-0"/>
               <input placeholder={tr.header.search} value={search} onChange={e=>setSearch(e.target.value)} className="bg-transparent text-[12px] font-bold outline-none w-full uppercase text-[var(--c-text)] placeholder-[var(--c-textMid)]"/>
@@ -1593,6 +1594,7 @@ export default function EliteSquadApp() {
                 <Plus size={14} className="text-[#a9822e]"/>Add Player / Staff
               </button>}
             </Dropdown>
+          </div>
 
             <Dropdown trigger={
               <button title="Account" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] transition-all fc-keep">
