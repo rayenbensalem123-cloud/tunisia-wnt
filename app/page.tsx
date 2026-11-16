@@ -1621,13 +1621,40 @@ export default function EliteSquadApp() {
             {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="hidden md:flex p-2 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_14px_rgba(227,6,44,.35)] transition-all fc-keep"><Plus size={16}/></button>}
           </div>
         </div>
-        <div className="max-w-[1800px] mx-auto px-6 pb-3 flex items-center gap-3 flex-wrap">
+        <div className="max-w-[1800px] mx-auto px-6 pb-3 flex items-center justify-center gap-3 flex-wrap">
           <div className="flex p-1 rounded-xl bg-zinc-100 border border-zinc-200">
             <button onClick={()=>{setActiveTab("STATS");setFilterPos("ALL")}} className={`px-5 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activeTab==="STATS"?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>Stats</button>
             <button onClick={()=>{setActiveTab("PLAYERS");setFilterPos("ALL")}} className={`px-5 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activeTab==="PLAYERS"?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>{tr.header.players}</button>
             <button onClick={()=>{setActiveTab("COACHES");setFilterPos("ALL")}} className={`px-5 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${activeTab==="COACHES"?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>{tr.header.staff}</button>
           </div>
-          <div className="w-px h-6 bg-zinc-200"/>
+        </div>
+
+        </header>
+
+      {/* ─── NEXT MATCH + FILTERS ─── */}
+      {(()=>{
+        const today=new Date().toISOString().slice(0,10)
+        const nx:any=matches.filter((m:any)=>m.date&&m.date>=today&&!m.result&&(!m.teamCategory||m.teamCategory===teamCat)).sort((x:any,y:any)=>x.date.localeCompare(y.date))[0]
+        const d=nx?Math.ceil((new Date(nx.date+"T00:00:00").getTime()-new Date(new Date().toDateString()).getTime())/86400000):0
+        return(
+      <div className="max-w-[1800px] mx-auto px-6 pt-4 pb-1 flex flex-col gap-3">
+        {nx&&(
+          <div className="relative rounded-2xl overflow-hidden border border-[rgba(148,170,210,.2)] px-5 py-3 flex items-center justify-center sm:justify-between gap-x-6 gap-y-2 flex-wrap" style={{background:"linear-gradient(120deg,#142c52 0%,#0b1322 62%,rgba(227,6,19,.45) 175%)"}}>
+            <div className="flex items-center gap-x-4 gap-y-1 flex-wrap justify-center">
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#f6c744]">Next match</span>
+              <span className="flex items-center gap-2 text-[17px] font-black uppercase tracking-tight text-white">
+                <CountryFlag name="Tunisia" className="w-6 h-4 rounded-sm"/>Tunisia <span className="text-[#ff4f66]">vs</span> <CountryFlag name={nx.opponent} className="w-6 h-4 rounded-sm"/>{nx.opponent||"TBD"}
+              </span>
+              <span className="text-[12px] font-bold text-white/70">{fmtDateWords(nx.date)}{nx.venue?` · ${nx.venue}`:""}</span>
+            </div>
+            <div className="flex items-center gap-4">
+              <span className="text-[13px] font-black uppercase tracking-wider text-white">{d<=0?"Today":d===1?"Tomorrow":`In ${d} days`}</span>
+              <button onClick={()=>setUpcomingOpen(true)} className="px-4 py-2 rounded-lg bg-white text-[#0b1322] text-[11px] font-black uppercase tracking-widest hover:bg-[#f6c744] transition-colors">Match centre</button>
+            </div>
+            <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#E30613]"/>
+          </div>
+        )}
+        <div className="flex items-center justify-center gap-3 flex-wrap">
           <div className="flex p-1 rounded-xl bg-zinc-100 border border-zinc-200">
             {(["SENIORS","U20","U17"] as TeamCategory[]).map(c=>(
               <button key={c} onClick={()=>selectCat(c)} className={`px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest transition-all ${teamCat===c?'bg-[#E30613] text-white':'text-zinc-500 hover:text-zinc-800'}`}>
@@ -1651,8 +1678,9 @@ export default function EliteSquadApp() {
             ))}
           </div>
         </div>
-
-        </header>
+      </div>
+        )
+      })()}
 
       {/* ─── DISCIPLINE LEGEND ─── */}
       {activeTab==="PLAYERS"&&(
