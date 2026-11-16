@@ -1641,8 +1641,8 @@ export default function EliteSquadApp() {
         return(
       <div className="max-w-[1800px] mx-auto px-6 pt-4 pb-1 flex flex-col gap-3">
         {nx&&(
-          <div className="relative rounded-2xl overflow-hidden border border-[rgba(148,170,210,.2)] px-5 py-3 flex items-center justify-center sm:justify-between gap-x-6 gap-y-2 flex-wrap" style={{background:"linear-gradient(120deg,#142c52 0%,#0b1322 62%,rgba(227,6,19,.45) 175%)"}}>
-            <div className="flex items-center gap-x-4 gap-y-1 flex-wrap justify-center">
+          <div className="relative rounded-2xl overflow-hidden border border-[rgba(148,170,210,.2)] px-5 py-3 flex flex-col items-center justify-center gap-y-3 text-center" style={{background:"linear-gradient(120deg,#142c52 0%,#0b1322 62%,rgba(227,6,19,.45) 175%)"}}>
+            <div className="flex flex-col items-center gap-y-1.5">
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#f6c744]">Next match</span>
               <span className="flex items-center gap-2 text-[17px] font-black uppercase tracking-tight text-white">
                 <CountryFlag name="Tunisia" className="w-6 h-4 rounded-sm"/>Tunisia <span className="text-[#ff4f66]">vs</span> <CountryFlag name={nx.opponent} className="w-6 h-4 rounded-sm"/>{nx.opponent||"TBD"}
