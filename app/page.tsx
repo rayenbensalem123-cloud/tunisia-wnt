@@ -1649,7 +1649,7 @@ export default function EliteSquadApp() {
             </div>
             <div className="flex items-center gap-4">
               <span className="text-[13px] font-black uppercase tracking-wider text-white">{d<=0?"Today":d===1?"Tomorrow":`In ${d} days`}</span>
-              <button onClick={()=>setUpcomingOpen(true)} className="px-4 py-2 rounded-lg bg-white text-[#0b1322] text-[11px] font-black uppercase tracking-widest hover:bg-[#f6c744] transition-colors">Match centre</button>
+              <button onClick={()=>setUpcomingOpen(true)} style={{background:"#f6c744",color:"#0b1322"}} className="px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest hover:brightness-110 transition-all">Match centre</button>
             </div>
             <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-[#E30613]"/>
           </div>
