@@ -1639,15 +1639,15 @@ export default function EliteSquadApp() {
         return(
       <div className="max-w-[1800px] mx-auto px-6 pt-4 pb-1 flex flex-col gap-3">
         {nx&&(
-          <div className="relative rounded-2xl overflow-hidden border border-[rgba(148,170,210,.2)] px-5 py-3 flex flex-col items-center justify-center gap-y-3 text-center" style={{background:"linear-gradient(120deg,#142c52 0%,#0b1322 62%,rgba(227,6,19,.45) 175%)"}}>
-            <div className="flex flex-col items-center gap-y-1.5">
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#f6c744]">Next match</span>
+          <div className="relative rounded-2xl overflow-hidden border border-[rgba(148,170,210,.2)] px-5 py-3 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-x-6 gap-y-2 text-center" style={{background:"linear-gradient(120deg,#142c52 0%,#0b1322 62%,rgba(227,6,19,.45) 175%)"}}>
+            <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#f6c744] sm:text-left">Next match</span>
+            <div className="flex items-center justify-center gap-x-4 gap-y-1 flex-wrap">
               <span className="flex items-center gap-2 text-[17px] font-black uppercase tracking-tight text-white">
                 <CountryFlag name="Tunisia" className="w-6 h-4 rounded-sm"/>Tunisia <span className="text-[#ff4f66]">vs</span> <CountryFlag name={nx.opponent} className="w-6 h-4 rounded-sm"/>{nx.opponent||"TBD"}
               </span>
               <span className="text-[12px] font-bold text-white/70">{fmtDateWords(nx.date)}{nx.venue?` · ${nx.venue}`:""}</span>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center justify-center sm:justify-end gap-4">
               <span className="text-[13px] font-black uppercase tracking-wider text-white">{d<=0?"Today":d===1?"Tomorrow":`In ${d} days`}</span>
               <button onClick={()=>setUpcomingOpen(true)} style={{background:"#f6c744",color:"#0b1322"}} className="px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest hover:brightness-110 transition-all">Match centre</button>
             </div>
