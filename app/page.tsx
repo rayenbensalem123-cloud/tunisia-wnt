@@ -1491,7 +1491,7 @@ export default function EliteSquadApp() {
       {/* ─── HEADER ─── */}
       <header className="sticky top-0 z-[100] border-b relative pt-safe-header">
         <div className="absolute bottom-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-[#E30613]/40 to-transparent animate-[pulse_3s_ease-in-out_infinite]"/>
-        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-x-4 gap-y-2 flex-wrap xl:grid xl:grid-cols-[1fr_auto_1fr]">
+        <div className="max-w-[1800px] mx-auto px-4 sm:px-6 pt-3 pb-2 flex items-center justify-between gap-x-4 gap-y-2 flex-wrap xl:flex-nowrap">
           <div className="flex items-center gap-3 shrink-0">
             <button onClick={()=>{setTeamCat(null);setSearch("")}} title="Back to team categories" className={`${HEADER_ICON_BTN} shrink-0`}><ChevronLeft size={16}/></button>
             <img src="/ftf-logo.png" className="h-10 sm:h-11 w-auto object-contain shrink-0" alt="Federation crest"/>
@@ -1500,7 +1500,7 @@ export default function EliteSquadApp() {
               <p className="text-[11px] font-black text-[#E30613] uppercase tracking-[0.3em]">{catLabel(teamCat)}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5 flex-wrap justify-end w-full lg:w-auto lg:grow lg:flex-nowrap min-w-0 xl:contents">
+          <div className="flex items-center gap-1.5 flex-wrap justify-end w-full lg:w-auto lg:grow lg:flex-nowrap min-w-0">
           <div className="flex items-center gap-1.5 flex-wrap justify-center grow min-w-0 lg:flex-nowrap">
             <div className="portal-search hidden sm:flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl border w-44 transition-all focus-within:border-[#E30613]/50 focus-within:shadow-[0_0_0_3px_rgba(227,6,44,.1)]">
               <Search size={13} className="text-[var(--c-textDim)] shrink-0"/>
@@ -1596,7 +1596,6 @@ export default function EliteSquadApp() {
             </Dropdown>
           </div>
 
-<div className="flex items-center gap-1.5 justify-end xl:col-start-3">
             <Dropdown trigger={
               <button title="Account" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-[rgba(148,170,210,.28)] bg-[#0d1f3c]/70 backdrop-blur-md text-[#cdc2b0] hover:text-[#f6c744] hover:border-[rgba(246,199,68,.55)] transition-all fc-keep">
                 <div className="w-6 h-6 rounded-full border border-[#f6c744]/60 bg-gradient-to-br from-[#12305a] to-[#0c1f3d] text-[#f6c744] flex items-center justify-center text-[11px] font-black uppercase shrink-0">{(user?.username||"?")[0]}</div>
@@ -1620,7 +1619,6 @@ export default function EliteSquadApp() {
 
             {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} title={selectMode?"Exit selection":"Select players to export passports"} className={`hidden md:flex p-2 rounded-lg border backdrop-blur-md transition-all fc-keep ${selectMode?'bg-[#f6c744] border-[#f6c744] text-[#0c1f3d] shadow-[0_0_14px_rgba(246,199,68,.3)]':'border-[rgba(246,199,68,.35)] bg-[#0d1f3c]/70 text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0d1f3d]'}`}><ListChecks size={16}/></button>}
             {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="hidden md:flex p-2 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_14px_rgba(227,6,44,.35)] transition-all fc-keep"><Plus size={16}/></button>}
-</div>
           </div>
         </div>
         <div className="max-w-[1800px] mx-auto px-6 pb-3 flex items-center justify-center gap-3 flex-wrap">
