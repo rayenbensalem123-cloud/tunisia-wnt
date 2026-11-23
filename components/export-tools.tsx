@@ -7,14 +7,14 @@ import { useFileDrop, isPdfFile, isImageFile } from "@/lib/use-file-drop"
 import { authHeaders } from "@/lib/auth-headers"
 import { norm } from "@/lib/callups"
 
-type ImportRow = { name: string; team?: string; camp?: string; isNew?: boolean }
+type ImportRow = { name: string; team?: string; isNew?: boolean }
 
 type Props = {
   members: any[]
   matches: any[]
   teamCat: string | null
   onImport: (data: { members: any[]; matches: any[] }) => void
-  onImportPlayers?: (rows: { name: string; team?: string; camp?: string }[]) => void
+  onImportPlayers?: (rows: { name: string; team?: string }[]) => void
   camps?: any[]
   // Fetched on demand (not pre-loaded into app state) so the full backup
   // stays cheap for callers who never open this menu. Omit either to leave
@@ -154,7 +154,7 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
     try {
       const fd = new FormData()
       for (const f of accepted) fd.append('file', f, f.name)
-      fd.append('campNames', JSON.stringify((camps || []).map((c: any) => c.name).filter(Boolean)))
+      fd.append('clubs', JSON.stringify([...new Set(members.map((m: any) => String(m.club || '').trim()).filter(Boolean))]))
       const r = await fetch('/api/import-players', { method: 'POST', headers: await authHeaders(), body: fd })
       const d = await r.json()
       if (!r.ok || d.error) {
@@ -184,14 +184,14 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
   }
   const pdfDrop = useFileDrop((files) => handleFiles(files), (f) => isPdfFile(f) || isImageFile(f))
 
-  const updateRow = (i: number, key: 'name' | 'team' | 'camp', val: string) => {
+  const updateRow = (i: number, key: 'name' | 'team', val: string) => {
     setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [key]: val } : r))
   }
 
   const confirmImport = () => {
     const valid = rows.filter(r => r.name && r.name.trim())
     if (!valid.length) return
-    onImportPlayers?.(valid.map(({ name, team, camp }) => ({ name, team, camp })))
+    onImportPlayers?.(valid.map(({ name, team }) => ({ name, team })))
     setPdfOpen(false); setRows([]); setFileName(""); setOpen(false)
   }
 
@@ -290,11 +290,11 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
             {rows.length > 0 && (
               <>
                 <div className="flex-1 min-h-0 mt-4 overflow-y-auto rounded-2xl border border-zinc-200">
-                  <div className="sticky top-0 bg-zinc-100 grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-500">
-                    <span>{tr.importPlayers.nameHeader}</span><span>{tr.importPlayers.teamHeader}</span><span>{tr.importPlayers.campHeader}</span>
+                  <div className="sticky top-0 bg-zinc-100 grid grid-cols-[1.2fr_1fr] gap-2 px-3 py-2 text-[10px] font-black uppercase tracking-wider text-zinc-500">
+                    <span>{tr.importPlayers.nameHeader}</span><span>{tr.importPlayers.teamHeader}</span>
                   </div>
                   {rows.map((r, i) => (
-                    <div key={i} className={`grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-1.5 ${i>0?'border-t border-zinc-100':''}`}>
+                    <div key={i} className={`grid grid-cols-[1.2fr_1fr] gap-2 px-3 py-1.5 ${i>0?'border-t border-zinc-100':''}`}>
                       <div className="min-w-0">
                         <input value={r.name} onChange={e => updateRow(i, 'name', e.target.value)} className="w-full text-[13px] font-bold outline-none border-b border-transparent focus:border-red-400 px-1 py-0.5"/>
                         <span className={`text-[8px] font-black uppercase tracking-wider ${r.isNew ? 'text-red-500' : 'text-emerald-600'}`}>
@@ -302,7 +302,6 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
                         </span>
                       </div>
                       <input value={r.team || ''} onChange={e => updateRow(i, 'team', e.target.value)} className="w-full text-[13px] outline-none border-b border-transparent focus:border-red-400 px-1 py-0.5"/>
-                      <input value={r.camp || ''} onChange={e => updateRow(i, 'camp', e.target.value)} className="w-full text-[13px] outline-none border-b border-transparent focus:border-red-400 px-1 py-0.5"/>
                     </div>
                   ))}
                 </div>

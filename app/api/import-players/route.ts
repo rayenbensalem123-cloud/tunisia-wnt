@@ -4,7 +4,7 @@ import { checkRateLimit } from '@/lib/rate-limit'
 import { extractPdfLines } from '@/lib/pdf-text'
 import { extractPdfImages } from '@/lib/pdf-scan'
 import { ocrImages } from '@/lib/ocr'
-import { parseCampList } from '@/lib/camp-list'
+import { parsePlayerList } from '@/lib/player-list'
 
 export const runtime = 'nodejs'
 // OCR of an image-only page can take a while on a cold start (traineddata is
@@ -49,16 +49,16 @@ export async function POST(req: Request) {
     if (!files.length) return NextResponse.json({ error: 'No file' }, { status: 400 })
     if (files.length > MAX_FILES) return NextResponse.json({ error: `Up to ${MAX_FILES} files at a time` }, { status: 413 })
 
-    let campNames: string[] = []
+    let clubs: string[] = []
     try {
-      const raw = form.get('campNames')
+      const raw = form.get('clubs')
       if (typeof raw === 'string') {
         const parsed = JSON.parse(raw)
-        if (Array.isArray(parsed)) campNames = parsed.filter((x): x is string => typeof x === 'string')
+        if (Array.isArray(parsed)) clubs = parsed.filter((x): x is string => typeof x === 'string' && x.trim().length > 0)
       }
-    } catch { /* camp names are only a parsing hint; ignore malformed input */ }
+    } catch { /* club names are only a parsing hint; ignore malformed input */ }
 
-    const lines: string[] = []
+    const lines: { text: string; page: number }[] = []
     let scannedPages = 0
     let ocredPages = 0
     let ocrFailures = 0
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
       if (kind === 'image') {
         try {
           const ocr = await ocrImages([buf])
-          lines.push(...ocr.lines)
+          lines.push(...ocr.lines.map((text) => ({ text, page: 1 })))
           ocredPages++
           ocrFailures += ocr.failed
         } catch (e) {
@@ -96,7 +96,7 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Could not read PDF: ' + safeError(e, 'unknown') }, { status: 400 })
       }
 
-      lines.push(...extracted.lines.map((l) => l.text))
+      lines.push(...extracted.lines)
       scannedPages += extracted.scannedPages
 
       if (extracted.scannedPageList.length) {
@@ -104,7 +104,7 @@ export async function POST(req: Request) {
           const images = await extractPdfImages(buf, extracted.scannedPageList)
           if (images.length) {
             const ocr = await ocrImages(images, 'eng+fra')
-            lines.push(...ocr.lines)
+            lines.push(...ocr.lines.map((text, i) => ({ text, page: extracted.scannedPageList[i] ?? 1 })))
             ocredPages += ocr.failed === 0 ? images.length : Math.max(0, images.length - ocr.failed)
             ocrFailures += ocr.failed
           }
@@ -116,7 +116,7 @@ export async function POST(req: Request) {
       }
     }
 
-    const rows = parseCampList(lines, campNames)
+    const rows = parsePlayerList(lines, clubs)
 
     return NextResponse.json({
       rows,
