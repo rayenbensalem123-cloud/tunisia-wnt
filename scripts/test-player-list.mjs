@@ -53,4 +53,16 @@ assert.deepEqual(piped, [
   { name: 'Nour Dridi', team: 'UST' },
 ])
 
+// Text PDFs carry x-coordinates: split on the real column boundary, with no
+// help from the club list (new players bring clubs the platform has never seen).
+const geometric = parsePlayerList([
+  { text: 'N" Nom et Prénom Club', page: 1, items: [{ str: 'Nom', x: 198 }, { str: 'Club', x: 389 }] },
+  { text: '9 Zayneb boukhriss Jawhra sfax', page: 1, items: [{ str: '9', x: 149 }, { str: 'Zayneb', x: 198 }, { str: 'boukhriss', x: 243 }, { str: 'Jawhra sfax', x: 368 }] },
+  { text: '13 Wided mejri BO U HAJ LA', page: 1, items: [{ str: '13', x: 145 }, { str: 'Wided', x: 212 }, { str: 'mejri', x: 253 }, { str: 'BO U HAJ LA', x: 370 }] },
+], [])
+assert.deepEqual(geometric, [
+  { name: 'Zayneb boukhriss', team: 'Jawhra sfax' },
+  { name: 'Wided mejri', team: 'BO U HAJ LA' },
+])
+
 console.log('Player list parser tests passed.')

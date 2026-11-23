@@ -1,7 +1,12 @@
 import { pathToFileURL } from 'url'
 import path from 'path'
 
-export type PdfTextLine = { text: string; page: number }
+export type PdfTextLine = {
+  text: string
+  page: number
+  /** Text items with their horizontal position, when column geometry matters. */
+  items?: { str: string; x: number }[]
+}
 
 export type ExtractPdfLinesResult = {
   /** Every non-empty visual line found, in reading order, with its 1-based page number. */
@@ -77,7 +82,11 @@ export async function extractPdfLines(
     for (const row of rows) {
       row.items.sort((a, b) => a.x - b.x) // left to right
       const text = row.items.map((i) => i.str).join(' ').trim()
-      if (text) lines.push({ text, page: i })
+      if (text) lines.push({
+        text,
+        page: i,
+        items: row.items.slice().sort((a, b) => a.x - b.x).map((it) => ({ str: it.str, x: it.x })),
+      })
     }
   }
 

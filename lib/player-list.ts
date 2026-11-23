@@ -13,7 +13,7 @@
 
 export type PlayerRow = { name: string; team?: string }
 
-type Line = { text: string; page: number }
+type Line = { text: string; page: number; items?: { str: string; x: number }[] }
 
 const norm = (s: string): string =>
   String(s || '')
@@ -36,6 +36,7 @@ function stripNumber(line: string): string | null {
   rest = rest.replace(/\s+(?:U\d{2}[A-Z]?\d*|R\d)\b/gi, '').trim() // trailing category tags
   return rest || null
 }
+const CLUB_SIGNAL = /^(club|stade|as|fa|fc|ogc|rc|us|united|sport|foot|academy|nice|marseille|grenoble|yverdon|monaco|briochin|genas|canne|lions|ajax|juventus)$/i
 const JUNK = /^(u\d+[a-z]?|u1[789]r?\d*|pts|total|n\.?a\.?|r[12]|لاعبة)$/i
 const PROSE = /\b(de|des|du|la|le|les|et|avec|pour|dans|sur|que|qui|un|une|au|aux|ne|pas|ce|cette|par|ainsi|sont|été|être|plus|mais|leur|ses|son|dont|comme|selon|vise|doit|peut|après|avant)\b/gi
 const LETTERS = /\p{L}/gu
@@ -80,13 +81,30 @@ function validName(name: string): boolean {
   return true
 }
 
-/** Split "Kmar makhlouf BH" into name + club using known clubs as a hint. */
-function parseRow(line: string, clubs: string[]): PlayerRow | null {
+/** Split "Kmar makhlouf BH" into name + club; prefer the PDF's column x-positions. */
+function parseRow(entry: Line, clubs: string[], clubX?: number): PlayerRow | null {
+  const line = clean(String(entry?.text || ''))
   const numbered = stripNumber(line)
   const rest = clean(numbered ?? line)
   if (!rest) return null
 
-  const cells = splitCells(rest)
+  let cells: string[]
+  if (entry.items && clubX !== undefined) {
+    // Text PDFs expose each item's x coordinate. The club column starts at
+    // clubX, so split there instead of guessing where a name ends — this is
+    // what keeps "Zayneb boukhriss Jawhra sfax" in the right columns.
+    const namePart = entry.items.filter((it) => it.x < clubX).map((it) => it.str).join(' ')
+    const clubPart = entry.items
+      .filter((it) => it.x >= clubX)
+      .map((it) => it.str)
+      .join(' ')
+      .replace(/\s+(?:U\d{2}[A-Z]?\d*|R\d)\b/gi, '')
+    cells = [clean(stripNumber(namePart) ?? namePart), clean(clubPart)].filter(Boolean)
+  } else {
+    cells = splitCells(rest)
+  }
+  if (!cells.length) return null
+
   let name = cells[0] || ''
   let team = cells.slice(1).join(' ').trim()
 
@@ -99,6 +117,18 @@ function parseRow(line: string, clubs: string[]): PlayerRow | null {
         team = club
         name = clean(rest.slice(0, rest.length - club.length))
         break
+      }
+    }
+    if (!team) {
+      const words = rest.split(/\s+/)
+      // OCR'd photos have no x-coordinates. Recognise the usual club words so
+      // "Mayssa omrane Stade Briochin" still splits into two columns.
+      for (let i = 1; i < words.length; i++) {
+        if (CLUB_SIGNAL.test(words[i])) {
+          team = clean(words.slice(i).join(' '))
+          name = clean(words.slice(0, i).join(' '))
+          break
+        }
       }
     }
     if (!team) {
@@ -127,6 +157,7 @@ export function parsePlayerList(lines: Line[], clubs: string[] = []): PlayerRow[
   let tablePage = -1
   let foundRow = false
   let numberedTable = false
+  let clubX: number | undefined
 
   for (const entry of lines) {
     const line = clean(String(entry?.text || ''))
@@ -135,6 +166,10 @@ export function parsePlayerList(lines: Line[], clubs: string[] = []): PlayerRow[
     if (looksLikeHeader(line)) {
       inTable = true
       tablePage = entry.page
+      // "Club" header sits over its column; allow a margin for narrower club
+      // text (e.g. "Yverdon Sport" starts left of the header label).
+      const clubLabel = entry.items?.find((it) => /^club\b/i.test(it.str.trim()))
+      clubX = clubLabel ? clubLabel.x - 60 : undefined
       continue
     }
     if (!inTable || entry.page !== tablePage) continue
@@ -149,7 +184,7 @@ export function parsePlayerList(lines: Line[], clubs: string[] = []): PlayerRow[
       break
     }
 
-    const row = parseRow(line, clubs)
+    const row = parseRow(entry, clubs, clubX)
     if (row) {
       const key = norm(row.name)
       if (!seen.has(key)) { seen.add(key); rows.push(row) }
@@ -171,7 +206,7 @@ export function parsePlayerList(lines: Line[], clubs: string[] = []): PlayerRow[
       const words = line.split(/\s+/)
       if (words.length < 2 || words.length > 4) continue
       if (words.every((w) => /^[\p{Lu}]+$/u.test(w))) continue // ALL CAPS headings
-      const row = parseRow(line, clubs)
+      const row = parseRow(entry, clubs)
       if (!row || !validName(row.name)) continue
       const key = norm(row.name)
       if (!seen.has(key)) { seen.add(key); rows.push(row) }
