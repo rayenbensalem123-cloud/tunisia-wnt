@@ -3,13 +3,13 @@
 // counterpart in the others would otherwise fail silently at runtime.
 //
 // Run with:  node scripts/check-translations.mjs
-import { fileURLToPath } from "node:url"
+import { fileURLToPath, pathToFileURL } from "node:url"
 import path from "node:path"
 
 const here = path.dirname(fileURLToPath(import.meta.url))
 const translationsPath = path.join(here, "..", "lib", "translations.ts")
 
-const mod = await import(translationsPath)
+const mod = await import(pathToFileURL(translationsPath).href)
 const translations = mod.default
 
 if (!translations || typeof translations !== "object") {

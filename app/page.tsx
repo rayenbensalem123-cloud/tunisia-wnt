@@ -45,6 +45,7 @@ import { MeetingsPanel } from "@/components/meetings-panel"
 import { ClubReportsPanel } from "@/components/club-reports-panel"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
 import { cleanEventMinutes } from "@/lib/bingo-logic"
+import { norm } from "@/lib/callups"
 import { useFileDrop, isImageFile } from "@/lib/use-file-drop"
 import { WhoAmI } from "@/components/games/who-am-i"
 import { MatchBingo } from "@/components/games/match-bingo"
@@ -1014,39 +1015,59 @@ export default function EliteSquadApp() {
     if(data.matches?.length) setMatches(data.matches)
   }
 
-  const normName=(s:string)=>(s||"").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/['’]/g,"").replace(/[^a-z0-9 ]/g,"").replace(/\s+/g," ").trim()
   const handleImportPlayers=(rows:{name:string;team?:string;camp?:string}[])=>{
     if(!rows.length)return
-    setMembers(prev=>{
-      const list=[...prev].map(m=>({...m,camps:Array.isArray(m.camps)?m.camps:[],club:m.club||""}))
-      let created=0,updated=0
-      for(const r of rows){
-        if(!r.name)continue
-        const key=normName(r.name)
-        const existing=list.find(m=>m.role==="PLAYERS"&&normName(m.name)===key)
-        if(existing){
-          let changed=false
-          const nextClub=r.team&&r.team.trim()?r.team.trim():existing.club
-          if(r.team&&r.team.trim()&&nextClub!==existing.club){existing.club=nextClub;changed=true}
-          if(r.camp&&r.camp.trim()){
-            const c=r.camp.trim()
-            if(!existing.camps.some((x:string)=>normName(x)===normName(c))){existing.camps=[...existing.camps,c];changed=true}
-          }
-          existing.updatedAt=Date.now()
-          if(changed)updated++
-        }else{
-          list.push({
-            id:Date.now()+Math.random()*1000, role:"PLAYERS", teamCategory:teamCat,
-            name:r.name.trim(), club:r.team?.trim()||"", position:"FORWARD",
-            camps:r.camp&&r.camp.trim()?[r.camp.trim()]:[],
-            goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",image:"",imagePath:"",passportImage:"",jerseyNumber:"",updatedAt:Date.now(),
-          })
-          created++
-        }
+    const list=[...members].map(m=>({...m,camps:Array.isArray(m.camps)?m.camps:[],club:m.club||""}))
+    // A camp name in the scanned list should register the player in that
+    // camp's real roster, not only as free text on her card.
+    const campRegs=new Map<number,Set<number>>()
+    const register=(memberId:number,campName?:string)=>{
+      const named=(campName||"").trim()
+      if(!named)return
+      const target=(camps||[]).find((c:any)=>norm(c.name)===norm(named))
+      if(!target||typeof target.id!=="number")return
+      const ids=campRegs.get(target.id)||new Set<number>()
+      ids.add(memberId);campRegs.set(target.id,ids)
+    }
+    let created=0,updated=0
+    for(const r of rows){
+      const name=(r.name||"").trim()
+      if(!name)continue
+      const key=norm(name)
+      const existing=list.find(m=>m.role==="PLAYERS"&&norm(m.name)===key)
+      let memberId:number
+      if(existing){
+        memberId=existing.id
+        let changed=false
+        const namedClub=(r.team||"").trim()
+        if(namedClub&&namedClub!==existing.club){existing.club=namedClub;changed=true}
+        const namedCamp=(r.camp||"").trim()
+        if(namedCamp&&!existing.camps.some((x:string)=>norm(x)===norm(namedCamp))){existing.camps=[...existing.camps,namedCamp];changed=true}
+        existing.updatedAt=Date.now()
+        if(changed)updated++
+      }else{
+        memberId=Date.now()+Math.random()*1000
+        list.push({
+          id:memberId, role:"PLAYERS", teamCategory:teamCat,
+          name, club:(r.team||"").trim(), position:"FORWARD",
+          camps:(r.camp||"").trim()?[(r.camp||"").trim()]:[],
+          goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",image:"",imagePath:"",passportImage:"",jerseyNumber:"",updatedAt:Date.now(),
+        })
+        created++
       }
-      console.log(`Players import: ${created} created, ${updated} updated`)
-      return list
-    })
+      register(memberId,r.camp)
+    }
+    setMembers(list)
+    if(campRegs.size){
+      setCamps(prev=>prev.map(c=>{
+        const ids=campRegs.get(c.id)
+        if(!ids)return c
+        const players=[...(Array.isArray(c.players)?c.players:[])]
+        for(const id of ids)if(!players.includes(id))players.push(id)
+        return {...c,players}
+      }))
+    }
+    console.log(`Players import: ${created} created, ${updated} updated`)
   }
 
   const toggleSelect=(id:number)=>setSelectedIds(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id])

@@ -8,6 +8,8 @@ export type ExtractPdfLinesResult = {
   lines: PdfTextLine[]
   /** Pages that had no extractable text items (likely a scanned image page). */
   scannedPages: number
+  /** The 1-based numbers of those pages, so callers can OCR their embedded images. */
+  scannedPageList: number[]
 }
 
 /**
@@ -45,7 +47,7 @@ export async function extractPdfLines(
   }
 
   const lines: PdfTextLine[] = []
-  let scannedPages = 0
+  const scannedPageList: number[] = []
 
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i)
@@ -60,7 +62,7 @@ export async function extractPdfLines(
       .filter((it) => it.str.length > 0)
 
     if (items.length === 0) {
-      scannedPages++
+      scannedPageList.push(i)
       continue
     }
 
@@ -79,5 +81,5 @@ export async function extractPdfLines(
     }
   }
 
-  return { lines, scannedPages }
+  return { lines, scannedPages: scannedPageList.length, scannedPageList }
 }

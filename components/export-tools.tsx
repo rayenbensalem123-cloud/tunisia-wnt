@@ -1,10 +1,13 @@
 "use client"
-import React, { useState } from "react"
+import React, { useState, useRef, useLayoutEffect, useEffect } from "react"
 import { createPortal } from "react-dom"
 import { Download, Upload, Printer, FileSpreadsheet, FileJson, X, FileText, Check } from "lucide-react"
 import { useTranslate } from "@/lib/language-context"
-import { useFileDrop, isPdfFile } from "@/lib/use-file-drop"
+import { useFileDrop, isPdfFile, isImageFile } from "@/lib/use-file-drop"
 import { authHeaders } from "@/lib/auth-headers"
+import { norm } from "@/lib/callups"
+
+type ImportRow = { name: string; team?: string; camp?: string; isNew?: boolean }
 
 type Props = {
   members: any[]
@@ -24,13 +27,47 @@ type Props = {
 export function ExportTools({ members, matches, teamCat, onImport, onImportPlayers, camps, fetchInjuriesAll, fetchClubReportsAll }: Props) {
   const { tr } = useTranslate()
   const [open, setOpen] = useState(false)
+  // The parent menu is a scrollable dropdown, so this submenu is portalled to
+  // the body and positioned next to the button — otherwise it renders on top
+  // of the other menu items and gets clipped by the dropdown's overflow.
+  const buttonRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const [pos, setPos] = useState({ top: 0, left: 0 })
   const [importOpen, setImportOpen] = useState(false)
   const [importData, setImportData] = useState("")
   const [pdfOpen, setPdfOpen] = useState(false)
   const [busy, setBusy] = useState(false)
   const [pdfError, setPdfError] = useState("")
-  const [rows, setRows] = useState<{ name: string; team?: string; camp?: string }[]>([])
+  const [rows, setRows] = useState<ImportRow[]>([])
   const [fileName, setFileName] = useState("")
+  const [scanInfo, setScanInfo] = useState("")
+
+  const placeMenu = () => {
+    const b = buttonRef.current?.getBoundingClientRect()
+    const m = menuRef.current?.getBoundingClientRect()
+    if (!b || !m) return
+    const gap = 8
+    const pad = 8
+    let left = b.left - m.width - gap // open to the left of the menu
+    if (left < pad) left = Math.min(b.right + gap, window.innerWidth - m.width - pad)
+    if (left < pad) left = pad
+    let top = b.top
+    const maxTop = window.innerHeight - m.height - pad
+    if (top > maxTop) top = Math.max(pad, maxTop)
+    setPos({ top, left })
+  }
+
+  useLayoutEffect(() => { if (open) placeMenu() }, [open])
+  useEffect(() => {
+    if (!open) return
+    const onMove = () => placeMenu()
+    window.addEventListener('resize', onMove)
+    window.addEventListener('scroll', onMove, true)
+    return () => {
+      window.removeEventListener('resize', onMove)
+      window.removeEventListener('scroll', onMove, true)
+    }
+  }, [open])
 
   const catMembers = members.filter(m => m.teamCategory === teamCat)
 
@@ -106,20 +143,32 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
     } catch {}
   }
 
-  const openPdf = () => { setPdfOpen(true); setRows([]); setFileName(""); setPdfError(""); setBusy(false) }
+  const openPdf = () => { setPdfOpen(true); setRows([]); setFileName(""); setPdfError(""); setScanInfo(""); setBusy(false) }
 
-  const handlePdfFile = async (f: File) => {
-    if (!isPdfFile(f)) { setPdfError(tr.importPlayers.couldNotProcess + 'not a PDF'); return }
-    setBusy(true); setPdfError(""); setFileName(f.name); setRows([])
+  const handleFiles = async (files: File[]) => {
+    const accepted = files.filter((f) => isPdfFile(f) || isImageFile(f))
+    if (!accepted.length) { setPdfError(tr.importPlayers.couldNotProcess + 'PDF / PNG / JPG / WEBP'); return }
+    if (accepted.length > 8) { setPdfError('Up to 8 files at a time'); return }
+    setBusy(true); setPdfError(""); setScanInfo(""); setRows([])
+    setFileName(accepted.map((f) => f.name).join(", "))
     try {
       const fd = new FormData()
-      fd.append('file', f, f.name)
+      for (const f of accepted) fd.append('file', f, f.name)
+      fd.append('campNames', JSON.stringify((camps || []).map((c: any) => c.name).filter(Boolean)))
       const r = await fetch('/api/import-players', { method: 'POST', headers: await authHeaders(), body: fd })
       const d = await r.json()
-      if (d.error) { setPdfError(d.error) }
-      else {
-        setRows(d.rows || [])
-        if (d.scannedPages > 0 && (d.rows || []).length === 0) {
+      if (!r.ok || d.error) {
+        setPdfError(d.error || 'Could not read the files')
+      } else {
+        // Compare against every player card in the platform, not just the
+        // currently selected team category.
+        const known = new Set(members.filter((m: any) => m.role === 'PLAYERS').map((m: any) => norm(m.name)))
+        setRows((d.rows || []).map((row: ImportRow) => ({ ...row, isNew: !known.has(norm(row.name)) })))
+        const bits: string[] = []
+        if (d.ocredPages) bits.push(`${d.ocredPages} OCR`)
+        if (d.scannedPages) bits.push(`${d.scannedPages} scanned`)
+        if (bits.length) setScanInfo(bits.join(' · '))
+        if (d.scannedPages > 0 && !d.ocredPages && !(d.rows || []).length) {
           setPdfError(`${d.scannedPages} ${tr.importPlayers.scannedNoText}`)
         }
       }
@@ -129,11 +178,11 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
     setBusy(false)
   }
   const onFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0]
+    const files = Array.from(e.target.files || [])
     e.target.value = ""
-    if (f) handlePdfFile(f)
+    if (files.length) handleFiles(files)
   }
-  const pdfDrop = useFileDrop(files => handlePdfFile(files[0]), isPdfFile)
+  const pdfDrop = useFileDrop((files) => handleFiles(files), (f) => isPdfFile(f) || isImageFile(f))
 
   const updateRow = (i: number, key: 'name' | 'team' | 'camp', val: string) => {
     setRows(prev => prev.map((r, idx) => idx === i ? { ...r, [key]: val } : r))
@@ -142,12 +191,12 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
   const confirmImport = () => {
     const valid = rows.filter(r => r.name && r.name.trim())
     if (!valid.length) return
-    onImportPlayers?.(valid)
+    onImportPlayers?.(valid.map(({ name, team, camp }) => ({ name, team, camp })))
     setPdfOpen(false); setRows([]); setFileName(""); setOpen(false)
   }
 
   return (
-    <div className="relative" onClick={(e) => e.stopPropagation()}>
+    <div ref={buttonRef} className="relative" onClick={(e) => e.stopPropagation()}>
       <button
         onClick={() => setOpen(!open)}
         className="flex items-center gap-1.5 px-3 py-2 rounded-xl border border-zinc-300 bg-white text-zinc-500 hover:text-zinc-900 text-[11px] font-black uppercase tracking-widest transition-all"
@@ -156,10 +205,10 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
         <span className="hidden sm:inline">{tr.exportTools.export}</span>
       </button>
 
-      {open && (
-        <>
+      {open && typeof document !== "undefined" && createPortal(
+        <div onMouseDownCapture={(e) => e.stopPropagation()}>
           <div className="fixed inset-0 z-[180]" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-12 z-[190] w-56 rounded-2xl border border-zinc-200 bg-white shadow-2xl max-h-[calc(100dvh-6rem)] overflow-y-auto text-zinc-900">
+          <div ref={menuRef} style={{ top: pos.top, left: pos.left }} className="fixed z-[190] w-56 rounded-2xl border border-zinc-200 bg-white shadow-2xl max-h-[calc(100dvh-1rem)] overflow-y-auto text-zinc-900">
             <div className="divide-y divide-zinc-200">
               <button onClick={() => { exportCSV(); setOpen(false) }} className="w-full text-left px-4 py-3 flex items-center gap-3 text-[11px] font-black uppercase transition-all hover:bg-zinc-50">
                 <FileSpreadsheet size={13} className="text-green-500" /> {tr.exportTools.csvRoster}
@@ -189,8 +238,8 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
               </button>
             </div>
           </div>
-        </>
-      )}
+        </div>
+      , document.body)}
 
       {
   importOpen && typeof document !== "undefined" && createPortal(
@@ -223,19 +272,20 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
             <div className="flex items-center justify-between mb-4 shrink-0">
               <div>
                 <h2 className="text-xl font-black italic uppercase tracking-tighter">{tr.exportTools.importPlayersPdf}</h2>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mt-1">{tr.exportTools.newNamesNote}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 mt-1">{tr.importPlayers.ocrNote}</p>
               </div>
               <button onClick={() => setPdfOpen(false)} className="p-2 hover:bg-red-500/10 rounded-xl"><X size={20} /></button>
             </div>
 
             <label {...pdfDrop.dropProps} className={`shrink-0 flex flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed p-6 cursor-pointer transition-all ${pdfDrop.isDragging ? 'border-red-400 bg-red-50 scale-[1.01]' : fileName ? 'border-green-400 bg-green-50' : 'border-zinc-300 bg-zinc-50 hover:border-red-400'}`}>
-              <input type="file" accept=".pdf,application/pdf" className="hidden" onChange={onFile} />
+              <input type="file" multiple accept=".pdf,application/pdf,image/png,image/jpeg,image/webp" className="hidden" onChange={onFile} />
               <FileText size={24} className={fileName ? 'text-green-500' : 'text-zinc-400'} />
               <span className="text-[12px] font-black uppercase tracking-widest text-zinc-500">{busy ? tr.importPlayers.readingPdf : fileName ? fileName : tr.importPlayers.clickToChoosePdf}</span>
               <span className="text-[10px] text-zinc-400">{tr.importPlayers.columnsNote}</span>
             </label>
 
             {pdfError && <p className="shrink-0 mt-3 text-[12px] font-bold text-red-500 bg-red-50 border border-red-200 rounded-xl px-3 py-2">{pdfError}</p>}
+            {scanInfo && <p className="shrink-0 mt-2 text-[10px] font-black uppercase tracking-wider text-emerald-600">{scanInfo}</p>}
 
             {rows.length > 0 && (
               <>
@@ -245,9 +295,14 @@ export function ExportTools({ members, matches, teamCat, onImport, onImportPlaye
                   </div>
                   {rows.map((r, i) => (
                     <div key={i} className={`grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-1.5 ${i>0?'border-t border-zinc-100':''}`}>
-                      <input value={r.name} onChange={e => updateRow(i, 'name', e.target.value)} className="text-[13px] font-bold outline-none border-b border-transparent focus:border-red-400 px-1 py-0.5"/>
-                      <input value={r.team || ''} onChange={e => updateRow(i, 'team', e.target.value)} className="text-[13px] outline-none border-b border-transparent focus:border-red-400 px-1 py-0.5"/>
-                      <input value={r.camp || ''} onChange={e => updateRow(i, 'camp', e.target.value)} className="text-[13px] outline-none border-b border-transparent focus:border-red-400 px-1 py-0.5"/>
+                      <div className="min-w-0">
+                        <input value={r.name} onChange={e => updateRow(i, 'name', e.target.value)} className="w-full text-[13px] font-bold outline-none border-b border-transparent focus:border-red-400 px-1 py-0.5"/>
+                        <span className={`text-[8px] font-black uppercase tracking-wider ${r.isNew ? 'text-red-500' : 'text-emerald-600'}`}>
+                          {r.isNew ? tr.importPlayers.newBadge : tr.importPlayers.existingBadge}
+                        </span>
+                      </div>
+                      <input value={r.team || ''} onChange={e => updateRow(i, 'team', e.target.value)} className="w-full text-[13px] outline-none border-b border-transparent focus:border-red-400 px-1 py-0.5"/>
+                      <input value={r.camp || ''} onChange={e => updateRow(i, 'camp', e.target.value)} className="w-full text-[13px] outline-none border-b border-transparent focus:border-red-400 px-1 py-0.5"/>
                     </div>
                   ))}
                 </div>

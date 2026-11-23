@@ -2,120 +2,130 @@ import { NextResponse } from 'next/server'
 import { requireActiveUser, can, safeError } from '@/lib/api-auth'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { extractPdfLines } from '@/lib/pdf-text'
+import { extractPdfImages } from '@/lib/pdf-scan'
+import { ocrImages } from '@/lib/ocr'
+import { parseCampList } from '@/lib/camp-list'
 
 export const runtime = 'nodejs'
-export const maxDuration = 60
+// OCR of an image-only page can take a while on a cold start (traineddata is
+// fetched on first use), so give it more room than a plain text extraction.
+export const maxDuration = 300
 
-const MAX_BYTES = 8 * 1024 * 1024 // 8 MB
+const MAX_BYTES = 8 * 1024 * 1024 // per file
+const MAX_TOTAL = 20 * 1024 * 1024
 const MAX_PAGES = 30
+const MAX_FILES = 8
+
+type FileKind = 'pdf' | 'image'
+
+/** Decide by bytes, never by the file name a browser reports. */
+function sniff(b: Uint8Array): FileKind | null {
+  const ascii = (from: number, n: number) => String.fromCharCode(...b.slice(from, from + n))
+  if (ascii(0, 5) === '%PDF-') return 'pdf'
+  if (b[0] === 0x89 && ascii(1, 3) === 'PNG') return 'image'
+  if (b[0] === 0xff && b[1] === 0xd8) return 'image'
+  if (ascii(0, 4) === 'RIFF' && ascii(8, 4) === 'WEBP') return 'image'
+  return null
+}
 
 export async function POST(req: Request) {
-  let caller
   try {
     const auth = await requireActiveUser(req)
     if (!auth.ok) return NextResponse.json({ error: auth.error }, { status: auth.status })
     if (!can(auth.caller, 'addPlayer')) {
       return NextResponse.json({ error: 'Permission denied' }, { status: 403 })
     }
-    caller = auth.caller
 
-    const rl = await checkRateLimit(`import-players:${auth.caller.id}`, { limit: 20, windowSeconds: 300 })
+    const rl = await checkRateLimit(`import-players:${auth.caller.id}`, { limit: 15, windowSeconds: 300 })
     if (!rl.ok) {
       return NextResponse.json({ error: 'Too many requests, please try again shortly' }, { status: 429 })
     }
-  } catch (e) {
-    return NextResponse.json({ error: safeError(e) }, { status: 500 })
-  }
-  void caller
 
-  try {
     const len = Number(req.headers.get('content-length') || '0')
-    if (len > MAX_BYTES) return NextResponse.json({ error: 'File too large (max 8 MB)' }, { status: 413 })
+    if (len > MAX_TOTAL) return NextResponse.json({ error: 'Files too large (20 MB total)' }, { status: 413 })
 
     const form = await req.formData()
-    const file = form.get('file')
-    if (!(file instanceof File)) return NextResponse.json({ error: 'No file' }, { status: 400 })
-    if (file.size > MAX_BYTES) return NextResponse.json({ error: 'File too large (max 8 MB)' }, { status: 413 })
-    if (file.type !== 'application/pdf' || !file.name.toLowerCase().endsWith('.pdf')) {
-      return NextResponse.json({ error: 'Please upload a PDF file' }, { status: 415 })
+    const files = form.getAll('file').filter((f): f is File => f instanceof File)
+    if (!files.length) return NextResponse.json({ error: 'No file' }, { status: 400 })
+    if (files.length > MAX_FILES) return NextResponse.json({ error: `Up to ${MAX_FILES} files at a time` }, { status: 413 })
+
+    let campNames: string[] = []
+    try {
+      const raw = form.get('campNames')
+      if (typeof raw === 'string') {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) campNames = parsed.filter((x): x is string => typeof x === 'string')
+      }
+    } catch { /* camp names are only a parsing hint; ignore malformed input */ }
+
+    const lines: string[] = []
+    let scannedPages = 0
+    let ocredPages = 0
+    let ocrFailures = 0
+
+    for (const file of files) {
+      if (file.size > MAX_BYTES) {
+        return NextResponse.json({ error: `File too large (max 8 MB): ${file.name}` }, { status: 413 })
+      }
+      const buf = Buffer.from(await file.arrayBuffer())
+      const kind = sniff(buf)
+      if (!kind) {
+        return NextResponse.json({ error: 'Please upload a PDF or an image (PNG, JPG, WEBP)' }, { status: 415 })
+      }
+
+      if (kind === 'image') {
+        try {
+          const ocr = await ocrImages([buf])
+          lines.push(...ocr.lines)
+          ocredPages++
+          ocrFailures += ocr.failed
+        } catch (e) {
+          return NextResponse.json({ error: 'Could not read the image: ' + safeError(e, 'unknown') }, { status: 500 })
+        }
+        continue
+      }
+
+      let extracted
+      try {
+        extracted = await extractPdfLines(buf, { maxPages: MAX_PAGES })
+      } catch (e: any) {
+        const message = typeof e?.message === 'string' ? e.message : ''
+        if (message.startsWith('PDF too long')) {
+          return NextResponse.json({ error: message }, { status: 413 })
+        }
+        return NextResponse.json({ error: 'Could not read PDF: ' + safeError(e, 'unknown') }, { status: 400 })
+      }
+
+      lines.push(...extracted.lines.map((l) => l.text))
+      scannedPages += extracted.scannedPages
+
+      if (extracted.scannedPageList.length) {
+        try {
+          const images = await extractPdfImages(buf, extracted.scannedPageList)
+          if (images.length) {
+            const ocr = await ocrImages(images, 'eng+fra')
+            lines.push(...ocr.lines)
+            ocredPages += ocr.failed === 0 ? images.length : Math.max(0, images.length - ocr.failed)
+            ocrFailures += ocr.failed
+          }
+        } catch (e) {
+          // A PDF whose images pdfjs cannot decode is unusual; keep the text we
+          // already have instead of failing the whole import.
+          console.error('scanned PDF OCR skipped:', safeError(e, 'unknown'))
+        }
+      }
     }
 
-    const buf = Buffer.from(await file.arrayBuffer())
-  let rows: { text: string; page: number }[] = []
-  let scannedPages = 0
+    const rows = parseCampList(lines, campNames)
 
-  try {
-    // Dynamic import (inside extractPdfLines) so the heavy pdfjs module
-    // isn't bundled into the main route graph eagerly.
-    const extracted = await extractPdfLines(buf, { maxPages: MAX_PAGES })
-    rows = extracted.lines
-    scannedPages = extracted.scannedPages
-  } catch (e: any) {
-    const message = typeof e?.message === 'string' ? e.message : ''
-    if (message.startsWith('PDF too long')) {
-      return NextResponse.json({ error: message }, { status: 413 })
-    }
-    return NextResponse.json({ error: 'Could not read PDF: ' + safeError(e, 'unknown') }, { status: 400 })
-  }
-
-  // Heuristic parse: drop header lines, split into name / team / camp
-  const parsed = rows
-    .filter((r) => r.text && !isHeader(r.text))
-    .map((r) => parsePlayerLine(r.text))
-    .filter((r) => r && r.name)
-
-  return NextResponse.json({ rows: parsed, scannedPages, totalLines: rows.length })
+    return NextResponse.json({
+      rows,
+      scannedPages,
+      ocredPages,
+      ocrFailures,
+      totalLines: lines.length,
+    })
   } catch (e) {
     return NextResponse.json({ error: safeError(e) }, { status: 500 })
   }
-}
-
-function isHeader(line: string): boolean {
-  const t = line.toLowerCase()
-  if (t.length < 3) return true
-  if (/^\s*(name|player|joueur|joueurs|nom|isim|الاسم|club|equipe|equipe|team|takim|اكبر|kamp|camp|list|liste|no\.|#|number|num)/.test(t)) return true
-  return false
-}
-
-function parsePlayerLine(raw: string): { name: string; team?: string; camp?: string } | null {
-  let line = raw.trim().replace(/\s+/g, ' ').replace(/^[•\-\–—*▶▪•●]+\s*/, '')
-  if (!line) return null
-
-  // Split on common separators: |, ;, dash, then split comma-joined name/team segments
-  let parts: string[] = []
-  if (line.includes('|')) parts = line.split('|').map((s) => s.trim()).filter(Boolean)
-  else if (line.includes(';')) parts = line.split(';').map((s) => s.trim()).filter(Boolean)
-  else {
-    // Dash separator between segments (e.g. "Sara Ben Ali, Espérance - Camp Jan")
-    const dashSplit = line.split(/\s+(?=[\-\–—])\s*|[\-\–—]\s+/).map((s) => s.trim()).filter(Boolean)
-    parts = dashSplit.length >= 2 ? dashSplit : [line]
-  }
-
-  // Expand comma-joined segments into name + team + camp when comma precedes a capitalized word
-  const expanded: string[] = []
-  for (const p of parts) {
-    const sub = p.split(/,\s+(?=[A-ZÀ-Ý])/).map((s) => s.trim()).filter(Boolean)
-    expanded.push(...sub)
-  }
-  parts = expanded
-
-  if (parts.length === 1) {
-    return { name: cleanName(parts[0]) }
-  }
-  if (parts.length === 2) return { name: cleanName(parts[0]), team: parts[1] }
-  if (parts.length === 3) return { name: cleanName(parts[0]), team: parts[1], camp: parts[2] }
-  // 4+ parts: name = first, treat last as camp when it looks like a camp keyword
-  const camp = /\b(camp|stage|ret\w+|training|camp)\b/i.test(parts[parts.length - 1]) ? parts.pop() : undefined
-  const name = parts[0]
-  const team = parts.slice(1).join(' ')
-  return { name: cleanName(name), team, camp }
-}
-
-function cleanName(raw: string): string {
-  let s = raw.trim()
-  // strip leading numbering like "17." or "17 -"
-  s = s.replace(/^(\d+(\.|\)|\s*-\s*)?\s*)+/, '').trim()
-  // Remove trailing/leading punctuation
-  s = s.replace(/^[,.:\s]+|[,.:\s]+$/g, '')
-  return s
 }
