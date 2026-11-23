@@ -510,37 +510,152 @@ export async function verifyClubReport(id: number, verified: boolean, byUsername
 }
 
 // ─────────────────────────────────────────────
-// MEETINGS (Zoom-backed) — scheduling and recording lookup go through the
-// /api/zoom/* routes, which hold the Zoom secret server-side. These two are
-// plain RLS-protected reads/writes like everything else above.
+// STREAM & VIDEOS — match replays, highlights, training clips, live streams.
+// A row is a link (YouTube/Vimeo/Twitch/.mp4) or an upload in the private
+// 'videos' bucket. Uploads go straight from the browser to Storage with the
+// signed-in user's own session (Vercel API routes cap bodies at ~4.5 MB), and
+// RLS decides who may read or write: see migrations/0029_video_library.sql.
 // ─────────────────────────────────────────────
-export async function fetchMeetings() {
-  const { data, error } = await supabase.from('meetings').select('*').order('scheduled_at', { ascending: false })
-  if (error) { console.error('fetchMeetings', error); return [] }
-  return data
+export type LibraryVideo = {
+  id: number
+  title: string
+  description: string
+  kind: 'match' | 'highlight' | 'training' | 'live'
+  team_category: string | null
+  source: 'link' | 'upload' | 'stream'
+  url: string | null
+  file_path: string | null
+  file_name: string | null
+  size_bytes: number | null
+  created_by_username: string | null
+  created_at: string
+  live_input_uid: string | null
 }
 
-export async function deleteMeeting(id: number) {
-  const { error } = await supabase.from('meetings').delete().eq('id', id)
+// Client-side ceiling. The real limit is the smaller of this and the bucket/global
+// Storage limit (50 MB on Supabase Free; raise it under Storage -> Settings on Pro).
+export const VIDEO_MAX_BYTES = 5 * 1024 * 1024 * 1024
+export const VIDEO_TYPES = ['video/mp4', 'video/webm', 'video/quicktime']
+
+export async function fetchLibraryVideos(): Promise<LibraryVideo[]> {
+  const { data, error } = await supabase.from('library_videos').select('*').order('created_at', { ascending: false })
+  if (error) { console.error('fetchLibraryVideos', error); return [] }
+  return data as LibraryVideo[]
+}
+
+async function currentUsername(): Promise<string | null> {
+  const { data } = await supabase.auth.getUser()
+  const id = data.user?.id
+  if (!id) return null
+  const { data: p } = await supabase.from('profiles').select('username').eq('id', id).maybeSingle()
+  return p?.username ?? null
+}
+
+export async function addLibraryVideo(v: {
+  title: string; description?: string; kind: LibraryVideo['kind']; teamCategory?: string | null
+  source: 'link' | 'upload'; url?: string; filePath?: string; fileName?: string; sizeBytes?: number
+}) {
+  const { error } = await supabase.from('library_videos').insert({
+    title: v.title.trim(),
+    description: (v.description || '').trim(),
+    kind: v.kind,
+    team_category: v.teamCategory || null,
+    source: v.source,
+    url: v.source === 'link' ? (v.url || '').trim() : null,
+    file_path: v.source === 'upload' ? v.filePath : null,
+    file_name: v.fileName ?? null,
+    size_bytes: v.sizeBytes ?? null,
+    created_by_username: await currentUsername(),
+  })
   return { error: error?.message || null }
 }
 
-async function authedPost(path: string, body: any) {
+export async function setLibraryVideoKind(id: number, kind: LibraryVideo['kind']) {
+  const { error } = await supabase.from('library_videos').update({ kind }).eq('id', id)
+  return { error: error?.message || null }
+}
+
+export async function deleteLibraryVideo(v: Pick<LibraryVideo, 'id' | 'file_path'> & { source?: LibraryVideo['source'] }) {
+  if (v.source === 'stream') {
+    // Also deletes the live input and its recordings at Cloudflare, so it goes through the server.
+    const r = await streamCall<{ ok?: boolean }>('remove', { id: v.id })
+    return { error: r.error || null }
+  }
+  const { error } = await supabase.from('library_videos').delete().eq('id', v.id)
+  if (error) return { error: error.message }
+  if (v.file_path) await supabase.storage.from('videos').remove([v.file_path])
+  return { error: null }
+}
+
+// ── Private live streaming (Cloudflare Stream, via our own API routes) ──
+// The browser never sees any Cloudflare secret. Each call carries the user's session token;
+// the server checks it, and RLS decides what the user may read or change.
+export type StreamResult<T> = T & { error?: string; status?: number }
+
+async function streamCall<T>(path: 'start' | 'credentials' | 'play' | 'remove', body: object): Promise<StreamResult<T>> {
+  const { data } = await supabase.auth.getSession()
+  const token = data.session?.access_token
+  if (!token) return { error: 'Not signed in', status: 401 } as StreamResult<T>
+  try {
+    const res = await fetch(`/api/stream/${path}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    })
+    const json = await res.json().catch(() => ({}))
+    return res.ok ? (json as StreamResult<T>) : ({ ...json, error: json.error || `Error ${res.status}`, status: res.status } as StreamResult<T>)
+  } catch {
+    return { error: 'Network error', status: 0 } as StreamResult<T>
+  }
+}
+
+export const startLiveStream = (v: { title: string; description?: string; teamCategory?: string | null }) =>
+  streamCall<{ id: number; url: string; key: string }>('start', v)
+export const getStreamCredentials = (id: number) => streamCall<{ url: string; key: string }>('credentials', { id })
+export const getStreamPlayerSrc = (id: number) => streamCall<{ src: string }>('play', { id })
+
+/**
+ * Upload one video with progress using Supabase's resumable (TUS) endpoint: the file is sent in
+ * 6 MB chunks, so large matches work and a dropped connection resumes instead of restarting.
+ * Goes straight from the browser to Storage with the signed-in user's session; RLS on the
+ * 'videos' bucket decides who may write (admins only).
+ */
+export async function uploadLibraryVideo(file: File, onProgress: (pct: number) => void): Promise<{ path?: string; error?: string }> {
+  if (!VIDEO_TYPES.includes(file.type)) return { error: 'Use an MP4, MOV or WebM file.' }
+  if (file.size > VIDEO_MAX_BYTES) return { error: 'tooBig' }
   const { data: sessionData } = await supabase.auth.getSession()
   const token = sessionData.session?.access_token
   if (!token) return { error: 'Not signed in' }
-  const res = await fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` }, body: JSON.stringify(body) })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) return { error: data.error || `Request failed (${res.status})` }
-  return data
+  const ext = file.type === 'video/webm' ? 'webm' : file.type === 'video/quicktime' ? 'mov' : 'mp4'
+  const path = `library/${crypto.randomUUID()}.${ext}`
+  // Large uploads should use the dedicated storage hostname.
+  const base = (process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace('.supabase.co', '.storage.supabase.co')
+  const { Upload } = await import('tus-js-client')
+  return new Promise((resolve) => {
+    const upload = new Upload(file, {
+      endpoint: `${base}/storage/v1/upload/resumable`,
+      retryDelays: [0, 3000, 5000, 10000, 20000],
+      headers: { authorization: `Bearer ${token}`, apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, 'x-upsert': 'false' },
+      uploadDataDuringCreation: true,
+      removeFingerprintOnSuccess: true,
+      metadata: { bucketName: 'videos', objectName: path, contentType: file.type, cacheControl: '3600' },
+      chunkSize: 6 * 1024 * 1024, // required by Supabase
+      onError: (err) => {
+        const text = String(err?.message || err)
+        const tooLarge = /413|exceeded|maximum allowed size|too large/i.test(text)
+        resolve({ error: tooLarge ? 'serverLimit' : text })
+      },
+      onProgress: (sent, total) => onProgress(Math.round((sent / total) * 100)),
+      onSuccess: () => resolve({ path }),
+    })
+    upload.start()
+  })
 }
 
-export async function scheduleMeeting(payload: { title: string; scheduledAt: string; teamCategory?: string | null }) {
-  return authedPost('/api/zoom/schedule', payload)
-}
-
-export async function checkMeetingRecording(meetingId: number) {
-  return authedPost('/api/zoom/recording', { meetingId })
+/** Short-lived link for playing an uploaded clip. */
+export async function signedVideoUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage.from('videos').createSignedUrl(path, 3 * 3600)
+  return error || !data?.signedUrl ? '' : data.signedUrl
 }
 
 // ─────────────────────────────────────────────
