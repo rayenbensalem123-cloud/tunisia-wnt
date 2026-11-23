@@ -231,7 +231,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
             <span className="px-1.5 py-0.5 rounded-sm bg-[#e3062c] text-white text-[8px] font-black uppercase tracking-[.18em]">{code}</span>
             <span className="text-[8.5px] font-black tracking-[.2em] text-[var(--c-cream)]/55 uppercase">TUNISIA WNT</span>
             {categoryBadge ? (
-              <span className="px-1.5 py-0.5 rounded-sm border border-[#f6c744]/60 bg-[#f6c744]/15 text-[#f6c744] text-[8px] font-black uppercase tracking-[.14em]" title="Also plays in">
+              <span className="px-2 py-1 rounded-md bg-[#f6c744] text-[#0b1322] text-[9px] font-black uppercase tracking-[.12em] ring-1 ring-[#f6c744]/70 shadow-[0_0_12px_rgba(246,199,68,.45)]" title="Also plays in">
                 + {categoryBadge}
               </span>
             ) : null}
