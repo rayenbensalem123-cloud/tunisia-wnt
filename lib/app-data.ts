@@ -43,6 +43,7 @@ export const memberFromDb = (r: any) => ({
   name: r.name,
   position: r.position,
   teamCategory: r.team_category,
+  otherCategories: Array.isArray(r.additional_categories) ? r.additional_categories : [],
   club: r.club,
   foot: r.foot,
   nationality: r.nationality,
@@ -81,6 +82,9 @@ export const memberToDb = (m: any) => ({
   name: m.name,
   position: m.position,
   team_category: m.teamCategory,
+  // Only sent once the form/loader carries the field, so a database that has
+  // not run migrations/0032 yet keeps saving every other card unchanged.
+  ...(m.otherCategories !== undefined ? { additional_categories: m.otherCategories } : {}),
   club: m.club,
   foot: m.foot,
   nationality: m.nationality,

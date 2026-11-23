@@ -46,6 +46,7 @@ import { ClubReportsPanel } from "@/components/club-reports-panel"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
 import { cleanEventMinutes } from "@/lib/bingo-logic"
 import { norm } from "@/lib/callups"
+import { inCategory, memberCategories, otherCategories, categoryLabel, categoryLabel as catLabel, CATEGORIES } from "@/lib/categories"
 import { useFileDrop, isImageFile } from "@/lib/use-file-drop"
 import { WhoAmI } from "@/components/games/who-am-i"
 import { MatchBingo } from "@/components/games/match-bingo"
@@ -674,7 +675,7 @@ export default function EliteSquadApp() {
   }
   const passportDrop=useFileDrop(files=>handlePassportFile(files[0]),f=>f.type==='image/jpeg'||f.type==='image/png')
 
-  const initForm={name:"",club:"",position:"",image:"",passportImage:"",jerseyNumber:"",camps:[],natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",bioQuote:"",leagueRegion:"",dualNationality:false,secondNationality:""}
+  const initForm={name:"",club:"",position:"",image:"",passportImage:"",jerseyNumber:"",camps:[],natMatches:"",goals:"",assists:"",cleansheets:0,height:"",birthdate:"",yellowCards:0,redCards:0,suspended:false,history:[],foot:"R",nationality:"",languages:"",contract:"",bioQuote:"",leagueRegion:"",dualNationality:false,secondNationality:"",otherCategories:[] as string[]}
   const [form,setForm]=useState<any>(initForm)
   const initMatch={opponent:"",date:"",result:"",venue:"",homeAway:"",competition:"",squad:[] as number[],scorers:[] as {playerId:number,goals:number}[],yellowCards:[] as number[],redCards:[] as number[],subs:[] as {out:number;in:number}[],notes:"",opponentSquad:[] as string[],opponentScorers:[] as {name:string,goals:number}[],opponentYellowCards:[] as string[],opponentRedCards:[] as string[],opponentSubs:[] as {out:string;in:string}[],tunisiaPossession:"",opponentPossession:"",tunisiaShots:"",opponentShots:"",tunisiaShotsOnTarget:"",opponentShotsOnTarget:"",tunisiaCorners:"",opponentCorners:"",tunisiaFouls:"",opponentFouls:"",eventMinutes:{} as Record<string,number>}
   const countryFlags:Record<string,string>={"Tunisia":"tn","Algeria":"dz","Egypt":"eg","Morocco":"ma","Senegal":"sn","Nigeria":"ng","Cameroon":"cm","Ghana":"gh","Ivory Coast":"ci","Côte d'Ivoire":"ci","Cote d'Ivoire":"ci","Mali":"ml","Burkina Faso":"bf","South Africa":"za","DR Congo":"cd","DRC":"cd","Congo":"cg","Zambia":"zm","Equatorial Guinea":"gq","Guinea":"gn","Guinea-Bissau":"gw","Benin":"bj","Togo":"tg","Sierra Leone":"sl","Liberia":"lr","Sudan":"sd","South Sudan":"ss","Uganda":"ug","Kenya":"ke","Tanzania":"tz","Rwanda":"rw","Burundi":"bi","Ethiopia":"et","Eritrea":"er","Somalia":"so","Angola":"ao","Namibia":"na","Botswana":"bw","Zimbabwe":"zw","Mozambique":"mz","Malawi":"mw","Lesotho":"ls","Eswatini":"sz","Madagascar":"mg","Mauritius":"mu","Cape Verde":"cv","Mauritania":"mr","Gambia":"gm","Gabon":"ga","Chad":"td","Niger":"ne","Libya":"ly","France":"fr","England":"gb-eng","Spain":"es","Germany":"de","Italy":"it","Netherlands":"nl","Portugal":"pt","Belgium":"be","Croatia":"hr","Switzerland":"ch","Sweden":"se","Denmark":"dk","Norway":"no","Poland":"pl","Brazil":"br","Argentina":"ar","Uruguay":"uy","Colombia":"co","Chile":"cl","Peru":"pe","Ecuador":"ec","Mexico":"mx","USA":"us","United States":"us","Canada":"ca","Japan":"jp","South Korea":"kr","Korea Republic":"kr","Saudi Arabia":"sa","Iran":"ir","Australia":"au","New Zealand":"nz"}
@@ -967,7 +968,7 @@ export default function EliteSquadApp() {
   const [videosOpen,setVideosOpen]=useState(false)
   const [reportsOpen,setReportsOpen]=useState(false)
   const filtered=useMemo(()=>members.filter(m=>
-    m.role===activeTab&&m.teamCategory===teamCat&&
+    m.role===activeTab&&inCategory(m,teamCat)&&
     m.name.toLowerCase().includes(search.toLowerCase())&&
     (filterPos==="ALL"||m.position===filterPos)
   ).sort((a:any,b:any)=>{
@@ -978,7 +979,7 @@ export default function EliteSquadApp() {
     return a.name.localeCompare(b.name)
   }),[members,activeTab,search,filterPos,teamCat])
 
-  const catPlayers=useMemo(()=>members.filter(m=>m.role==="PLAYERS"&&m.teamCategory===teamCat),[members,teamCat])
+  const catPlayers=useMemo(()=>members.filter(m=>m.role==="PLAYERS"&&inCategory(m,teamCat)),[members,teamCat])
   // A cap is a match she actually took part in — in the eleven, or on the bench
   // and brought on. It is counted from the matches themselves, so adding a
   // match raises her total and deleting one lowers it again, with nothing to
@@ -988,7 +989,7 @@ export default function EliteSquadApp() {
     const base=Number(mem?.natMatches)||0
     if(!mem||mem.role!=="PLAYERS") return base
     const extra=matches.reduce((n:number,x:any)=>{
-      if(x.teamCategory!==mem.teamCategory||x.status!=="approved") return n
+      if(!x.teamCategory||!memberCategories(mem).includes(x.teamCategory)||x.status!=="approved") return n
       const squad=Array.isArray(x.squad)?x.squad:[]
       const subs=Array.isArray(x.subs)?x.subs:[]
       const played=squad.slice(0,11).includes(mem.id)||subs.some((s:any)=>s["in"]===mem.id||s.out===mem.id)
@@ -998,11 +999,9 @@ export default function EliteSquadApp() {
   }
   const catMatches=useMemo(()=>matches.filter(m=>m.teamCategory===teamCat&&m.status==="approved"),[matches,teamCat])
   const pendingMatches=useMemo(()=>matches.filter(m=>m.teamCategory===teamCat&&m.status==="pending"),[matches,teamCat])
-  const catLabel=(c:TeamCategory|null)=>!c?"":(c==="SENIORS"?"SENIORS":c==="U20"?"U-20":c==="LIGUE"?"LIGUE FÉMININE":"U-17")
-
   const saveForm=(e:React.FormEvent)=>{
     e.preventDefault()
-    const payload={...form,id:editingId||Date.now(),role:activeTab,teamCategory:teamCat,yellowCards:Number(form.yellowCards)||0,redCards:Number(form.redCards)||0,updatedAt:Date.now()}
+    const payload={...form,id:editingId||Date.now(),role:activeTab,teamCategory:form.teamCategory||teamCat,otherCategories:Array.isArray(form.otherCategories)?form.otherCategories:[],yellowCards:Number(form.yellowCards)||0,redCards:Number(form.redCards)||0,updatedAt:Date.now()}
     const newMembers=editingId?members.map(m=>m.id===editingId?payload:m):[...members,payload]
     setMembers(newMembers)
     setIsFormOpen(false)
@@ -1688,8 +1687,8 @@ export default function EliteSquadApp() {
             <div className="w-px h-6 bg-zinc-200"/>
             <button onClick={()=>setReportsOpen(true)} className="relative flex items-center gap-1.5 px-4 py-2 rounded-lg text-[11px] font-black uppercase tracking-widest border border-zinc-200 bg-white text-zinc-600 hover:bg-zinc-50 transition-all">
               <ClipboardCheck size={13} className="text-[#a9822e]"/>{tr.clubReportsPage.title}
-              {allClubReports.filter((r:any)=>!r.verified&&members.find((m:any)=>m.id===r.member_id)?.teamCategory===teamCat).length>0&&(
-                <span className="ml-0.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black">{allClubReports.filter((r:any)=>!r.verified&&members.find((m:any)=>m.id===r.member_id)?.teamCategory===teamCat).length}</span>
+              {allClubReports.filter((r:any)=>!r.verified&&inCategory(members.find((m:any)=>m.id===r.member_id),teamCat)).length>0&&(
+                <span className="ml-0.5 bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black">{allClubReports.filter((r:any)=>!r.verified&&inCategory(members.find((m:any)=>m.id===r.member_id),teamCat)).length}</span>
               )}
             </button>
           </>)}
@@ -1715,7 +1714,7 @@ export default function EliteSquadApp() {
           </div>
           <span className="text-[9px] text-zinc-300 italic hidden sm:block">{tr.discipline.cafRule}</span>
           <div className="ml-auto flex items-center gap-2">
-            <button onClick={async()=>{if(await askConfirm("Reset all yellow/red cards for all players in this category?")){setMembers((p:any[])=>p.map(m=>m.teamCategory===teamCat?{...m,yellowCards:0,redCards:0,suspended:false}:m))}}}
+            <button onClick={async()=>{if(await askConfirm("Reset all yellow/red cards for all players in this category?")){setMembers((p:any[])=>p.map(m=>inCategory(m,teamCat)?{...m,yellowCards:0,redCards:0,suspended:false}:m))}}}
               className="px-2 py-1 rounded-lg border border-zinc-200 text-[8px] font-black uppercase tracking-widest text-zinc-400 hover:text-[#ff4f66] hover:border-[#e3062c]/40 hover:bg-[#e3062c]/15 transition-all">Reset</button>
           </div>
         </div>
@@ -1777,6 +1776,7 @@ export default function EliteSquadApp() {
                 assists={m.role==="PLAYERS"?Number(m.assists)||0:undefined}
                 yellows={m.yellowCards}
                 reds={m.redCards}
+                categoryBadge={otherCategories(m,teamCat).map(categoryLabel).join(' · ')}
                 entranceDelay={i*60}
               />
             </div>
@@ -1828,7 +1828,7 @@ export default function EliteSquadApp() {
                     </div>
                   )}
                   <div className="min-w-0">
-                    <p className="text-[11px] font-bold uppercase tracking-[.2em] text-[var(--c-textMid)] truncate">{catLabel(selMember.teamCategory)}{selMember.club?` · ${selMember.club}`:""}</p>
+                    <p className="text-[11px] font-bold uppercase tracking-[.2em] text-[var(--c-textMid)] truncate">{memberCategories(selMember).map(categoryLabel).join(' · ')}{selMember.club?` · ${selMember.club}`:""}</p>
                     <h2 className={`mt-0.5 text-[22px] leading-[1.05] font-black uppercase tracking-tight truncate ${isOwnCard?'text-transparent bg-clip-text bg-gradient-to-r from-[#f6c744] via-[#fff3c4] to-[#f6c744]':'text-[var(--c-text)]'}`}>{titleCase(selMember.name)}</h2>
                     <div className="mt-1.5 flex items-center gap-2">
                       <span className={`px-1.5 py-0.5 rounded-sm text-white text-[10px] font-black uppercase tracking-[.18em] ${isOwnCard?'bg-[#f6c744] text-[#0b1322]':'bg-[#e3062c]'}`}>{mcode}</span>
@@ -2553,6 +2553,18 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                       <input placeholder={tr.form.assists} value={form.assists} onChange={e=>setForm({...form,assists:e.target.value})} className="pm-field"/>
                     </div>
                     <input placeholder={tr.form.fifaConnectId} value={form.fifaConnectId||""} onChange={e=>setForm({...form,fifaConnectId:e.target.value})} className="pm-field col-span-2"/>
+                    <div className="col-span-2">
+                      <p className="pm-label mb-1.5">{tr.form.alsoPlaysIn}</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {CATEGORIES.filter(c=>c!==(form.teamCategory||teamCat)).map(c=>{
+                          const current:string[]=Array.isArray(form.otherCategories)?form.otherCategories:[]
+                          const active=current.includes(c)
+                          return <button type="button" key={c}
+                            onClick={()=>setForm({...form,otherCategories:active?current.filter(x=>x!==c):[...current,c]})}
+                            className={`pm-chip ${active?'pm-chip-on':''}`}>{categoryLabel(c)}</button>
+                        })}
+                      </div>
+                    </div>
                   </div>
                   <div className="mt-3 pm-tile">
                     <p className="pm-label flex items-center gap-1.5"><AlertTriangle size={10} className="text-[#f6c744]"/> {tr.form.discipline}</p>
@@ -2938,7 +2950,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
       ═══════════════════════════════════════════ */}
       {gamesOpen&&user&&(()=>{
         const G=GAME_STRINGS[lang]
-        const catPlayersForGames=members.filter((m:any)=>m.role==="PLAYERS"&&m.teamCategory===teamCat)
+        const catPlayersForGames=members.filter((m:any)=>m.role==="PLAYERS"&&inCategory(m,teamCat))
         const catMatchesForGames=matches.filter((m:any)=>m.teamCategory===teamCat)
         const gameUser={id:user.id,username:user.username}
         return(
@@ -3103,7 +3115,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
           SQUAD LAB — test formations & lineups, FPL-style
       ═══════════════════════════════════════════ */}
       {squadLabOpen&&(()=>{
-        const categoryPlayers=members.filter((m:any)=>m.role==="PLAYERS"&&m.teamCategory===teamCat)
+        const categoryPlayers=members.filter((m:any)=>m.role==="PLAYERS"&&inCategory(m,teamCat))
         const usedIds=new Set(Object.values(labSlots).filter(Boolean))
         const availableForPicker=categoryPlayers.filter((m:any)=>!usedIds.has(m.id))
         const filledCount=Object.values(labSlots).filter(Boolean).length
@@ -3940,7 +3952,7 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
         const match=matchSheetTarget
         const xi=(match.squad||[]).slice(0,11).map((pid:number)=>members.find((m:any)=>m.id===pid)).filter(Boolean)
         const bench=(match.squad||[]).slice(11).map((pid:number)=>members.find((m:any)=>m.id===pid)).filter(Boolean)
-        const staff=members.filter((m:any)=>m.role==="COACHES"&&m.teamCategory===match.teamCategory)
+        const staff=members.filter((m:any)=>m.role==="COACHES"&&inCategory(m,match.teamCategory))
         const rowFor=(pos:string)=>{
           const P=(pos||"").toUpperCase()
           if(P.includes("GOAL")||P==="GK") return 0

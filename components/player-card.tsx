@@ -22,6 +22,8 @@ interface PlayerCardProps {
   reds?: number;
   entranceDelay?: number;
   license?: string;
+  /** Other categories she also plays in, shown as a badge on the card. */
+  categoryBadge?: string;
 }
 
 const posAbbr: Record<string, string> = {
@@ -66,6 +68,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
   reds,
   entranceDelay = 0,
   license,
+  categoryBadge,
 }) => {
   const { tr } = useTranslate();
   // For staff this used to always be the literal word "STAFF" no matter the
@@ -224,9 +227,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({
         <div className="flex-1 px-3 py-3 flex flex-col min-w-0 relative">
           <p className="text-[9px] text-[var(--c-textWarm2)] font-black uppercase tracking-[.22em] truncate">{club}</p>
           <h3 className="font-black text-[18px] leading-[1.05] uppercase mt-1 text-[var(--c-cream)] break-words">{titleCase(name)}</h3>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex items-center gap-2 flex-wrap">
             <span className="px-1.5 py-0.5 rounded-sm bg-[#e3062c] text-white text-[8px] font-black uppercase tracking-[.18em]">{code}</span>
             <span className="text-[8.5px] font-black tracking-[.2em] text-[var(--c-cream)]/55 uppercase">TUNISIA WNT</span>
+            {categoryBadge ? (
+              <span className="px-1.5 py-0.5 rounded-sm border border-[#f6c744]/60 bg-[#f6c744]/15 text-[#f6c744] text-[8px] font-black uppercase tracking-[.14em]" title="Also plays in">
+                + {categoryBadge}
+              </span>
+            ) : null}
           </div>
 
           <div className="mt-4 space-y-1.5 relative z-10">
