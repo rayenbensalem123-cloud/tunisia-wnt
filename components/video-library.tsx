@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react"
 import { ChevronLeft, Plus, Trash2, Link2, Upload, Play, X, Radio, ExternalLink, Square, Lock, KeyRound, Copy, Check, Eye, EyeOff } from "lucide-react"
 import { Select } from "@/components/pickers"
 import { videoPlayback } from "@/lib/video-embed"
-import { signedVideoUrl, uploadLibraryVideo, VIDEO_MAX_BYTES, startLiveStream, getStreamCredentials, getStreamPlayerSrc, type LibraryVideo } from "@/lib/app-data"
+import { signedVideoUrl, uploadLibraryVideo, VIDEO_MAX_BYTES, getStreamCredentials, getStreamPlayerSrc, type LibraryVideo } from "@/lib/app-data"
 
 type Kind = LibraryVideo["kind"]
 type NewVideo = {
@@ -135,6 +135,7 @@ export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDel
   const [liveOpen, setLiveOpen] = useState(false)
   const [liveTitle, setLiveTitle] = useState("")
   const [liveDesc, setLiveDesc] = useState("")
+  const [liveUrl, setLiveUrl] = useState("")
   const [liveCat, setLiveCat] = useState(teamCat || "SENIORS")
   const [liveBusy, setLiveBusy] = useState(false)
   const [liveErr, setLiveErr] = useState<string | null>(null)
@@ -146,12 +147,13 @@ export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDel
   const startLive = async () => {
     setLiveErr(null)
     if (!liveTitle.trim()) { setLiveErr(L.needTitle); return }
+    const playback = videoPlayback(liveUrl)
+    if (!playback || playback.type !== "iframe") { setLiveErr(L.invalidLink); return }
     setLiveBusy(true)
-    const r = await startLiveStream({ title: liveTitle, description: liveDesc, teamCategory: liveCat })
+    const res = await onAdd({ title: liveTitle.trim(), description: liveDesc, kind: "live", teamCategory: liveCat, source: "link", url: liveUrl.trim() })
     setLiveBusy(false)
-    if (!r.id) { setLiveErr(apiMsg(r)); return }
-    setCreds({ title: liveTitle.trim(), url: r.url, key: r.key }); setShowKey(false)
-    setLiveTitle(""); setLiveDesc(""); setLiveOpen(false)
+    if (res.error) { setLiveErr(res.error); return }
+    setLiveTitle(""); setLiveDesc(""); setLiveUrl(""); setLiveOpen(false)
     await onReload()
   }
   const showCodes = async (v: LibraryVideo) => {
@@ -277,16 +279,18 @@ export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDel
 
         {liveOpen && canManage && (
           <div className="mt-4 rounded-2xl border border-[#E30613]/35 bg-[var(--c-panel2)]/60 p-5 space-y-3">
-            <p className="text-[11px] font-bold text-[var(--c-textDim)] flex items-center gap-2"><Lock size={12} /> {L.privateNote}</p>
+            <p className="text-[11px] font-bold text-[var(--c-textDim)] flex items-start gap-2"><Lock size={12} className="mt-0.5 shrink-0" /> {L.youtubeNote}</p>
             <input value={liveTitle} onChange={e => setLiveTitle(e.target.value)} placeholder={L.titleLabel} maxLength={120} aria-label={L.titleLabel}
               className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[13px] font-bold outline-none focus:border-[#E30613]/50 transition-all" />
             <Select variant="stage" allowEmpty={false} value={liveCat} onChange={setLiveCat} options={CATS} />
+            <input value={liveUrl} onChange={e => setLiveUrl(e.target.value)} placeholder={L.youtubeLink} aria-label={L.youtubeLink} inputMode="url"
+              className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[13px] font-bold outline-none focus:border-[#E30613]/50 transition-all" />
             <input value={liveDesc} onChange={e => setLiveDesc(e.target.value)} placeholder={L.descLabel} maxLength={300} aria-label={L.descLabel}
               className="w-full px-4 py-3 rounded-xl bg-[var(--c-panel3)] border border-[rgba(var(--line-rgb),.22)] text-[var(--c-text)] placeholder-[var(--c-textFaint)] text-[13px] font-bold outline-none focus:border-[#E30613]/50 transition-all" />
             {liveErr && <p role="alert" className="text-[11px] font-bold text-[#ff4f66]">{liveErr}</p>}
             <div className="flex justify-end gap-2">
               <button onClick={() => { setLiveOpen(false); setLiveErr(null) }} disabled={liveBusy} className="px-5 py-2.5 rounded-xl border border-[rgba(var(--line-rgb),.2)] text-[var(--c-textDim)] text-[11px] font-black uppercase tracking-wider disabled:opacity-40">{tr.common.cancel}</button>
-              <button onClick={startLive} disabled={liveBusy} className="px-6 py-2.5 rounded-xl bg-[#E30613] text-white text-[11px] font-black uppercase tracking-wider disabled:opacity-40">{liveBusy ? L.creating : L.createStream}</button>
+              <button onClick={startLive} disabled={liveBusy} className="px-6 py-2.5 rounded-xl bg-[#E30613] text-white text-[11px] font-black uppercase tracking-wider disabled:opacity-40">{liveBusy ? L.creating : L.publishLive}</button>
             </div>
           </div>
         )}
