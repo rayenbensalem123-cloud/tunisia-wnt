@@ -196,13 +196,22 @@ export function VideoLibrary({ onClose, videos, canManage, teamCat, onAdd, onDel
   }
 
   const Card = ({ v, wide }: { v: LibraryVideo; wide?: boolean }) => {
-    const thumb = youtubeThumb(v.url)
     const isLive = v.kind === "live"
+    // Live rows get our own poster instead of a YouTube preview image, so the
+    // card reads as a federation broadcast rather than a YouTube link.
+    const thumb = isLive ? null : youtubeThumb(v.url)
     return (
       <div className={`w-full sm:w-[calc(50%-0.375rem)] ${wide ? "" : "lg:w-[calc(33.333%-0.5rem)]"} rounded-2xl border bg-[var(--c-panel2)]/50 overflow-hidden flex flex-col ${isLive ? "border-[#E30613]/50" : "border-[rgba(var(--line-rgb),.14)]"}`}>
         <button onClick={() => setPlaying(v)} aria-label={`${L.watch}: ${v.title}`}
           className="group relative aspect-video w-full bg-gradient-to-br from-[#0d1f3c] to-[#1a2f55] flex items-center justify-center overflow-hidden">
-          {thumb && <img src={thumb} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = "none" }} className="absolute inset-0 w-full h-full object-cover opacity-90" />}
+          {isLive ? (
+            <span className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 bg-[radial-gradient(120%_90%_at_30%_10%,#3a0b18_0%,#1a2f55_55%,#0d1f3c_100%)]">
+              <Radio size={30} className="text-[#ff4f5e]" strokeWidth={2.2} />
+              <span className="text-[9px] font-black uppercase tracking-[.35em] text-white/60">{L.live}</span>
+            </span>
+          ) : thumb ? (
+            <img src={thumb} alt="" loading="lazy" onError={e => { e.currentTarget.style.display = "none" }} className="absolute inset-0 w-full h-full object-cover opacity-90" />
+          ) : null}
           <span className="relative w-12 h-12 rounded-full bg-black/55 border border-white/30 flex items-center justify-center text-white transition-transform group-hover:scale-105"><Play size={18} fill="currentColor" /></span>
           {isLive && <span className="absolute top-2 left-2"><LiveBadge tr={tr} /></span>}
         </button>

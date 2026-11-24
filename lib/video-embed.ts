@@ -15,7 +15,12 @@ export function videoPlayback(raw: string, parentHost?: string): Playback | null
   const host = u.hostname.replace(/^www\./, '')
   const seg = u.pathname.split('/').filter(Boolean)
 
-  const yt = (id?: string) => (id && /^[\w-]{6,}$/.test(id) ? { type: 'iframe' as const, src: `https://www.youtube.com/embed/${id}?rel=0` } : null)
+  // YouTube cannot remove its logo from an embed (that needs channel-level
+  // branding settings), but these options hide related videos, annotations and
+  // fullscreen clutter so the player reads as part of the app.
+  const yt = (id?: string) => (id && /^[\w-]{6,}$/.test(id)
+    ? { type: 'iframe' as const, src: `https://www.youtube-nocookie.com/embed/${id}?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&fs=0` }
+    : null)
 
   if (host === 'youtu.be') return yt(seg[0])
   if (host === 'youtube.com' || host === 'm.youtube.com') {
