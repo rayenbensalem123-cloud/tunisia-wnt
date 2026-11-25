@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { inCategory, otherCategories, memberCategories, categoryLabel } from '../lib/categories.ts'
+import { inCategory, otherCategories, memberCategories, categoryLabel, canManageCategory } from '../lib/categories.ts'
 
 const dual = { teamCategory: 'U20', otherCategories: ['SENIORS'] }
 assert.equal(inCategory(dual, 'U20'), true)
@@ -14,5 +14,12 @@ assert.equal(categoryLabel('LIGUE'), 'LIGUE FÉMININE')
 const plain = { teamCategory: 'SENIORS' }
 assert.equal(inCategory(plain, 'U20'), false)
 assert.deepEqual(otherCategories(plain, 'SENIORS'), [])
+
+// Category-scoped staff permissions.
+const scoped = { role: 'staff', perms: { managedCategories: ['U17'] } }
+assert.equal(canManageCategory(scoped, 'U17'), true)
+assert.equal(canManageCategory(scoped, 'SENIORS'), false)
+assert.equal(canManageCategory({ role: 'staff', perms: {} }, 'SENIORS'), true)
+assert.equal(canManageCategory({ role: 'admin', perms: {} }, 'U20'), true)
 
 console.log('Category tests passed.')

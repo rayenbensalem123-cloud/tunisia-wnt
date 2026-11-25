@@ -272,6 +272,7 @@ const t = {
     users: {
       pendingTitle: "Pending Users", awaitingReview: "awaiting approval", awaitingYourReview: "PENDING · Awaiting your review",
       assignPermissions: "Assign Permissions", saveAndApprove: "Save & Approve",
+      categoriesLabel: "Allowed categories", categoriesHint: "None selected = all categories",
       active: "ACTIVE", pending: "PENDING", you: "(you)",
       linkToPlayer: "Link to squad player", notLinked: "Not linked",
     },
@@ -696,6 +697,7 @@ const t = {
     users: {
       pendingTitle: "Utilisateurs en attente", awaitingReview: "en attente d'approbation", awaitingYourReview: "EN ATTENTE · À examiner",
       assignPermissions: "Attribuer les permissions", saveAndApprove: "Enregistrer et approuver",
+      categoriesLabel: "Catégories autorisées", categoriesHint: "Aucune sélection = toutes les catégories",
       active: "ACTIF", pending: "EN ATTENTE", you: "(vous)",
       linkToPlayer: "Lier à une joueuse", notLinked: "Non lié",
     },
@@ -1120,6 +1122,7 @@ const t = {
     users: {
       pendingTitle: "المستخدمون المعلقون", awaitingReview: "بانتظار الموافقة", awaitingYourReview: "بالانتظار · بحاجة لمراجعتك",
       assignPermissions: "تحديد الصلاحيات", saveAndApprove: "حفظ والموافقة",
+      categoriesLabel: "الفئات المسموحة", categoriesHint: "بدون اختيار = كل الفئات",
       active: "نشط", pending: "معلق", you: "(أنت)",
       linkToPlayer: "ربط بلاعبة في التشكيلة", notLinked: "غير مرتبط",
     },

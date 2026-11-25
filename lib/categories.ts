@@ -20,6 +20,17 @@ export function otherCategories(m: any, current: string | null): string[] {
   return memberCategories(m).filter((c) => c !== current)
 }
 
+/**
+ * A user with managedCategories may only change rows in those categories.
+ * Absent/empty means unrestricted (legacy staff), admins always pass.
+ */
+export function canManageCategory(user: any, category: string | null): boolean {
+  if (!user || user.role === 'admin') return true
+  const cats = user.perms?.managedCategories
+  if (!Array.isArray(cats) || cats.length === 0) return true
+  return !!category && cats.includes(category)
+}
+
 export function categoryLabel(c: string | null): string {
   if (!c) return ''
   if (c === 'SENIORS') return 'SENIORS'

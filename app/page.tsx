@@ -46,7 +46,7 @@ import { ClubReportsPanel } from "@/components/club-reports-panel"
 import { DatePicker, AgeCalendar, JerseyScale, Select, NumberStepper, MinuteBox } from "@/components/pickers"
 import { cleanEventMinutes } from "@/lib/bingo-logic"
 import { norm } from "@/lib/callups"
-import { inCategory, memberCategories, otherCategories, categoryLabel, categoryLabel as catLabel, CATEGORIES } from "@/lib/categories"
+import { inCategory, memberCategories, otherCategories, canManageCategory, categoryLabel, categoryLabel as catLabel, CATEGORIES } from "@/lib/categories"
 import { useFileDrop, isImageFile } from "@/lib/use-file-drop"
 import { WhoAmI } from "@/components/games/who-am-i"
 import { MatchBingo } from "@/components/games/match-bingo"
@@ -128,6 +128,7 @@ interface UserPerms {
   addCamps: boolean
   viewClubReports: boolean
   manageTravel: boolean
+  managedCategories?: string[]
 }
 interface AppUser {
   username: string; firstName: string; lastName: string; status: "active" | "pending"
@@ -486,7 +487,8 @@ const TeamSelector=({onSelect,showLeague}:{onSelect:(c:TeamCategory)=>void;showL
 // ─────────────────────────────────────────────
 // Just the keys — the display label is looked up from tr.perms at render time
 // (this array lives outside the component, so it can't call useTranslate()).
-const PERM_KEYS: (keyof UserPerms)[] = [
+type BooleanPermKey = Exclude<keyof UserPerms, "managedCategories">
+const PERM_KEYS: BooleanPermKey[] = [
   "addPlayer","editPlayer","deletePlayer","addMatch","deleteMatch","exportData","viewMedical","editMedical","addCamps","viewClubReports","manageTravel",
 ]
 
@@ -1208,6 +1210,8 @@ export default function EliteSquadApp() {
   const homeAwayLabel=(v:string)=>v==="home"?tr.match.home:v==="away"?tr.match.away:v==="neutral"?tr.match.neutral:""
   const p = user?.perms || DEFAULT_PERMS
   const canManageUsers = user?.role === "admin"
+  // Staff can be limited to specific categories (profiles.permissions.managedCategories).
+  const catAllowed = (cat: string | null) => canManageCategory(user, cat)
   const canSeeWelfare = p.viewMedical||canManageUsers
   // Passport expiry dates: RLS returns everything to admins / travel managers / medical staff,
   // and only her own row to a player. The UI just asks; the database decides.
@@ -1492,7 +1496,7 @@ export default function EliteSquadApp() {
       </div>
 
       {stagesOpen ? (
-        <StagesManager open onClose={()=>setStagesOpen(false)} stages={camps} members={members} teamCat={teamCat} canManage={!!(canManageUsers||p.addCamps)} onSave={async(stage)=>{const isNew=!(camps||[]).some((c:any)=>(c.id||0)===stage.id);const payload=isNew?{...stage,createdByUsername:user?.username}:stage;const res=await saveCampRow(payload,isNew);if(res.error){alert('Could not save the camp: '+res.error);return false}await reloadCamps();return true}} onDelete={async(id)=>{const res=await deleteCampRow(id);if(res.error){alert('Could not delete the camp: '+res.error);return false}await reloadCamps();return true}} onRefresh={reloadCamps} user={user}/>
+        <StagesManager open onClose={()=>setStagesOpen(false)} stages={canManageUsers?camps:camps.filter((c:any)=>catAllowed(c.teamCategory))} members={members} teamCat={teamCat} canManage={!!(canManageUsers||p.addCamps)} onSave={async(stage)=>{const isNew=!(camps||[]).some((c:any)=>(c.id||0)===stage.id);const payload=isNew?{...stage,createdByUsername:user?.username}:stage;const res=await saveCampRow(payload,isNew);if(res.error){alert('Could not save the camp: '+res.error);return false}await reloadCamps();return true}} onDelete={async(id)=>{const res=await deleteCampRow(id);if(res.error){alert('Could not delete the camp: '+res.error);return false}await reloadCamps();return true}} onRefresh={reloadCamps} user={user}/>
       ) : videosOpen ? (
         <VideoLibrary onClose={()=>setVideosOpen(false)} videos={libraryVideos} canManage={!!canManageUsers} teamCat={teamCat}
           onAdd={async(v)=>{const res=await addLibraryVideo(v);await reloadVideos();return res}}
@@ -1533,10 +1537,10 @@ export default function EliteSquadApp() {
               {canManageUsers&&pendingMatches.length>0&&<span className="bg-amber-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black">{pendingMatches.length}</span>}
               {catMatches.length>0&&<span className="bg-[#E30613] text-white rounded-full w-4 h-4 flex items-center justify-center text-[9px] font-black">{catMatches.length}</span>}
             </button>
-            {p.addMatch&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className={HEADER_BTN}>
+            {p.addMatch&&catAllowed(teamCat)&&<button onClick={()=>{setMatchForm(initMatch);setIsMatchOpen(true)}} title="Add a new match" className={HEADER_BTN}>
               <Users size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">Add Match</span>
             </button>}
-            {p.addMatch&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:"",homeAway:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className={HEADER_BTN}>
+            {p.addMatch&&catAllowed(teamCat)&&<button onClick={()=>{setScheduleForm({opponent:"",date:"",competition:"",venue:"",homeAway:""});setScheduleOpen(true)}} title="Schedule an upcoming fixture" className={HEADER_BTN}>
               <Calendar size={14} className="text-[#f6c744]"/><span className="hidden sm:inline">Schedule Match</span>
             </button>}
             {user&&<button onClick={()=>setGamesOpen(true)} title={GAME_STRINGS[lang].gamesTitle} className={HEADER_BTN}>
@@ -1585,7 +1589,7 @@ export default function EliteSquadApp() {
                 </button>
                 <div className="h-px bg-zinc-200 my-1 mx-2"/>
               </>)}
-              {p.exportData&&<div className="px-1"><ExportTools members={members} matches={matches} teamCat={teamCat} onImport={handleImport} onImportPlayers={handleImportPlayers} camps={camps}
+              {p.exportData&&<div className="px-1"><ExportTools members={members} matches={matches} teamCat={teamCat} onImport={handleImport} onImportPlayers={catAllowed(teamCat)?handleImportPlayers:undefined} camps={camps}
                 fetchInjuriesAll={(p.viewMedical||canManageUsers)?fetchAllInjuries:undefined}
                 fetchClubReportsAll={(p.viewClubReports||canManageUsers)?fetchAllClubReports:undefined}
               /></div>}
@@ -1596,7 +1600,7 @@ export default function EliteSquadApp() {
               <button onClick={()=>setUpcomingOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Calendar size={14} className="text-[#a9822e]"/>Upcoming Matches
               </button>
-              {p.addMatch&&<button onClick={async()=>{setLabSlots({});setLabTemplateName("");setSquadLabOpen(true);setLabTemplates(await fetchSquadTemplates(teamCat))}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
+              {p.addMatch&&catAllowed(teamCat)&&<button onClick={async()=>{setLabSlots({});setLabTemplateName("");setSquadLabOpen(true);setLabTemplates(await fetchSquadTemplates(teamCat))}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Users size={14} className="text-[#a9822e]"/>Squad Lab
               </button>}
               <button onClick={()=>setStagesOpen(true)} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
@@ -1608,10 +1612,10 @@ export default function EliteSquadApp() {
               <button onClick={()=>{setNewsOpen(true);if(newsItems===null){setNewsLoading(true);fetch('/api/news').then(r=>r.json()).then(d=>{setNewsItems(d.items||[]);setNewsLoading(false)}).catch(()=>setNewsLoading(false))}}} className="w-full flex items-center gap-2.5 px-3.5 py-2 text-[12px] font-black uppercase tracking-wider text-zinc-600 hover:bg-[#fdf8ee] hover:text-zinc-900 transition-all text-left">
                 <Newspaper size={14} className="text-[#a9822e]"/>Women&apos;s Football News
               </button>
-              {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[12px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+              {p.addPlayer&&catAllowed(teamCat)&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[12px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <ListChecks size={14} className="text-[#a9822e]"/>Select Players (Passports)
               </button>}
-              {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[12px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
+              {p.addPlayer&&catAllowed(teamCat)&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} className="flex md:hidden items-center gap-2 px-3.5 py-2 text-[12px] font-bold text-zinc-600 hover:bg-zinc-50 transition-all text-left">
                 <Plus size={14} className="text-[#a9822e]"/>Add Player / Staff
               </button>}
             </Dropdown>
@@ -1638,8 +1642,8 @@ export default function EliteSquadApp() {
               </button>
             </Dropdown>
 
-            {p.addPlayer&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} title={selectMode?"Exit selection":"Select players to export passports"} className={`hidden md:flex p-2 rounded-lg border backdrop-blur-md transition-all fc-keep ${selectMode?'bg-[#f6c744] border-[#f6c744] text-[#0c1f3d] shadow-[0_0_14px_rgba(246,199,68,.3)]':'border-[rgba(246,199,68,.35)] bg-[#0d1f3c]/70 text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0d1f3d]'}`}><ListChecks size={16}/></button>}
-            {p.addPlayer&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="hidden md:flex p-2 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_14px_rgba(227,6,44,.35)] transition-all fc-keep"><Plus size={16}/></button>}
+            {p.addPlayer&&catAllowed(teamCat)&&<button onClick={selectMode?exitSelectMode:()=>{setSelectMode(true);setSelectedIds([]);setExportMsg("")}} title={selectMode?"Exit selection":"Select players to export passports"} className={`hidden md:flex p-2 rounded-lg border backdrop-blur-md transition-all fc-keep ${selectMode?'bg-[#f6c744] border-[#f6c744] text-[#0c1f3d] shadow-[0_0_14px_rgba(246,199,68,.3)]':'border-[rgba(246,199,68,.35)] bg-[#0d1f3c]/70 text-[#f6c744] hover:bg-[#f6c744] hover:text-[#0d1f3d]'}`}><ListChecks size={16}/></button>}
+            {p.addPlayer&&catAllowed(teamCat)&&<button onClick={()=>{setEditingId(null);setForm(initForm);setIsFormOpen(true)}} title="Add new player/staff" className="hidden md:flex p-2 rounded-lg border border-[rgba(227,6,44,.4)] bg-[#3a0b18]/70 backdrop-blur-md text-[#ff5f72] hover:bg-[#e3062c] hover:text-white hover:border-[#e3062c] hover:shadow-[0_0_14px_rgba(227,6,44,.35)] transition-all fc-keep"><Plus size={16}/></button>}
           </div>
         </div>
         <div className="max-w-[1800px] mx-auto px-6 pb-3 flex items-center justify-center gap-3 flex-wrap">
@@ -1838,8 +1842,8 @@ export default function EliteSquadApp() {
                   </div>
                 </div>
                 <div className="flex gap-1.5 shrink-0">
-                  {p.editPlayer&&<button onClick={()=>{setEditingId(selMember.id);setForm({...selMember});setSelMember(null);setIsFormOpen(true)}} className="pm-close" title="Edit"><Edit3 size={13}/></button>}
-                  {p.deletePlayer&&<button onClick={async()=>{if(await askConfirm(tr.profile.delete+"?")){{setMembers(members.filter(m=>m.id!==selMember.id));setSelMember(null)}}}} className="pm-close" title="Delete"><Trash2 size={13}/></button>}
+                  {p.editPlayer&&catAllowed(selMember?.teamCategory)&&<button onClick={()=>{setEditingId(selMember.id);setForm({...selMember});setSelMember(null);setIsFormOpen(true)}} className="pm-close" title="Edit"><Edit3 size={13}/></button>}
+                  {p.deletePlayer&&catAllowed(selMember?.teamCategory)&&<button onClick={async()=>{if(await askConfirm(tr.profile.delete+"?")){{setMembers(members.filter(m=>m.id!==selMember.id));setSelMember(null)}}}} className="pm-close" title="Delete"><Trash2 size={13}/></button>}
                   <button onClick={()=>setSelMember(null)} title="Close" className="pm-close"><X size={14}/></button>
                 </div>
               </div>
@@ -2117,7 +2121,7 @@ export default function EliteSquadApp() {
                     <div className="flex flex-col items-center gap-3 py-10 text-center">
                       <span className="w-14 h-14 rounded-2xl bg-[var(--c-deep)] border border-[rgba(var(--line-rgb),.16)] flex items-center justify-center text-[var(--c-textDim)]"><IdCard color="var(--c-textDim)" size={24}/></span>
                       <p className="max-w-[260px] text-[14px] font-semibold text-[var(--c-textDim)]">{tr.profile.noPassport}</p>
-                      {p.editPlayer&&<button type="button" onClick={()=>{setEditingId(selMember.id);setForm({...selMember});setSelMember(null);setIsFormOpen(true)}} className="px-3 py-1.5 rounded-lg pm-btn-soft text-[13px] font-black uppercase tracking-wider">Upload Scan</button>}
+                      {p.editPlayer&&catAllowed(selMember?.teamCategory)&&<button type="button" onClick={()=>{setEditingId(selMember.id);setForm({...selMember});setSelMember(null);setIsFormOpen(true)}} className="px-3 py-1.5 rounded-lg pm-btn-soft text-[13px] font-black uppercase tracking-wider">Upload Scan</button>}
                     </div>
                   )}
                 </div>
@@ -2667,6 +2671,11 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                 const togglePerm=(perm:keyof UserPerms)=>{
                   updateProfile(u.username,{permissions:{...allUsers[realIdx].perms,[perm]:!allUsers[realIdx].perms[perm]}}).then(reloadProfiles)
                 }
+                const toggleCat=(cat:string)=>{
+                  const current:string[]=Array.isArray(allUsers[realIdx]?.perms.managedCategories)?allUsers[realIdx].perms.managedCategories:[]
+                  const next=current.includes(cat)?current.filter(c=>c!==cat):[...current,cat]
+                  updateProfile(u.username,{permissions:{...allUsers[realIdx].perms,managedCategories:next}}).then(reloadProfiles)
+                }
                 const doApprove=async()=>{
                   const res=await updateProfile(u.username,{status:"active"})
                   if(res.error){alert("Approve failed: "+res.error);return}
@@ -2703,6 +2712,20 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                             </button>
                           )
                         })}
+                      </div>
+                      <div>
+                        <p className="text-[9px] font-black uppercase text-zinc-500 tracking-wider mb-1.5">{tr.users.categoriesLabel}</p>
+                        <div className="flex flex-wrap gap-2">
+                          {CATEGORIES.map((c)=>{
+                            const cats:string[]=Array.isArray(allUsers[realIdx]?.perms.managedCategories)?allUsers[realIdx].perms.managedCategories:[]
+                            const on=cats.includes(c)
+                            return <button key={c} onClick={()=>toggleCat(c)}
+                              className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-wider border transition-all ${on?'bg-[#1a5fc4] border-[#1a5fc4] text-white':'bg-white border-zinc-200 text-zinc-500 hover:border-[#1a5fc4]/40'}`}>
+                              {on&&<Check size={10} className="inline mr-1"/>}{catLabel(c)}
+                            </button>
+                          })}
+                        </div>
+                        <p className="mt-1.5 text-[8px] font-bold uppercase tracking-wider text-zinc-400">{tr.users.categoriesHint}</p>
                       </div>
                     </div>
                     <div className="flex gap-3 px-5 pb-5">
@@ -2795,6 +2818,13 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                   updateProfile(u.username,{permissions:newPerms}).then(reloadProfiles)
                   if(currentUser) setUser({...user!,perms:newPerms})
                 }
+                const toggleCat=(cat:string)=>{
+                  const current:string[]=Array.isArray(u.perms.managedCategories)?u.perms.managedCategories:[]
+                  const next=current.includes(cat)?current.filter(c=>c!==cat):[...current,cat]
+                  const newPerms={...u.perms,managedCategories:next}
+                  updateProfile(u.username,{permissions:newPerms}).then(reloadProfiles)
+                  if(currentUser) setUser({...user!,perms:newPerms})
+                }
                 const approveUser=async()=>{
                   const res=await updateProfile(u.username,{status:"active"})
                   if(res.error){alert("Approve failed: "+res.error);return}
@@ -2854,6 +2884,22 @@ className="hidden" accept="image/jpeg,image/png,image/gif"/>
                             </button>
                           )
                         })}
+                      </div>
+                    )}
+                    {canManageUsers&&u.role!=="player"&&(
+                      <div className="mt-2">
+                        <p className="text-[8px] font-black uppercase tracking-wider text-zinc-500 mb-1">{tr.users.categoriesLabel}</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {CATEGORIES.map((c)=>{
+                            const cats:string[]=Array.isArray(u.perms.managedCategories)?u.perms.managedCategories:[]
+                            const on=cats.includes(c)
+                            return <button key={c} onClick={()=>toggleCat(c)}
+                              className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-wider border transition-all ${on?'bg-[#1a5fc4]/15 border-[#1a5fc4]/40 text-[#1a5fc4]':'bg-zinc-100 border-zinc-200 text-zinc-400 hover:bg-zinc-200'}`}>
+                              {on&&<Check size={9} className="inline mr-1"/>}{catLabel(c)}
+                            </button>
+                          })}
+                        </div>
+                        <p className="mt-1 text-[8px] font-bold uppercase tracking-wider text-zinc-400">{tr.users.categoriesHint}</p>
                       </div>
                     )}
                   </div>
